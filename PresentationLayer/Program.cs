@@ -1,3 +1,5 @@
+using DataAccessLayer.DependencyInjections.Extensions;
+
 namespace PresentationLayer
 {
     public class Program
@@ -8,7 +10,9 @@ namespace PresentationLayer
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
-
+            builder.Services.AddIdentityFrameWork();
+            builder.Services.AddDatabaseConfiguration(builder.Configuration);
+            
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
