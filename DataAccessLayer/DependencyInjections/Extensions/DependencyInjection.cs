@@ -1,4 +1,6 @@
-﻿using DataAccessLayer.Entities;
+﻿using DataAccessLayer.Abstractions.IRepositories;
+using DataAccessLayer.Entities;
+using DataAccessLayer.Repositoies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +26,12 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             {
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
             });
+        }
+
+        public static void ConfigureRepositories(this IServiceCollection services)
+        {
+            services.AddScoped(typeof(IBaseRepository<,>), typeof(BaseRepository<,>));
+            services.AddScoped<IUserRepository,UserRepository>();
         }
     }
 }

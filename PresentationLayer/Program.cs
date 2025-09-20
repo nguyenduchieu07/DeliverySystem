@@ -12,7 +12,7 @@ namespace PresentationLayer
             builder.Services.AddControllersWithViews();
             builder.Services.AddIdentityFrameWork();
             builder.Services.AddDatabaseConfiguration(builder.Configuration);
-            
+            builder.Services.ConfigureRepositories();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

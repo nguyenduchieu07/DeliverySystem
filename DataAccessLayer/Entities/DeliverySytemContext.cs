@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DataAccessLayer.DependencyInjections.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -345,6 +346,8 @@ public partial class DeliverySytemContext : IdentityDbContext<User,IdentityRole<
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_WalletTransactions_Wallets");
         });
+
+        modelBuilder.Seeding();
         base.OnModelCreating(modelBuilder);
         OnModelCreatingPartial(modelBuilder);
     }
