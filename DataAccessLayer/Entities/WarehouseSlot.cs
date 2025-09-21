@@ -1,0 +1,18 @@
+﻿using DataAccessLayer.Entities.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DataAccessLayer.Entities
+{
+    public class WarehouseSlot : BaseEntity<Guid>
+    {
+        public Guid WarehouseId { get; set; }
+        public string Code { get; set; } = null!;
+        public string Status { get; set; } = "Available"; // enum
+        public Guid? CurrentOrderId { get; set; }
+        public virtual Warehouse Warehouse { get; set; } = null!;
+    }
+}

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Entities;
 
-public partial class DeliverySytemContext : IdentityDbContext<User,IdentityRole<Guid>,Guid>
+public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 {
     public DeliverySytemContext(DbContextOptions<DeliverySytemContext> options)
         : base(options)
@@ -346,7 +346,37 @@ public partial class DeliverySytemContext : IdentityDbContext<User,IdentityRole<
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_WalletTransactions_Wallets");
         });
+        modelBuilder.Entity<Warehouse>(entity =>
+        {
+            entity.HasMany(e => e.Slots)
+                  .WithOne(e => e.Warehouse)
+                  .HasForeignKey(e => e.WarehouseId)
+                  .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(e => e.Store)
+                  .WithMany(e => e.Warehouses)
+                  .HasForeignKey(e => e.StoreId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => new { x.StoreId, x.Name });
+        });
+        modelBuilder.Entity<WarehouseSlot>(entity =>
+        {
+            entity.HasIndex(x => new { x.WarehouseId, x.Code })
+            .IsUnique();
+
+            entity.HasIndex(x => new { x.WarehouseId, x.Status });
+        });
+        modelBuilder.Entity<SlotReservation>(b =>
+        {
+            b.HasIndex(x => new { x.WarehouseSlotId, x.ExpiresAt });
+
+            b.HasIndex(x => x.OrderId);
+
+            b.HasOne<WarehouseSlot>()
+             .WithMany()
+             .HasForeignKey(x => x.WarehouseSlotId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
         modelBuilder.Seeding();
         base.OnModelCreating(modelBuilder);
         OnModelCreatingPartial(modelBuilder);

@@ -41,4 +41,6 @@ public partial class Store : BaseEntity<Guid>
     public virtual ICollection<Service> Services { get; set; } = new List<Service>();
 
     public virtual ICollection<StoreStaff> StoreStaffs { get; set; } = new List<StoreStaff>();
+
+    public virtual ICollection<Warehouse> Warehouses { get; set; } = new List<Warehouse>();
 }
