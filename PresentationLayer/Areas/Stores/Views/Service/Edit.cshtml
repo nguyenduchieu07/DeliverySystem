@@ -1,0 +1,66 @@
+﻿@using PresentationLayer.Areas.Stores.Models
+@model ServiceEditVM
+@{
+    ViewBag.Title = "Sửa dịch vụ";
+}
+<div class="page-head">
+    <h1 class="page-title">@Model.Name</h1>
+    <div class="page-actions">
+        <a class="btn" href="@Url.Action("Index")">Quay lại</a>
+    </div>
+</div>
+@using (Html.BeginForm("Edit", "Service", FormMethod.Post, new { id = Model.Id }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.Id)
+    <div class="grid" style="grid-template-columns:1fr; max-width:980px">
+        @Html.Partial("~/Areas/Stores/Views/Shared/_CategoryPicker.cshtml", Model)
+
+        <div class="card" style="margin-bottom:12px">
+            <label>Tên</label>@Html.TextBoxFor(m => m.Name)
+            <label>Mô tả</label>@Html.TextAreaFor(m => m.Description, 3, 80, null)
+            <div class="row">
+                <div><label>Đơn vị</label>@Html.TextBoxFor(m => m.Unit)</div>
+                <div><label>Giá cơ bản</label>@Html.TextBoxFor(m => m.BasePrice, new { type = "number", step = "0.01" })</div>
+                <div><label>Trạng thái</label>@Html.DropDownListFor(m => m.IsActive, new SelectList(new[] { new { v = true, t = "Active" }, new { v = false, t = "Inactive" } }, "v", "t", Model.IsActive))</div>
+            </div>
+            <div class="row">
+                <div><label>Hiển thị</label>@Html.DropDownListFor(m => m.IsPublished, new SelectList(new[] { new { v = false, t = "Unpublished" }, new { v = true, t = "Published" } }, "v", "t", Model.IsPublished))</div>
+            </div>
+            <div style="margin-top:10px"><button class="btn primary" type="submit">Lưu</button></div>
+        </div>
+
+        <section class="section">
+            <div class="header"><div class="title">Bảng giá theo bậc (tiers)</div></div>
+            <div class="card">
+                @Html.Partial("_TierForm", new PriceTierVM { ServiceId = Model.Id!.Value, ValidFrom = DateTime.UtcNow.Date })
+            </div>
+            <div style="overflow:auto">
+                <table class="table">
+                    <thead><tr><th>Hiệu lực từ</th><th>Đến</th><th>Min</th><th>Max</th><th>Giá</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var t in Model.Tiers)
+                        {
+                            <tr>
+                                <td>@t.ValidFrom.ToString("yyyy-MM-dd")</td>
+                                <td>@(t.ValidTo.HasValue ? t.ValidTo.Value.ToString("yyyy-MM-dd") : "—")</td>
+                                <td>@(t.MinQty?.ToString() ?? "—")</td>
+                                <td>@(t.MaxQty?.ToString() ?? "—")</td>
+                                <td>@t.Price.ToString("N0")</td>
+                                <td>
+                                    <form method="post" action="@Url.Action("DeleteTier", "Service", new { serviceId = Model.Id, tierId = t.Id })" onsubmit="return confirm('Xoá tier này?')">
+                                        @Html.AntiForgeryToken()
+                                        <button class="badge" type="submit">Xoá</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+}
+@section Scripts {
+  
+}

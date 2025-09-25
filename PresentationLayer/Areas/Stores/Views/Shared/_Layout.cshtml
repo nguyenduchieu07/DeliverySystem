@@ -1,0 +1,29 @@
+﻿@{
+    Layout = null;
+    var title = ViewBag.Title ?? "Store Admin";
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title</title>
+    <link rel="stylesheet" href="~/css/storeSite.css" />
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <div class="app">
+        @Html.Partial("_Topbar")
+        <input type="checkbox" id="navToggle" />
+        <div class="body">
+            @Html.Partial("_Sidebar")
+            <main class="content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
