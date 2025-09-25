@@ -2,6 +2,7 @@
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PresentationLayer.Areas.Stores.Helpers;
 using PresentationLayer.Areas.Stores.Models;
 
 namespace PresentationLayer.Areas.Stores.Controllers
@@ -133,5 +134,52 @@ namespace PresentationLayer.Areas.Stores.Controllers
             return RedirectToAction(nameof(Edit), new { vm.Id });
         }
 
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddTier(PriceTierVM vm)
+        {
+
+            var service = await _serviceRepository
+                .FindAll(s => s.Id == vm.ServiceId && s.StoreId == _storeId,
+                e => e.ServicePrices)
+                .FirstOrDefaultAsync();
+            if (service == null) return NotFound();
+
+
+            var newTier = new ServicePrice
+            {
+                Id = Guid.NewGuid(),
+                ServiceId = service.Id,
+                ValidFrom = vm.ValidFrom.Date,
+                ValidTo = vm.ValidTo.Value,
+                Price = vm.Price,
+                MinQty = vm.MinQty,
+                MaxQty = vm.MaxQty,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Validate chồng chéo
+            var errors = PriceTierValidator.ValidateNewTier(newTier, service.ServicePrices).ToList();
+            if (errors.Any())
+            {
+                TempData["TierErrors"] = string.Join("\n", errors);
+                return RedirectToAction(nameof(Edit), new { id = vm.ServiceId });
+            }
+
+            _context.ServicePrices.Add(newTier);
+            await _context.SaveChangesAsync();
+            TempData["TierSuccess"] = "Đã thêm tier.";
+            return RedirectToAction(nameof(Edit), new { id = vm.ServiceId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteTier(Guid serviceId, Guid tierId)
+        {
+            
+            TempData["TierSuccess"] = "Đã xoá tier.";
+            return RedirectToAction(nameof(Edit), new { id = serviceId });
+        }
     }
 }

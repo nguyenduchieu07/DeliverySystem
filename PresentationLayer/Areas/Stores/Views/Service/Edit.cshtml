@@ -14,6 +14,19 @@
 {
     @Html.AntiForgeryToken()
     @Html.HiddenFor(m => m.Id)
+    @if (TempData["TierErrors"] != null)
+    {
+        <div class="card" style="border-color:#ff6b6b; background:#22171a; margin-bottom:12px">
+            <strong style="color:#ff6b6b">Lỗi tier:</strong>
+            <pre style="white-space:pre-wrap; margin:6px 0 0">@TempData["TierErrors"]</pre>
+        </div>
+    }
+    @if (TempData["TierSuccess"] != null)
+    {
+        <div class="card" style="border-color:#2d6a4f; background:#142018; margin-bottom:12px">
+            <strong style="color:#5cd3a6">@TempData["TierSuccess"]</strong>
+        </div>
+    }
 
     <div class="grid" style="grid-template-columns:1fr; max-width:980px">
         @Html.Partial("~/Areas/Stores/Views/Shared/_CategoryPicker.cshtml", Model)

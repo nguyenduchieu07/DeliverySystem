@@ -2,8 +2,9 @@
 @model PriceTierVM
 <form method="post" action="@Url.Action("AddTier", "Service")" class="grid" style="grid-template-columns:repeat(6,1fr);gap:10px">
     @Html.AntiForgeryToken()
-    <div><label>Từ</label><input type="date" name="ValidFrom" value="@Model.ValidFrom.ToString("yyyy-MM-dd")" required /></div>
-    <div><label>Đến</label><input type="date" name="ValidTo" /></div>
+    @Html.HiddenFor(m => m.ServiceId)
+    <div><label>Từ</label><input type="datetime-local" name="ValidFrom" value="@Model.ValidFrom.ToString("yyyy-MM-dd hh-mm-ss")" required /></div>
+    <div><label>Đến</label><input type="datetime-local" name="ValidTo" /></div>
     <div><label>Min</label><input type="number" name="MinQty" min="0" /></div>
     <div><label>Max</label><input type="number" name="MaxQty" min="0" /></div>
     <div><label>Giá</label><input type="number" name="Price" step="0.01" required /></div>
