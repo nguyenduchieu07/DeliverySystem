@@ -378,6 +378,8 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
              .OnDelete(DeleteBehavior.Cascade);
         });
         modelBuilder.Seeding();
+        modelBuilder.SeedingStoreData();
+        modelBuilder.SeedingCategoryData();
         base.OnModelCreating(modelBuilder);
         OnModelCreatingPartial(modelBuilder);
     }
