@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Areas\Stores\Data\**" />
+    <Content Remove="Areas\Stores\Data\**" />
+    <EmbeddedResource Remove="Areas\Stores\Data\**" />
+    <None Remove="Areas\Stores\Data\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.17">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -19,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Stores\Data\" />
     <Folder Include="Areas\Stores\Models\" />
   </ItemGroup>
 
