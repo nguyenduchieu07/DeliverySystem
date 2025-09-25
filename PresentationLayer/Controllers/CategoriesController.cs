@@ -19,8 +19,8 @@ namespace PresentationLayer.Controllers
             return View();
         }
 
-        [HttpGet("parents")]
-        public async Task<IActionResult> GetCategoriesParent()
+        [HttpGet("roots")]
+        public async Task<IActionResult> GetRoots()
         {
             var parents = await _categoryRepository
                 .FindAll(c => c.ParentId == null)
@@ -49,5 +49,27 @@ namespace PresentationLayer.Controllers
                 .ToListAsync();
             return Json(childrens);
         }
+
+        [HttpGet("path")]
+        public async Task<IActionResult> GetPath(Guid categoryId)
+        {
+            var path = new List<Category>();
+            var node = await _categoryRepository.FindAll(x => x.Id == categoryId).FirstOrDefaultAsync();
+            if (node == null) return Json(Array.Empty<object>());
+            path.Add(node);
+            while (node.ParentId.HasValue)
+            {
+                var parent =  await _categoryRepository.FindAll(x => x.Id == node.ParentId.Value).FirstOrDefaultAsync();
+                if (parent == null) break;
+                path.Add(parent);
+                node = parent;
+            }
+            path.Reverse();
+            var result = path.Select(c => new { id = c.Id, name = c.Name, parentId = c.ParentId }).ToList();
+            return Json(result);
+        }
+
+        [HttpGet("parents")]
+        public Task<IActionResult> GetParentsCompat() => Task.FromResult<IActionResult>(RedirectToAction(nameof(GetRoots)));
     }
 }

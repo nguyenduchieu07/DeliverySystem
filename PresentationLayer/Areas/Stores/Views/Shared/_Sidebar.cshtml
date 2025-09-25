@@ -8,9 +8,9 @@
             </div>
         </div>
         <nav class="menu">
-            <a class="item active" href="@Url.Action("Index","Home")"><span class="icon"></span><span class="text">Dashboard</span></a>
+            <a class="item @Html.IsActive("Home","Index")" href="@Url.Action("Index", "Home")"><span class="icon"></span><span class="text">Dashboard</span></a>
             <a class="item" href="#"><span class="icon"></span><span class="text">Đơn hàng</span></a>
-            <a class="item" href="@Url.Action("Index","Service")"><span class="icon"></span><span class="text">Dịch vụ</span></a>
+            <a class="item @Html.IsActive("Service","Index")" " href="@Url.Action("Index", "Service")"><span class="icon"></span><span class="text">Dịch vụ</span></a>
             <a class="item" href="#"><span class="icon"></span><span class="text">Bảng giá</span></a>
             <a class="item" href="#"><span class="icon"></span><span class="text">Báo giá</span></a>
             <a class="item" href="#"><span class="icon"></span><span class="text">Hợp đồng</span></a>
