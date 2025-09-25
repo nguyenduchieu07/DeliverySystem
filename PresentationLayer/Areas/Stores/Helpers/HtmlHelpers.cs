@@ -15,11 +15,9 @@ public static class HtmlHelpers
         if (string.IsNullOrEmpty(actions)) actions = currentAction;
         if (string.IsNullOrEmpty(controllers)) controllers = currentController;
 
-        var acceptedActions = actions.Split(',');
+        //var acceptedActions = actions.Split(',');
         var acceptedControllers = controllers.Split(',');
 
-        return acceptedActions.Contains(currentAction) &&
-               acceptedControllers.Contains(currentController) ?
-               cssClass : string.Empty;
+        return acceptedControllers.Contains(currentController) ? cssClass : string.Empty;
     }
 }
