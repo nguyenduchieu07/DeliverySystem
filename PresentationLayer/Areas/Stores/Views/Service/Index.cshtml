@@ -1,0 +1,33 @@
+﻿@using PresentationLayer.Areas.Stores.Models
+@model IEnumerable<ServiceListItemVM>
+@{
+    ViewBag.Title = "Dịch vụ";
+}
+<div class="page-head">
+    <h1 class="page-title">Dịch vụ</h1>
+    <div class="page-actions">
+        <a class="btn primary" href="@Url.Action("Create")">+ Tạo dịch vụ</a>
+    </div>
+</div>
+<div class="section">
+    <div class="header"><div class="title">Danh sách</div></div>
+    <div style="overflow:auto">
+        <table class="table">
+            <thead><tr><th>Tên</th><th>Danh mục</th><th>Đơn vị</th><th>Giá cơ bản</th><th>Trạng thái</th><th>Hiển thị</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td>@s.Name</td>
+                        <td>@(s.CategoryName ?? "—")</td>
+                        <td>@s.Unit</td>
+                        <td>@s.BasePrice.ToString("N0")</td>
+                        <td>@(s.IsActive ? "Active" : "Inactive")</td>
+                        <td>@(s.IsPublished ? "Published" : "Unpublished")</td>
+                        <td><a class="badge" href="@Url.Action("Edit", new { id = s.Id })">Sửa</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

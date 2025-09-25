@@ -25,8 +25,4 @@
     <ProjectReference Include="..\ServiceLayer\ServiceLayer.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Areas\Stores\Models\" />
-  </ItemGroup>
-
 </Project>

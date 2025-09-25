@@ -1,0 +1,28 @@
+﻿@using PresentationLayer.Areas.Stores.Models
+@model ServiceEditVM
+@{
+    ViewBag.Title = "Tạo dịch vụ"; Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h1 class="page-title">Tạo dịch vụ</h1>
+@using (Html.BeginForm("Create", "Service", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    <div class="grid" style="grid-template-columns:1fr; max-width:920px">
+        @Html.Partial("~/Views/Shared/_CategoryPicker.cshtml", Model)
+        <div class="card" style="margin-bottom:12px">
+            <label>Tên</label>
+            @Html.TextBoxFor(m => m.Name, new { @placeholder = "VD: Chuyển nhà gói" })
+            <label>Mô tả</label>
+            @Html.TextAreaFor(m => m.Description, 4, 80, new { @placeholder = "Mô tả ngắn về dịch vụ..." })
+            <div class="row">
+                <div><label>Đơn vị</label>@Html.TextBoxFor(m => m.Unit)</div>
+                <div><label>Giá cơ bản</label>@Html.TextBoxFor(m => m.BasePrice, new { type = "number", step = "0.01" })</div>
+                <div><label>Trạng thái</label>@Html.DropDownListFor(m => m.IsActive, new SelectList(new[] { new { v = true, t = "Active" }, new { v = false, t = "Inactive" } }, "v", "t"))</div>
+            </div>
+            <div class="row">
+                <div><label>Hiển thị</label>@Html.DropDownListFor(m => m.IsPublished, new SelectList(new[] { new { v = false, t = "Unpublished" }, new { v = true, t = "Published" } }, "v", "t"))</div>
+            </div>
+            <div style="margin-top:10px"><button class="btn primary" type="submit">Lưu & Tiếp tục</button> <a class="btn" href="@Url.Action("Index")">Huỷ</a></div>
+        </div>
+    </div>
+}
