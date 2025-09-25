@@ -11,11 +11,14 @@ namespace PresentationLayer.Areas.Stores.Controllers
     {
         private readonly IBaseRepository<Service, Guid> _serviceRepository;
         private readonly IBaseRepository<Category, Guid> _categoryRepository;
+        private readonly DeliverySytemContext _context;
         private readonly Guid _storeId = Guid.Parse("22222222-2222-2222-2222-222222222222"); // demo
-        public ServiceController(IBaseRepository<Service, Guid> baseRepository, IBaseRepository<Category, Guid> baseRepository1)
+        public ServiceController(IBaseRepository<Service, Guid> baseRepository, IBaseRepository<Category, Guid> baseRepository1, DeliverySytemContext context)
         {
             _serviceRepository = baseRepository;
             _categoryRepository = baseRepository1;
+            _context = context;
+
         }
         public async Task<IActionResult> Index()
         {
@@ -74,7 +77,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 Unit = s.Unit,
                 BasePrice = s.BasePrice,
                 IsActive = s.IsActive,
-                IsPublished = EF.Property<bool>(s, "IsActive")
+                IsPublished = true
             };
             vm.Tiers = s.ServicePrices.OrderByDescending(p => p.ValidFrom).Select(p => new PriceTierVM
             {
@@ -88,5 +91,47 @@ namespace PresentationLayer.Areas.Stores.Controllers
             }).ToList();
             return View(vm);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(ServiceEditVM vm)
+        {
+            if (!ModelState.IsValid) return View(vm);
+            if (vm.CategoryId == null) { ModelState.AddModelError("CategoryId", "Hãy chọn danh mục cuối trong nhánh"); return View(vm); }
+
+            var entity = new Service
+            {
+                Id = Guid.NewGuid(),
+                StoreId = _storeId,
+                CategoryId = vm.CategoryId,
+                Name = vm.Name,
+                Description = vm.Description,
+                Unit = vm.Unit,
+                BasePrice = vm.BasePrice,
+                IsActive = vm.IsActive,
+                CreatedAt = DateTime.UtcNow
+            };
+            _serviceRepository.Add(entity);
+            _context.SaveChanges();
+            return RedirectToAction(nameof(Edit), new { id = entity.Id });
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(ServiceEditVM vm)
+        {
+            if (!ModelState.IsValid) return View(vm);
+            if (vm.CategoryId == null) { ModelState.AddModelError("CategoryId", "Hãy chọn danh mục cuối trong nhánh"); return View(vm); }
+
+            var s = await _serviceRepository.FindAll(x => x.Id == vm.Id && x.StoreId == _storeId).FirstOrDefaultAsync();
+            if (s == null) return NotFound();
+
+            s.CategoryId = vm.CategoryId; s.Name = vm.Name; s.Description = vm.Description; s.Unit = vm.Unit; s.BasePrice = vm.BasePrice; s.IsActive = vm.IsActive;
+            _context.Attach(s).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Edit), new { vm.Id });
+        }
+
     }
 }

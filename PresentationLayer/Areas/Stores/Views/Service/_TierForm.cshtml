@@ -1,6 +1,6 @@
 ﻿@using PresentationLayer.Areas.Stores.Models
 @model PriceTierVM
-<form method="post" action="@Url.Action("AddTier", "Service", new { serviceId = Model.ServiceId })" class="grid" style="grid-template-columns:repeat(6,1fr);gap:10px">
+<form method="post" action="@Url.Action("AddTier", "Service")" class="grid" style="grid-template-columns:repeat(6,1fr);gap:10px">
     @Html.AntiForgeryToken()
     <div><label>Từ</label><input type="date" name="ValidFrom" value="@Model.ValidFrom.ToString("yyyy-MM-dd")" required /></div>
     <div><label>Đến</label><input type="date" name="ValidTo" /></div>

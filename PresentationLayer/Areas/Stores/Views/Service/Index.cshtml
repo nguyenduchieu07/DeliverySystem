@@ -23,7 +23,7 @@
                         <td>@s.Unit</td>
                         <td>@s.BasePrice.ToString("N0")</td>
                         <td>@(s.IsActive ? "Active" : "Inactive")</td>
-                        <td>@(s.IsPublished ? "Published" : "Unpublished")</td>
+                        @* <td>@(s.IsPublished ? "Published" : "Unpublished")</td> *@
                         <td><a class="badge" href="@Url.Action("Edit", new { id = s.Id })">Sửa</a></td>
                     </tr>
                 }
