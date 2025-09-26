@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Areas.Stores.Helpers;
 using PresentationLayer.Areas.Stores.Models;
+using PresentationLayer.Models;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
@@ -21,23 +22,69 @@ namespace PresentationLayer.Areas.Stores.Controllers
             _context = context;
 
         }
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index([FromQuery] ServiceListFilterVM filter)
         {
-            var query = await _serviceRepository.FindAll(e => e.StoreId == _storeId,
-                e => e.Category
-                ).Select(s => new ServiceListItemVM
-                {
-                    Id = s.Id,
-                    Name = s.Name,
-                    CategoryName = s.Category != null ? s.Category.Name : null,
-                    Unit = s.Unit,
-                    BasePrice = s.BasePrice,
-                    IsActive = s.IsActive,
-                    IsPublished = EF.Property<bool>(s, "IsActive") == true,
-                    CreatedAt = s.CreatedAt
-                }).ToListAsync();
+            filter.Page = filter.Page <= 0 ? 1 : filter.Page;
+            filter.Size = filter.Size <= 0 ? 5 : Math.Min(filter.Size, 100);
+            var query = _context.Set<Service>()
+                .AsNoTracking()
+                .Where(s => s.StoreId == _storeId)
+                .Select(s => new { s, c = s.Category });
 
-            return View(query);
+            if (!string.IsNullOrWhiteSpace(filter.Q))
+            {
+                var q = filter.Q.Trim().ToLower();
+                query = query.Where(x =>
+                    x.s.Name.ToLower().Contains(q) ||
+                    (x.s.Description != null && x.s.Description.ToLower().Contains(q)) ||
+                    x.s.Unit.ToLower().Contains(q) ||
+                    (x.c != null && x.c.Name.ToLower().Contains(q))
+                );
+            }
+            // filter by category (exact match at any depth)
+            if (filter.CategoryId.HasValue)
+            {
+                query = query.Where(x => x.s.CategoryId == filter.CategoryId);
+            }
+
+            // status
+            if (!string.Equals(filter.Status, "All", StringComparison.OrdinalIgnoreCase))
+            {
+                bool active = string.Equals(filter.Status, "Active", StringComparison.OrdinalIgnoreCase);
+                query = query.Where(x => x.s.IsActive == active);
+            }
+
+            var total = await query.CountAsync();
+
+            var rows = await query
+                .OrderByDescending(x => x.s.CreatedAt)
+                .Skip((filter.Page - 1) * filter.Size)
+                .Take(filter.Size)
+                .Select(x => new ServiceListItemVM
+                {
+                    Id = x.s.Id,
+                    Name = x.s.Name,
+                    CategoryName = x.c != null ? x.c.Name : null,
+                    Unit = x.s.Unit,
+                    BasePrice = x.s.BasePrice,
+                    IsActive = x.s.IsActive,
+                    CreatedAt = x.s.CreatedAt
+                })
+                .ToListAsync();
+
+            var vm = new ServiceListVM
+            {
+                Filter = filter,
+                PageData = new PagedResult<ServiceListItemVM>
+                {
+                    Items = rows,
+                    Page = filter.Page,
+                    Size = filter.Size,
+                    TotalItems = total
+                }
+            };
+
+            return View(vm);
         }
 
         [HttpGet]
