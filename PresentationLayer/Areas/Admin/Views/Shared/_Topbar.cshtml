@@ -1,5 +1,17 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿<div class="topbar">
+    <label for="navToggle" class="btn toggle">☰</label>
+    <div class="brand">
+        <div class="logo"></div>
+        <span>Admin Console</span>
+    </div>
+    <div class="search">
+        <input placeholder="Search stores, users, reviews…" />
+        <button class="btn">Search</button>
+    </div>
+    <div class="actions">
+        <a class="btn" asp-area="Admin" asp-controller="Kyc" asp-action="Index">KYC</a>
+        <a class="btn" asp-area="Admin" asp-controller="Reviews" asp-action="Index">Reviews</a>
+        <a class="btn" asp-area="Admin" asp-controller="Ban" asp-action="Index">Ban</a>
+        <div class="avatar"></div>
+    </div>
+</div>
