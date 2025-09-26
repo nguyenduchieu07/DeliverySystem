@@ -380,6 +380,8 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
         modelBuilder.Seeding();
         modelBuilder.SeedingStoreData();
         modelBuilder.SeedingCategoryData();
+        modelBuilder.SeedingAdminData();
+
         base.OnModelCreating(modelBuilder);
         OnModelCreatingPartial(modelBuilder);
     }

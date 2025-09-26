@@ -107,5 +107,28 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                 new Category { Id = CAT_VS_VP, ParentId = CAT_DONDEP, Name = "Vệ sinh văn phòng", Slug = "ve-sinh-van-phong", SortOrder = 2 }
             );
         }
+
+        public static void SeedingAdminData(this ModelBuilder modelBuilder)
+        {
+            var userId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002");
+            var hasher = new PasswordHasher<User>();
+            var temp = new User();
+            var hash = hasher.HashPassword(temp, "password123@");
+            var user = new User
+            {
+                Id = userId,
+                Email = "SystemAdmin@gmail.com",
+                EmailConfirmed = true,
+                UserName = "SystemAdmin",
+                NormalizedEmail = "SystemAdmin@gmail.com",
+                NormalizedUserName = "SystemAdmin",
+                PasswordHash = hash,
+                Status = "Active",
+                
+            };
+            modelBuilder.Entity<User>().HasData(user);
+            modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid> { RoleId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000001"), UserId = user.Id });
+
+        }
     }
 }
