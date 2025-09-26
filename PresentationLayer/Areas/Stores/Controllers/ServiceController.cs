@@ -100,7 +100,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             var s = await _serviceRepository
                 .FindSingleAsync((e => e.Id == id && e.StoreId == _storeId),
                     CancellationToken.None,
-                    e => e.ServicePrices);
+                    e => e.ServicePrices.Where(sp => sp.DeletedAt != null));
             if (s == null)
             {
                 return NotFound();
@@ -224,7 +224,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteTier(Guid serviceId, Guid tierId)
         {
-            
+            var s = await _context.ServicePrices.FirstOrDefaultAsync(x => x.ServiceId == serviceId && x.Id == tierId);
+            s.DeletedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
             TempData["TierSuccess"] = "Đã xoá tier.";
             return RedirectToAction(nameof(Edit), new { id = serviceId });
         }
