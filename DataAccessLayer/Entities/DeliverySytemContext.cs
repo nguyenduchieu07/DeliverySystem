@@ -377,6 +377,22 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
              .HasForeignKey(x => x.WarehouseSlotId)
              .OnDelete(DeleteBehavior.Cascade);
         });
+        modelBuilder.Entity<KycSubmission>(e =>
+        {
+            e.HasIndex(x => new { x.Status, x.SubmittedAt }); 
+            e.HasOne(x => x.Store).WithMany().HasForeignKey(x => x.StoreId);
+            e.Property(x => x.Status).HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<KycDocument>(e =>
+        {
+            e.HasIndex(x => x.KycSubmissionId);
+            e.HasOne(x => x.KycSubmission)
+                .WithMany(s => s.Documents)
+                .HasForeignKey(x => x.KycSubmissionId);
+            e.Property(x => x.DocType).HasMaxLength(40);
+            e.Property(x => x.FilePath).HasMaxLength(512);
+        });
         modelBuilder.Seeding();
         modelBuilder.SeedingStoreData();
         modelBuilder.SeedingCategoryData();
