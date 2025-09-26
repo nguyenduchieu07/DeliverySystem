@@ -23,7 +23,15 @@ public partial class Store : BaseEntity<Guid>
     public decimal RatingAvg { get; set; }
 
     public int RatingCount { get; set; }
+    public string? KycStatus { get; set; }        // Pending | NeedChanges | Approved | Rejected
+    public string? KycNote { get; set; }          // ghi chú admin / yêu cầu bổ sung
+    public DateTime? KycSubmittedAt { get; set; }
+    public DateTime? KycReviewedAt { get; set; }
+    public Guid? KycReviewedBy { get; set; }
 
+    // tuỳ chọn cấu hình vận hành sau khi duyệt
+    public int? MaxOrdersPerDay { get; set; }
+    public string? ActiveRegions { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
