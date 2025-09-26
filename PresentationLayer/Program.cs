@@ -1,4 +1,5 @@
 using DataAccessLayer.DependencyInjections.Extensions;
+using ServiceLayer.Extensions;
 
 namespace PresentationLayer
 {
@@ -13,6 +14,7 @@ namespace PresentationLayer
             builder.Services.AddIdentityFrameWork();
             builder.Services.AddDatabaseConfiguration(builder.Configuration);
             builder.Services.ConfigureRepositories();
+            builder.Services.AddServices();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

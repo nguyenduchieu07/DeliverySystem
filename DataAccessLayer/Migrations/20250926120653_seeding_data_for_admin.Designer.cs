@@ -4,6 +4,7 @@ using DataAccessLayer.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(DeliverySytemContext))]
-    partial class DeliverySytemContextModelSnapshot : ModelSnapshot
+    [Migration("20250926120653_seeding_data_for_admin")]
+    partial class seeding_data_for_admin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,7 +146,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7103),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(7954),
                             Name = "Dịch vụ vận chuyển",
                             Slug = "van-chuyen",
                             SortOrder = 1
@@ -151,7 +154,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa2-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7135),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(7977),
                             Name = "Lưu kho",
                             Slug = "luu-kho",
                             SortOrder = 2
@@ -159,7 +162,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa3-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7138),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(7983),
                             Name = "Dọn dẹp",
                             Slug = "don-dep",
                             SortOrder = 3
@@ -167,7 +170,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7140),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(7986),
                             Name = "Chuyển nhà",
                             ParentId = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
                             Slug = "chuyen-nha",
@@ -176,7 +179,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7143),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(7991),
                             Name = "Chuyển văn phòng",
                             ParentId = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
                             Slug = "chuyen-van-phong",
@@ -185,7 +188,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000004"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7145),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(7993),
                             Name = "Xe tải theo km",
                             ParentId = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
                             Slug = "xe-tai-theo-km",
@@ -194,7 +197,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa2-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7148),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(7996),
                             Name = "Theo giờ",
                             ParentId = new Guid("aaaaaaa2-0000-0000-0000-000000000001"),
                             Slug = "theo-gio",
@@ -203,7 +206,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa2-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7150),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(7999),
                             Name = "Theo ngày",
                             ParentId = new Guid("aaaaaaa2-0000-0000-0000-000000000001"),
                             Slug = "theo-ngay",
@@ -212,7 +215,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa3-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7152),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(8001),
                             Name = "Vệ sinh nhà",
                             ParentId = new Guid("aaaaaaa3-0000-0000-0000-000000000001"),
                             Slug = "ve-sinh-nha",
@@ -221,7 +224,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa3-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 9, 26, 19, 13, 33, 52, DateTimeKind.Local).AddTicks(7154),
+                            CreatedAt = new DateTime(2025, 9, 26, 19, 6, 49, 721, DateTimeKind.Local).AddTicks(8004),
                             Name = "Vệ sinh văn phòng",
                             ParentId = new Guid("aaaaaaa3-0000-0000-0000-000000000001"),
                             Slug = "ve-sinh-van-phong",
@@ -319,93 +322,6 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("ToStoreId");
 
                     b.ToTable("Feedbacks");
-                });
-
-            modelBuilder.Entity("DataAccessLayer.Entities.KycDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DocType")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
-
-                    b.Property<string>("Hash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("KycSubmissionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("KycSubmissionId");
-
-                    b.ToTable("KycDocument");
-                });
-
-            modelBuilder.Entity("DataAccessLayer.Entities.KycSubmission", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AdminNote")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("ReviewedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Status")
-                        .HasMaxLength(20)
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("StoreId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("SubmittedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StoreId");
-
-                    b.HasIndex("Status", "SubmittedAt");
-
-                    b.ToTable("KycSubmission");
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Order", b =>
@@ -801,6 +717,21 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("None");
 
+                    b.Property<string>("KycNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("KycReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("KycReviewedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("KycStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("KycSubmittedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("LegalName")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
@@ -981,14 +912,14 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "1a22efbb-1ca1-4609-ae06-fb5806e8a2dd",
+                            ConcurrencyStamp = "8d05f2a0-fecd-4a6a-b1af-173dcaf1bb74",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "store1@gmail.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "store1@gmail.com",
                             NormalizedUserName = "store1",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGOTf6WwGk4mAWfPu62mOOOKSrOaNPVCA0X0es26/mShPBYOktJlnX+q5BQNMjWRBA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEKgYq34yX7lavVvPfnxi3V6aWLIy/AecsSZ59nvU6XQzYHBCzQ0QEaGd0OMrKZ9Ctw==",
                             PhoneNumberConfirmed = false,
                             Status = "Active",
                             TwoFactorEnabled = false,
@@ -999,14 +930,14 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000002"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "c1352afe-2a11-4b1c-92ce-fbd2dca0946c",
+                            ConcurrencyStamp = "c9967212-78af-4eb5-b7cb-03c4c0a70bb0",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "SystemAdmin@gmail.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "SystemAdmin@gmail.com",
                             NormalizedUserName = "SystemAdmin",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDbNk2SQdIKTKCZBrncxz/dD3tqay7pXbdXYvOcyEsEqasx6ubtiI8thGvpIV3AUTg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMB+s8sXLgkBX4Qe4X2AvY8iqoNKp2KpdtOfbD36JsI9aO3LcVavElDQb6t7q054rw==",
                             PhoneNumberConfirmed = false,
                             Status = "Active",
                             TwoFactorEnabled = false,
@@ -1432,28 +1363,6 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("ToStore");
                 });
 
-            modelBuilder.Entity("DataAccessLayer.Entities.KycDocument", b =>
-                {
-                    b.HasOne("DataAccessLayer.Entities.KycSubmission", "KycSubmission")
-                        .WithMany("Documents")
-                        .HasForeignKey("KycSubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("KycSubmission");
-                });
-
-            modelBuilder.Entity("DataAccessLayer.Entities.KycSubmission", b =>
-                {
-                    b.HasOne("DataAccessLayer.Entities.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Store");
-                });
-
             modelBuilder.Entity("DataAccessLayer.Entities.Order", b =>
                 {
                     b.HasOne("DataAccessLayer.Entities.Customer", "Customer")
@@ -1721,11 +1630,6 @@ namespace DataAccessLayer.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("Quotations");
-                });
-
-            modelBuilder.Entity("DataAccessLayer.Entities.KycSubmission", b =>
-                {
-                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Order", b =>

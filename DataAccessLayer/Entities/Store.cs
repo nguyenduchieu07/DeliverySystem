@@ -23,7 +23,10 @@ public partial class Store : BaseEntity<Guid>
     public decimal RatingAvg { get; set; }
 
     public int RatingCount { get; set; }
-
+    
+    // tuỳ chọn cấu hình vận hành sau khi duyệt
+    public int? MaxOrdersPerDay { get; set; }
+    public string? ActiveRegions { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
