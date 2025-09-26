@@ -1,0 +1,17 @@
+﻿@using DataAccessLayer.Entities
+@model IEnumerable<KycSubmission>
+<table class="table" style="width:100%">
+    <thead><tr><th>Store</th><th>Submitted</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td>@s.Store.StoreName</td>
+                <td>@s.SubmittedAt.ToLocalTime()</td>
+                <td style="text-align:right">
+                    <a class="btn" asp-area="Admin" asp-controller="Kyc" asp-action="Index" asp-route-status="Pending">Review</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
