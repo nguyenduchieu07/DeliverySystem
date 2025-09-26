@@ -1,33 +1,92 @@
 ﻿@using PresentationLayer.Areas.Stores.Models
-@model IEnumerable<ServiceListItemVM>
+@model ServiceListVM
 @{
     ViewBag.Title = "Dịch vụ";
 }
+
 <div class="page-head">
     <h1 class="page-title">Dịch vụ</h1>
     <div class="page-actions">
         <a class="btn primary" href="@Url.Action("Create")">+ Tạo dịch vụ</a>
     </div>
 </div>
+
+<div class="section" style="margin-bottom:12px">
+    <div class="header"><div class="title">Tìm kiếm & Lọc</div></div>
+    <div class="card">
+        <form method="get" action="@Url.Action("Index")" class="row">
+            <div>
+                <label>Từ khoá</label>
+                <input type="text" name="q" value="@Model.Filter.Q" placeholder="Tên, mô tả, đơn vị, danh mục..." />
+            </div>
+            <div>
+                <label>Trạng thái</label>
+                <select name="status">
+                    <option value="All" @(Model.Filter.Status == "All" ? "selected" : null)>All</option>
+                    <option value="Active" @(Model.Filter.Status == "Active" ? "selected" : null)>Active</option>
+                    <option value="Inactive" @(Model.Filter.Status == "Inactive" ? "selected" : null)>Inactive</option>
+                </select>
+            </div>
+            
+         
+            <div>
+                <label>Kích thước trang</label>
+                <select name="size">
+                    @foreach (var s in new[] { 5, 10, 20, 50, 100 })
+                    {
+                        <option value="@s" @(Model.Filter.Size == s ? "selected" : null)>@s</option>
+                    }
+                </select>
+            </div>
+            <div style="align-self:end">
+                <button class="btn" type="submit">Tìm</button>
+                <a class="btn" href="@Url.Action("Index")">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="section">
-    <div class="header"><div class="title">Danh sách</div></div>
+    <div class="header">
+        <div class="title">Danh sách (@Model.PageData.TotalItems) — Hiển thị @Model.PageData.From–@Model.PageData.To</div>
+    </div>
     <div style="overflow:auto">
         <table class="table">
             <thead><tr><th>Tên</th><th>Danh mục</th><th>Đơn vị</th><th>Giá cơ bản</th><th>Trạng thái</th><th>Hiển thị</th><th></th></tr></thead>
             <tbody>
-                @foreach (var s in Model)
+                @if (!Model.PageData.Items.Any())
                 {
-                    <tr>
-                        <td>@s.Name</td>
-                        <td>@(s.CategoryName ?? "—")</td>
-                        <td>@s.Unit</td>
-                        <td>@s.BasePrice.ToString("N0")</td>
-                        <td>@(s.IsActive ? "Active" : "Inactive")</td>
-                        <td>@(s.IsPublished ? "Published" : "Unpublished")</td>
-                        <td><a class="badge" href="@Url.Action("Edit", new { id = s.Id })">Sửa</a></td>
-                    </tr>
+                    <tr><td colspan="7" class="muted">Không có dữ liệu.</td></tr>
+                }
+                else
+                {
+                    foreach (var s in Model.PageData.Items)
+                    {
+                        <tr>
+                            <td>@s.Name</td>
+                            <td>@(s.CategoryName ?? "—")</td>
+                            <td>@s.Unit</td>
+                            <td>@s.BasePrice.ToString("N0")</td>
+                            <td>@(s.IsActive ? "Active" : "Inactive")</td>
+                           
+                            <td><a class="badge" href="@Url.Action("Edit", new { id = s.Id })">Sửa</a></td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
     </div>
+
+    @{
+        var p = Model.PageData.Page; var pages = Model.PageData.TotalPages; var size = Model.PageData.Size;
+        string link(int page) => Url.Action("Index", new { q = Model.Filter.Q, categoryId = Model.Filter.CategoryId, status = Model.Filter.Status, page, size });
+    }
+    @if (pages > 1)
+    {
+        <div style="display:flex;gap:8px;justify-content:flex-end;padding:12px">
+            <a class="btn" href="@(p>1?link(p-1):"#")" style="pointer-events:@(p>1?"auto":"none");opacity:@(p>1?1:.5)">« Trước</a>
+            <div class="muted" style="align-self:center">Trang @p / @pages</div>
+            <a class="btn" href="@(p<pages?link(p+1):"#")" style="pointer-events:@(p<pages?"auto":"none");opacity:@(p<pages?1:.5)">Sau »</a>
+        </div>
+    }
 </div>
