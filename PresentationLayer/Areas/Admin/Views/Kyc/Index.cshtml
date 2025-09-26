@@ -3,6 +3,19 @@
 @{
     ViewBag.Title = "KYC chờ duyệt";
 }
+<style>
+    select {
+        color: rgb(230, 233, 242); /* To match the input's text color */
+        background-color: rgb(12, 19, 33); /* To match the input's background color */
+        border-radius: 10px; /* To match the input's rounded corners */
+        /* Keep the previously applied styles for width, height, padding, border, and box-sizing */
+        width: 191px;
+        height: 33px;
+        padding: 8px 10px;
+        border: 1px solid rgb(31, 42, 62);
+        box-sizing: border-box;
+    }
+</style>
 <div class="tabs">
     <div class="tab active" data-tab="kyc">KYC</div>
     <div class="tab" data-tab="feedback">Feedback</div>
@@ -25,7 +38,8 @@
             </form>
         </div>
         <div class="body">
-            <table class="table" style="width:100%">
+            <table class="table kyc-table" style="width:80vw">
+
                 <thead>
                     <tr>
                         <th>Cửa hàng</th>
@@ -40,7 +54,7 @@
                     @foreach (var s in Model)
                     {
                         <tr>
-                            <td><b>@s.Store.StoreName</b> · @s.Store.Id.ToString().Substring(0, 8)</td>
+                            <td><b>@s.Store.StoreName</b> · @s.Store.Id.ToString().Substring(0, 4)</td>
                             <td>@s.SubmittedAt.ToLocalTime()</td>
                             <td>
                                 @foreach (var d in s.Documents)
@@ -59,18 +73,22 @@
                                     <button class="btn success">Approve</button>
                                 </form>
                             </td>
-                            <td style="display:flex;gap:6px">
-                                <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post" class="inline">
-                                    <input type="hidden" name="submissionId" value="@s.Id" />
-                                    <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." />
-                                    <button class="btn warn">Need changes</button>
-                                </form>
-                                <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post" class="inline">
-                                    <input type="hidden" name="submissionId" value="@s.Id" />
-                                    <input class="input sm" name="note" placeholder="Lý do từ chối..." />
-                                    <button class="btn danger">Reject</button>
-                                </form>
+                            <td class="actions">
+                                <div class="cell">
+                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post" class="inline">
+                                        <input type="hidden" name="submissionId" value="@s.Id" />
+                                        <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." />
+                                        <button class="btn warn">Need changes</button>
+                                    </form>
+
+                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post" class="inline">
+                                        <input type="hidden" name="submissionId" value="@s.Id" />
+                                        <input class="input sm" name="note" placeholder="Lý do từ chối..." />
+                                        <button class="btn danger">Reject</button>
+                                    </form>
+                                </div>
                             </td>
+
                         </tr>
                     }
                 </tbody>

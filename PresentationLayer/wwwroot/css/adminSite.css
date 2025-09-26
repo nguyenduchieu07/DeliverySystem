@@ -300,3 +300,318 @@ main.content {
         color: #ffd5d5;
         border-color: #6f2b2b
     }
+/* Admin module CSS */
+:root {
+    --bg: #0b0f17;
+    --panel: #121826;
+    --muted: #8b93a7;
+    --text: #e6e9f2;
+    --primary: #6ee7b7;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --accent: #60a5fa;
+    --border: #1f2a3e;
+    --card: #0f1522;
+    --success: #10b981
+}
+
+* {
+    box-sizing: border-box
+}
+
+html, body {
+    height: 100%
+}
+
+body {
+    margin: 0;
+    background: linear-gradient(120deg,#0b0f17,#0a1323 60%,#0b0f17);
+    color: var(--text);
+    font: 14px/1.6 system-ui,-apple-system,Segoe UI,Roboto
+}
+
+a {
+    color: inherit;
+    text-decoration: none
+}
+
+.app {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh
+}
+
+/* layout shells */
+.body {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 0
+}
+
+@media (max-width:1024px) {
+    .body {
+        grid-template-columns: 1fr
+    }
+}
+
+.sidebar {
+    background: rgba(15,21,34,.95);
+    border-right: 1px solid var(--border)
+}
+
+main.content {
+    padding: 18px;
+    display: grid;
+    gap: 16px;
+    align-content: start
+}
+
+/* tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px
+}
+
+.tab {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #0c1321;
+    cursor: default;
+    color: #cbd5e1
+}
+
+    .tab.active {
+        box-shadow: 0 0 0 1px #263651 inset;
+        color: #fff
+    }
+
+/* grid & cards */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(12,1fr);
+    gap: 16px
+}
+
+.panel {
+    align-content: start
+}
+
+.col-12 {
+    grid-column: span 12
+}
+
+.card {
+    background: linear-gradient(180deg,rgba(18,26,42,.8),rgba(14,20,33,.8));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.25);
+    overflow: hidden
+}
+
+    .card .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border)
+    }
+
+        .card .head h3 {
+            margin: 0;
+            font-size: 15px;
+            letter-spacing: .2px
+        }
+
+    .card .body {
+        padding: 14px 16px
+    }
+
+/* filters */
+.filters {
+    display: flex;
+    gap: 8px;
+    align-items: center
+}
+
+.input {
+    background: #0c1321;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 10px;
+    outline: none
+}
+
+    .input.sm {
+        padding: 6px 8px;
+        border-radius: 8px
+    }
+
+.btn {
+    border: 1px solid var(--border);
+    background: #0c1321;
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .2s
+}
+
+    .btn:hover {
+        transform: translateY(-1px);
+        border-color: #294064
+    }
+
+    .btn.success {
+        background: linear-gradient(135deg,#0d2a21,#0f3529);
+        border-color: #1c4e3c;
+        color: #c9ffea
+    }
+
+    .btn.warn {
+        background: linear-gradient(135deg,#2a240d,#3b2f0d);
+        border-color: #594214;
+        color: #ffe6b8
+    }
+
+    .btn.danger {
+        background: linear-gradient(135deg,#2a0f0f,#3b1212);
+        border-color: #5b1d1d;
+        color: #ffd7d7
+    }
+
+/* table */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px
+}
+
+    .table thead th {
+        font-weight: 600;
+        color: #a8b1c7;
+        text-align: left;
+        padding: 6px 10px
+    }
+
+    .table tbody tr {
+        background: rgba(13,19,33,.7);
+        border: 1px solid var(--border)
+    }
+
+    .table tbody td {
+        padding: 10px;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border)
+    }
+
+    .table tbody tr td:first-child {
+        border-left: 1px solid var(--border);
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px
+    }
+
+    .table tbody tr td:last-child {
+        border-right: 1px solid var(--border);
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px
+    }
+
+    .table a {
+        color: var(--accent)
+    }
+
+/* chips consistent theo enum */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 12px
+}
+
+    .chip.ok {
+        background: rgba(16,48,32,.6);
+        color: #c6ffe9;
+        border-color: #2b6f58
+    }
+    /* Approved */
+    .chip.pending {
+        background: rgba(56,46,20,.5);
+        color: #ffe9b8;
+        border-color: #6f5b2b
+    }
+    /* Pending */
+    .chip.need {
+        background: rgba(56,40,10,.5);
+        color: #ffe3a1;
+        border-color: #6f522b
+    }
+    /* NeedChanges */
+    .chip.danger {
+        background: rgba(56,20,20,.5);
+        color: #ffd5d5;
+        border-color: #6f2b2b
+    }
+/* Rejected */
+
+/* helpers */
+.inline {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center
+}
+
+.muted {
+    color: var(--muted)
+}
+
+.docs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px
+}
+
+.note {
+    font-size: 12px;
+    color: #cbd5e1
+}
+
+.nowrap {
+    white-space: nowrap
+}
+/* Bảng */
+table.kyc-table td {
+    vertical-align: top;
+    box-sizing: border-box;
+}
+
+    /* Ô cuối: xếp ngang */
+    table.kyc-table td.actions > .cell {
+        display: flex; /* xếp ngang mặc định là row */
+        gap: 8px;
+        align-items: stretch; /* các form cao đều theo chiều td */
+        min-height: 100%; /* nội dung kéo giãn bằng chiều cao td */
+    }
+
+    /* Mỗi form là một “item” nằm ngang */
+    table.kyc-table td.actions form.inline {
+        display: flex;
+        gap: 6px;
+        align-items: center; /* căn giữa theo trục dọc */
+    }
+
+    /* (Tuỳ chọn 1) Luôn 1 dòng, tràn thì cuộn ngang */
+    table.kyc-table td.actions > .cell {
+        flex-wrap: nowrap;
+        overflow-x: auto; /* nếu dài quá thì cuộn ngang */
+        white-space: nowrap;
+    }
+
+/* (Tuỳ chọn 2) Nếu thích tự xuống hàng khi hẹp, thay bằng:
+table.kyc-table td.actions > .cell { flex-wrap: wrap; overflow-x: visible; white-space: normal; }
+*/
