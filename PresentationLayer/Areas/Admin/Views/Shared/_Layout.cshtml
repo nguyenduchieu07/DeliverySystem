@@ -1,5 +1,29 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
+    var title = ViewBag.Title as string ?? "Admin Console";
 }
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title</title>
+
+    <link rel="stylesheet" href="~/css/adminSite.css" asp-append-version="true" />
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <div class="app">
+        @await Html.PartialAsync("_Topbar")
+        <input type="checkbox" id="navToggle" hidden />
+        <div class="body">
+            @await Html.PartialAsync("_Sidebar")
+            <main class="content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

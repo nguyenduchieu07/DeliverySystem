@@ -1,5 +1,80 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@using DataAccessLayer.Entities
+@model IEnumerable<KycSubmission>
 @{
+    ViewBag.Title = "KYC chờ duyệt";
 }
+<div class="tabs">
+    <div class="tab active" data-tab="kyc">KYC</div>
+    <div class="tab" data-tab="feedback">Feedback</div>
+    <div class="tab" data-tab="ban">Ban</div>
+</div>
+
+<section class="grid panel" id="panel-kyc">
+    <div class="card col-12">
+        <div class="head">
+            <h3>KYC chờ duyệt</h3>
+            <form method="get" class="filters">
+                <select name="status" value="@Context.Request.Query["status"]">
+                    <option value="Pending">Pending</option>
+                    <option value="NeedChanges">Need Changes</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <input class="input" name="q" placeholder="Tìm theo tên cửa hàng" value="@Context.Request.Query["q"]" />
+                <button class="btn">Lọc</button>
+            </form>
+        </div>
+        <div class="body">
+            <table class="table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Cửa hàng</th>
+                        <th>Ngày nộp</th>
+                        <th>Giấy tờ</th>
+                        <th>Trạng thái</th>
+                        <th>Max/Day</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td><b>@s.Store.StoreName</b> · @s.Store.Id.ToString().Substring(0, 8)</td>
+                            <td>@s.SubmittedAt.ToLocalTime()</td>
+                            <td>
+                                @foreach (var d in s.Documents)
+                                {
+                                    <a href="@d.FilePath" target="_blank">@d.DocType</a>
+
+                                    @:
+                                }
+                            </td>
+                            <td><span class="chip @(s.Status=="Approved"?"ok":s.Status=="Rejected"?"danger":"pending")">@s.Status</span></td>
+                            <td>
+                                <form asp-area="Admin" asp-controller="Kyc" asp-action="Approve" method="post" class="inline">
+                                    <input type="hidden" name="submissionId" value="@s.Id" />
+                                    <input class="input sm" name="maxPerDay" type="number" placeholder="Max/day" style="width:90px" />
+                                    <input class="input sm" name="regionsCsv" placeholder="HN,HCM,DN" style="width:140px" />
+                                    <button class="btn success">Approve</button>
+                                </form>
+                            </td>
+                            <td style="display:flex;gap:6px">
+                                <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post" class="inline">
+                                    <input type="hidden" name="submissionId" value="@s.Id" />
+                                    <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." />
+                                    <button class="btn warn">Need changes</button>
+                                </form>
+                                <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post" class="inline">
+                                    <input type="hidden" name="submissionId" value="@s.Id" />
+                                    <input class="input sm" name="note" placeholder="Lý do từ chối..." />
+                                    <button class="btn danger">Reject</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
