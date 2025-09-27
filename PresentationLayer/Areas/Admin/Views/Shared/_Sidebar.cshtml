@@ -1,14 +1,16 @@
-﻿@{
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
     string ctrl = (ViewContext.RouteData.Values["controller"]?.ToString() ?? "").ToLowerInvariant();
     string active(string c) => ctrl == c.ToLowerInvariant() ? "active" : string.Empty;
 }
 <aside class="sidebar">
     <nav class="nav">
+        <div class="section-title">Reports</div>
+        <a class="@Html.IsActive("Home","Index")" asp-area="Admin" asp-controller="Home" asp-action="Index"><span class="dot"></span> Dashboard</a>
         <div class="section-title">Navigation</div>
         <a class="@active("Kyc")" asp-area="Admin" asp-controller="Kyc" asp-action="Index"><span class="dot"></span> KYC chờ duyệt</a>
         <a class="@active("Reviews")" asp-area="Admin" asp-controller="Reviews" asp-action="Index"><span class="dot"></span> Feedback & Moderation</a>
-        <a class="@active("Ban")" asp-area="Admin" asp-controller="Ban" asp-action="Index"><span class="dot"></span> Ban Center</a>
-        <div class="section-title">Reports</div>
-        <a class="@active("Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><span class="dot"></span> Dashboard</a>
+        <a class="@active("Banned")" asp-area="Admin" asp-controller="Banned" asp-action="Index"><span class="dot"></span> Ban Center</a>
+       
     </nav>
 </aside>

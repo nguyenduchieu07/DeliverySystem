@@ -1,13 +1,75 @@
-﻿@using DataAccessLayer.Entities
+﻿
+@using DataAccessLayer.Entities
 @model IEnumerable<KycSubmission>
 @{
     ViewBag.Title = "KYC chờ duyệt";
 }
+<style>
+    .alert {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        margin: 10px 0;
+        border: 1px solid transparent;
+        font-size: 14px;
+    }
+
+        .alert.success {
+            background: rgba(34,197,94,.12); /* xanh lá nhạt */
+            border-color: rgba(34,197,94,.35);
+            color: rgb(187, 247, 208);
+        }
+
+        .alert.error {
+            background: rgba(239,68,68,.12); /* đỏ nhạt */
+            border-color: rgba(239,68,68,.35);
+            color: rgb(254, 202, 202);
+        }
+
+        .alert .close {
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+    select {
+        color: rgb(230, 233, 242); /* To match the input's text color */
+        background-color: rgb(12, 19, 33); /* To match the input's background color */
+        border-radius: 10px; /* To match the input's rounded corners */
+        /* Keep the previously applied styles for width, height, padding, border, and box-sizing */
+        width: 191px;
+        height: 33px;
+        padding: 8px 10px;
+        border: 1px solid rgb(31, 42, 62);
+        box-sizing: border-box;
+    }
+</style>
 <div class="tabs">
     <div class="tab active" data-tab="kyc">KYC</div>
     <div class="tab" data-tab="feedback">Feedback</div>
     <div class="tab" data-tab="ban">Ban</div>
 </div>
+@if (TempData["Success"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert success">
+        <span class="msg">@ok</span>
+        <button type="button" class="close" aria-label="Đóng" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+@if (TempData["Error"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert error">
+        <span class="msg">@err</span>
+        <button type="button" class="close" aria-label="Đóng" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
 
 <section class="grid panel" id="panel-kyc">
     <div class="card col-12">
@@ -25,7 +87,8 @@
             </form>
         </div>
         <div class="body">
-            <table class="table" style="width:100%">
+            <table class="table kyc-table" style="width:80vw">
+
                 <thead>
                     <tr>
                         <th>Cửa hàng</th>
@@ -40,7 +103,7 @@
                     @foreach (var s in Model)
                     {
                         <tr>
-                            <td><b>@s.Store.StoreName</b> · @s.Store.Id.ToString().Substring(0, 8)</td>
+                            <td><b>@s.Store.StoreName</b> · @s.Store.Id.ToString().Substring(0, 4)</td>
                             <td>@s.SubmittedAt.ToLocalTime()</td>
                             <td>
                                 @foreach (var d in s.Documents)
@@ -59,18 +122,22 @@
                                     <button class="btn success">Approve</button>
                                 </form>
                             </td>
-                            <td style="display:flex;gap:6px">
-                                <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post" class="inline">
-                                    <input type="hidden" name="submissionId" value="@s.Id" />
-                                    <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." />
-                                    <button class="btn warn">Need changes</button>
-                                </form>
-                                <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post" class="inline">
-                                    <input type="hidden" name="submissionId" value="@s.Id" />
-                                    <input class="input sm" name="note" placeholder="Lý do từ chối..." />
-                                    <button class="btn danger">Reject</button>
-                                </form>
+                            <td class="actions">
+                                <div class="cell">
+                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post" class="inline">
+                                        <input type="hidden" name="submissionId" value="@s.Id" />
+                                        <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." />
+                                        <button class="btn warn">Need changes</button>
+                                    </form>
+
+                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post" class="inline">
+                                        <input type="hidden" name="submissionId" value="@s.Id" />
+                                        <input class="input sm" name="note" placeholder="Lý do từ chối..." />
+                                        <button class="btn danger">Reject</button>
+                                    </form>
+                                </div>
                             </td>
+
                         </tr>
                     }
                 </tbody>
@@ -78,3 +145,11 @@
         </div>
     </div>
 </section>
+@section Scripts {
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(a => a.remove());
+        }, 4000);
+    </script>
+
+}
