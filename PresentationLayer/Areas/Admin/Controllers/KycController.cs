@@ -35,30 +35,54 @@ namespace PresentationLayer.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(Guid submissionId, int? maxPerDay, string? regionsCsv)
         {
-            var regions = string.IsNullOrWhiteSpace(regionsCsv)
+            try
+            {
+                var regions = string.IsNullOrWhiteSpace(regionsCsv)
                 ? null
                 : regionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            await _svc.ApproveAsync(submissionId, maxPerDay, regions, adminId);
-            return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+                var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                await _svc.ApproveAsync(submissionId, maxPerDay, regions, adminId);
+                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+            }
+            catch(Exception ex)
+            {
+                TempData["Error"] = "Approve thất bại: " + ex.Message;
+                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> NeedChanges(Guid submissionId, string note)
         {
-            var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            await _svc.NeedChangesAsync(submissionId, note, adminId);
-            return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+            try
+            {
+                var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                await _svc.NeedChangesAsync(submissionId, note, adminId);
+                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+            }
+            catch(Exception ex)
+            {
+                TempData["Error"] = "Approve thất bại: " + ex.Message;
+                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reject(Guid submissionId, string note)
         {
-            var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            await _svc.RejectAsync(submissionId, note, adminId);
-            return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+            try
+            {
+                var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                await _svc.RejectAsync(submissionId, note, adminId);
+                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+            }
+            catch(Exception ex)
+            {
+                TempData["Error"] = "Approve thất bại: " + ex.Message;
+                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+            }
         }
     }
 }

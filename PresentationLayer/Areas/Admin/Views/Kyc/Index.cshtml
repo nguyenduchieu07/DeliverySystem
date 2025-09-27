@@ -1,9 +1,44 @@
-﻿@using DataAccessLayer.Entities
+﻿
+@using DataAccessLayer.Entities
 @model IEnumerable<KycSubmission>
 @{
     ViewBag.Title = "KYC chờ duyệt";
 }
 <style>
+    .alert {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        margin: 10px 0;
+        border: 1px solid transparent;
+        font-size: 14px;
+    }
+
+        .alert.success {
+            background: rgba(34,197,94,.12); /* xanh lá nhạt */
+            border-color: rgba(34,197,94,.35);
+            color: rgb(187, 247, 208);
+        }
+
+        .alert.error {
+            background: rgba(239,68,68,.12); /* đỏ nhạt */
+            border-color: rgba(239,68,68,.35);
+            color: rgb(254, 202, 202);
+        }
+
+        .alert .close {
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
     select {
         color: rgb(230, 233, 242); /* To match the input's text color */
         background-color: rgb(12, 19, 33); /* To match the input's background color */
@@ -21,6 +56,20 @@
     <div class="tab" data-tab="feedback">Feedback</div>
     <div class="tab" data-tab="ban">Ban</div>
 </div>
+@if (TempData["Success"] is string ok && !string.IsNullOrWhiteSpace(ok))
+{
+    <div class="alert success">
+        <span class="msg">@ok</span>
+        <button type="button" class="close" aria-label="Đóng" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
+@if (TempData["Error"] is string err && !string.IsNullOrWhiteSpace(err))
+{
+    <div class="alert error">
+        <span class="msg">@err</span>
+        <button type="button" class="close" aria-label="Đóng" onclick="this.parentElement.remove()">×</button>
+    </div>
+}
 
 <section class="grid panel" id="panel-kyc">
     <div class="card col-12">
@@ -96,3 +145,11 @@
         </div>
     </div>
 </section>
+@section Scripts {
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(a => a.remove());
+        }, 4000);
+    </script>
+
+}
