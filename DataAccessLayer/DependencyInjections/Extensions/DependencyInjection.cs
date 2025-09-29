@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Abstractions.IRepositories;
+using DataAccessLayer.Configs;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Repositoies;
 using Microsoft.AspNetCore.Identity;
@@ -28,8 +29,10 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             });
         }
 
-        public static void ConfigureRepositories(this IServiceCollection services)
+        public static void ConfigureRepositories(this IServiceCollection services, IConfiguration configuration)
         {
+            var cloudinaryConfig = configuration.GetSection("Cloudinary");
+            services.Configure<CloudinaryConfig>(cloudinaryConfig);
             services.AddScoped(typeof(IBaseRepository<,>), typeof(BaseRepository<,>));
             services.AddScoped<IUserRepository,UserRepository>();
         }

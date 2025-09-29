@@ -13,7 +13,7 @@ namespace PresentationLayer
             builder.Services.AddControllersWithViews();
             builder.Services.AddIdentityFrameWork();
             builder.Services.AddDatabaseConfiguration(builder.Configuration);
-            builder.Services.ConfigureRepositories();
+            builder.Services.ConfigureRepositories(builder.Configuration);
             builder.Services.AddServices();
             var app = builder.Build();
 
