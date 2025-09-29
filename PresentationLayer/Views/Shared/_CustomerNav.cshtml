@@ -1,0 +1,14 @@
+﻿@{
+    string active(string ctrl, string? act = null)
+    {
+        var c = (ViewContext.RouteData.Values["controller"]?.ToString() ?? "").ToLower();
+        var a = (ViewContext.RouteData.Values["action"]?.ToString() ?? "").ToLower();
+        return (c == ctrl.ToLower() && (act == null || a == act.ToLower())) ? "active" : string.Empty;
+    }
+}
+<nav class="nav">
+    <a class="item @active("Booking","Create")" href="@Url.Action("Create","Booking")">📦 Tạo yêu cầu gửi đồ</a>
+    <a class="item @active("Orders")" href="@Url.Action("Index","Orders")">🧾 Đơn hàng của tôi</a>
+    <a class="item @active("Address")" href="@Url.Action("Index","Address")">🏠 Địa chỉ</a>
+    <a class="item @active("Wallet")" href="@Url.Action("Index","Wallet")">💳 Ví của tôi</a>
+</nav>

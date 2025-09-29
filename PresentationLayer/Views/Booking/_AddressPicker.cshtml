@@ -1,0 +1,26 @@
+﻿@model BookingRequestVM
+<div class="row-2">
+    <div>
+        <label>Địa chỉ lấy hàng</label>
+        <select asp-for="PickupAddressId">
+            <option value="">-- Chọn --</option>
+            @foreach (var a in Model.AddressOptions)
+            {
+                <option value="@a.Id">@a.Label — @a.Full</option>
+            }
+        </select>
+        <span class="field-validation" asp-validation-for="PickupAddressId"></span>
+    </div>
+    <div>
+        <label>Địa chỉ giao hàng</label>
+        <select asp-for="DropoffAddressId">
+            <option value="">-- Chọn --</option>
+            @foreach (var a in Model.AddressOptions)
+            {
+                <option value="@a.Id">@a.Label — @a.Full</option>
+            }
+        </select>
+        <span class="field-validation" asp-validation-for="DropoffAddressId"></span>
+    </div>
+</div>
+<p class="hint">Chưa có địa chỉ? <a href="@Url.Action("Create","Address")">Thêm địa chỉ mới</a>.</p>

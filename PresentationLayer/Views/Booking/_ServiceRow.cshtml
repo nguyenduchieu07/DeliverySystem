@@ -1,0 +1,28 @@
+﻿
+
+@model (int idx, BookingItemVM item)
+<tr data-row="@Model.idx">
+    <td>
+        <select name="Items[@Model.idx].ServiceId" class="svc">
+            <option value="">-- Chọn dịch vụ --</option>
+            @foreach (var s in (IEnumerable<dynamic>)ViewBag.Services)
+            {
+                if (Model.item.ServiceId == s.Id)
+                {
+                    <option value="@s.Id" selected="selected">@s.Name (@s.Unit)</option>
+                }
+                else
+                {
+                    <option value="@s.Id">@s.Name (@s.Unit)</option>
+                }
+            }
+        </select>
+        <span class="field-validation" data-valmsg-for="Items[@Model.idx].ServiceId"></span>
+    </td>
+    <td>
+        <input type="number" name="Items[@Model.idx].Quantity" value="@Model.item.Quantity" min="1" class="qty" />
+    </td>
+    <td>
+        <button type="button" class="icon-btn remove" title="Xoá">✖</button>
+    </td>
+</tr>

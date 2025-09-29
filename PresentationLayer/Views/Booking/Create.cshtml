@@ -1,0 +1,57 @@
+﻿@model BookingRequestVM
+<form asp-action="Create" method="post" class="card" id="booking-form">
+    <div class="grid two">
+        <div>
+            <h3 class="section-title">1) Chọn địa chỉ</h3>
+            @Html.Partial("_AddressPicker", Model)
+
+            <div class="row-2">
+                <div>
+                    <label>Ngày lấy hàng</label>
+                    <input type="date" asp-for="PickupDate" />
+                    <span class="field-validation" asp-validation-for="PickupDate"></span>
+                </div>
+                <div>
+                    <label>Giờ lấy hàng</label>
+                    <input type="time" asp-for="PickupTime" />
+                    <span class="field-validation" asp-validation-for="PickupTime"></span>
+                </div>
+            </div>
+
+            <label>Ghi chú</label>
+            <textarea asp-for="Note" rows="3" placeholder="Ví dụ: có đồ dễ vỡ, cần người bốc xếp..."></textarea>
+        </div>
+
+        <div>
+            <h3 class="section-title">2) Chọn dịch vụ & số lượng</h3>
+            <table class="table" id="items-table">
+                <thead>
+                    <tr><th>Dịch vụ</th><th style="width:120px">Số lượng</th><th style="width:48px"></th></tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Items.Count; i++)
+                    {
+                        @Html.Partial("_ServiceRow", (i, Model.Items[i]))
+                    }
+                </tbody>
+            </table>
+            <button type="button" class="btn" id="add-row">+ Thêm dịch vụ</button>
+
+            <div class="estimate">
+                <div>Tạm tính: <strong id="est-total">0</strong></div>
+                <small>Giá chính xác sẽ được cửa hàng xác nhận trong báo giá.</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn primary">Gửi yêu cầu</button>
+        <a class="btn ghost" href="@Url.Action("Index","Home")">Huỷ</a>
+    </div>
+
+    @Html.Partial("~/Views/Shared/_ValidationScriptsPartial.cshtml")
+</form>
+@section scripts {
+    <script>window.__services = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Services));</script>
+    <script src="/js/booking.js"></script>
+}
