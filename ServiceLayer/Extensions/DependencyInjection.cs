@@ -14,6 +14,7 @@ namespace ServiceLayer.Extensions
         public static void AddServices(this IServiceCollection services)
         {
             services.AddScoped<IKycService, KycService>();
+            services.AddScoped<IDashboardService, DashboardService>();
         }
     }
 }

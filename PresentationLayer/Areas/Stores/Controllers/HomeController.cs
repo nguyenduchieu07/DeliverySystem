@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Mvc;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        
+        public async Task<IActionResult> Index()
         {
             return View();
         }
