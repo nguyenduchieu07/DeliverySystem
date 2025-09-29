@@ -1,6 +1,8 @@
 ﻿using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Dtos.RegisterStore;
 using System;
@@ -15,10 +17,15 @@ namespace ServiceLayer.Services
     {
         private readonly UserManager<User> _userManager;
         private readonly DeliverySytemContext _context;
-        public StoreRegistrationService(UserManager<User> userManager, DeliverySytemContext deliverySytemContext)
+        private readonly ICloudinaryService cloudinaryService;
+        public StoreRegistrationService(UserManager<User> userManager,
+            DeliverySytemContext deliverySytemContext,
+            ICloudinaryService cloudinaryService)
         {
             _context = deliverySytemContext;
             _userManager = userManager;
+            this.cloudinaryService = cloudinaryService;
+
         }
 
         public Task<Store> GetStoreDetailsAsync(Guid storeId)
@@ -111,7 +118,7 @@ namespace ServiceLayer.Services
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                
+
 
                 return new RegisterStoreResponse
                 {
@@ -126,13 +133,59 @@ namespace ServiceLayer.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-
+                throw;
             }
         }
 
-        public Task<KycSubmission> SubmitKycDocumentsAsync(SubmitKycRequest request)
+        public async Task<KycSubmission> SubmitKycDocumentsAsync(SubmitKycRequest request)
         {
-            throw new NotImplementedException();
+            var store = await _context.Stores.FirstOrDefaultAsync(e => e.Id == request.StoreId);
+
+            if (store == null)
+                throw new Exception("Store not found");
+
+            var kycSubmission = await _context.KycSubmissions
+                        .Where(k => k.StoreId == request.StoreId && k.Status == KycStatus.Pending)
+                        .FirstOrDefaultAsync();
+
+
+            if (kycSubmission == null)
+            {
+                kycSubmission = new KycSubmission
+                {
+                    Id = Guid.NewGuid(),
+                    StoreId = request.StoreId,
+                    Status = KycStatus.Pending,
+                    SubmittedAt = DateTime.UtcNow
+                };
+                await _context.KycSubmissions.AddAsync(kycSubmission);
+            }
+            // Upload and save documents
+            foreach (var doc in request.Documents)
+            {
+                var filePath = await cloudinaryService.UploadImageFileAsync(doc.File);
+                var fileHash = await CalculateFileHashAsync(doc.File);
+
+                var kycDocument = new KycDocument
+                {
+                    Id = Guid.NewGuid(),
+                    KycSubmissionId = kycSubmission.Id,
+                    DocType = doc.DocType,
+                    FilePath = filePath,
+                    Hash = fileHash
+                };
+                await _context.KycDocuments.AddAsync(kycDocument);
+            }
+            await _context.SaveChangesAsync();
+            return kycSubmission;
         }
+        private async Task<string> CalculateFileHashAsync(IFormFile file)
+        {
+            using var stream = file.OpenReadStream();
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hash = await sha256.ComputeHashAsync(stream);
+            return Convert.ToBase64String(hash);
+        }
+
     }
 }
