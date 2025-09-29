@@ -43,6 +43,12 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
     public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
 
+    public virtual DbSet<Warehouse> Warehouses {  get; set; }
+
+    public virtual DbSet<WarehouseSlot> WarehouseSlots { get; set; }
+
+    public virtual DbSet<SlotReservation> SlotReservations {  get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>
@@ -358,6 +364,10 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                   .HasForeignKey(e => e.StoreId)
                   .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => new { x.StoreId, x.Name });
+
+            entity.HasOne(e => e.Address)
+                  .WithMany()
+                  .HasForeignKey(e => e.AddressRefId);
         });
         modelBuilder.Entity<WarehouseSlot>(entity =>
         {
@@ -376,6 +386,8 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
              .WithMany()
              .HasForeignKey(x => x.WarehouseSlotId)
              .OnDelete(DeleteBehavior.Cascade);
+
+            
         });
         modelBuilder.Entity<KycSubmission>(e =>
         {
