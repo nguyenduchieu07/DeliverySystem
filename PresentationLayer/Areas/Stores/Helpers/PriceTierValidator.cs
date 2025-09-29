@@ -26,8 +26,8 @@ namespace PresentationLayer.Areas.Stores.Helpers
 
             bool DateOverlap(ServicePrice a, ServicePrice b)
             {
-                var aTo = DateTime.MaxValue;
-                var bTo = DateTime.MaxValue;
+                var aTo = a.ValidTo;
+                var bTo = b.ValidTo;
                 return a.ValidFrom <= bTo && b.ValidFrom <= aTo;
             }
 
