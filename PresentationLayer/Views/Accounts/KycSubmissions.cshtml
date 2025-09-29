@@ -1,0 +1,351 @@
+﻿@using ServiceLayer.Dtos.RegisterStore
+@model KycViewModel
+@{
+    ViewData["Title"] = "Xác minh KYC";
+    string KycBadgeClass(string status)
+    {
+        status = status?.ToLowerInvariant() ?? "";
+        return status switch
+        {
+            "approved" => "badge bg-success",
+            "pending" => "badge bg-warning text-dark",
+            "rejected" => "badge bg-danger",
+            "notsubmitted" => "badge bg-secondary",
+            _ => "badge bg-light text-dark"
+        };
+    }
+}
+
+@section Styles {
+    <style>
+        .kyc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kyc-card {
+            border: none;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 6px 14px rgba(0,0,0,.06);
+        }
+
+        .kyc-section-title {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .doc-hint {
+            color: #64748b;
+            font-size: .925rem;
+        }
+
+        .kyc-item {
+            padding: 1rem;
+            border: 1px dashed #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+
+        .preview img {
+            max-height: 140px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .preview .pdf-box {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: .75rem;
+            background: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            color: #334155;
+        }
+
+        .sticky-actions {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: .75rem;
+            z-index: 2;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .badge {
+            font-size: .9rem;
+        }
+
+        code {
+            user-select: all;
+        }
+    </style>
+}
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card kyc-card mb-4">
+            <div class="card-body">
+                <div class="kyc-header">
+                    <div>
+                        <h3 class="mb-1">
+                            <i class="fas fa-shield-check me-2 text-primary"></i>
+                            Xác minh KYC cho cửa hàng
+                        </h3>
+                        <div class="text-muted">Vui lòng nộp các tài liệu để xác minh thông tin doanh nghiệp.</div>
+                    </div>
+                    <div>
+                        <a class="btn btn-outline-secondary" href="/"><i class="fas fa-arrow-left me-2"></i>Quay lại</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông tin cửa hàng -->
+        <div class="card kyc-card mb-4">
+            <div class="card-body">
+                <div class="row gy-2">
+                    <div class="col-md-6">
+                        <div class="fw-semibold">Tên cửa hàng</div>
+                        <div>@Model.Response?.StoreName</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fw-semibold">Mã cửa hàng</div>
+                        <div><code>@Model.Response?.StoreId</code></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="fw-semibold">Trạng thái</div>
+                        <span class="@(KycBadgeClass(Model.Response?.Status))">@Model.Response?.Status</span>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fw-semibold">KYC</div>
+                        <span class="@(KycBadgeClass(Model.Response?.KycStatus))">@Model.Response?.KycStatus</span>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Response?.Message))
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-info mt-2 mb-0">
+                                <i class="fas fa-info-circle me-2"></i>@Model.Response.Message
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Form nộp KYC -->
+        <div class="card kyc-card">
+            <div class="card-header bg-white">
+                <h5 class="kyc-section-title mb-0">
+                    <i class="fas fa-file-upload me-2"></i> Nộp tài liệu KYC
+                </h5>
+            </div>
+
+            <form asp-action="SubmitKyc" asp-controller="Store" method="post" enctype="multipart/form-data" id="kycForm">
+                <div class="card-body">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <!-- StoreId -->
+                    <input type="hidden" asp-for="KycRequest.StoreId" value="@Model.Response.StoreId" />
+
+                    <div class="doc-hint mb-3">
+                        Định dạng chấp nhận: PDF/JPG/PNG. Tối đa 10MB/tệp. Bạn cần nộp ít nhất 1 tài liệu.
+                    </div>
+
+                    <div id="kyc-rows" class="vstack gap-3">
+                        @{
+                            // 3 tài liệu gợi ý mặc định
+                            var defaults = new[] {
+                        new { Key = "BusinessLicense", Label = "Giấy phép kinh doanh" },
+                        new { Key = "TaxCertificate", Label = "Giấy chứng nhận thuế" },
+                        new { Key = "OwnerID", Label = "CMND/CCCD chủ sở hữu" }
+                        };
+                            for (int i = 0; i < defaults.Length; i++)
+                            {
+                                <div class="kyc-item" data-index="@i">
+                                    <div class="row g-3 align-items-center">
+                                        <input type="hidden" name="Documents[@i].DocType" value="@defaults[i].Key" />
+                                        <div class="col-md-4">
+                                            <label class="form-label mb-1">@defaults[i].Label</label>
+                                            <div class="text-muted small">PDF/JPG/PNG — tối đa 10MB</div>
+                                        </div>
+                                        <div class="col-md-7">
+                                            <input type="file"
+                                                   class="form-control kyc-file"
+                                                   name="Documents[@i].File"
+                                                   accept=".pdf,.jpg,.jpeg,.png" />
+                                            <div class="preview mt-2"></div>
+                                        </div>
+                                        <div class="col-md-1 d-flex align-items-end justify-content-end">
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Xóa dòng" disabled>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-primary" id="btnAddRow">
+                            <i class="fas fa-plus me-1"></i> Thêm tài liệu khác
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sticky-actions">
+                    <button type="reset" class="btn btn-outline-secondary">
+                        <i class="fas fa-rotate-left me-1"></i> Làm mới
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Gửi KYC
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Giới hạn upload
+        const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+        const ACCEPT = ['application/pdf', 'image/jpeg', 'image/png'];
+
+        const rowsContainer = document.getElementById('kyc-rows');
+        const btnAddRow = document.getElementById('btnAddRow');
+
+        function createRowTemplate(index) {
+            return `
+        <div class="kyc-item" data-index="${index}">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+              <label class="form-label">Loại tài liệu <span class="text-danger">*</span></label>
+              <select name="Documents[${index}].DocType" class="form-select" required>
+                <option value="">-- Chọn loại --</option>
+                <option value="BusinessLicense">Giấy phép kinh doanh</option>
+                <option value="TaxCertificate">Giấy chứng nhận thuế</option>
+                <option value="OwnerID">CMND/CCCD chủ sở hữu</option>
+                <option value="Other">Khác</option>
+              </select>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label">Tệp đính kèm <span class="text-danger">*</span></label>
+              <input type="file" class="form-control kyc-file" name="Documents[${index}].File" accept=".pdf,.jpg,.jpeg,.png" required />
+              <div class="preview mt-2"></div>
+            </div>
+            <div class="col-md-1 d-flex align-items-end justify-content-end">
+              <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Xóa dòng">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>`;
+        }
+
+        // Lấy index kế tiếp
+        function nextIndex() {
+            const items = rowsContainer.querySelectorAll('.kyc-item');
+            let max = -1;
+            items.forEach(it => { max = Math.max(max, parseInt(it.getAttribute('data-index')) || 0); });
+            return max + 1;
+        }
+
+        // Re-number toàn bộ rows để ModelBinder bind List<StoreKycDocumentDto> gọn gàng
+        function renumberRows() {
+            const items = rowsContainer.querySelectorAll('.kyc-item');
+            items.forEach((it, idx) => {
+                it.setAttribute('data-index', idx);
+                // cập nhật name cho DocType và File
+                const docType = it.querySelector('select[name^="Documents["], input[type="hidden"][name^="Documents["]');
+                const file = it.querySelector('input[type="file"][name^="Documents["]');
+                if (docType) {
+                    if (docType.tagName === 'SELECT') {
+                        docType.name = `Documents[${idx}].DocType`;
+                    } else {
+                        docType.name = `Documents[${idx}].DocType`;
+                    }
+                }
+                if (file) file.name = `Documents[${idx}].File`;
+            });
+
+            // Re-parse unobtrusive validation nếu dùng jQuery Validate
+            if (window.jQuery && $.validator && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse('#kycForm');
+            }
+        }
+
+        // Thêm dòng
+        btnAddRow.addEventListener('click', () => {
+            const idx = nextIndex();
+            rowsContainer.insertAdjacentHTML('beforeend', createRowTemplate(idx));
+        });
+
+        // Xử lý remove + preview + validate file
+        rowsContainer.addEventListener('click', (e) => {
+            if (e.target.closest('.remove-row')) {
+                const item = e.target.closest('.kyc-item');
+                item.remove();
+                renumberRows();
+            }
+        });
+
+        rowsContainer.addEventListener('change', (e) => {
+            const input = e.target;
+            if (!input.classList.contains('kyc-file')) return;
+
+            const preview = input.closest('.kyc-item').querySelector('.preview');
+            preview.innerHTML = '';
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            // Validate size & type
+            if (file.size > MAX_SIZE) {
+                input.value = '';
+                preview.innerHTML = `<div class="text-danger small">Tệp vượt quá 10MB.</div>`;
+                return;
+            }
+            if (!ACCEPT.includes(file.type)) {
+                input.value = '';
+                preview.innerHTML = `<div class="text-danger small">Định dạng không hợp lệ. Chỉ PDF/JPG/PNG.</div>`;
+                return;
+            }
+
+            // Preview
+            if (file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                preview.innerHTML = `<img src="${url}" alt="preview" />`;
+            } else if (file.type === 'application/pdf') {
+                preview.innerHTML = `
+                            <div class="pdf-box">
+                                <i class="fas fa-file-pdf text-danger"></i>
+                                <span>${file.name}</span>
+                                <span class="text-muted">(${(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+                            </div>`;
+            } else {
+                preview.textContent = file.name;
+            }
+        });
+
+        // Kiểm tra tối thiểu 1 file trước khi submit
+        document.getElementById('kycForm').addEventListener('submit', function (e) {
+            const anyFile = [...this.querySelectorAll('.kyc-file')].some(inp => inp.files && inp.files.length > 0);
+            if (!anyFile) {
+                e.preventDefault();
+                alert('Vui lòng chọn ít nhất 1 tài liệu trước khi gửi.');
+                return false;
+            }
+        });
+    </script>
+}

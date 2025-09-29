@@ -26,7 +26,11 @@ namespace PresentationLayer.Controllers
         public async Task<IActionResult> RegisterStore(RegisterStoreRequest request)
         {
             var data = await _storeService.RegisterStoreAsync(request);
-            return Ok(request);
+            var dto = new KycViewModel
+            {
+                Response = data,
+            };
+            return View("KycSubmissions", dto);
         }
     }
 }
