@@ -49,6 +49,10 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
     public virtual DbSet<SlotReservation> SlotReservations {  get; set; }
 
+    public virtual DbSet<KycDocument> KycDocuments { get; set; }    
+
+    public virtual DbSet<KycSubmission> KycSubmissions {  get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>

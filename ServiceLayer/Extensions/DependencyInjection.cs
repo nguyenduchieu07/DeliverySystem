@@ -15,6 +15,7 @@ namespace ServiceLayer.Extensions
         {
             services.AddScoped<IKycService, KycService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IStoreRegistrationService,StoreRegistrationService>();
         }
     }
 }
