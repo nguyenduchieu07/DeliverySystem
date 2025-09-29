@@ -40,7 +40,7 @@ namespace PresentationLayer.Areas.Admin.Controllers
                 var regions = string.IsNullOrWhiteSpace(regionsCsv)
                 ? null
                 : regionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var adminId = new Guid();
                 await _svc.ApproveAsync(submissionId, maxPerDay, regions, adminId);
                 return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
             }
