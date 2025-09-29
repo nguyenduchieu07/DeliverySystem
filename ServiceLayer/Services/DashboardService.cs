@@ -19,67 +19,144 @@ namespace ServiceLayer.Services
         }
         public async Task<DashboardDto> GetDashboard(Guid storeId)
         {
-            var statisticQuery = _context.Orders.Where(e => e.StoreId == storeId).AsNoTracking();
-            var today = DateTime.Today;
-            var yesterday = today.AddDays(-1);
-            var lastMonth = today.AddMonths(-1);
 
-            var reports = await statisticQuery.Select(e => new DashboardDto
+            var todayStart = DateTime.Today;
+            var tomorrowStart = todayStart.AddDays(1);
+            var yesterdayStart = todayStart.AddDays(-1);
+
+            var monthStart = new DateTime(todayStart.Year, todayStart.Month, 1);
+            var nextMonthStart = monthStart.AddMonths(1);
+
+            var prevMonthStart = monthStart.AddMonths(-1);
+
+            var orders = _context.Orders
+                .AsNoTracking()
+                .Where(o => o.StoreId == storeId);
+
+
+            var agg = await orders
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    PendingCount = g.Sum(o => o.Status == "pending" ? 1 : 0),
+
+                    TodayCount = g.Sum(o =>
+                        (o.CreatedAt >= todayStart && o.CreatedAt < tomorrowStart) ? 1 : 0),
+
+                    YesterdayCount = g.Sum(o =>
+                        (o.CreatedAt >= yesterdayStart && o.CreatedAt < todayStart) ? 1 : 0),
+
+                    RevenueThisMonth = g.Sum(o =>
+                        (o.CreatedAt >= monthStart && o.CreatedAt < nextMonthStart) ? o.TotalAmount : 0m),
+
+                    RevenueLastMonth = g.Sum(o =>
+                        (o.CreatedAt >= prevMonthStart && o.CreatedAt < monthStart) ? o.TotalAmount : 0m)
+                })
+                .FirstOrDefaultAsync() ?? new
+                {
+                    PendingCount = 0,
+                    TodayCount = 0,
+                    YesterdayCount = 0,
+                    RevenueThisMonth = 0m,
+                    RevenueLastMonth = 0m
+                };
+
+            var ratingAgg = await _context.Feedbacks
+                .AsNoTracking()
+                .Where(f => f.Order.StoreId == storeId)
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    Avg = (double?)g.Average(f => (double?)f.Rating) ?? 0.0,
+                    Total = g.Count()
+                })
+                .FirstOrDefaultAsync() ?? new { Avg = 0.0, Total = 0 };
+
+
+            var pendingOrders = await orders
+                .Where(o => o.Status == "pending")
+                .OrderByDescending(o => o.CreatedAt)
+                .Select(o => new OrderPeding
+                {
+                    CreatedAt = o.CreatedAt,
+                    CustomerName = o.Customer.FullName,
+                    Id = o.Id.ToString(),
+
+                    Name = o.OrderItems
+                                      .OrderBy(oi => oi.Id)
+                                      .Select(oi => oi.Service.Name)
+                                      .FirstOrDefault() ?? "None",
+                    Status = o.Status,
+                    Total = o.TotalAmount
+                })
+                .Take(10)
+                .ToListAsync();
+
+
+            var today = agg.TodayCount;
+            var yesterday = agg.YesterdayCount;
+            double todayGrowthRate = (yesterday > 0)
+                ? ((today - yesterday) / (double)yesterday * 100.0)
+                : (today > 0 ? 100.0 : 0.0);
+
+            var thisRev = agg.RevenueThisMonth;
+            var lastRev = agg.RevenueLastMonth;
+            double saleGrowthRatio = (lastRev > 0m)
+                ? (double)((thisRev - lastRev) / lastRev * 100m)
+                : (thisRev > 0m ? 100.0 : 0.0);
+
+            var reports = new DashboardDto
             {
-                TotalOrderPending = statisticQuery.Where(e => e.Status.Equals("pending")).Count(),
+                TotalOrderPending = agg.PendingCount,
+
                 OrderToday = new Dtos.OrderToday
                 {
-                    Total = statisticQuery.Where(e => e.CreatedAt.Date == today).Count(),
-                    GrowthRate = (statisticQuery.Where(e => e.CreatedAt.Date == today).Count() - statisticQuery.Where(e => e.CreatedAt.Date == yesterday).Count()) / 100.0 * 100.0
+                    Total = today,
+                    GrowthRate = todayGrowthRate
                 },
 
                 Revenue = new Dtos.Revenue
                 {
-                    Total = statisticQuery
-                            .Where(e => e.CreatedAt.Month == today.Month
-                                      && e.CreatedAt.Year == today.Year)
-                            .Sum(e => e.TotalAmount),
-                    SaleGrowthRatio = (statisticQuery.Where(e => e.CreatedAt.Month == today.Month && e.CreatedAt.Year == today.Year).Sum(e => e.TotalAmount)
-
-                                      - statisticQuery.Where(e => e.CreatedAt.Month == lastMonth.Month && e.CreatedAt.Year == lastMonth.Year).Sum(e => e.TotalAmount))
-
-                                      / 100 * 100
+                    Total = thisRev,
+                    SaleGrowthRatio = (decimal)saleGrowthRatio
                 },
 
                 AvarageRating = new Dtos.RatingDto
                 {
-                    Average = statisticQuery
-                               .SelectMany(e => e.Feedbacks)
-                               .Average(e => e.Rating),
-                    Total = statisticQuery.SelectMany(e => e.Feedbacks).Count()
+                    Average = ratingAgg.Avg,
+                    Total = ratingAgg.Total
                 },
 
-                OrderPendings = statisticQuery.Select(order => new OrderPeding
-                {
-                    CreatedAt = order.CreatedAt,
-                    CustomerName = order.Customer.FullName,
-                    Id = order.Id.ToString(),
-                    Name = order.OrderItems.FirstOrDefault()!.Service.Name ?? "None",
-                    Status = order.Status,
-                    Total = order.TotalAmount
-                }).ToList(),
+                OrderPendings = pendingOrders
+            };
 
-               
-            }).FirstOrDefaultAsync();
-            var warehouse =await _context.Warehouses
-                                    .Where(e => e.StoreId == storeId).AsNoTracking()
-                                    .Select(e => new WareHouseDashboard
-                                    {
-                                        Address = $"{e.Address.City}, {e.Address.District} - {e.Address.Ward}",
-                                        Slots = e.Slots.Select(slot => new WareHouseSlotDashboard
-                                        {
-                                            Code = slot.Code,
-                                            Id = slot.Id,
-                                            Status = slot.Status,
-                                        }).ToList()
-                                    })
-                                    .ToListAsync();
+
+            var warehouse = await _context.Warehouses
+                .AsNoTracking()
+                .Where(w => w.StoreId == storeId)
+                .Select(w => new WareHouseDashboard
+                {
+                    Address = (
+                        (w.Address.City ?? "") + ", " +
+                        (w.Address.District ?? "") + " - " +
+                        (w.Address.Ward ?? "")
+                    ).Trim(new[] { ' ', ',', '-' }),
+                    Slots = w.Slots
+                             .OrderBy(s => s.Code)
+                             .Select(s => new WareHouseSlotDashboard
+                             {
+                                 Code = s.Code,
+                                 Id = s.Id,
+                                 Status = s.Status,
+                             })
+                             .Take(6)
+                             .ToList()
+                })
+                .Take(3)
+                .ToListAsync();
+
             reports.WareHouseDashboards = warehouse;
+
             return reports;
         }
     }

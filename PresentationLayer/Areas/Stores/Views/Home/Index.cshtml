@@ -1,111 +1,125 @@
-﻿@{
+﻿@using PresentationLayer.Areas.Stores.Models
+@model DashboardDto
+@{
     ViewBag.Title = "Tổng quan cửa hàng";
 
 }
 <div class="breadcrumb">Trang chủ ▸ <span>Dashboard</span></div>
 <div class="page-head">
-  <h1 class="page-title">Tổng quan cửa hàng</h1>
-  <div class="page-actions">
-    <button class="btn">Xuất báo cáo</button>
-    <button class="btn">Bộ lọc</button>
-  </div>
+    <h1 class="page-title">Tổng quan cửa hàng</h1>
+    <div class="page-actions">
+        <button class="btn">Xuất báo cáo</button>
+        <button class="btn">Bộ lọc</button>
+    </div>
 </div>
 <section class="grid cards">
-  <div class="card metric">
-    <div class="label">Đơn mới hôm nay</div>
-    <div class="value">42</div>
-    <div class="delta up">+12% so với hôm qua</div>
-  </div>
-  <div class="card metric">
-    <div class="label">Đang xử lý</div>
-    <div class="value">18</div>
-    <div class="delta">—</div>
-  </div>
-  <div class="card metric">
-    <div class="label">Doanh thu (tháng)</div>
-    <div class="value">₫ 128,450,000</div>
-    <div class="delta up">+8.4% MoM</div>
-  </div>
-  <div class="card metric">
-    <div class="label">Điểm đánh giá</div>
-    <div class="value">4.7 ⭐</div>
-    <div class="delta">362 lượt</div>
-  </div>
+    <div class="card metric">
+        <div class="label">Đơn mới hôm nay</div>
+        <div class="value">@Model.OrderToday.Total</div>
+        <div class="delta up">@Model.OrderToday.GrowthRate% so với hôm qua</div>
+    </div>
+    <div class="card metric">
+        <div class="label">Đang xử lý</div>
+        <div class="value">@Model.TotalOrderPending</div>
+        <div class="delta">—</div>
+    </div>
+    <div class="card metric">
+        <div class="label">Doanh thu (tháng)</div>
+        <div class="value">₫ @Model.Revenue.Total.ToString("N0")</div>
+        <div class="delta up">@Model.Revenue.SaleGrowthRatio% MoM</div>
+    </div>
+    <div class="card metric">
+        <div class="label">Điểm đánh giá</div>
+        <div class="value">@Model.AvarageRating.Average ⭐</div>
+        <div class="delta">@Model.AvarageRating.Total lượt</div>
+    </div>
 </section>
 <section class="section" style="margin-top:16px">
-  <div class="header">
-    <div class="title">Đơn đang làm</div>
-    <div class="tools">
-      <span class="badge ok">InProgress</span>
+    <div class="header">
+        <div class="title">Đơn đang làm</div>
+        <div class="tools">
+            <span class="badge ok">InProgress</span>
+        </div>
     </div>
-  </div>
-  <div style="overflow:auto">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Order #</th>
-          <th>Khách hàng</th>
-          <th>Dịch vụ</th>
-          <th>Trạng thái</th>
-          <th>Tạo lúc</th>
-          <th>Tổng tiền</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>#ORD-2025-0912</td>
-          <td>Nguyễn Văn A</td>
-          <td>Chuyển nhà gói 3</td>
-          <td><span class="badge ok">InProgress</span></td>
-          <td>10:24 21/09</td>
-          <td>₫ 3,200,000</td>
-          <td><a class="badge" href="#">Chi tiết</a></td>
-        </tr>
-        <tr>
-          <td>#ORD-2025-0913</td>
-          <td>Trần Thị B</td>
-          <td>Lưu kho 24h</td>
-          <td><span class="badge warn">AwaitingContract</span></td>
-          <td>09:05 21/09</td>
-          <td>₫ 1,450,000</td>
-          <td><a class="badge" href="#">Ký HĐ</a></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <div style="overflow:auto">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Khách hàng</th>
+                    <th>Dịch vụ</th>
+                    <th>Trạng thái</th>
+                    <th>Tạo lúc</th>
+                    <th>Tổng tiền</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(Model.OrderPendings.Count > 0)
+                {
+                    @foreach (var order in Model.OrderPendings)
+                    {
+                        <tr>
+                            <td>#ORD-@order.CreatedAt.ToString("yyyy-MM-dd")</td>
+                            <td>@order.CustomerName</td>
+                            <td>@order.Name</td>
+                            <td><span class="badge warn">@order.Status</span></td>
+                            <td>@order.CreatedAt.ToString("hh-mm dd/MM")</td>
+                            <td>₫ @order.Total.ToString("N0")</td>
+                            <td><a class="badge" href="#">Ký HĐ</a></td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                     <tr>
+        <td colspan="7" class="text-center text-muted">Chưa có đơn hàng</td>
+    </tr>
+                }
+
+            </tbody>
+        </table>
+    </div>
 </section>
-<section class="section" style="margin-top:16px">
-  <div class="header">
-    <div class="title">Slot kho – trạng thái nhanh</div>
-    <div class="tools">
-      <span class="badge">Kho Hà Đông</span>
-    </div>
-  </div>
-  <div class="grid" style="grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; padding:12px">
-    <div class="card" style="padding:10px; display:grid; gap:6px; align-items:start">
-      <strong>B2-01</strong>
-      <span class="badge">Available</span>
-    </div>
-    <div class="card" style="padding:10px; display:grid; gap:6px">
-      <strong>B2-02</strong>
-      <span class="badge warn">Reserved</span>
-    </div>
-    <div class="card" style="padding:10px; display:grid; gap:6px">
-      <strong>B2-03</strong>
-      <span class="badge ok">InUse</span>
-    </div>
-    <div class="card" style="padding:10px; display:grid; gap:6px">
-      <strong>B1-01</strong>
-      <span class="badge">Available</span>
-    </div>
-    <div class="card" style="padding:10px; display:grid; gap:6px">
-      <strong>B1-02</strong>
-      <span class="badge">Maintenance</span>
-    </div>
-    <div class="card" style="padding:10px; display:grid; gap:6px">
-      <strong>B1-03</strong>
-      <span class="badge ok">InUse</span>
-    </div>
-  </div>
-</section>
+
+@foreach(var warehouse in Model.WareHouseDashboards)
+{
+    <section class="section" style="margin-top:16px">
+        <div class="header">
+            <div class="title">Slot kho – trạng thái nhanh</div>
+            <div class="tools">
+                <span class="badge">@warehouse.Address</span>
+            </div>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; padding:12px">
+            @foreach(var slot in warehouse.Slots)
+            {
+                <div class="card" style="padding:10px; display:grid; gap:6px; align-items:start">
+                    <strong>@slot.Code</strong>
+                    <span class="badge">@slot.Status</span>
+                </div>
+            }
+            @* <div class="card" style="padding:10px; display:grid; gap:6px">
+                <strong>B2-02</strong>
+                <span class="badge warn">Reserved</span>
+            </div>
+            <div class="card" style="padding:10px; display:grid; gap:6px">
+                <strong>B2-03</strong>
+                <span class="badge ok">InUse</span>
+            </div>
+            <div class="card" style="padding:10px; display:grid; gap:6px">
+                <strong>B1-01</strong>
+                <span class="badge">Available</span>
+            </div>
+            <div class="card" style="padding:10px; display:grid; gap:6px">
+                <strong>B1-02</strong>
+                <span class="badge">Maintenance</span>
+            </div>
+            <div class="card" style="padding:10px; display:grid; gap:6px">
+                <strong>B1-03</strong>
+                <span class="badge ok">InUse</span>
+            </div> *@
+        </div>
+    </section>
+
+}
