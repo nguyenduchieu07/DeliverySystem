@@ -1,4 +1,5 @@
-﻿using DataAccessLayer.Entities;
+﻿using DataAccessLayer.Constants;
+using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -55,7 +56,7 @@ namespace ServiceLayer.Services
                 {
                     throw new Exception($"Failed to create user: {string.Join(", ", createUserResult.Errors.Select(e => e.Description))}");
                 }
-
+                await _userManager.AddToRoleAsync(user,UserRoles.STORE);
 
                 // 2. Create Store
                 var store = new Store

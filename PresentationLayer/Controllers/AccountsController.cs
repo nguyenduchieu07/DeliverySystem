@@ -25,12 +25,20 @@ namespace PresentationLayer.Controllers
         [HttpPost]
         public async Task<IActionResult> RegisterStore(RegisterStoreRequest request)
         {
-            var data = await _storeService.RegisterStoreAsync(request);
-            var dto = new KycViewModel
+            try
             {
-                Response = data,
-            };
-            return View("KycSubmissions", dto);
+                var data = await _storeService.RegisterStoreAsync(request);
+                var dto = new KycViewModel
+                {
+                    Response = data,
+                };
+                return View("KycSubmissions", dto);
+            }
+            catch(Exception ex)
+            {
+                return RedirectToAction(nameof(RegisterStore));
+            }
+            
         }
     }
 }
