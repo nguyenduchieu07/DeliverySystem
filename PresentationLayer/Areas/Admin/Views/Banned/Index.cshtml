@@ -108,7 +108,7 @@
                                     {
                                         <form asp-area="Admin" asp-controller="Banned" asp-action="UnbanUser" method="post" class="inline">
                                             @Html.AntiForgeryToken()
-                                            <input type="hidden" name="storeId" value="@u.Id" />
+                                            <input type="hidden" name="id" value="@u.Id" />
                                             <button class="btn">Unban</button>
                                         </form>
 
