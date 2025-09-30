@@ -1,0 +1,615 @@
+﻿@model RegisterViewModel
+@{
+    ViewData["Title"] = "Đăng ký";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .register-page {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: calc(100vh - 120px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        padding: 40px 20px;
+    }
+   
+    .background-illustration {
+        position: absolute;
+        left: -10%;
+        bottom: -10%;
+        width: 60%;
+        height: 60%;
+        opacity: 0.3;
+        z-index: 1;
+    }
+   
+    .vehicle {
+        position: absolute;
+        background: #f26722;
+        border-radius: 8px;
+    }
+   
+    .car1 { width: 80px; height: 40px; bottom: 20%; left: 5%; transform: rotate(-15deg); }
+    .van1 { width: 100px; height: 60px; bottom: 40%; left: 15%; transform: rotate(-10deg); }
+    .truck1 { width: 120px; height: 50px; bottom: 60%; left: 8%; transform: rotate(-20deg); }
+    .car2 { width: 85px; height: 45px; bottom: 10%; left: 25%; transform: rotate(-25deg); }
+    .van2 { width: 110px; height: 55px; bottom: 35%; left: 30%; transform: rotate(-5deg); }
+    .truck2 { width: 90px; height: 45px; bottom: 55%; left: 35%; background: #ff8c42; transform: rotate(-15deg); }
+   
+    .register-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        width: 100%;
+        max-width: 450px;
+        position: relative;
+        z-index: 10;
+    }
+   
+    .register-logo {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+   
+    .register-logo-text {
+        font-size: 32px;
+        font-weight: bold;
+        color: #f26722;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+   
+    .register-logo-icon {
+        width: 40px;
+        height: 40px;
+        background: #f26722;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+   
+    .register-logo-icon::before {
+        content: '⚡';
+        color: white;
+        font-size: 20px;
+    }
+   
+    .register-title {
+        text-align: center;
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 30px;
+        font-weight: 500;
+    }
+   
+    .register-form-group {
+        margin-bottom: 20px;
+    }
+   
+    .phone-group {
+        display: flex;
+        gap: 10px;
+    }
+   
+    .country-code-select {
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        color: #333;
+        cursor: pointer;
+        min-width: 80px;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+   
+    .country-code-select:focus { border-color: #f26722; }
+   
+    .phone-number-input, .register-input {
+        flex: 1;
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+   
+    .phone-number-input:focus, .register-input:focus { border-color: #f26722; }
+   
+    .password-field {
+        position: relative;
+    }
+   
+    .password-input {
+        width: 100%;
+        padding: 12px 50px 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+   
+    .password-input:focus { border-color: #f26722; }
+   
+    .password-toggle-btn {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #666;
+        font-size: 18px;
+        padding: 0;
+    }
+   
+    .password-toggle-btn:hover { color: #f26722; }
+   
+    .checkbox-group {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin: 20px 0;
+    }
+   
+    .custom-checkbox {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #e0e0e0;
+        border-radius: 4px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+   
+    .custom-checkbox.checked {
+        background: #f26722;
+        border-color: #f26722;
+    }
+   
+    .custom-checkbox.checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+    }
+   
+    .checkbox-label {
+        font-size: 13px;
+        color: #666;
+        line-height: 1.4;
+        cursor: pointer;
+    }
+   
+    .checkbox-label a {
+        color: #f26722;
+        text-decoration: none;
+    }
+   
+    .checkbox-label a:hover { text-decoration: underline; }
+   
+    .terms-info {
+        font-size: 12px;
+        color: #999;
+        margin-top: 8px;
+        line-height: 1.3;
+    }
+   
+    .register-submit-btn {
+        width: 100%;
+        background: #f26722;
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin: 20px 0;
+    }
+   
+    .register-submit-btn:hover { background: #e55a1b; }
+    .register-submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+   
+    .or-divider {
+        position: relative;
+        text-align: center;
+        margin: 25px 0;
+        color: #999;
+        font-size: 14px;
+    }
+   
+    .or-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #e0e0e0;
+        z-index: 1;
+    }
+   
+    .or-divider span {
+        background: white;
+        padding: 0 15px;
+        position: relative;
+        z-index: 2;
+    }
+   
+    .social-register-btn {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        transition: box-shadow 0.3s ease;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        color: #333;
+        text-decoration: none;
+    }
+   
+    .social-register-btn:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        color: #333;
+        text-decoration: none;
+    }
+   
+    .social-icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border-radius: 4px;
+    }
+   
+    .facebook-icon { background: #1877f2; color: white; }
+    .google-icon { background: #4285f4; color: white; border-radius: 50%; font-size: 12px; }
+   
+    .login-section {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #666;
+    }
+   
+    .login-section a {
+        color: #f26722;
+        text-decoration: none;
+        font-weight: 600;
+    }
+   
+    .login-section a:hover { text-decoration: underline; }
+   
+    .alert-danger {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+   
+    .field-validation-error {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+   
+    @@keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(var(--rotation, 0deg)); }
+        50% { transform: translateY(-10px) rotate(var(--rotation, 0deg)); }
+    }
+   
+    .vehicle.animated {
+        animation: float 3s ease-in-out infinite;
+    }
+   
+    @@media (max-width: 768px) {
+        .register-page {
+            padding: 20px 15px;
+            min-height: calc(100vh - 80px);
+        }
+       
+        .register-container {
+            padding: 30px 25px;
+            max-width: 100%;
+        }
+       
+        .background-illustration { display: none; }
+       
+        .phone-group {
+            flex-direction: column;
+            gap: 15px;
+        }
+       
+        .country-code-select { min-width: 100%; }
+    }
+</style>
+<div class="register-page">
+    <div class="background-illustration">
+        <!-- Nội dung giữ nguyên... -->
+    </div>
+
+    <div class="register-container">
+        <div class="register-logo">
+            <div class="register-logo-text">
+                <div class="register-logo-icon"></div>
+                LALAMOVE
+            </div>
+        </div>
+
+        <div class="register-title">
+            Tạo một tài khoản miễn phí ngay
+        </div>
+
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="alert-danger">
+                @ViewBag.ErrorMessage
+            </div>
+        }
+
+        @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { id = "registerForm" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="register-form-group">
+                <div class="phone-group">
+                    @Html.DropDownListFor(m => m.CountryCode, new SelectList(new[] {
+                new { Value = "+84", Text = "+84" },
+                new { Value = "+65", Text = "+65" },
+                new { Value = "+66", Text = "+66" },
+                new { Value = "+1", Text = "+1" },
+                new { Value = "+44", Text = "+44" }
+                }, "Value", "Text"), new { @class = "country-code-select" })
+
+                    @Html.TextBoxFor(m => m.PhoneNumber, new
+                        {
+                            @class = "phone-number-input",
+                            @placeholder = "Số điện thoại",
+                            @type = "tel"
+                        })
+                </div>
+                @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="register-form-group">
+                @Html.TextBoxFor(m => m.FullName, new
+                    {
+                        @class = "register-input",
+                        @placeholder = "Họ và tên"
+                    })
+                @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="register-form-group">
+                @Html.TextBoxFor(m => m.Email, new
+                    {
+                        @class = "register-input",
+                        @placeholder = "E-mail (không bắt buộc)",
+                        @type = "email"
+                    })
+                @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="register-form-group">
+                <div class="password-field">
+                    @Html.PasswordFor(m => m.Password, new
+                        {
+                            @class = "password-input",
+                            @placeholder = "Mật khẩu (tối thiểu 6 ký tự)",
+                            @id = "passwordField"
+                        })
+                    <button type="button" class="password-toggle-btn" onclick="togglePassword('passwordField')">👁</button>
+                </div>
+                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation-error" })
+            </div>
+
+            <!-- Sửa: Thêm trường ConfirmPassword -->
+            <div class="register-form-group">
+                <div class="password-field">
+                    @Html.PasswordFor(m => m.ConfirmPassword, new
+                        {
+                            @class = "password-input",
+                            @placeholder = "Xác nhận mật khẩu",
+                            @id = "confirmPasswordField"
+                        })
+                    <button type="button" class="password-toggle-btn" onclick="togglePassword('confirmPasswordField')">👁</button>
+                </div>
+                @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div class="checkbox-group">
+                <div class="custom-checkbox" id="termsCheckbox" onclick="toggleCheckbox()"></div>
+                @Html.HiddenFor(m => m.AgreeToTerms, new { id = "agreeToTermsInput" })
+                <label class="checkbox-label" onclick="toggleCheckbox()">
+                    Tôi muốn nhận các ưu đãi và khuyến mãi từ Lalamove.
+                    Tôi đã đọc và đồng ý với
+                    <a href="@Url.Action("Terms", "Home")" target="_blank">Điều khoản</a>
+                    và <a href="@Url.Action("Privacy", "Home")" target="_blank">Chính sách Quyền Riêng Tư</a>.
+                </label>
+            </div>
+            @Html.ValidationMessageFor(m => m.AgreeToTerms, "", new { @class = "field-validation-error" })
+
+            <div class="terms-info">
+                Bằng cách nhấp vào Đăng ký bên dưới, bạn đã đọc toàn bộ văn bản và
+                đồng ý với <a href="@Url.Action("Terms", "Home")" target="_blank">Điều khoản</a>
+                và <a href="@Url.Action("Privacy", "Home")" target="_blank">Chính sách quyền riêng tư</a>.
+            </div>
+
+            <button type="submit" class="register-submit-btn" id="registerBtn">
+                Đăng ký miễn phí
+            </button>
+        }
+
+        <div class="or-divider">
+            <span>Hoặc</span>
+        </div>
+
+        <a href="@Url.Action("FacebookRegister", "Account")" class="social-register-btn">
+            <span class="social-icon facebook-icon">f</span>
+            Tiếp tục với tài khoản Facebook
+        </a>
+
+        <a href="@Url.Action("GoogleRegister", "Account")" class="social-register-btn">
+            <span class="social-icon google-icon">G</span>
+            Tiếp tục với tài khoản Google
+        </a>
+
+        <div class="login-section">
+            Bạn đã có tài khoản?
+            @Html.ActionLink("Đăng nhập", "Login", "Account")
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/additional-methods.min.js"></script>
+    <script>
+        // Initialize jQuery Validation
+        $(document).ready(function () {
+            $("#registerForm").validate({
+                rules: {
+                    PhoneNumber: {
+                        required: true,
+                        digits: true,
+                        minlength: 10,
+                        maxlength: 10
+                    },
+                    FullName: {
+                        required: true,
+                        minlength: 2
+                    },
+                    Email: {
+                        email: true
+                    },
+                    Password: {
+                        required: true,
+                        minlength: 6
+                    },
+                    ConfirmPassword: { // Sửa: Thêm rule cho ConfirmPassword
+                        required: true,
+                        equalTo: "#passwordField"
+                    },
+                    AgreeToTerms: {
+                        equalTo: "true"
+                    }
+                },
+                messages: {
+                    PhoneNumber: {
+                        required: "Vui lòng nhập số điện thoại",
+                        digits: "Số điện thoại chỉ được chứa số",
+                        minlength: "Số điện thoại phải có 10 chữ số",
+                        maxlength: "Số điện thoại phải có 10 chữ số"
+                    },
+                    FullName: {
+                        required: "Vui lòng nhập họ và tên",
+                        minlength: "Họ và tên phải có ít nhất 2 ký tự"
+                    },
+                    Email: {
+                        email: "Vui lòng nhập địa chỉ email hợp lệ"
+                    },
+                    Password: {
+                        required: "Vui lòng nhập mật khẩu",
+                        minlength: "Mật khẩu phải có ít nhất 6 ký tự"
+                    },
+                    ConfirmPassword: { // Sửa: Thêm message cho ConfirmPassword
+                        required: "Vui lòng xác nhận mật khẩu",
+                        equalTo: "Mật khẩu và xác nhận mật khẩu không khớp"
+                    },
+                    AgreeToTerms: {
+                        equalTo: "Vui lòng đồng ý với điều khoản và chính sách"
+                    }
+                },
+                errorPlacement: function (error, element) {
+                    error.appendTo(element.closest(".register-form-group").find(".field-validation-error"));
+                }
+            });
+        });
+
+        // Sửa: Cập nhật hàm togglePassword để hỗ trợ nhiều field
+        function togglePassword(fieldId) {
+            const passwordInput = document.getElementById(fieldId);
+            const toggleBtn = passwordInput.nextElementSibling; // Giả sử button là sibling ngay sau input
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁';
+            }
+        }
+
+        function toggleCheckbox() {
+            const checkbox = document.getElementById('termsCheckbox');
+            const hiddenField = document.getElementById('agreeToTermsInput');
+            checkbox.classList.toggle('checked');
+            hiddenField.value = checkbox.classList.contains('checked') ? 'true' : 'false';
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', function (e) {
+            const registerBtn = document.getElementById('registerBtn');
+            const agreeToTerms = document.getElementById('agreeToTermsInput').value;
+            if (agreeToTerms !== 'true') {
+                e.preventDefault();
+                alert('Vui lòng đồng ý với điều khoản và chính sách');
+                return false;
+            }
+            if (!$("#registerForm").valid()) {
+                e.preventDefault();
+                registerBtn.textContent = 'Đăng ký miễn phí';
+                registerBtn.disabled = false;
+                return false;
+            }
+            registerBtn.textContent = 'Đang đăng ký...';
+            registerBtn.disabled = true;
+        });
+
+        // Phone number validation - only allow numbers
+        document.querySelector('input[name="PhoneNumber"]').addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 10) {
+                value = value.substring(0, 10);
+            }
+            e.target.value = value;
+        });
+
+        // Reset button state on page load or error
+        window.addEventListener('load', function () {
+            const registerBtn = document.getElementById('registerBtn');
+            const checkbox = document.getElementById('termsCheckbox');
+            const hiddenField = document.getElementById('agreeToTermsInput');
+            registerBtn.textContent = 'Đăng ký miễn phí';
+            registerBtn.disabled = false;
+            hiddenField.value = checkbox.classList.contains('checked') ? 'true' : 'false';
+        });
+    </script>
+}

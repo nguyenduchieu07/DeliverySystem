@@ -6,12 +6,10 @@ using System.Collections.Generic;
 namespace DataAccessLayer.Entities;
 
 public partial class User : IdentityUser<Guid>
-{    
-    public string Status { get; set; } = null!;
-
-    public DateTime CreatedAt { get; set; }
-
-    public DateTime UpdatedAt { get; set; }
+{
+    public string Status { get; set; } = "Active";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 

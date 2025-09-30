@@ -12,13 +12,18 @@ namespace DataAccessLayer.Repositoies
 {
     public class UserRepository : BaseRepository<User, Guid>, IUserRepository
     {
-        public UserRepository(DeliverySytemContext context) : base(context)
-        {
-        }
-        [FromServices]
-        public UserManager<User> UserManager {  get; set; }
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
 
-        [FromServices]
-        public SignInManager<User> SignInManager {  get; set; }
+        public UserRepository(DeliverySytemContext context, UserManager<User> userManager, SignInManager<User> signInManager)
+            : base(context)
+        {
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
+        }
+
+        // Loại bỏ [FromServices] vì không cần thiết
+        public UserManager<User> UserManager => _userManager;
+        public SignInManager<User> SignInManager => _signInManager;
     }
 }

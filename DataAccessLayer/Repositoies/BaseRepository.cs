@@ -15,7 +15,7 @@ namespace DataAccessLayer.Repositoies
         private readonly DeliverySytemContext _context;
 
         public BaseRepository(DeliverySytemContext context)
-            => _context = context;
+            => _context = context ?? throw new ArgumentNullException(nameof(context));
 
         public void Dispose()
             => _context?.Dispose();
@@ -27,14 +27,10 @@ namespace DataAccessLayer.Repositoies
             if (includeProperties != null)
                 foreach (var includeProperty in includeProperties)
                     items = items.Include(includeProperty);
-
-            if (predicate is not null)
+            if (predicate != null)
                 items = items.Where(predicate);
-
             return items;
         }
-
-      
 
         public async Task<TEntity> FindSingleAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object>>[] includeProperties)
             => await FindAll(null, includeProperties).AsTracking().SingleOrDefaultAsync(predicate, cancellationToken);

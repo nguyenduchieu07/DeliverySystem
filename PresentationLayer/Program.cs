@@ -1,5 +1,8 @@
-using DataAccessLayer.DependencyInjections.Extensions;
+﻿using DataAccessLayer.DependencyInjections.Extensions;
+using DataAccessLayer.Entities;
+using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Extensions;
+using ServiceLayer.Services;
 
 namespace PresentationLayer
 {
@@ -9,12 +12,12 @@ namespace PresentationLayer
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
             builder.Services.AddControllersWithViews();
-            builder.Services.AddIdentityFrameWork();
             builder.Services.AddDatabaseConfiguration(builder.Configuration);
+            builder.Services.AddIdentityFrameWork();
             builder.Services.ConfigureRepositories();
-            builder.Services.AddServices();
+            builder.Services.AddServices(); // từ ServiceLayer
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -27,9 +30,8 @@ namespace PresentationLayer
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
             app.UseRouting();
-
+            app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllerRoute(
                 name : "areas",

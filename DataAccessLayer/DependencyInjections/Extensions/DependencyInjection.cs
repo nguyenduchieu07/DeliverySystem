@@ -15,9 +15,20 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             services.AddIdentity<User, IdentityRole<Guid>>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-
-            }).AddEntityFrameworkStores<DeliverySytemContext>()
+                options.Password.RequireDigit = false; // Tùy chỉnh yêu cầu mật khẩu
+                options.Password.RequiredLength = 6;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+                options.SignIn.RequireConfirmedEmail = false; // Tùy chỉnh đăng nhập
+                options.SignIn.RequireConfirmedPhoneNumber = false;
+            })
+            .AddEntityFrameworkStores<DeliverySytemContext>()
             .AddDefaultTokenProviders();
+
+            // Đảm bảo UserManager và SignInManager được tiêm vào
+            services.AddScoped<UserManager<User>>();
+            services.AddScoped<SignInManager<User>>();
         }
 
         public static void AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
@@ -31,7 +42,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
         public static void ConfigureRepositories(this IServiceCollection services)
         {
             services.AddScoped(typeof(IBaseRepository<,>), typeof(BaseRepository<,>));
-            services.AddScoped<IUserRepository,UserRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
         }
     }
 }
