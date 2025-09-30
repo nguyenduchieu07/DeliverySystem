@@ -226,5 +226,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                 new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc8"), KycSubmissionId = kycPrimeId, DocType = "Tax", FilePath = "/uploads/kyc/prime/tax.pdf", CreatedAt = DateTime.UtcNow.AddDays(-15) }
             );
         }
+
+        
     }
 }
