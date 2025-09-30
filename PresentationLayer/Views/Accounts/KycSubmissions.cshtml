@@ -150,12 +150,12 @@
                 </h5>
             </div>
 
-            <form asp-action="SubmitKyc" asp-controller="Account" method="post" enctype="multipart/form-data" id="kycForm">
+            <form asp-action="SubmitKyc" asp-controller="Accounts" method="post" enctype="multipart/form-data" id="kycForm">
                 <div class="card-body">
                     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                     <!-- StoreId -->
-                    <input type="hidden" asp-for="KycRequest.StoreId" value="@Model.Response.StoreId" />
+                    <input type="hidden" name="StoreId" value="@Model.Response!.StoreId" />
 
                     <div class="doc-hint mb-3">
                         Định dạng chấp nhận: PDF/JPG/PNG. Tối đa 10MB/tệp. Bạn cần nộp ít nhất 1 tài liệu.

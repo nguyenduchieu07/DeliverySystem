@@ -36,24 +36,24 @@ namespace PresentationLayer.Controllers
             }
             catch (Exception ex)
             {
-                ViewData["Error"] = ex.Message;
-                return RedirectToAction(nameof(RegisterStore));
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(RegisterStore),request);
             }
 
         }
 
 
         [HttpPost]
-        public async Task<IActionResult> SubmitKyc(KycViewModel request)
+        public async Task<IActionResult> SubmitKyc(SubmitKycRequest request)
         {
             try
             {
-                var data = await _storeService.SubmitKycDocumentsAsync(request.KycRequest);
+                var data = await _storeService.SubmitKycDocumentsAsync(request);
                 return Ok("Gửi thành công."); 
             }
             catch (Exception ex)
             {
-                ViewData["Error"] = ex.Message;
+                TempData["Error"] = ex.Message;
                 return View("KycSubmissions", request);
             }
         }

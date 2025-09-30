@@ -157,9 +157,9 @@
     <form asp-action="RegisterStore" method="post" novalidate>
         <!-- Validation Summary -->
         <div asp-validation-summary="All" class="validation-summary text-danger"></div>
-        @if(ViewData["Error"] != null)
+        @if (TempData["Error"] != null)
         {
-            <div class="validation-summary text-danger">@ViewData["Error"]</div>
+            <div class="validation-summary text-danger">@TempData["Error"]</div>
         }
         <!-- Account Information -->
         <fieldset>
