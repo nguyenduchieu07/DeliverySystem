@@ -46,32 +46,24 @@ namespace PresentationLayer.Controllers
         {
             if (!ModelState.IsValid)
                 return View(model);
-
-            // Chuẩn hóa số điện thoại
             var fullPhoneNumber = model.PhoneNumber;
             if (!model.PhoneNumber.StartsWith("+") && !model.PhoneNumber.StartsWith("0"))
             {
                 fullPhoneNumber = model.CountryCode + model.PhoneNumber;
             }
-
-            // Kiểm tra null cho email
             if (string.IsNullOrEmpty(model.Email))
             {
                 ModelState.AddModelError("Email", "Email là bắt buộc.");
                 return View(model);
             }
-
-            // Gọi service để đăng ký
             var (success, message, user) = await _customerService.RegisterCustomerAsync(
                 phoneNumber: fullPhoneNumber,
                 password: model.Password,
                 fullName: model.FullName,
                 email: model.Email
             );
-
             if (success)
             {
-                // Gửi email xác nhận
                 var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = emailConfirmationToken }, protocol: Request.Scheme);
                 await _emailSender.SendEmailAsync(
@@ -82,7 +74,6 @@ namespace PresentationLayer.Controllers
                 TempData["SuccessMessage"] = message;
                 return RedirectToAction(nameof(Login));
             }
-
             ModelState.AddModelError(string.Empty, message);
             return View(model);
         }
@@ -94,14 +85,10 @@ namespace PresentationLayer.Controllers
         public IActionResult Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
-            {
                 return RedirectToAction("Index", "Home");
-            }
             ViewData["ReturnUrl"] = returnUrl;
             if (TempData["SuccessMessage"] != null)
-            {
                 ViewBag.SuccessMessage = TempData["SuccessMessage"];
-            }
             return View(new LoginViewModel());
         }
 
@@ -112,33 +99,21 @@ namespace PresentationLayer.Controllers
         {
             ViewData["ReturnUrl"] = returnUrl;
             if (!ModelState.IsValid)
-            {
                 return View(model);
-            }
-
-            // Chuẩn hóa phone/email cho login
             var phoneOrEmail = model.PhoneOrEmail.Trim();
             if (!phoneOrEmail.Contains("@") && !phoneOrEmail.StartsWith("+"))
-            {
                 phoneOrEmail = model.CountryCode + phoneOrEmail;
-            }
-
-            // Gọi service để đăng nhập
             var (success, message) = await _customerService.LoginAsync(
                 phoneOrEmail: phoneOrEmail,
                 password: model.Password,
                 rememberMe: model.RememberMe
             );
-
             if (success)
             {
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                {
                     return Redirect(returnUrl);
-                }
                 return RedirectToAction("Index", "Delivery");
             }
-
             ModelState.AddModelError(string.Empty, message);
             return View(model);
         }
@@ -163,7 +138,6 @@ namespace PresentationLayer.Controllers
             return View(new ForgotPasswordViewModel());
         }
 
-        #region Forgot Password
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -171,22 +145,18 @@ namespace PresentationLayer.Controllers
         {
             if (!ModelState.IsValid)
                 return View(model);
-
-            // Chuẩn hóa email
             var email = model.Email?.Trim().ToLower();
             if (string.IsNullOrWhiteSpace(email))
             {
                 ModelState.AddModelError("Email", "Email không được để trống.");
                 return View(model);
             }
-
             var (success, message, resetToken) = await _customerService.ForgotPasswordAsync(email);
             if (!success)
             {
                 ModelState.AddModelError("", message);
                 return View(model);
             }
-
             var user = await _userManager.FindByEmailAsync(email);
             var userId = user?.Id.ToString();
             if (user == null)
@@ -194,17 +164,13 @@ namespace PresentationLayer.Controllers
                 ModelState.AddModelError("", "Không tìm thấy tài khoản.");
                 return View(model);
             }
-
-            // Encode token trước khi gắn vào URL
             var encodedToken = System.Web.HttpUtility.UrlEncode(resetToken);
-
             var callbackUrl = Url.Action(
                 "ResetPassword",
                 "Account",
                 new { userId = userId, code = encodedToken },
                 protocol: Request.Scheme
             );
-
             await _emailSender.SendEmailAsync(
                 email,
                 "Đặt lại mật khẩu",
@@ -227,13 +193,8 @@ namespace PresentationLayer.Controllers
         public IActionResult ResetPassword(string userId, string code)
         {
             if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(userId))
-            {
                 return BadRequest("Mã token hoặc userId không hợp lệ.");
-            }
-
-            // Giải mã token khi nhận lại
             var decodedToken = System.Web.HttpUtility.UrlDecode(code);
-
             var model = new ResetPasswordViewModel
             {
                 UserId = userId,
@@ -249,19 +210,14 @@ namespace PresentationLayer.Controllers
         {
             if (!ModelState.IsValid)
                 return View(model);
-
-            // Giải mã token khi submit form
             var decodedToken = System.Web.HttpUtility.UrlDecode(model.Code);
-
             var (success, message) = await _customerService.ResetPasswordAsync(
                 model.UserId!,
                 decodedToken!,
                 model.NewPassword!
             );
-
             if (success)
                 return RedirectToAction("ResetPasswordConfirmation");
-
             ModelState.AddModelError(string.Empty, message);
             return View(model);
         }
@@ -274,11 +230,9 @@ namespace PresentationLayer.Controllers
         }
         #endregion
 
-        #endregion
-
         #region Change Password
         [HttpGet]
-        [Authorize]
+        [Authorize] // Bất kỳ user đã đăng nhập đều thay đổi được
         public IActionResult ChangePassword()
         {
             return View(new ChangePasswordViewModel());
@@ -290,9 +244,7 @@ namespace PresentationLayer.Controllers
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
         {
             if (!ModelState.IsValid)
-            {
                 return View(model);
-            }
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
             var (success, message) = await _customerService.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword);
             if (success)
@@ -307,7 +259,7 @@ namespace PresentationLayer.Controllers
 
         #region Profile
         [HttpGet]
-        [Authorize]
+        [Authorize] 
         public async Task<IActionResult> Profile()
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
@@ -325,7 +277,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize] 
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
         {
@@ -339,7 +291,6 @@ namespace PresentationLayer.Controllers
                 model.NewAddress = model.NewAddress ?? new Address();
                 return View("Profile", model);
             }
-
             var userIdUpdate = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
             try
             {
@@ -367,7 +318,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize] 
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddAddress(ProfileViewModel model)
         {
@@ -382,7 +333,6 @@ namespace PresentationLayer.Controllers
                 model.NewAddress = model.NewAddress ?? new Address();
                 return View("Profile", model);
             }
-
             var address = new Address
             {
                 Id = Guid.NewGuid(),
@@ -393,7 +343,6 @@ namespace PresentationLayer.Controllers
                 Ward = model.NewAddress.Ward,
                 Label = model.NewAddress.Label
             };
-
             try
             {
                 await _customerService.AddAddressAsync(userId, address);
@@ -413,7 +362,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize] 
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAddress(Guid addressId)
         {
@@ -475,21 +424,18 @@ namespace PresentationLayer.Controllers
                 TempData["ErrorMessage"] = "UserId hoặc mã xác nhận không hợp lệ.";
                 return RedirectToAction("ConfirmEmailConfirmation");
             }
-
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy tài khoản.";
                 return RedirectToAction("ConfirmEmailConfirmation");
             }
-
             var result = await _userManager.ConfirmEmailAsync(user, code);
             if (result.Succeeded)
             {
                 TempData["SuccessMessage"] = "Xác nhận email thành công.";
                 return RedirectToAction("ConfirmEmailConfirmation");
             }
-
             TempData["ErrorMessage"] = "Xác nhận email thất bại.";
             return RedirectToAction("ConfirmEmailConfirmation");
         }
@@ -499,6 +445,31 @@ namespace PresentationLayer.Controllers
         public IActionResult ConfirmEmailConfirmation()
         {
             return View();
+        }
+        #endregion
+
+        #region Role Management
+        [HttpGet]
+        [Authorize(Roles = "Admin")] // Chỉ Admin gán vai trò
+        public IActionResult AssignRole(string userId)
+        {
+            ViewBag.UserId = userId;
+            // Lấy danh sách vai trò từ database (thay bằng 4 quyền thực tế)
+            var roles = new List<string> { "Admin", "Manager", "Staff", "User" }; // Thay bằng truy vấn thực tế nếu cần
+            ViewBag.Roles = roles;
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AssignRole(string userId, string role)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            await _userManager.AddToRoleAsync(user, role);
+            return RedirectToAction("Profile", new { userId });
         }
         #endregion
     }
