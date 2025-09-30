@@ -17,57 +17,62 @@ namespace ServiceLayer.Services
         private readonly IBaseRepository<Address, Guid> _addressRepo;
         private readonly IBaseRepository<Order, Guid> _orderRepo;
         private readonly DeliverySytemContext _context;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
 
         public CustomerService(
             IUserRepository userRepository,
             IBaseRepository<Customer, Guid> customerRepo,
             IBaseRepository<Address, Guid> addressRepo,
             IBaseRepository<Order, Guid> orderRepo,
-            DeliverySytemContext context)
+            DeliverySytemContext context,
+            UserManager<User> userManager,
+            SignInManager<User> signInManager)
         {
             _userRepository = userRepository;
             _customerRepo = customerRepo;
             _addressRepo = addressRepo;
             _orderRepo = orderRepo;
             _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public async Task<(bool Success, string Message, User? User)> RegisterCustomerAsync(
-             string phoneNumber,
-             string password,
-             string fullName,
-             string email)
+            string phoneNumber,
+            string password,
+            string fullName,
+            string email)
         {
-            // Sửa: Sử dụng transaction để đảm bảo tính toàn vẹn
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Validate phone number format (remove spaces, dashes)
+                // Chuẩn hóa số điện thoại
                 phoneNumber = phoneNumber.Trim().Replace(" ", "").Replace("-", "");
 
-                // Check if phone already exists
-                var existingUserByPhone = await _userRepository.UserManager.Users
+                // Kiểm tra số điện thoại đã tồn tại
+                var existingUserByPhone = await _userManager.Users
                     .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
                 if (existingUserByPhone != null)
                 {
                     return (false, "Số điện thoại đã được đăng ký", null);
                 }
 
-                // Check if email already exists (if provided)
+                // Kiểm tra email đã tồn tại (nếu có)
                 if (!string.IsNullOrWhiteSpace(email))
                 {
-                    var existingUserByEmail = await _userRepository.UserManager.FindByEmailAsync(email);
+                    var existingUserByEmail = await _userManager.FindByEmailAsync(email);
                     if (existingUserByEmail != null)
                     {
                         return (false, "Email đã được đăng ký", null);
                     }
                 }
 
-                // Create User entity
+                // Tạo entity User
                 var user = new User
                 {
                     Id = Guid.NewGuid(),
-                    UserName = phoneNumber, // Use phone as username
+                    UserName = phoneNumber,
                     PhoneNumber = phoneNumber,
                     Email = email,
                     PhoneNumberConfirmed = false,
@@ -77,20 +82,20 @@ namespace ServiceLayer.Services
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                // Create user with password
-                var result = await _userRepository.UserManager.CreateAsync(user, password);
+                // Tạo người dùng với mật khẩu
+                var result = await _userManager.CreateAsync(user, password);
                 if (!result.Succeeded)
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                     return (false, $"Đăng ký thất bại: {errors}", null);
                 }
 
-                // Create Customer entity with same Id
+                // Tạo entity Customer với cùng Id
                 var customer = new Customer
                 {
-                    Id = user.Id, // Same ID as User
+                    Id = user.Id,
                     FullName = fullName,
-                    PhoneNumber=phoneNumber,
+                    PhoneNumber = phoneNumber,
                     Email = email,
                     PreferredLang = "vi",
                     Tier = "Basic",
@@ -101,12 +106,11 @@ namespace ServiceLayer.Services
                 _customerRepo.Add(customer);
                 await _context.SaveChangesAsync();
 
-                // Assign Customer role
-                await _userRepository.UserManager.AddToRoleAsync(user, "Customer");
+                // Gán vai trò Customer
+                await _userManager.AddToRoleAsync(user, "Customer");
 
-                // Commit transaction nếu thành công
+                // Commit transaction
                 await transaction.CommitAsync();
-
                 return (true, "Đăng ký thành công! Vui lòng đăng nhập.", user);
             }
             catch (Exception ex)
@@ -123,19 +127,17 @@ namespace ServiceLayer.Services
             bool rememberMe = false)
         {
             phoneOrEmail = phoneOrEmail.Trim();
-
-            // Find user by phone or email
             User? user;
+
+            // Tìm người dùng theo email hoặc số điện thoại
             if (phoneOrEmail.Contains("@"))
             {
-                // Login by email
-                user = await _userRepository.UserManager.FindByEmailAsync(phoneOrEmail);
+                user = await _userManager.FindByEmailAsync(phoneOrEmail);
             }
             else
             {
-                // Login by phone (remove spaces/dashes)
                 var cleanPhone = phoneOrEmail.Replace(" ", "").Replace("-", "");
-                user = await _userRepository.UserManager.Users
+                user = await _userManager.Users
                     .FirstOrDefaultAsync(u => u.PhoneNumber == cleanPhone);
             }
 
@@ -144,21 +146,21 @@ namespace ServiceLayer.Services
                 return (false, "Số điện thoại hoặc email không tồn tại");
             }
 
-            // Check if user is active
+            // Kiểm tra trạng thái tài khoản
             if (user.Status != "Active")
             {
                 return (false, "Tài khoản của bạn đã bị vô hiệu hóa");
             }
 
-            // Check if user is a customer
-            var isCustomer = await _userRepository.UserManager.IsInRoleAsync(user, "Customer");
+            // Kiểm tra vai trò Customer
+            var isCustomer = await _userManager.IsInRoleAsync(user, "Customer");
             if (!isCustomer)
             {
                 return (false, "Tài khoản này không phải là tài khoản khách hàng");
             }
 
-            // Sign in
-            var result = await _userRepository.SignInManager.PasswordSignInAsync(
+            // Đăng nhập
+            var result = await _signInManager.PasswordSignInAsync(
                 user,
                 password,
                 rememberMe,
@@ -178,6 +180,76 @@ namespace ServiceLayer.Services
             }
         }
 
+        public async Task<(bool Success, string Message, string? ResetToken)> ForgotPasswordAsync(string email)
+        {
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+                    return (false, "Không tìm thấy tài khoản hoặc email chưa được xác nhận.", null);
+                }
+
+                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                return (true, "Mã đặt lại mật khẩu đã được tạo.", resetToken);
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Lỗi hệ thống: {ex.Message}", null);
+            }
+        }
+
+        public async Task<(bool Success, string Message)> ResetPasswordAsync(string userId, string token, string newPassword)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return (false, "Không tìm thấy tài khoản.");
+                }
+
+                var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+                if (result.Succeeded)
+                {
+                    return (true, "Đặt lại mật khẩu thành công.");
+                }
+
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return (false, $"Đặt lại mật khẩu thất bại: {errors}");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool Success, string Message)> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null)
+                {
+                    return (false, "Không tìm thấy tài khoản.");
+                }
+
+                var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+                if (result.Succeeded)
+                {
+                    await _signInManager.RefreshSignInAsync(user); // Cập nhật phiên đăng nhập
+                    return (true, "Đổi mật khẩu thành công.");
+                }
+
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return (false, $"Đổi mật khẩu thất bại: {errors}");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
         public async Task<Customer?> GetProfileAsync(Guid userId)
         {
             return await _customerRepo.FindSingleAsync(c => c.Id == userId);
@@ -185,15 +257,68 @@ namespace ServiceLayer.Services
 
         public async Task UpdateProfileAsync(Guid userId, string fullName, string? email, string? phoneNumber, string? lang, string? tier)
         {
-            var customer = await _customerRepo.FindSingleAsync(c => c.Id == userId);
-            if (customer != null)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
+                var customer = await _customerRepo.FindSingleAsync(c => c.Id == userId);
+                if (customer == null)
+                {
+                    return;
+                }
+
+                // Cập nhật thông tin khách hàng
                 customer.FullName = fullName;
                 customer.PreferredLang = lang ?? customer.PreferredLang;
                 customer.Tier = tier ?? customer.Tier;
+                customer.UpdatedAt = DateTime.UtcNow;
+
+                // Cập nhật email và số điện thoại nếu được cung cấp
+                if (!string.IsNullOrWhiteSpace(email) || !string.IsNullOrWhiteSpace(phoneNumber))
+                {
+                    var user = await _userManager.FindByIdAsync(userId.ToString());
+                    if (user != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(email) && email != user.Email)
+                        {
+                            var existingUserByEmail = await _userManager.FindByEmailAsync(email);
+                            if (existingUserByEmail != null && existingUserByEmail.Id != userId)
+                            {
+                                throw new Exception("Email đã được sử dụng.");
+                            }
+                            user.Email = email;
+                            customer.Email = email;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(phoneNumber))
+                        {
+                            var cleanPhone = phoneNumber.Trim().Replace(" ", "").Replace("-", "");
+                            var existingUserByPhone = await _userManager.Users
+                                .FirstOrDefaultAsync(u => u.PhoneNumber == cleanPhone);
+                            if (existingUserByPhone != null && existingUserByPhone.Id != userId)
+                            {
+                                throw new Exception("Số điện thoại đã được sử dụng.");
+                            }
+                            user.PhoneNumber = cleanPhone;
+                            customer.PhoneNumber = cleanPhone;
+                        }
+
+                        var updateResult = await _userManager.UpdateAsync(user);
+                        if (!updateResult.Succeeded)
+                        {
+                            var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+                            throw new Exception($"Cập nhật thông tin người dùng thất bại: {errors}");
+                        }
+                    }
+                }
 
                 _customerRepo.Update(customer);
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception($"Lỗi khi cập nhật hồ sơ: {ex.Message}");
             }
         }
 
@@ -205,23 +330,43 @@ namespace ServiceLayer.Services
 
         public async Task AddAddressAsync(Guid userId, Address address)
         {
-            address.UserId = userId;
-            address.Active = true;
-            address.CreatedAt = DateTime.UtcNow;
-            address.UpdatedAt = DateTime.UtcNow;
-
-            _addressRepo.Add(address);
-            await _context.SaveChangesAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                address.UserId = userId;
+                address.Active = true;
+                address.CreatedAt = DateTime.UtcNow;
+                address.UpdatedAt = DateTime.UtcNow;
+                _addressRepo.Add(address);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception($"Lỗi khi thêm địa chỉ: {ex.Message}");
+            }
         }
 
         public async Task DeleteAddressAsync(Guid addressId)
         {
-            var address = await _addressRepo.FindSingleAsync(a => a.Id == addressId);
-            if (address != null)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                address.Active = false;
-                _addressRepo.Update(address);
-                await _context.SaveChangesAsync();
+                var address = await _addressRepo.FindSingleAsync(a => a.Id == addressId);
+                if (address != null)
+                {
+                    address.Active = false;
+                    address.UpdatedAt = DateTime.UtcNow;
+                    _addressRepo.Update(address);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception($"Lỗi khi xóa địa chỉ: {ex.Message}");
             }
         }
 
@@ -232,7 +377,7 @@ namespace ServiceLayer.Services
 
         public async Task LogoutAsync()
         {
-            await _userRepository.SignInManager.SignOutAsync();
+            await _signInManager.SignOutAsync();
         }
     }
 }

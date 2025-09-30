@@ -33,10 +33,12 @@
         .text-primary {
             color: var(--primary-color) !important;
         }
+
         /* Navigation */
         .navbar-brand img {
             height: 40px;
         }
+
         /* User Profile Dropdown */
         .user-avatar {
             width: 40px;
@@ -55,6 +57,7 @@
         .dropdown-menu {
             min-width: 10rem;
         }
+
         /* Footer */
         .footer {
             background-color: #333;
@@ -71,6 +74,7 @@
                 .footer a:hover {
                     color: white;
                 }
+
         /* Main wrapper để footer luôn ở dưới */
         .wrapper {
             min-height: 100vh;
@@ -90,7 +94,8 @@
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
             <div class="container">
                 <a class="navbar-brand" href="@Url.Action("Index", "Home")">
-                    <img src="https://www.lalamove.com/hubfs/Lalamove%20Website%202020/logo.svg" alt="Lalamove">
+                    <img src="https://png.pngtree.com/png-clipart/20230921/original/pngtree-delivery-truck-logo-freight-black-semi-vector-png-image_12646190.png"
+                         alt="Vận tải">
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
@@ -111,8 +116,9 @@
                             <a class="nav-link" href="#">Di Chuyển</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Tài Xế</a>
+                            <a asp-controller="Delivery" asp-action="Index" class="nav-link">Đặt xe</a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link" href="#">Ưu Đãi</a>
                         </li>
@@ -130,6 +136,7 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Hồ sơ</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu</a></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" style="margin: 0;">
                                             @Html.AntiForgeryToken()
@@ -157,8 +164,10 @@
             <div class="container">
                 <div class="row">
                     <div class="col-lg-3 col-md-6 mb-4">
-                        <img src="https://www.lalamove.com/hubfs/Lalamove%20Website%202020/logo.svg"
-                             alt="Lalamove" class="mb-3" style="height: 40px; filter: brightness(0) invert(1);">
+                        <img src="https://png.pngtree.com/png-clipart/20230921/original/pngtree-delivery-truck-logo-freight-black-semi-vector-png-image_12646190.png"
+                             alt="Vận tải"
+                             class="mb-3"
+                             style="height: 120px; filter: brightness(0) invert(1);">
                         <p>Nền tảng giao hàng hàng đầu châu Á</p>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-4">
@@ -166,7 +175,7 @@
                         <ul class="list-unstyled">
                             <li><a href="#">Doanh Nghiệp</a></li>
                             <li><a href="#">Cá Nhân</a></li>
-                            <li><a href="#">Tài Xế</a></li>
+                            <li><a href="#">Đặt xe</a></li>
                             <li><a href="#">Bảng Giá Dịch Vụ</a></li>
                         </ul>
                     </div>

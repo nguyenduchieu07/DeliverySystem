@@ -25,10 +25,9 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             })
             .AddEntityFrameworkStores<DeliverySytemContext>()
             .AddDefaultTokenProviders();
-
-            // Đảm bảo UserManager và SignInManager được tiêm vào
-            services.AddScoped<UserManager<User>>();
-            services.AddScoped<SignInManager<User>>();
+            // Xóa các dòng sau vì AddIdentity đã đăng ký UserManager và SignInManager
+            // services.AddScoped<UserManager<User>>();
+            // services.AddScoped<SignInManager<User>>();
         }
 
         public static void AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)

@@ -60,5 +60,8 @@ namespace ServiceLayer.Abstractions.IServices
         /// Get order history of customer
         /// </summary>
         Task<List<Order>> GetOrdersAsync(Guid userId);
+        Task<(bool Success, string Message, string? ResetToken)> ForgotPasswordAsync(string email);
+        Task<(bool Success, string Message)> ResetPasswordAsync(string userId, string token, string newPassword);
+        Task<(bool Success, string Message)> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword);
     }
 }
