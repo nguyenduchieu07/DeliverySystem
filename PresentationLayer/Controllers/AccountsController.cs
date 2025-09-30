@@ -34,11 +34,30 @@ namespace PresentationLayer.Controllers
                 };
                 return View("KycSubmissions", dto);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                ViewData["Error"] = ex.Message;
                 return RedirectToAction(nameof(RegisterStore));
             }
-            
+
         }
+
+
+        [HttpPost]
+        public async Task<IActionResult> SubmitKyc(KycViewModel request)
+        {
+            try
+            {
+                var data = await _storeService.SubmitKycDocumentsAsync(request.KycRequest);
+                return Ok("Gửi thành công."); 
+            }
+            catch (Exception ex)
+            {
+                ViewData["Error"] = ex.Message;
+                return View("KycSubmissions", request);
+            }
+        }
+        
+        
     }
 }
