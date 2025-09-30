@@ -39,7 +39,8 @@ namespace ServiceLayer.Services
                     PublicId = Path.GetFileNameWithoutExtension(file.FileName), // Tên file ko kèm đuôi
                     Overwrite = true,     // Cho phép ghi đè nếu upload lại
                     UseFilename = true,   // Dùng tên file gốc
-                    UniqueFilename = false
+                    UniqueFilename = false,
+                    
                 };
                 var uploadResult = await cloudinary.UploadAsync(uploadParam);
                 return uploadResult.SecureUrl.ToString();

@@ -14,7 +14,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            var id = Guid.Parse("22222222-2222-2222-2222-222222222222");
+            var id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3");
             var reports =await _dashboardService.GetDashboard(id);
             if(reports == null)
             {
