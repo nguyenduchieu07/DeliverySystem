@@ -5,30 +5,60 @@
     ViewBag.Title = "KYC chờ duyệt";
 }
 <style>
+    /* === ALERT (Orange–White Theme) === */
     .alert {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding: 10px 12px;
+        padding: 12px 14px;
         border-radius: 10px;
         margin: 10px 0;
         border: 1px solid transparent;
         font-size: 14px;
+        font-weight: 500;
+        transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
+        /* Success (vàng sáng nhẹ) */
         .alert.success {
-            background: rgba(34,197,94,.12); /* xanh lá nhạt */
-            border-color: rgba(34,197,94,.35);
-            color: rgb(187, 247, 208);
+            background: #fff8e1; /* vàng nhạt */
+            border-color: #ffecb3;
+            color: #a36b00;
+            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.15);
         }
 
+        /* Error (đỏ nhạt sáng) */
         .alert.error {
-            background: rgba(239,68,68,.12); /* đỏ nhạt */
-            border-color: rgba(239,68,68,.35);
-            color: rgb(254, 202, 202);
+            background: #ffeaea; /* hồng nhạt */
+            border-color: #ffc2c2;
+            color: #c62828;
+            box-shadow: 0 2px 6px rgba(239, 83, 80, 0.15);
         }
 
+        /* Warning (cam nhẹ) */
+        .alert.warn {
+            background: #fff4e5;
+            border-color: #ffd8b0;
+            color: var(--brand);
+            box-shadow: 0 2px 6px rgba(255, 140, 0, 0.15);
+        }
+
+        /* Info (vàng sáng hơn) */
+        .alert.info {
+            background: #fffbea;
+            border-color: #ffeab0;
+            color: #9c6d00;
+            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.12);
+        }
+
+        /* Hover: nhẹ hơn, sáng hơn */
+        .alert:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 123, 0, 0.12);
+        }
+
+        /* Close button */
         .alert .close {
             border: none;
             background: transparent;
@@ -36,20 +66,51 @@
             font-size: 18px;
             line-height: 1;
             cursor: pointer;
-            padding: 0 4px;
+            padding: 0 6px;
+            transition: color 0.2s ease, transform 0.1s ease;
         }
 
+            .alert .close:hover {
+                color: var(--brand);
+                transform: scale(1.2);
+            }
+
+    /* === SELECT (Orange–White Theme) === */
     select {
-        color: rgb(230, 233, 242); /* To match the input's text color */
-        background-color: rgb(12, 19, 33); /* To match the input's background color */
-        border-radius: 10px; /* To match the input's rounded corners */
-        /* Keep the previously applied styles for width, height, padding, border, and box-sizing */
-        width: 191px;
-        height: 33px;
+        color: var(--text);
+        background-color: #fff;
+        border-radius: 10px;
+        width: 190px;
+        height: 36px;
         padding: 8px 10px;
-        border: 1px solid rgb(31, 42, 62);
+        border: 1px solid var(--border);
         box-sizing: border-box;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        appearance: none;
+        background-image: linear-gradient(45deg, transparent 50%, var(--brand) 50%), linear-gradient(135deg, var(--brand) 50%, transparent 50%), linear-gradient(to right, transparent, transparent);
+        background-position: calc(100% - 22px) 16px, calc(100% - 14px) 16px, 0 0;
+        background-size: 8px 8px, 8px 8px, 1px 1.6em;
+        background-repeat: no-repeat;
     }
+
+        /* Hover / Focus */
+        select:hover {
+            border-color: var(--brand);
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px var(--ring);
+        }
+
+        /* Disabled */
+        select:disabled {
+            background: #f5f5f5;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
 </style>
 <div class="tabs">
     <div class="tab active" data-tab="kyc">KYC</div>
