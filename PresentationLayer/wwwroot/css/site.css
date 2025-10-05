@@ -1,22 +1,185 @@
-html {
-  font-size: 14px;
+/* wwwroot/css/customer.css */
+:root {
+    --bg: #0c1321;
+    --panel: #101a2b;
+    --line: #1f2a3e;
+    --text: #e6e9f2;
+    --muted: #9aa4b2;
+    --primary: #5b8cff;
+    --success: #33c481;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+* {
+    box-sizing: border-box
 }
 
 body {
-  margin-bottom: 60px;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif
+}
+
+.shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh
+}
+
+.sidebar {
+    background: linear-gradient(180deg,#0f1730,#0b1223);
+    border-right: 1px solid var(--line);
+    padding: 16px
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+}
+
+    .nav .item {
+        padding: 10px 12px;
+        border-radius: 10px;
+        color: var(--text);
+        text-decoration: none;
+        display: block;
+        border: 1px solid transparent
+    }
+
+        .nav .item.active {
+            background: var(--panel);
+            border-color: var(--line)
+        }
+
+.page {
+    padding: 24px
+}
+
+.page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px
+}
+
+.page-title {
+    margin: 0;
+    font-size: 20px
+}
+
+.card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px
+}
+
+.grid.two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px
+}
+
+.row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted)
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: #0c1321;
+    color: var(--text)
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px
+}
+
+    .table td, .table th {
+        padding: 8px;
+        border-bottom: 1px solid var(--line)
+    }
+
+.icon-btn {
+    background: #17233a;
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 8px;
+    cursor: pointer
+}
+
+.btn {
+    background: #17233a;
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer
+}
+
+    .btn.primary {
+        background: var(--primary);
+        border-color: #4a75d6;
+        color: white
+    }
+
+    .btn.ghost {
+        background: transparent
+    }
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 16px
+}
+
+.toast {
+    background: #132235;
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px
+}
+
+.section-title {
+    margin: 0 0 8px 0;
+    font-size: 16px
+}
+
+.estimate {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    color: var(--muted)
+}
+
+.field-validation {
+    color: #ff8181;
+    font-size: 12px
+}
+
+@media (max-width: 980px) {
+    .grid.two {
+        grid-template-columns: 1fr
+    }
+
+    .row-2 {
+        grid-template-columns: 1fr
+    }
 }

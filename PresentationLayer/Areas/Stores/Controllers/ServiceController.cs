@@ -100,7 +100,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             var s = await _serviceRepository
                 .FindSingleAsync((e => e.Id == id && e.StoreId == _storeId),
                     CancellationToken.None,
-                    e => e.ServicePrices.Where(sp => sp.DeletedAt != null));
+                    e => e.ServicePrices.Where(sp => sp.DeletedAt == null));
             if (s == null)
             {
                 return NotFound();

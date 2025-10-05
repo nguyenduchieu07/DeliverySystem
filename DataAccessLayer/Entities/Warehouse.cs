@@ -11,8 +11,10 @@ namespace DataAccessLayer.Entities
     {
         public Guid StoreId { get; set; }
         public string Name { get; set; } = null!;
-        public string? AddressRefId { get; set; } 
+        public Guid? AddressRefId { get; set; } 
         public virtual Store Store { get; set; } = null!;
+
+        public Address? Address { get; set; }
         public virtual ICollection<WarehouseSlot> Slots { get; set; } = new List<WarehouseSlot>();
     }
 }

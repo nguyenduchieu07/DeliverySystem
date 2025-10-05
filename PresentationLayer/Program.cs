@@ -1,4 +1,4 @@
-﻿using DataAccessLayer.DependencyInjections.Extensions;
+using DataAccessLayer.DependencyInjections.Extensions;
 using DataAccessLayer.Entities;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Extensions;
