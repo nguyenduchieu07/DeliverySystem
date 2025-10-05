@@ -1,4 +1,4 @@
-﻿using DataAccessLayer.Abstractions.IRepositories;
+using DataAccessLayer.Abstractions.IRepositories;
 using DataAccessLayer.Configs;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Repositoies;
@@ -16,9 +16,19 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             services.AddIdentity<User, IdentityRole<Guid>>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-
-            }).AddEntityFrameworkStores<DeliverySytemContext>()
+                options.Password.RequireDigit = false; // Tùy chỉnh yêu cầu mật khẩu
+                options.Password.RequiredLength = 6;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+                options.SignIn.RequireConfirmedEmail = false; // Tùy chỉnh đăng nhập
+                options.SignIn.RequireConfirmedPhoneNumber = false;
+            })
+            .AddEntityFrameworkStores<DeliverySytemContext>()
             .AddDefaultTokenProviders();
+            // Xóa các dòng sau vì AddIdentity đã đăng ký UserManager và SignInManager
+            // services.AddScoped<UserManager<User>>();
+            // services.AddScoped<SignInManager<User>>();
         }
 
         public static void AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
@@ -34,7 +44,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             var cloudinaryConfig = configuration.GetSection("Cloudinary");
             services.Configure<CloudinaryConfig>(cloudinaryConfig);
             services.AddScoped(typeof(IBaseRepository<,>), typeof(BaseRepository<,>));
-            services.AddScoped<IUserRepository,UserRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
         }
     }
 }

@@ -1,0 +1,476 @@
+﻿using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using PresentationLayer.Models;
+using ServiceLayer.Abstractions.IServices;
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+
+namespace PresentationLayer.Controllers
+{
+    public class AccountController : Controller
+    {
+        private readonly ICustomerService _customerService;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        private readonly IEmailSender _emailSender;
+
+        public AccountController(
+            ICustomerService customerService,
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
+            IEmailSender emailSender)
+        {
+            _customerService = customerService;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _emailSender = emailSender;
+        }
+
+        #region Register
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult Register()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Home");
+            return View(new RegisterViewModel());
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+            var fullPhoneNumber = model.PhoneNumber;
+            if (!model.PhoneNumber.StartsWith("+") && !model.PhoneNumber.StartsWith("0"))
+            {
+                fullPhoneNumber = model.CountryCode + model.PhoneNumber;
+            }
+            if (string.IsNullOrEmpty(model.Email))
+            {
+                ModelState.AddModelError("Email", "Email là bắt buộc.");
+                return View(model);
+            }
+            var (success, message, user) = await _customerService.RegisterCustomerAsync(
+                phoneNumber: fullPhoneNumber,
+                password: model.Password,
+                fullName: model.FullName,
+                email: model.Email
+            );
+            if (success)
+            {
+                var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = emailConfirmationToken }, protocol: Request.Scheme);
+                await _emailSender.SendEmailAsync(
+                    model.Email,
+                    "Xác nhận email",
+                    $"Vui lòng xác nhận email bằng cách <a href='{callbackUrl}'>nhấn vào đây</a>."
+                );
+                TempData["SuccessMessage"] = message;
+                return RedirectToAction(nameof(Login));
+            }
+            ModelState.AddModelError(string.Empty, message);
+            return View(model);
+        }
+        #endregion
+
+        #region Login
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult Login(string? returnUrl = null)
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Home");
+            ViewData["ReturnUrl"] = returnUrl;
+            if (TempData["SuccessMessage"] != null)
+                ViewBag.SuccessMessage = TempData["SuccessMessage"];
+            return View(new LoginViewModel());
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            if (!ModelState.IsValid)
+                return View(model);
+            var phoneOrEmail = model.PhoneOrEmail.Trim();
+            if (!phoneOrEmail.Contains("@") && !phoneOrEmail.StartsWith("+"))
+                phoneOrEmail = model.CountryCode + phoneOrEmail;
+            var (success, message) = await _customerService.LoginAsync(
+                phoneOrEmail: phoneOrEmail,
+                password: model.Password,
+                rememberMe: model.RememberMe
+            );
+            if (success)
+            {
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    return Redirect(returnUrl);
+                return RedirectToAction("Index", "Delivery");
+            }
+            ModelState.AddModelError(string.Empty, message);
+            return View(model);
+        }
+        #endregion
+
+        #region Logout
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await _customerService.LogoutAsync();
+            return RedirectToAction("Index", "Home");
+        }
+        #endregion
+
+        #region Forgot Password
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+            var email = model.Email?.Trim().ToLower();
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ModelState.AddModelError("Email", "Email không được để trống.");
+                return View(model);
+            }
+            var (success, message, resetToken) = await _customerService.ForgotPasswordAsync(email);
+            if (!success)
+            {
+                ModelState.AddModelError("", message);
+                return View(model);
+            }
+            var user = await _userManager.FindByEmailAsync(email);
+            var userId = user?.Id.ToString();
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Không tìm thấy tài khoản.");
+                return View(model);
+            }
+            var encodedToken = System.Web.HttpUtility.UrlEncode(resetToken);
+            var callbackUrl = Url.Action(
+                "ResetPassword",
+                "Account",
+                new { userId = userId, code = encodedToken },
+                protocol: Request.Scheme
+            );
+            await _emailSender.SendEmailAsync(
+                email,
+                "Đặt lại mật khẩu",
+                $"Vui lòng đặt lại mật khẩu bằng cách <a href='{callbackUrl}'>nhấn vào đây</a>."
+            );
+            return RedirectToAction("ForgotPasswordConfirmation");
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPasswordConfirmation()
+        {
+            return View();
+        }
+        #endregion
+
+        #region Reset Password
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPassword(string userId, string code)
+        {
+            if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(userId))
+                return BadRequest("Mã token hoặc userId không hợp lệ.");
+            var decodedToken = System.Web.HttpUtility.UrlDecode(code);
+            var model = new ResetPasswordViewModel
+            {
+                UserId = userId,
+                Code = decodedToken
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+            var decodedToken = System.Web.HttpUtility.UrlDecode(model.Code);
+            var (success, message) = await _customerService.ResetPasswordAsync(
+                model.UserId!,
+                decodedToken!,
+                model.NewPassword!
+            );
+            if (success)
+                return RedirectToAction("ResetPasswordConfirmation");
+            ModelState.AddModelError(string.Empty, message);
+            return View(model);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPasswordConfirmation()
+        {
+            return View();
+        }
+        #endregion
+
+        #region Change Password
+        [HttpGet]
+        [Authorize] // Bất kỳ user đã đăng nhập đều thay đổi được
+        public IActionResult ChangePassword()
+        {
+            return View(new ChangePasswordViewModel());
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
+            var (success, message) = await _customerService.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword);
+            if (success)
+            {
+                ViewBag.Success = message;
+                return View();
+            }
+            ModelState.AddModelError(string.Empty, message);
+            return View(model);
+        }
+        #endregion
+
+        #region Profile
+        [HttpGet]
+        [Authorize] 
+        public async Task<IActionResult> Profile()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
+            var customer = await _customerService.GetProfileAsync(userId);
+            var addresses = await _customerService.GetAddressesAsync(userId);
+            var orders = await _customerService.GetOrdersAsync(userId);
+            var model = new ProfileViewModel
+            {
+                Customer = customer ?? new Customer(),
+                Addresses = addresses,
+                Orders = orders,
+                NewAddress = new Address()
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize] 
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
+                var customer = await _customerService.GetProfileAsync(userId);
+                model.Customer = customer ?? new Customer();
+                model.Addresses = await _customerService.GetAddressesAsync(userId);
+                model.Orders = await _customerService.GetOrdersAsync(userId);
+                model.NewAddress = model.NewAddress ?? new Address();
+                return View("Profile", model);
+            }
+            var userIdUpdate = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
+            try
+            {
+                await _customerService.UpdateProfileAsync(
+                    userIdUpdate,
+                    model.Customer.FullName,
+                    model.Customer.Email,
+                    model.Customer.PhoneNumber,
+                    model.Customer.PreferredLang,
+                    model.Customer.Tier
+                );
+                TempData["SuccessMessage"] = "Cập nhật hồ sơ thành công.";
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                var customer = await _customerService.GetProfileAsync(userIdUpdate);
+                model.Customer = customer ?? new Customer();
+                model.Addresses = await _customerService.GetAddressesAsync(userIdUpdate);
+                model.Orders = await _customerService.GetOrdersAsync(userIdUpdate);
+                model.NewAddress = model.NewAddress ?? new Address();
+                return View("Profile", model);
+            }
+            return RedirectToAction("Profile");
+        }
+
+        [HttpPost]
+        [Authorize] 
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAddress(ProfileViewModel model)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
+            if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.NewAddress?.AddressLine))
+            {
+                ModelState.AddModelError("NewAddress.AddressLine", "Địa chỉ không được để trống.");
+                var customer = await _customerService.GetProfileAsync(userId);
+                model.Customer = customer ?? new Customer();
+                model.Addresses = await _customerService.GetAddressesAsync(userId);
+                model.Orders = await _customerService.GetOrdersAsync(userId);
+                model.NewAddress = model.NewAddress ?? new Address();
+                return View("Profile", model);
+            }
+            var address = new Address
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                AddressLine = model.NewAddress.AddressLine,
+                City = model.NewAddress.City,
+                District = model.NewAddress.District,
+                Ward = model.NewAddress.Ward,
+                Label = model.NewAddress.Label
+            };
+            try
+            {
+                await _customerService.AddAddressAsync(userId, address);
+                TempData["SuccessMessage"] = "Thêm địa chỉ thành công.";
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                var customer = await _customerService.GetProfileAsync(userId);
+                model.Customer = customer ?? new Customer();
+                model.Addresses = await _customerService.GetAddressesAsync(userId);
+                model.Orders = await _customerService.GetOrdersAsync(userId);
+                model.NewAddress = model.NewAddress ?? new Address();
+                return View("Profile", model);
+            }
+            return RedirectToAction("Profile");
+        }
+
+        [HttpPost]
+        [Authorize] 
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAddress(Guid addressId)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
+            try
+            {
+                await _customerService.DeleteAddressAsync(addressId);
+                TempData["SuccessMessage"] = "Xóa địa chỉ thành công.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+            return RedirectToAction("Profile");
+        }
+        #endregion
+
+        #region Social Login (Placeholders)
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult FacebookLogin()
+        {
+            TempData["ErrorMessage"] = "Đăng nhập bằng Facebook chưa được hỗ trợ";
+            return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult GoogleLogin()
+        {
+            TempData["ErrorMessage"] = "Đăng nhập bằng Google chưa được hỗ trợ";
+            return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult FacebookRegister()
+        {
+            TempData["ErrorMessage"] = "Đăng ký bằng Facebook chưa được hỗ trợ";
+            return RedirectToAction(nameof(Register));
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult GoogleRegister()
+        {
+            TempData["ErrorMessage"] = "Đăng ký bằng Google chưa được hỗ trợ";
+            return RedirectToAction(nameof(Register));
+        }
+        #endregion
+
+        #region Confirm Email
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConfirmEmail(string userId, string code)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(code))
+            {
+                TempData["ErrorMessage"] = "UserId hoặc mã xác nhận không hợp lệ.";
+                return RedirectToAction("ConfirmEmailConfirmation");
+            }
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy tài khoản.";
+                return RedirectToAction("ConfirmEmailConfirmation");
+            }
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+            if (result.Succeeded)
+            {
+                TempData["SuccessMessage"] = "Xác nhận email thành công.";
+                return RedirectToAction("ConfirmEmailConfirmation");
+            }
+            TempData["ErrorMessage"] = "Xác nhận email thất bại.";
+            return RedirectToAction("ConfirmEmailConfirmation");
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ConfirmEmailConfirmation()
+        {
+            return View();
+        }
+        #endregion
+
+        #region Role Management
+        [HttpGet]
+        [Authorize(Roles = "Admin")] // Chỉ Admin gán vai trò
+        public IActionResult AssignRole(string userId)
+        {
+            ViewBag.UserId = userId;
+            // Lấy danh sách vai trò từ database (thay bằng 4 quyền thực tế)
+            var roles = new List<string> { "Admin", "Manager", "Staff", "User" }; // Thay bằng truy vấn thực tế nếu cần
+            ViewBag.Roles = roles;
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AssignRole(string userId, string role)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            await _userManager.AddToRoleAsync(user, role);
+            return RedirectToAction("Profile", new { userId });
+        }
+        #endregion
+    }
+}

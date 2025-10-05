@@ -1,8 +1,205 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewBag.Title = "VCN Vietnam | Dịch vụ giao hàng xe van tải toàn quốc";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@section styles {
+    <style>
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://www.lalamove.com/hubfs/Lalamove-vehicles-1-1.jpeg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 120px 0;
+            text-align: center;
+        }
+
+            .hero-section h1 {
+                font-size: 3.5rem;
+                font-weight: bold;
+                margin-bottom: 1.5rem;
+            }
+
+            .hero-section .lead {
+                font-size: 1.3rem;
+                background: var(--primary-color);
+                padding: 15px 30px;
+                border-radius: 8px;
+                display: inline-block;
+                margin-bottom: 2rem;
+            }
+
+        /* Feature Cards */
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+
+            .feature-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 4rem 0;
+            background: var(--text-dark);
+            color: white;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        /* App Cards */
+        .app-showcase {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 4rem 0;
+        }
+
+        .app-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+            .app-card:hover {
+                transform: scale(1.05);
+            }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-section .lead {
+                font-size: 1.1rem;
+                padding: 12px 20px;
+            }
+        }
+    </style>
+}
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1>GIAO HÀNG VCN<br>XE VAN TẢI</h1>
+        <div class="lead">
+            Nền tảng cung cấp dịch vụ giao hàng theo yêu cầu.<br>
+            Đặt 30 giây là có xe.
+        </div>
+        <a asp-controller="Delivery" asp-action="Index" class="btn btn-primary btn-lg">Đặt xe ngay</a>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-10 mx-auto">
+                <h2 class="text-primary fw-bold mb-4">BẠN ĐANG CẦN GIAO HÀNG VỚI SỐ LƯỢNG NHIỀU, KIỆN HÀNG LỚN?</h2>
+                <p class="lead">Đặt giao ngay với VCN! Dịch vụ giao hàng xe van - tải VCN cung cấp đủ loại phương tiện vận chuyển và trọng tải: <strong class="text-primary">Xe Bán Tải, Xe Van, Xe Tải từ 500kg đến 3,5 tấn</strong> - là giải pháp vận chuyển tối ưu nhất dành cho bạn và doanh nghiệp.</p>
+                <p class="mt-4">Với tiêu chí tiết kiệm, nhanh chóng và tận tâm, chỉ với vài thao tác đặt giao, VCN sẽ đáp ứng tức thì nhu cầu vận chuyển hàng hoá của bạn một cách dễ dàng và nhanh chóng với giá cước hợp lý.</p>
+            </div>
+        </div>
+
+        <!-- Features Grid giữ nguyên -->
+    </div>
+</section>
+
+<!-- Stats Section giữ nguyên -->
+<!-- Why Choose Us Section -->
+<section class="py-5" style="background-color: var(--background-light);">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <img src="https://www.lalamove.com/hubfs/Imported%20sitepage%20images/shutterstock_1454556197_min.jpg"
+                     alt="Đặt xe van tải dễ dàng" class="img-fluid rounded">
+            </div>
+            <div class="col-lg-6">
+                <h2 style="color: var(--text-dark);">ĐẶT VCN NGAY CHỈ VỚI VÀI BƯỚC ĐƠN GIẢN</h2>
+                <p class="lead">Dễ dàng tìm xe van - tải chở hàng hoặc chuyển nhà với vài thao tác đơn giản tại ứng dụng!</p>
+
+                <!-- Các bước giữ nguyên -->
+                <a href="#" class="btn btn-primary btn-lg">Bắt đầu ngay</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- App Showcase -->
+<section class="app-showcase">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-4">ỨNG DỤNG CỦA VCN</h2>
+            <p class="lead">Tải ngay ứng dụng VCN để trải nghiệm dịch vụ giao hàng nhanh chóng, tiện lợi nhất!</p>
+        </div>
+
+        <!-- Cards giữ nguyên -->
+    </div>
+</section>
+
+<!-- Driver Registration CTA -->
+<section class="py-5" style="background-color: rgba(241, 102, 34, 0.1);">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2 class="text-primary fw-bold mb-3">BẠN ĐANG SỞ HỮU XE, MUỐN KIẾM THÊM THU NHẬP?</h2>
+                <p class="lead mb-0">Trở thành Đối tác tài xế VCN ngay! Đăng ký đơn giản. Chỉ cần nhập số điện thoại, VCN sẽ gọi lại để hỗ trợ hoàn tất đăng ký.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <a href="#" class="btn btn-primary btn-lg px-4 py-3">Đăng ký làm tài xế</a>
+            </div>
+        </div>
+    </div>
+</section>
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            // Animation cho feature cards khi scroll
+            $(window).scroll(function () {
+                $('.feature-card').each(function () {
+                    var elementTop = $(this).offset().top;
+                    var elementBottom = elementTop + $(this).outerHeight();
+                    var viewportTop = $(window).scrollTop();
+                    var viewportBottom = viewportTop + $(window).height();
+
+                    if (elementBottom > viewportTop && elementTop < viewportBottom) {
+                        $(this).addClass('animate__animated animate__fadeInUp');
+                    }
+                });
+            });
+        });
+    </script>
+}

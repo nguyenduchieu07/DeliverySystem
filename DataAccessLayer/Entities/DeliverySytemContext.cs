@@ -95,8 +95,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Customer__A4AE64D8B858128B");
-
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedNever(); // Không tự động sinh, sử dụng giá trị từ User.Id
             entity.Property(e => e.FullName).HasMaxLength(150);
             entity.Property(e => e.KycLevel)
                 .HasMaxLength(20)
@@ -106,9 +105,12 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                 .HasMaxLength(20)
                 .HasDefaultValue("Basic");
 
-            entity.HasOne(d => d.CustomerNavigation).WithOne(p => p.Customer)
-                .HasForeignKey<Customer>(d => d.Id)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+            // Sửa: Xác định rõ mối quan hệ 1-1 với shared primary key
+            entity.HasOne(d => d.User)
+                .WithOne(p => p.Customer)
+                .HasForeignKey<Customer>(d => d.Id) // Sử dụng Id làm khóa ngoại
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Customers_Users");
         });
 

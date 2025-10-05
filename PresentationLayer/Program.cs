@@ -1,45 +1,47 @@
 using DataAccessLayer.DependencyInjections.Extensions;
+using DataAccessLayer.Entities;
+using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Extensions;
+using ServiceLayer.Services;
 
-namespace PresentationLayer
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+builder.Services.AddDatabaseConfiguration(builder.Configuration); // Đăng ký DbContext
+builder.Services.AddIdentityFrameWork(); // Đăng ký Identity
+builder.Services.ConfigureRepositories(); // Đăng ký Repository
+builder.Services.AddServices(); // Đăng ký Service từ ServiceLayer
+// Register EmailSender with SMTP
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
-            builder.Services.AddIdentityFrameWork();
-            builder.Services.AddDatabaseConfiguration(builder.Configuration);
-            builder.Services.ConfigureRepositories(builder.Configuration);
-            builder.Services.AddServices();
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-            app.MapControllerRoute(
-                name : "areas",
-                pattern : "{area:exists}/{controller=Home}/{action=Index}/{id?}"
-                );
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
-
-            app.Run();
-        }
-    }
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+// Quan trọng: UseAuthentication phải trước UseAuthorization
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Định nghĩa route
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}"
+);
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+);
+
+app.Run();

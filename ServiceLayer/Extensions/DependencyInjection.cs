@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Services;
 using System;
@@ -17,6 +17,7 @@ namespace ServiceLayer.Extensions
             services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<IStoreRegistrationService,StoreRegistrationService>();
             services.AddSingleton<ICloudinaryService, CloudinaryService>();
+            services.AddScoped<ICustomerService, CustomerService>();
         }
     }
 }
