@@ -58,7 +58,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     Name = w.Name,
                     AddressText = w.Address != null ? w.Address.AddressLine : "(No address)",
                     SlotCount = w.Slots.Count,
-                    CreatedAt = w.CreatedAt
+                    CreatedAt = w.CreatedAt,
+                    CoverImageUrl = w.CoverImageUrl
                 })
                 .ToListAsync();
 

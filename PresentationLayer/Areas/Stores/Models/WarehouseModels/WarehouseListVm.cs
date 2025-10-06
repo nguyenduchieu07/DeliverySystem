@@ -23,6 +23,7 @@
             public string AddressText { get; set; } = "";
             public int SlotCount { get; set; }
             public DateTimeOffset CreatedAt { get; set; }
+            public string? CoverImageUrl { get; set; }
         }
     }
 }
