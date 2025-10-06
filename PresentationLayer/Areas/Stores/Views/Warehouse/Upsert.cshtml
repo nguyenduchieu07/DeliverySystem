@@ -1,0 +1,279 @@
+﻿@using DataAccessLayer.Entities
+@using PresentationLayer.Areas.Stores.Models.WarehouseModels
+@model WarehouseUpsertDto
+@{
+    var stores = ViewBag.Stores as IEnumerable<Store>;
+    var addresses = ViewBag.Addresses as IEnumerable<Address>;
+    bool isEdit = Model.Id.HasValue;
+    ViewData["Title"] = isEdit ? "Edit Warehouse" : "Create Warehouse";
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+}
+
+<div class="breadcrumb">
+    <span>Warehouses</span> <span>/</span> <span>@ViewData["Title"]</span>
+</div>
+
+<div class="page-head">
+    <div class="page-title">@ViewData["Title"]</div>
+</div>
+
+<div class="card">
+    <form asp-action="Upsert" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+
+        @* Id *@
+        @if (isEdit)
+        {
+            <input type="hidden" asp-for="Id" />
+        }
+
+        <div class="row">
+            <div>
+                <label asp-for="Name"></label>
+                <input asp-for="Name" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label>Store</label>
+                @* Khi Edit: khoá select + gửi value ẩn đảm bảo bind đúng *@
+                @if (isEdit)
+                {
+                    <input type="hidden" asp-for="StoreId" />
+                    <select asp-for="StoreId" disabled>
+                        @foreach (var s in stores ?? Enumerable.Empty<Store>())
+                        {
+                            <option value="@s.Id" selected="@(Model.StoreId==s.Id)">@s.StoreName</option>
+                        }
+                    </select>
+                    <span class="help">Không đổi Store khi chỉnh sửa.</span>
+                }
+                else
+                {
+                    <select asp-for="StoreId">
+                        <option value="">-- Select store --</option>
+                        @foreach (var s in stores ?? Enumerable.Empty<Store>())
+                        {
+                            <option value="@s.Id" selected="@(Model.StoreId==s.Id)">@s.StoreName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="StoreId" class="text-danger"></span>
+                }
+            </div>
+
+            <div>
+                <label>Address (Existing)</label>
+                <select asp-for="AddressRefId">
+                    <option value="">-- Select existing --</option>
+                    @foreach (var a in addresses ?? Enumerable.Empty<Address>())
+                    {
+                        <option value="@a.Id" selected="@(Model.AddressRefId==a.Id)">@a.AddressLine</option>
+                    }
+                </select>
+                <span class="help">Hoặc tạo mới từ bản đồ bên dưới.</span>
+            </div>
+
+            @* Cover image upload with filters *@
+            <div>
+                <label asp-for="CoverImage">Cover Image</label>
+                <input asp-for="CoverImage"
+                       type="file"
+                       accept="image/png,image/jpeg,image/webp,image/gif"
+                       data-max-mb="5"
+                       id="CoverImageInput" />
+                <div id="CoverImagePreview" class="muted" style="margin-top:6px;"></div>
+                @* Nếu bạn có CoverImageUrl hiện tại, hiển thị để người dùng biết *@
+                @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+                {
+                    <div style="margin-top:6px;">
+                        <span class="help">Current:</span><br />
+                        <img src="@Model.CoverImageUrl" style="width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);" />
+                    </div>
+                }
+            </div>
+
+            @* Map image upload with filters *@
+            <div>
+                <label asp-for="MapImage">Map Image</label>
+                <input asp-for="MapImage"
+                       type="file"
+                       accept="image/png,image/jpeg,image/webp,image/gif"
+                       data-max-mb="5"
+                       id="MapImageInput" />
+                <div id="MapImagePreview" class="muted" style="margin-top:6px;"></div>
+                @if (!string.IsNullOrWhiteSpace(Model.MapImageUrl))
+                {
+                    <div style="margin-top:6px;">
+                        <span class="help">Current:</span><br />
+                        <img src="@Model.MapImageUrl" style="width:120px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);" />
+                    </div>
+                }
+            </div>
+        </div>
+
+        <hr style="border-color:var(--border);opacity:.4;margin:12px 0;" />
+
+        <div class="row">
+            <div style="grid-column: 1 / -1;">
+                <label>Tạo Address mới bằng bản đồ</label>
+                <div class="help">Tìm kiếm hoặc click bản đồ để lấy toạ độ & địa chỉ. Nếu bạn không chọn Address có sẵn, hệ thống sẽ tạo Address mới từ dữ liệu này.</div>
+            </div>
+
+            <div style="grid-column:1 / -1;">
+                <div id="map" style="height:380px;border-radius:12px;border:1px solid var(--border);"></div>
+            </div>
+
+            <div>
+                <label asp-for="AddressLine">Address Line</label>
+                <input asp-for="AddressLine" id="AddressLine" />
+            </div>
+            <div>
+                <label asp-for="Latitude">Latitude</label>
+                <input asp-for="Latitude" id="Latitude" type="number" step="any" />
+            </div>
+            <div>
+                <label asp-for="Longitude">Longitude</label>
+                <input asp-for="Longitude" id="Longitude" type="number" step="any" />
+            </div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn primary" type="submit">Save</button>
+            <a class="btn" asp-controller="StoreWarehouses" asp-action="Index" asp-route-storeId="@Model.StoreId">Back</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <script>
+        // -------- FILE FILTERS + PREVIEW ----------
+        function wireImageInput(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            if (!input) return;
+
+            input.addEventListener('change', function () {
+                preview.innerHTML = '';
+                const f = this.files && this.files[0];
+                if (!f) return;
+
+                // type filter
+                const okTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+                if (!okTypes.includes(f.type)) {
+                    preview.innerHTML = '<span class="text-danger">Chỉ chấp nhận PNG/JPEG/WEBP/GIF.</span>';
+                    this.value = '';
+                    return;
+                }
+
+                // size filter (MB)
+                const maxMB = parseFloat(this.getAttribute('data-max-mb') || '5');
+                if (f.size > maxMB * 1024 * 1024) {
+                    preview.innerHTML = `<span class="text-danger">Kích thước tối đa ${maxMB}MB.</span>`;
+                    this.value = '';
+                    return;
+                }
+
+                // preview
+                const url = URL.createObjectURL(f);
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.width = '120px';
+                img.style.height = '90px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '8px';
+                img.style.border = '1px solid var(--border)';
+                preview.appendChild(img);
+            });
+        }
+
+        wireImageInput('CoverImageInput', 'CoverImagePreview');
+        wireImageInput('MapImageInput', 'MapImagePreview');
+
+        // -------- LEAFLET MAP ----------
+        const _lat = '@(Model.Latitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "21.028511")';
+        const _lng = '@(Model.Longitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "105.804817")';
+        const hasPoint = @(Model.Latitude.HasValue && Model.Longitude.HasValue ? "true" : "false");
+
+        document.addEventListener('DOMContentLoaded', function () {
+            let lat = parseFloat(_lat);
+            let lng = parseFloat(_lng);
+            if (Number.isNaN(lat) || Number.isNaN(lng)) { lat = 21.028511; lng = 105.804817; }
+
+            const map = L.map('map', { zoomControl: true }).setView([lat, lng], hasPoint ? 15 : 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+
+            let marker = null;
+
+            function setMarker(lat, lng) {
+                if (!marker) {
+                    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                    marker.on('dragend', e => {
+                        const p = e.target.getLatLng();
+                        updateLatLng(p.lat, p.lng, true);
+                    });
+                } else {
+                    marker.setLatLng([lat, lng]);
+                }
+                updateLatLng(lat, lng, false);
+            }
+
+            function updateLatLng(lat, lng, doReverse) {
+                const latBox = document.getElementById('Latitude');
+                const lngBox = document.getElementById('Longitude');
+                if (latBox) latBox.value = (+lat).toFixed(6);
+                if (lngBox) lngBox.value = (+lng).toFixed(6);
+                if (doReverse) reverse(lat, lng);
+            }
+
+            function reverse(lat, lng) {
+                if (!L.Control.Geocoder || !L.Control.Geocoder.nominatim) return;
+                L.Control.Geocoder.nominatim().reverse(
+                    { lat: lat, lng: lng },
+                    map.options.crs.scale(map.getZoom()),
+                    results => {
+                        if (results && results.length) {
+                            const addr = document.getElementById('AddressLine');
+                            if (addr) addr.value = results[0].name || '';
+                        }
+                    }
+                );
+            }
+
+            if (hasPoint) setMarker(lat, lng);
+
+            L.Control.geocoder({ defaultMarkGeocode: false })
+                .on('markgeocode', function (e) {
+                    const c = e.geocode.center;
+                    setMarker(c.lat, c.lng);
+                    map.setView(c, 16);
+                    const addr = document.getElementById('AddressLine');
+                    if (addr) addr.value = e.geocode.name || '';
+                })
+                .addTo(map);
+
+            map.on('click', function (e) {
+                setMarker(e.latlng.lat, e.latlng.lng);
+                reverse(e.latlng.lat, e.latlng.lng);
+            });
+
+            setTimeout(() => map.invalidateSize(), 0);
+            window.addEventListener('resize', () => map.invalidateSize());
+        });
+    </script>
+}
