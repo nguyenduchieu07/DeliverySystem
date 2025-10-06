@@ -1,0 +1,135 @@
+﻿@using PresentationLayer.Areas.Stores.Models.WarehouseModels
+@model WarehouseListVm
+@{
+   
+}
+
+<div class="breadcrumb">
+    <span>Store</span> <span>/</span> <span>Warehouses</span>
+</div>
+
+<div class="page-head">
+    <div class="page-title">Warehouses</div>
+    <div class="page-actions">
+        <a class="btn primary" asp-controller="Warehouses" asp-action="Create" asp-route-storeId="@Model.StoreId">
+            + New Warehouse
+        </a>
+    </div>
+</div>
+
+<div class="section">
+    <div class="header">
+        <div class="title">Filters</div>
+        <div class="muted">Total: @Model.Total</div>
+    </div>
+    <div class="content" style="padding:12px 14px;">
+        <form method="get" asp-action="Index" asp-controller="StoreWarehouses" class="grid" style="grid-template-columns: 2fr 2fr 1fr 1fr auto; gap:12px;">
+            <input type="hidden" name="storeId" value="@Model.StoreId" />
+            <div>
+                <label>Search</label>
+                <input type="text" name="q" value="@Model.Q" placeholder="Tên kho hoặc địa chỉ..." />
+            </div>
+            <div>
+                <label>Address</label>
+                <select name="addressId">
+                    <option value="">All</option>
+                    @foreach (var a in Model.AddressOptions)
+                    {
+                        <option value="@a.Id" selected="@(Model.AddressId == a.Id)">
+                            @a.Name
+                        </option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label>Page Size</label>
+                <select name="pageSize">
+                    @{
+                        int[] sizes = new[] { 5, 10, 20, 30, 50 };
+                        foreach (var s in sizes)
+                        {
+                            <option value="@s" selected="@(Model.PageSize == s)">@s</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <label>&nbsp;</label>
+                <button class="btn">Apply</button>
+            </div>
+            <div>
+                <label>&nbsp;</label>
+                <a class="btn" asp-action="Index" asp-route-storeId="@Model.StoreId">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width:30%;">Name</th>
+                <th>Address</th>
+                <th style="width:12%;">Slots</th>
+                <th style="width:20%;">Created</th>
+                <th style="width:18%;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="muted">No warehouses found.</td></tr>
+            }
+            else
+            {
+                foreach (var w in Model.Items)
+                {
+                    <tr>
+                        <td>@w.Name</td>
+                        <td>@w.AddressText</td>
+                        <td><span class="badge">@w.SlotCount</span></td>
+                        <td>@w.CreatedAt.LocalDateTime.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <a class="btn" asp-controller="Warehouses" asp-action="Details" asp-route-id="@w.Id">Details</a>
+                            <a class="btn" asp-controller="WarehouseSlots" asp-action="Index" asp-route-warehouseId="@w.Id">Slots</a>
+                            <a class="btn" asp-controller="Warehouses" asp-action="Edit" asp-route-id="@w.Id">Edit</a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <!-- Paging -->
+    @if (Model.TotalPages > 1)
+    {
+        <div style="display:flex; gap:8px; justify-content:flex-end; padding-top:12px;">
+            @{
+                int cur = Model.Page;
+                int last = Model.TotalPages;
+                int start = Math.Max(1, cur - 2);
+                int end = Math.Min(last, cur + 2);
+                string baseRoute = Url.Action("Index", "StoreWarehouses", new
+                {
+                    storeId = Model.StoreId,
+                    q = Model.Q,
+                    addressId = Model.AddressId,
+                    pageSize = Model.PageSize
+                })!;
+            }
+
+            <a class="btn @(cur==1?"disabled":null)"
+               href="@(cur==1 ? "#" : $"{baseRoute}&page={cur-1}")">Prev</a>
+
+            @for (int p = start; p <= end; p++)
+            {
+                var active = p == cur ? "primary" : "";
+                <a class="btn @active" href="@(p==cur ? "#" : $"{baseRoute}&page={p}")">@p</a>
+            }
+
+            <a class="btn @(cur==last?"disabled":null)"
+               href="@(cur==last ? "#" : $"{baseRoute}&page={cur+1}")">Next</a>
+        </div>
+    }
+</div>
