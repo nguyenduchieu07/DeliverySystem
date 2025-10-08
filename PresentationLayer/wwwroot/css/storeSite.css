@@ -1019,3 +1019,45 @@ a {
 ::-webkit-scrollbar-thumb:active {
     background: #ff9a3d;
 }
+/* ====== Toast / Notification ====== */
+.toast {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: transform .3s ease, opacity .3s ease;
+    min-width: 260px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: 500;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border);
+}
+
+    .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .toast.success {
+        background: rgba(92,211,166,.14);
+        border-color: rgba(92,211,166,.35);
+        color: var(--brand);
+    }
+
+    .toast.error {
+        background: rgba(255,107,107,.12);
+        border-color: rgba(255,107,107,.3);
+        color: var(--danger);
+    }
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}

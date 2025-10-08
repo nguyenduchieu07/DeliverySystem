@@ -1,0 +1,214 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model DataAccessLayer.Entities.Warehouse
+@{
+    ViewBag.Title = "Tạo Kho Mới";
+    var addresses = ViewBag.Addresses as List<DataAccessLayer.Entities.Address>;
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <style>
+        #map {
+            height: 380px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-top: 12px;
+            margin-bottom: 20px;
+        }
+
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        /* ====== Address Row (Form create warehouse) ====== */
+    .row-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px 20px;
+        margin-top: 12px;
+    }
+    
+    .row-2 > div {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Label nhỏ gọn */
+    .row-2 label {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        margin-bottom: 6px;
+    }
+    
+    /* Input phong cách giống layout */
+    .row-2 input {
+        width: 100%;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 14px;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    
+    .row-2 input:hover {
+        border-color: #32405b;
+    }
+    
+    .row-2 input:focus {
+        border-color: var(--brand-2);
+        box-shadow: 0 0 0 3px var(--ring);
+        background: #1c2434;
+    }
+    
+    /* Input readonly */
+    .row-2 input[readonly] {
+        opacity: .85;
+        cursor: not-allowed;
+    }
+    
+    /* Responsive */
+    @@media (max-width: 860px) {
+        .row-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .leaflet-control-geocoder {
+        max-width: 300px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 4px;
+        color: var(--text);
+    }
+
+    .leaflet-control-geocoder input {
+        background: transparent;
+        border: none;
+        color: var(--text);
+    }
+
+        form input[type="text"],
+        form input[type="file"],
+        form select {
+            width: 100%;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            padding: 10px 12px;
+            font-size: 14px;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+
+    </style>
+}
+
+<h2 class="page-title">Tạo Kho Mới</h2>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" id="warehouseForm" class="grid gap-4">
+    <div class="card">
+        <label>Tên kho</label>
+        <input type="text" asp-for="Name" placeholder="VD: Kho Hà Đông" />
+
+        <label>Chọn địa chỉ có sẵn (tùy chọn)</label>
+        <select asp-for="AddressRefId">
+            <option value="">-- Không chọn (tự thêm) --</option>
+            @foreach (var addr in addresses)
+            {
+                <option value="@addr.Id">@addr.AddressLine (@addr.City)</option>
+            }
+        </select>
+
+        <hr class="muted" />
+
+        <h4>Hoặc thêm địa chỉ mới</h4>
+        <div class="row-2">
+            <div>
+                <label>Địa chỉ chi tiết</label>
+                <input name="newAddress.AddressLine" id="addressLine" placeholder="Nhập hoặc chọn trên bản đồ" />
+            </div>
+            <div>
+                <label>Tỉnh / Thành phố</label>
+                <input name="newAddress.City" id="city" />
+            </div>
+            <div>
+                <label>Quận / Huyện</label>
+                <input name="newAddress.District" id="district" />
+            </div>
+            <div>
+                <label>Phường / Xã</label>
+                <input name="newAddress.Ward" id="ward"  />
+            </div>
+            <div>
+                <label>Latitude</label>
+                <input name="newAddress.Latitude" id="lat" readonly />
+            </div>
+            <div>
+                <label>Longitude</label>
+                <input name="newAddress.Longitude" id="lng" readonly />
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="row-2">
+            <div>
+                <label>Ảnh bìa kho</label>
+                <input type="file" name="CoverImage" accept="image/*" />
+            </div>
+            <div>
+                <label>Ảnh sơ đồ kho</label>
+                <input type="file" name="MapImage" accept="image/*" />
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h4>Thêm Slot trong kho</h4>
+        <div class="row-2">
+            <input type="text" id="slotCode" placeholder="Mã slot (VD: A1)" />
+            <input type="text" id="slotSize" placeholder="Kích thước (VD: 2x3m)" />
+            <select id="slotStatus">
+                <option>Available</option>
+                <option>Occupied</option>
+                <option>Maintenance</option>
+            </select>
+            <button type="button" class="btn primary" id="btnAddSlot">+ Thêm Slot</button>
+        </div>
+
+        <table class="table" id="slotTable">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Kích thước</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <button type="submit" class="btn primary">Tạo Kho</button>
+</form>
+
+@section Scripts {
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <script src="~/js/warehouse.js"></script>
+}

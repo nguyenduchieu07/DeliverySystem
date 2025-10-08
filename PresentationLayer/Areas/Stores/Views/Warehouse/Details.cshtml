@@ -1,0 +1,119 @@
+﻿@model DataAccessLayer.Entities.Warehouse
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewBag.Title = "Warehouse Details";
+}
+<style>
+    .badge.ok {
+        background: rgba(92,211,166,.15);
+        border-color: rgba(92,211,166,.3);
+        color: var(--brand);
+    }
+
+    .badge.warn {
+        background: rgba(255,204,102,.15);
+        border-color: rgba(255,204,102,.3);
+        color: var(--warn);
+    }
+
+    .badge.danger {
+        background: rgba(255,107,107,.15);
+        border-color: rgba(255,107,107,.3);
+        color: var(--danger);
+    }
+
+</style>
+<div class="breadcrumb">
+    <span>Store</span> <span>/</span>
+    <a asp-area="Stores" asp-controller="Warehouses" asp-action="Index" class="muted">Warehouses</a>
+    <span>/</span>
+    <span>@Model.Name</span>
+</div>
+
+<div class="page-head">
+    <div class="page-title">@Model.Name</div>
+    <div class="page-actions">
+        <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+        <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="Index">Back</a>
+    </div>
+</div>
+
+<div class="grid" style="gap:16px;">
+
+    <!-- ===== Thông tin chung ===== -->
+    <div class="card" style="display:grid; grid-template-columns: 1fr 2fr; gap:16px;">
+        <div>
+            @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+            {
+                <img src="@Model.CoverImageUrl"
+                     alt="cover"
+                     style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border);" />
+            }
+            else
+            {
+                <img src="@($"https://api.dicebear.com/7.x/initials/svg?seed={Model.Name}&radius=50")"
+                     style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border);" />
+            }
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <div><strong>Tên kho:</strong> @Model.Name</div>
+            <div><strong>Thuộc cửa hàng:</strong> @Model.Store?.StoreName</div>
+            <div><strong>Địa chỉ:</strong> @(Model.Address?.AddressLine ?? "—")</div>
+            <div><strong>Thành phố:</strong> @(Model.Address?.City ?? "—")</div>
+            <div><strong>Toạ độ:</strong> @($"{Model.Address?.Latitude}, {Model.Address?.Longitude}")</div>
+            <div><strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+        </div>
+    </div>
+
+    <!-- ===== Sơ đồ kho (nếu có) ===== -->
+    @if (!string.IsNullOrEmpty(Model.MapImageUrl))
+    {
+        <div class="card">
+            <div class="title" style="font-weight:700;margin-bottom:10px;">Sơ đồ kho</div>
+            <img src="@Model.MapImageUrl" alt="map" style="width:100%;border-radius:12px;border:1px solid var(--border);" />
+        </div>
+    }
+
+    <!-- ===== Danh sách Slot ===== -->
+    <div class="section">
+        <div class="header">
+            <div class="title">Warehouse Slots</div>
+            <div class="muted">Total: @Model.Slots.Count</div>
+        </div>
+        <div class="content" style="padding:12px 14px;">
+            @if (Model.Slots.Count == 0)
+            {
+                <div class="muted">No slots available.</div>
+            }
+            else
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Size</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Model.Slots)
+                        {
+                            var badgeClass = s.Status switch
+                            {
+                                "Available" => "ok",
+                                "Occupied" => "warn",
+                                "Maintenance" => "danger",
+                                _ => ""
+                            };
+                            <tr>
+                                <td>@s.Code</td>
+                                <td>@(string.IsNullOrEmpty(s.Size) ? "—" : s.Size)</td>
+                                <td><span class="badge @badgeClass">@s.Status</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

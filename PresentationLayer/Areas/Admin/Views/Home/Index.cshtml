@@ -6,36 +6,36 @@
 
 <div class="grid">
     <div class="card col-4">
-        <div class="head"><h3>Pending KYC</h3></div>
+        <div class="head"><h3>Đang chờ KYC</h3></div>
         <div class="body"><span class="chip pending">@Model.PendingKyc</span></div>
     </div>
     <div class="card col-4">
-        <div class="head"><h3>Active Stores</h3></div>
+        <div class="head"><h3>Cửa hàng đang hoạt động</h3></div>
         <div class="body"><span class="chip ok">@Model.ActiveStores</span></div>
     </div>
     <div class="card col-4">
-        <div class="head"><h3>Orders Today</h3></div>
+        <div class="head"><h3>Đơn hàng hôm nay</h3></div>
         <div class="body"><span class="chip">@Model.OrdersToday</span></div>
     </div>
     <div class="card col-4">
-        <div class="head"><h3>Low ★ Reviews (≤2)</h3></div>
+        <div class="head"><h3>Đánh giá thấp ★ (≤2)</h3></div>
         <div class="body"><span class="chip danger">@Model.LowRatingCount</span></div>
     </div>
 </div>
 
 <section class="grid" style="margin-top:16px">
     <div class="card col-8">
-        <div class="head"><h3>Recent Pending KYC</h3></div>
+        <div class="head"><h3>KYC đang chờ xử lý gần đây</h3></div>
         <div class="body">
             @await Component.InvokeAsync("RecentKyc")
         </div>
     </div>
     <div class="card col-4">
-        <div class="head"><h3>Quick Actions</h3></div>
+        <div class="head"><h3>Hành động nhanh</h3></div>
         <div class="body" style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn" asp-area="Admin" asp-controller="Kyc" asp-action="Index">Go to KYC</a>
-            <a class="btn" asp-area="Admin" asp-controller="Reviews" asp-action="Index">Moderate Reviews</a>
-            <a class="btn" asp-area="Admin" asp-controller="Ban" asp-action="Index">Ban Center</a>
+            <a class="btn" asp-area="Admin" asp-controller="Kyc" asp-action="Index">Đi đến KYC</a>
+            <a class="btn" asp-area="Admin" asp-controller="Reviews" asp-action="Index">Đánh giá vừa phải</a>
+            <a class="btn" asp-area="Admin" asp-controller="Ban" asp-action="Index">Trung tâm Cấmr</a>
         </div>
     </div>
 </section>

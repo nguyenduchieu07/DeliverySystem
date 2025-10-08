@@ -113,9 +113,9 @@
 
 </style>
 <div class="tabs">
-    <div class="tab active" data-tab="kyc">KYC</div>
-    <div class="tab" data-tab="feedback">Feedback</div>
-    <div class="tab" data-tab="ban">Ban</div>
+    <div class="tab" data-tab="kyc"><a asp-area="Admin" asp-controller="Kyc" asp-action="Index">KYC</a></div>
+    <div class="tab" data-tab="feedback"><a asp-area="Admin" asp-controller="Reviews" asp-action="Index">Nhận xét</a></div>
+    <div class="tab active" data-tab="ban">Cấm</div>
 </div>
 @if (TempData["Success"] is string ok && !string.IsNullOrWhiteSpace(ok))
 {
@@ -138,10 +138,10 @@
             <h3>KYC chờ duyệt</h3>
             <form method="get" class="filters">
                 <select name="status" value="@Context.Request.Query["status"]">
-                    <option value="Pending">Pending</option>
-                    <option value="NeedChanges">Need Changes</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
+                    <option value="Pending">Chưa giải quyết</option>
+                    <option value="NeedChanges">Cần thay đổi</option>
+                    <option value="Approved">Tán thành</option>
+                    <option value="Rejected">Từ chối</option>
                 </select>
                 <input class="input" name="q" placeholder="Tìm theo tên cửa hàng" value="@Context.Request.Query["q"]" />
                 <button class="btn">Lọc</button>
@@ -180,7 +180,7 @@
                                     <input type="hidden" name="submissionId" value="@s.Id" />
                                     <input class="input sm" name="maxPerDay" type="number" placeholder="Max/day" style="width:90px" />
                                     <input class="input sm" name="regionsCsv" placeholder="HN,HCM,DN" style="width:140px" />
-                                    <button class="btn success">Approve</button>
+                                    <button class="btn success">Chấp thuận</button>
                                 </form>
                             </td>
                             <td class="actions">
@@ -188,13 +188,13 @@
                                     <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post" class="inline">
                                         <input type="hidden" name="submissionId" value="@s.Id" />
                                         <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." />
-                                        <button class="btn warn">Need changes</button>
+                                        <button class="btn warn">Cần thay đổi</button>
                                     </form>
 
                                     <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post" class="inline">
                                         <input type="hidden" name="submissionId" value="@s.Id" />
                                         <input class="input sm" name="note" placeholder="Lý do từ chối..." />
-                                        <button class="btn danger">Reject</button>
+                                        <button class="btn danger">Từ chối</button>
                                     </form>
                                 </div>
                             </td>
