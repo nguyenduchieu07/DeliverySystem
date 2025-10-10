@@ -2,9 +2,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Models;
 using ServiceLayer.Abstractions.IServices;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -108,11 +111,27 @@ namespace PresentationLayer.Controllers
                 password: model.Password,
                 rememberMe: model.RememberMe
             );
+
             if (success)
             {
-                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                    return Redirect(returnUrl);
-                return RedirectToAction("Index", "Delivery");
+                var user = await _userManager.FindByEmailAsync(phoneOrEmail);
+                if (user == null) 
+                {
+                    user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phoneOrEmail);
+                }
+
+                if (user != null && await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    return RedirectToAction("Index", "Home", new { area = "Admin" });
+                }
+                else
+                {
+                    // Nếu là Customer (hoặc vai trò khác), giữ nguyên logic cũ
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                        return Redirect(returnUrl);
+                    return RedirectToAction("Index", "Delivery");
+                }
+                // === KẾT THÚC THAY ĐỔI ===
             }
             ModelState.AddModelError(string.Empty, message);
             return View(model);
@@ -232,7 +251,7 @@ namespace PresentationLayer.Controllers
 
         #region Change Password
         [HttpGet]
-        [Authorize] // Bất kỳ user đã đăng nhập đều thay đổi được
+        [Authorize]
         public IActionResult ChangePassword()
         {
             return View(new ChangePasswordViewModel());
@@ -259,7 +278,7 @@ namespace PresentationLayer.Controllers
 
         #region Profile
         [HttpGet]
-        [Authorize] 
+        [Authorize]
         public async Task<IActionResult> Profile()
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
@@ -269,15 +288,29 @@ namespace PresentationLayer.Controllers
             var model = new ProfileViewModel
             {
                 Customer = customer ?? new Customer(),
-                Addresses = addresses,
+                Addresses = addresses?.Select(a => new AddressViewModel
+                {
+                    Id = a.Id,
+                    UserId = a.UserId,
+                    StoreId = a.StoreId,
+                    Label = a.Label,
+                    AddressLine = a.AddressLine,
+                    Ward = a.Ward,
+                    District = a.District,
+                    City = a.City,
+                    Latitude = a.Latitude,
+                    Longitude = a.Longitude,
+                    IsDefault = a.IsDefault,
+                    Active = a.Active
+                }).ToList() ?? new List<AddressViewModel>(),
                 Orders = orders,
-                NewAddress = new Address()
+                NewAddress = new AddressViewModel()
             };
             return View(model);
         }
 
         [HttpPost]
-        [Authorize] 
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
         {
@@ -286,9 +319,23 @@ namespace PresentationLayer.Controllers
                 var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
                 var customer = await _customerService.GetProfileAsync(userId);
                 model.Customer = customer ?? new Customer();
-                model.Addresses = await _customerService.GetAddressesAsync(userId);
+                model.Addresses = (await _customerService.GetAddressesAsync(userId))?.Select(a => new AddressViewModel
+                {
+                    Id = a.Id,
+                    UserId = a.UserId,
+                    StoreId = a.StoreId,
+                    Label = a.Label,
+                    AddressLine = a.AddressLine,
+                    Ward = a.Ward,
+                    District = a.District,
+                    City = a.City,
+                    Latitude = a.Latitude,
+                    Longitude = a.Longitude,
+                    IsDefault = a.IsDefault,
+                    Active = a.Active
+                }).ToList() ?? new List<AddressViewModel>();
                 model.Orders = await _customerService.GetOrdersAsync(userId);
-                model.NewAddress = model.NewAddress ?? new Address();
+                model.NewAddress = model.NewAddress ?? new AddressViewModel();
                 return View("Profile", model);
             }
             var userIdUpdate = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
@@ -309,28 +356,56 @@ namespace PresentationLayer.Controllers
                 ModelState.AddModelError(string.Empty, ex.Message);
                 var customer = await _customerService.GetProfileAsync(userIdUpdate);
                 model.Customer = customer ?? new Customer();
-                model.Addresses = await _customerService.GetAddressesAsync(userIdUpdate);
+                model.Addresses = (await _customerService.GetAddressesAsync(userIdUpdate))?.Select(a => new AddressViewModel
+                {
+                    Id = a.Id,
+                    UserId = a.UserId,
+                    StoreId = a.StoreId,
+                    Label = a.Label,
+                    AddressLine = a.AddressLine,
+                    Ward = a.Ward,
+                    District = a.District,
+                    City = a.City,
+                    Latitude = a.Latitude,
+                    Longitude = a.Longitude,
+                    IsDefault = a.IsDefault,
+                    Active = a.Active
+                }).ToList() ?? new List<AddressViewModel>();
                 model.Orders = await _customerService.GetOrdersAsync(userIdUpdate);
-                model.NewAddress = model.NewAddress ?? new Address();
+                model.NewAddress = model.NewAddress ?? new AddressViewModel();
                 return View("Profile", model);
             }
             return RedirectToAction("Profile");
         }
 
         [HttpPost]
-        [Authorize] 
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddAddress(ProfileViewModel model)
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new UnauthorizedAccessException());
-            if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.NewAddress?.AddressLine))
+            if (string.IsNullOrWhiteSpace(model.NewAddress?.AddressLine))
             {
                 ModelState.AddModelError("NewAddress.AddressLine", "Địa chỉ không được để trống.");
                 var customer = await _customerService.GetProfileAsync(userId);
                 model.Customer = customer ?? new Customer();
-                model.Addresses = await _customerService.GetAddressesAsync(userId);
+                model.Addresses = (await _customerService.GetAddressesAsync(userId))?.Select(a => new AddressViewModel
+                {
+                    Id = a.Id,
+                    UserId = a.UserId,
+                    StoreId = a.StoreId,
+                    Label = a.Label,
+                    AddressLine = a.AddressLine,
+                    Ward = a.Ward,
+                    District = a.District,
+                    City = a.City,
+                    Latitude = a.Latitude,
+                    Longitude = a.Longitude,
+                    IsDefault = a.IsDefault,
+                    Active = a.Active
+                }).ToList() ?? new List<AddressViewModel>();
                 model.Orders = await _customerService.GetOrdersAsync(userId);
-                model.NewAddress = model.NewAddress ?? new Address();
+                model.NewAddress = model.NewAddress ?? new AddressViewModel();
                 return View("Profile", model);
             }
             var address = new Address
@@ -353,16 +428,30 @@ namespace PresentationLayer.Controllers
                 ModelState.AddModelError(string.Empty, ex.Message);
                 var customer = await _customerService.GetProfileAsync(userId);
                 model.Customer = customer ?? new Customer();
-                model.Addresses = await _customerService.GetAddressesAsync(userId);
+                model.Addresses = (await _customerService.GetAddressesAsync(userId))?.Select(a => new AddressViewModel
+                {
+                    Id = a.Id,
+                    UserId = a.UserId,
+                    StoreId = a.StoreId,
+                    Label = a.Label,
+                    AddressLine = a.AddressLine,
+                    Ward = a.Ward,
+                    District = a.District,
+                    City = a.City,
+                    Latitude = a.Latitude,
+                    Longitude = a.Longitude,
+                    IsDefault = a.IsDefault,
+                    Active = a.Active
+                }).ToList() ?? new List<AddressViewModel>();
                 model.Orders = await _customerService.GetOrdersAsync(userId);
-                model.NewAddress = model.NewAddress ?? new Address();
+                model.NewAddress = model.NewAddress ?? new AddressViewModel();
                 return View("Profile", model);
             }
             return RedirectToAction("Profile");
         }
 
         [HttpPost]
-        [Authorize] 
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAddress(Guid addressId)
         {
@@ -450,11 +539,10 @@ namespace PresentationLayer.Controllers
 
         #region Role Management
         [HttpGet]
-        [Authorize(Roles = "Admin")] // Chỉ Admin gán vai trò
+        [Authorize(Roles = "Admin")]
         public IActionResult AssignRole(string userId)
         {
             ViewBag.UserId = userId;
-            // Lấy danh sách vai trò từ database (thay bằng 4 quyền thực tế)
             var roles = new List<string> { "Admin", "Manager", "Staff", "User" }; // Thay bằng truy vấn thực tế nếu cần
             ViewBag.Roles = roles;
             return View();

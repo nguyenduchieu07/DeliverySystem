@@ -1,5 +1,4 @@
-﻿// PresentationLayer/Models/ProfileViewModel.cs
-using DataAccessLayer.Entities;
+﻿using DataAccessLayer.Entities;
 using System;
 using System.Collections.Generic;
 
@@ -7,21 +6,29 @@ namespace PresentationLayer.Models
 {
     public class ProfileViewModel
     {
-        public Customer? Customer { get; set; }
-        public List<Address> Addresses { get; set; } = new List<Address>();
-        public List<Order> Orders { get; set; } = new List<Order>();
-        public Address NewAddress { get; set; } = new Address();
+        public Customer Customer { get; set; }
+        public List<AddressViewModel> Addresses { get; set; }
+        public AddressViewModel NewAddress { get; set; }
+        public List<Order> Orders { get; set; }
 
-        // Thêm thuộc tính cho booking kho
-        public Address PickupAddress { get; set; } = new Address();
-        public Address DropoffAddress { get; set; } = new Address();
-        public DateTime? DeliveryDate { get; set; }
-        public DateTime? PickupDate { get; set; }
+        // Thuộc tính cho order
+        public string PickupAddress { get; set; }
+        public string DropoffAddress { get; set; }
+        public double DistanceKm { get; set; }
+        public int EtaMinutes { get; set; }
+        public DateTime DeliveryDate { get; set; }
+        public DateTime PickupDate { get; set; }
         public string Note { get; set; }
-        public string SelectedVehicle { get; set; } = "motorbike";
-        public float? DistanceKm { get; set; }
-        public int? EtaMinutes { get; set; }
-        public bool UseStoredPickupAddress { get; set; }
-        public bool UseStoredDropoffAddress { get; set; }
+        public string VehicleType { get; set; }
+        public Guid? ServiceCategoryId { get; set; }
+        public List<OrderItemViewModel> Items { get; set; }
+
+        public ProfileViewModel()
+        {
+            Addresses = new List<AddressViewModel>();
+            NewAddress = new AddressViewModel();
+            Orders = new List<Order>();
+            Items = new List<OrderItemViewModel>();
+        }
     }
 }

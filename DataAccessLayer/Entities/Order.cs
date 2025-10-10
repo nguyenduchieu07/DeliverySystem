@@ -15,7 +15,8 @@ public partial class Order : BaseEntity<Guid>
     public Guid? PickupAddressId { get; set; }
 
     public Guid? DropoffAddressId { get; set; }
-
+    public DateTime? DeliveryDate { get; set; } // Thêm
+    public DateTime? PickupDate { get; set; }
     public decimal? DistanceKm { get; set; }
 
     public int? EtaMinutes { get; set; }
