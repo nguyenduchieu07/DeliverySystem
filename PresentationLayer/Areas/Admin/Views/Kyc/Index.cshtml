@@ -5,30 +5,60 @@
     ViewBag.Title = "KYC chờ duyệt";
 }
 <style>
+    /* === ALERT (Orange–White Theme) === */
     .alert {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding: 10px 12px;
+        padding: 12px 14px;
         border-radius: 10px;
         margin: 10px 0;
         border: 1px solid transparent;
         font-size: 14px;
+        font-weight: 500;
+        transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
+        /* Success (vàng sáng nhẹ) */
         .alert.success {
-            background: rgba(34,197,94,.12); /* xanh lá nhạt */
-            border-color: rgba(34,197,94,.35);
-            color: rgb(187, 247, 208);
+            background: #fff8e1; /* vàng nhạt */
+            border-color: #ffecb3;
+            color: #a36b00;
+            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.15);
         }
 
+        /* Error (đỏ nhạt sáng) */
         .alert.error {
-            background: rgba(239,68,68,.12); /* đỏ nhạt */
-            border-color: rgba(239,68,68,.35);
-            color: rgb(254, 202, 202);
+            background: #ffeaea; /* hồng nhạt */
+            border-color: #ffc2c2;
+            color: #c62828;
+            box-shadow: 0 2px 6px rgba(239, 83, 80, 0.15);
         }
 
+        /* Warning (cam nhẹ) */
+        .alert.warn {
+            background: #fff4e5;
+            border-color: #ffd8b0;
+            color: var(--brand);
+            box-shadow: 0 2px 6px rgba(255, 140, 0, 0.15);
+        }
+
+        /* Info (vàng sáng hơn) */
+        .alert.info {
+            background: #fffbea;
+            border-color: #ffeab0;
+            color: #9c6d00;
+            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.12);
+        }
+
+        /* Hover: nhẹ hơn, sáng hơn */
+        .alert:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 123, 0, 0.12);
+        }
+
+        /* Close button */
         .alert .close {
             border: none;
             background: transparent;
@@ -36,25 +66,56 @@
             font-size: 18px;
             line-height: 1;
             cursor: pointer;
-            padding: 0 4px;
+            padding: 0 6px;
+            transition: color 0.2s ease, transform 0.1s ease;
         }
 
+            .alert .close:hover {
+                color: var(--brand);
+                transform: scale(1.2);
+            }
+
+    /* === SELECT (Orange–White Theme) === */
     select {
-        color: rgb(230, 233, 242); /* To match the input's text color */
-        background-color: rgb(12, 19, 33); /* To match the input's background color */
-        border-radius: 10px; /* To match the input's rounded corners */
-        /* Keep the previously applied styles for width, height, padding, border, and box-sizing */
-        width: 191px;
-        height: 33px;
+        color: var(--text);
+        background-color: #fff;
+        border-radius: 10px;
+        width: 190px;
+        height: 36px;
         padding: 8px 10px;
-        border: 1px solid rgb(31, 42, 62);
+        border: 1px solid var(--border);
         box-sizing: border-box;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        appearance: none;
+        background-image: linear-gradient(45deg, transparent 50%, var(--brand) 50%), linear-gradient(135deg, var(--brand) 50%, transparent 50%), linear-gradient(to right, transparent, transparent);
+        background-position: calc(100% - 22px) 16px, calc(100% - 14px) 16px, 0 0;
+        background-size: 8px 8px, 8px 8px, 1px 1.6em;
+        background-repeat: no-repeat;
     }
+
+        /* Hover / Focus */
+        select:hover {
+            border-color: var(--brand);
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px var(--ring);
+        }
+
+        /* Disabled */
+        select:disabled {
+            background: #f5f5f5;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
 </style>
 <div class="tabs">
-    <div class="tab active" data-tab="kyc">KYC</div>
-    <div class="tab" data-tab="feedback">Feedback</div>
-    <div class="tab" data-tab="ban">Ban</div>
+    <div class="tab" data-tab="kyc"><a asp-area="Admin" asp-controller="Kyc" asp-action="Index">KYC</a></div>
+    <div class="tab" data-tab="feedback"><a asp-area="Admin" asp-controller="Reviews" asp-action="Index">Nhận xét</a></div>
+    <div class="tab active" data-tab="ban">Cấm</div>
 </div>
 @if (TempData["Success"] is string ok && !string.IsNullOrWhiteSpace(ok))
 {
@@ -77,10 +138,10 @@
             <h3>KYC chờ duyệt</h3>
             <form method="get" class="filters">
                 <select name="status" value="@Context.Request.Query["status"]">
-                    <option value="Pending">Pending</option>
-                    <option value="NeedChanges">Need Changes</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
+                    <option value="Pending">Chưa giải quyết</option>
+                    <option value="NeedChanges">Cần thay đổi</option>
+                    <option value="Approved">Tán thành</option>
+                    <option value="Rejected">Từ chối</option>
                 </select>
                 <input class="input" name="q" placeholder="Tìm theo tên cửa hàng" value="@Context.Request.Query["q"]" />
                 <button class="btn">Lọc</button>
@@ -119,7 +180,7 @@
                                     <input type="hidden" name="submissionId" value="@s.Id" />
                                     <input class="input sm" name="maxPerDay" type="number" placeholder="Max/day" style="width:90px" />
                                     <input class="input sm" name="regionsCsv" placeholder="HN,HCM,DN" style="width:140px" />
-                                    <button class="btn success">Approve</button>
+                                    <button class="btn success">Chấp thuận</button>
                                 </form>
                             </td>
                             <td class="actions">
@@ -127,13 +188,13 @@
                                     <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post" class="inline">
                                         <input type="hidden" name="submissionId" value="@s.Id" />
                                         <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." />
-                                        <button class="btn warn">Need changes</button>
+                                        <button class="btn warn">Cần thay đổi</button>
                                     </form>
 
                                     <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post" class="inline">
                                         <input type="hidden" name="submissionId" value="@s.Id" />
                                         <input class="input sm" name="note" placeholder="Lý do từ chối..." />
-                                        <button class="btn danger">Reject</button>
+                                        <button class="btn danger">Từ chối</button>
                                     </form>
                                 </div>
                             </td>

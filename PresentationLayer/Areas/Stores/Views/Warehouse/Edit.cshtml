@@ -1,0 +1,236 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model DataAccessLayer.Entities.Warehouse
+@{
+    ViewBag.Title = "Chỉnh sửa kho";
+    var addresses = ViewBag.Addresses as List<DataAccessLayer.Entities.Address>;
+    var addr = Model.Address;
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          crossorigin="" />
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <style>
+        #map {
+            height: 380px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-top: 12px;
+            margin-bottom: 20px;
+        }
+
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px 20px;
+        }
+
+            .row-2 > div {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .row-2 label {
+                color: var(--muted);
+                font-size: 12px;
+                text-transform: uppercase;
+                margin-bottom: 6px;
+            }
+
+            .row-2 input, .row-2 select {
+                width: 100%;
+                background: var(--panel-2);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                color: var(--text);
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+        form input[type="text"],
+        form input[type="file"],
+        form select {
+            width: 100%;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            padding: 10px 12px;
+            font-size: 14px;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+    </style>
+}
+
+<h2 class="page-title">Chỉnh sửa kho</h2>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="card">
+        <label>Tên kho</label>
+        <input asp-for="Name" placeholder="VD: Kho Hà Đông" />
+
+        <label>Chọn địa chỉ có sẵn (tùy chọn)</label>
+        <select asp-for="AddressRefId">
+            <option value="">-- Không chọn (tự thêm) --</option>
+            @foreach (var a in addresses)
+            {
+                <option value="@a.Id" selected="@(a.Id == Model.AddressRefId)">
+                    @a.AddressLine (@a.City)
+                </option>
+            }
+        </select>
+
+        <hr />
+        <h4>Hoặc cập nhật địa chỉ mới</h4>
+
+        <div class="row-2">
+            <div>
+                <label>Địa chỉ chi tiết</label>
+                <input name="newAddress.AddressLine" id="addressLine" value="@addr?.AddressLine" />
+            </div>
+            <div>
+                <label>Tỉnh / Thành phố</label>
+                <input name="newAddress.City" id="city" value="@addr?.City" readonly />
+            </div>
+            <div>
+                <label>Quận / Huyện</label>
+                <input name="newAddress.District" id="district" value="@addr?.District" readonly />
+            </div>
+            <div>
+                <label>Phường / Xã</label>
+                <input name="newAddress.Ward" id="ward" value="@addr?.Ward" readonly />
+            </div>
+            <div>
+                <label>Latitude</label>
+                <input name="newAddress.Latitude" id="lat" value="@addr?.Latitude" readonly />
+            </div>
+            <div>
+                <label>Longitude</label>
+                <input name="newAddress.Longitude" id="lng" value="@addr?.Longitude" readonly />
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="row-2">
+            <div>
+                <label>Ảnh bìa kho</label>
+                <input type="file" name="CoverImage" accept="image/*" />
+                @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+                {
+                    <img src="@Model.CoverImageUrl" style="width:100%;max-height:150px;margin-top:8px;border-radius:12px;" />
+                }
+            </div>
+            <div>
+                <label>Ảnh sơ đồ kho</label>
+                <input type="file" name="MapImage" accept="image/*" />
+                @if (!string.IsNullOrEmpty(Model.MapImageUrl))
+                {
+                    <img src="@Model.MapImageUrl" style="width:100%;max-height:150px;margin-top:8px;border-radius:12px;" />
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h4>Quản lý Slot</h4>
+        <table class="table" id="slotTable">
+            <thead>
+                <tr><th>Mã</th><th>Kích thước</th><th>Trạng thái</th><th></th></tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Slots.Count; i++)
+                {
+                    <tr>
+                        <td><input type="hidden" name="slots[@i].Code" value="@Model.Slots.ElementAt(i).Code" />@Model.Slots.ElementAt(i).Code</td>
+                        <td><input type="hidden" name="slots[@i].Size" value="@Model.Slots.ElementAt(i).Size" />@Model.Slots.ElementAt(i).Size</td>
+                        <td><input type="hidden" name="slots[@i].Status" value="@Model.Slots.ElementAt(i).Status" />@Model.Slots.ElementAt(i).Status</td>
+                        <td><button type="button" class="btn danger" onclick="this.closest('tr').remove()">X</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="row-2" style="margin-top:10px;">
+            <input type="text" id="slotCode" placeholder="Mã slot" />
+            <input type="text" id="slotSize" placeholder="Kích thước" />
+            <select id="slotStatus">
+                <option>Available</option>
+                <option>Occupied</option>
+                <option>Maintenance</option>
+            </select>
+            <button type="button" class="btn primary" id="btnAddSlot">+ Thêm Slot</button>
+        </div>
+    </div>
+
+    <button type="submit" class="btn primary">Lưu thay đổi</button>
+</form>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script>
+        const map = L.map('map').setView([@addr?.Latitude ?? 21.0278, @addr?.Longitude ?? 105.8342], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker = L.marker([@addr?.Latitude ?? 21.0278, @addr?.Longitude ?? 105.8342], { draggable: true }).addTo(map);
+
+        marker.on('dragend', function (e) {
+            const lat = e.target.getLatLng().lat.toFixed(6);
+            const lng = e.target.getLatLng().lng.toFixed(6);
+            document.getElementById("lat").value = lat;
+            document.getElementById("lng").value = lng;
+            fetchReverse(lat, lng);
+        });
+
+        const geocoderControl = L.Control.geocoder({
+            geocoder: L.Control.Geocoder.nominatim(),
+            placeholder: '🔍 Tìm kiếm địa chỉ...',
+            defaultMarkGeocode: false
+        }).on('markgeocode', function (e) {
+            const latlng = e.geocode.center;
+            marker.setLatLng(latlng);
+            map.setView(latlng, 15);
+            document.getElementById("lat").value = latlng.lat.toFixed(6);
+            document.getElementById("lng").value = latlng.lng.toFixed(6);
+            fetchReverse(latlng.lat, latlng.lng);
+        }).addTo(map);
+
+        function fetchReverse(lat, lng) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+                .then(res => res.json())
+                .then(d => {
+                    const a = d.address || {};
+                    document.getElementById("addressLine").value = d.display_name;
+                    document.getElementById("city").value = a.city || a.state || '';
+                    document.getElementById("district").value = a.county || a.suburb || '';
+                    document.getElementById("ward").value = a.village || a.town || '';
+                });
+        }
+
+        // Add Slot dynamically
+        document.getElementById("btnAddSlot").addEventListener("click", function () {
+            const code = slotCode.value.trim();
+            const size = slotSize.value.trim();
+            const status = slotStatus.value;
+            if (!code) return alert("Nhập mã slot!");
+            const row = document.createElement("tr");
+            const index = document.querySelectorAll("#slotTable tbody tr").length;
+            row.innerHTML = `
+                        <td><input type="hidden" name="slots[${index}].Code" value="${code}" />${code}</td>
+                        <td><input type="hidden" name="slots[${index}].Size" value="${size}" />${size}</td>
+                        <td><input type="hidden" name="slots[${index}].Status" value="${status}" />${status}</td>
+                        <td><button type="button" class="btn danger" onclick="this.closest('tr').remove()">X</button></td>`;
+            document.querySelector("#slotTable tbody").appendChild(row);
+            slotCode.value = "";
+            slotSize.value = "";
+            slotStatus.value = "Available";
+        });
+    </script>
+}

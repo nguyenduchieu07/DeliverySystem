@@ -12,6 +12,8 @@ namespace DataAccessLayer.Entities
         public Guid WarehouseId { get; set; }
         public string Code { get; set; } = null!;
         public string Status { get; set; } = "Available"; // enum
+        public string? Size { get; set; }
+        public string? ImageUrl { get; set; }
         public Guid? CurrentOrderId { get; set; }
         public virtual Warehouse Warehouse { get; set; } = null!;
     }
