@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDatabaseConfiguration(builder.Configuration); // Đăng ký DbContext
 builder.Services.AddIdentityFrameWork(); // Đăng ký Identity
-builder.Services.ConfigureRepositories(); // Đăng ký Repository
+builder.Services.ConfigureRepositories(builder.Configuration);
 builder.Services.AddServices(); // Đăng ký Service từ ServiceLayer
 // Register EmailSender with SMTP
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));

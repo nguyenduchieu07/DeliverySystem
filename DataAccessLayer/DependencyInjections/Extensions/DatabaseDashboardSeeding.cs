@@ -86,6 +86,8 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             {
                 Id = customerUser,
                 FullName = "Nguyễn Văn A",
+                PhoneNumber = "0123456789",
+                Email = "a@gmail.com",
                 PreferredLang = "vi",
                 Tier = "Basic",
                 KycLevel = "None",

@@ -28,7 +28,8 @@ public partial class Store : BaseEntity<Guid>
     public int? MaxOrdersPerDay { get; set; }
     public string? ActiveRegions { get; set; }
     public string? ServiceTypes { get; set; }  // JSON: ["storage", "delivery"]
-
+    public double? Latitude { get; set; } // Thêm
+    public double? Longitude { get; set; }
     // Tài chính
     public string? BankAccountNumber { get; set; }
     public string? BankName { get; set; }

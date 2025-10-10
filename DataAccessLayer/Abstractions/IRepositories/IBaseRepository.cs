@@ -20,5 +20,8 @@ namespace DataAccessLayer.Abstractions.IRepositories
         void Remove(TEntity entity);
 
         void RemoveMultiple(List<TEntity> entities);
+        Task<TEntity> AddAsync(TEntity entity);
+        Task<TEntity> GetByIdAsync(TKey id);
+        Task<List<TEntity>> GetAllAsync();
     }
 }

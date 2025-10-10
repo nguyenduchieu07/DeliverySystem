@@ -152,11 +152,14 @@ namespace ServiceLayer.Services
                 return (false, "Tài khoản của bạn đã bị vô hiệu hóa");
             }
 
-            // Kiểm tra vai trò Customer
+            // Đoạn code mới
+            var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
             var isCustomer = await _userManager.IsInRoleAsync(user, "Customer");
-            if (!isCustomer)
+
+            // Nếu không phải Admin VÀ cũng không phải Customer thì mới chặn
+            if (!isAdmin && !isCustomer)
             {
-                return (false, "Tài khoản này không phải là tài khoản khách hàng");
+                return (false, "Tài khoản không có quyền đăng nhập vào hệ thống này.");
             }
 
             // Đăng nhập
