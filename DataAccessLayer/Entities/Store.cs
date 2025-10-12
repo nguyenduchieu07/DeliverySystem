@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Entities.Common;
+using DataAccessLayer.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -11,7 +12,7 @@ public partial class Store : BaseEntity<Guid>
     public string? LegalName { get; set; }
     public string? LicenseNumber { get; set; }
     public string? TaxNumber { get; set; }
-    public string Status { get; set; } = null!;
+    public StatusValue Status { get; set; }
     public string? KycLevel { get; set; }
     public decimal RatingAvg { get; set; }
     public int RatingCount { get; set; }
@@ -33,10 +34,6 @@ public partial class Store : BaseEntity<Guid>
     // Tài chính
     public string? BankAccountNumber { get; set; }
     public string? BankName { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-
     // Navigation properties
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();

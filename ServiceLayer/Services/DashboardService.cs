@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Status = DataAccessLayer.Enums.StatusValue;
 namespace ServiceLayer.Services
 {
     public class DashboardService : IDashboardService
@@ -38,7 +38,7 @@ namespace ServiceLayer.Services
                 .GroupBy(_ => 1)
                 .Select(g => new
                 {
-                    PendingCount = g.Sum(o => o.Status == "pending" ? 1 : 0),
+                    PendingCount = g.Sum(o => o.Status == Status.Pending ? 1 : 0),
 
                     TodayCount = g.Sum(o =>
                         (o.CreatedAt >= todayStart && o.CreatedAt < tomorrowStart) ? 1 : 0),
@@ -74,7 +74,7 @@ namespace ServiceLayer.Services
 
 
             var pendingOrders = await orders
-                .Where(o => o.Status == "pending")
+                .Where(o => o.Status == Status.Pending)
                 .OrderByDescending(o => o.CreatedAt)
                 .Select(o => new OrderPeding
                 {

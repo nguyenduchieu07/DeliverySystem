@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using DataAccessLayer.Enums;
+using System.Runtime.CompilerServices;
 
 namespace PresentationLayer.Areas.Stores.Models
 {
@@ -10,7 +11,7 @@ namespace PresentationLayer.Areas.Stores.Models
 
         public string CustomerName { get; set; }
 
-        public string Status { get; set; }
+        public StatusValue Status { get; set; }
 
         public DateTime CreatedAt { get; set; }
 

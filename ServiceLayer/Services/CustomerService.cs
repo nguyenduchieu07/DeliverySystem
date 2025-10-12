@@ -1,5 +1,6 @@
 ﻿using DataAccessLayer.Abstractions.IRepositories;
 using DataAccessLayer.Entities;
+using DataAccessLayer.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
@@ -77,7 +78,7 @@ namespace ServiceLayer.Services
                     Email = email,
                     PhoneNumberConfirmed = false,
                     EmailConfirmed = false,
-                    Status = "Active",
+                    Status = StatusValue.Active,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -147,7 +148,7 @@ namespace ServiceLayer.Services
             }
 
             // Kiểm tra trạng thái tài khoản
-            if (user.Status != "Active")
+            if (user.Status != StatusValue.Active)
             {
                 return (false, "Tài khoản của bạn đã bị vô hiệu hóa");
             }

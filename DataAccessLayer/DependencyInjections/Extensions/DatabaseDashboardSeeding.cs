@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using status = DataAccessLayer.Enums.StatusValue;
 namespace DataAccessLayer.DependencyInjections.Extensions
 {
     public static class DatabaseDashboardSeeding
@@ -59,7 +59,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     Email = "owner@test.local",
                     NormalizedEmail = "OWNER@TEST.LOCAL",
                     EmailConfirmed = true,
-                    Status = "Active",
+                    Status = status.Active,
                     CreatedAt = dtToday,
                     UpdatedAt = dtToday,
                     PasswordHash = "AQAAAA..." // demo hash
@@ -72,7 +72,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     Email = "cust1@test.local",
                     NormalizedEmail = "CUST1@TEST.LOCAL",
                     EmailConfirmed = true,
-                    Status = "Active",
+                    Status = status.Active,
                     CreatedAt = dtToday,
                     UpdatedAt = dtToday,
                     PasswordHash = "AQAAAA..."
@@ -198,7 +198,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     DropoffAddressId = addrDropId,
                     DistanceKm = 7.2m,
                     EtaMinutes = 55,
-                    Status = "completed",
+                    Status = status.Completed,
                     TotalAmount = 2_200_000m,
                     Note = "August order",
                     CreatedAt = dtLastMonth,
@@ -213,7 +213,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     DropoffAddressId = addrDropId,
                     DistanceKm = 5.1m,
                     EtaMinutes = 45,
-                    Status = "pending",
+                    Status = status.Pending,
                     TotalAmount = 1_500_000m,
                     Note = "Yesterday pending",
                     CreatedAt = dtYesterday,
@@ -228,7 +228,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     DropoffAddressId = addrDropId,
                     DistanceKm = 3.4m,
                     EtaMinutes = 35,
-                    Status = "completed",
+                    Status = status.Completed,
                     TotalAmount = 2_000_000m,
                     Note = "Today completed",
                     CreatedAt = dtToday.AddHours(-2),
@@ -243,7 +243,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     DropoffAddressId = addrDropId,
                     DistanceKm = 9.0m,
                     EtaMinutes = 70,
-                    Status = "pending",
+                    Status = status.Pending,
                     TotalAmount = 3_100_000m,
                     Note = "Today pending",
                     CreatedAt = dtToday.AddHours(-1),
@@ -283,9 +283,9 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             });
 
             modelBuilder.Entity<WarehouseSlot>().HasData(
-                new WarehouseSlot { Id = slotA1, WarehouseId = whId, Code = "A1", Status = "Available", CurrentOrderId = null },
-                new WarehouseSlot { Id = slotA2, WarehouseId = whId, Code = "A2", Status = "Reserved", CurrentOrderId = orderYest },
-                new WarehouseSlot { Id = slotB1, WarehouseId = whId, Code = "B1", Status = "Available", CurrentOrderId = null }
+                new WarehouseSlot { Id = slotA1, WarehouseId = whId, Code = "A1", Status = status.Avalavaible, CurrentOrderId = null },
+                new WarehouseSlot { Id = slotA2, WarehouseId = whId, Code = "A2", Status = status.Reserved, CurrentOrderId = orderYest },
+                new WarehouseSlot { Id = slotB1, WarehouseId = whId, Code = "B1", Status = status.Avalavaible, CurrentOrderId = null }
             );
         }
     }
