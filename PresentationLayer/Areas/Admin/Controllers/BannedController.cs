@@ -12,14 +12,14 @@ namespace PresentationLayer.Areas.Admin.Controllers
     {
         private readonly DeliverySytemContext _db;
         public BannedController(DeliverySytemContext db) => _db = db;
-        public async Task<IActionResult> Index(TargetType? scope = TargetType.Customer, string? q = null, string? status = null)
+        public async Task<IActionResult> Index(TargetType? scope = TargetType.Customer, string? q = null, StatusValue? status = null)
         {
             
 
             if (scope == TargetType.Store)
             {
                 var stores = _db.Stores.AsQueryable();
-                if (!string.IsNullOrWhiteSpace(status)) stores = stores.Where(s => s.Status == status);
+                if (status != null) stores = stores.Where(s => s.Status == status);
                 if (!string.IsNullOrWhiteSpace(q)) stores = stores.Where(s => s.StoreName.Contains(q));
                 var model = await stores.OrderByDescending(s => s.UpdatedAt).Take(300).ToListAsync();
                 ViewBag.Scope = TargetType.Store;
@@ -28,7 +28,7 @@ namespace PresentationLayer.Areas.Admin.Controllers
             else
             {
                 var users = _db.Users.AsQueryable();
-                if (!string.IsNullOrWhiteSpace(status)) users = users.Where(u => u.Status == status);
+                if(status != null) users = users.Where(u => u.Status == status);
                 if (!string.IsNullOrWhiteSpace(q)) users = users.Where(u => (u.UserName ?? "").Contains(q) || (u.Email ?? "").Contains(q));
                 var model = await users.OrderByDescending(u => u.UpdatedAt).Take(300).ToListAsync();
                 ViewBag.Scope = TargetType.Customer;
@@ -41,7 +41,7 @@ namespace PresentationLayer.Areas.Admin.Controllers
         {
             var s = await _db.Stores.FindAsync(id);
             if (s == null) return NotFound();
-            s.Status = "Banned";
+            s.Status = StatusValue.Ban;
             s.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             TempData["ok"] = $"Store {s.StoreName} banned.";
@@ -53,7 +53,7 @@ namespace PresentationLayer.Areas.Admin.Controllers
         {
             var s = await _db.Stores.FindAsync(id);
             if (s == null) return NotFound();
-            s.Status = "Active";
+            s.Status =StatusValue.Active;
             s.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             TempData["ok"] = $"Store {s.StoreName} unbanned.";
@@ -66,7 +66,7 @@ namespace PresentationLayer.Areas.Admin.Controllers
         {
             var u = await _db.Users.FindAsync(id);
             if (u == null) return NotFound();
-            u.Status = "Banned";
+            u.Status = StatusValue.Ban;
             u.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             TempData["ok"] = $"User {(u.UserName ?? u.Email)} banned.";
@@ -78,7 +78,7 @@ namespace PresentationLayer.Areas.Admin.Controllers
         {
             var u = await _db.Users.FindAsync(id);
             if (u == null) return NotFound();
-            u.Status = "Active";
+            u.Status = StatusValue.Active;
             u.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             TempData["ok"] = $"User {(u.UserName ?? u.Email)} unbanned.";

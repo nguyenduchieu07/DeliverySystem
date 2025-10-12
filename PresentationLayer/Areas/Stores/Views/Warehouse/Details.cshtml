@@ -1,4 +1,5 @@
 ﻿@model DataAccessLayer.Entities.Warehouse
+@using DataAccessLayer.Enums
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     ViewBag.Title = "Warehouse Details";
@@ -100,9 +101,9 @@
                         {
                             var badgeClass = s.Status switch
                             {
-                                "Available" => "ok",
-                                "Occupied" => "warn",
-                                "Maintenance" => "danger",
+                                StatusValue.Avalavaible => "ok",
+                                StatusValue.Occupied => "warn",
+                                StatusValue.Maintenance => "danger",
                                 _ => ""
                             };
                             <tr>

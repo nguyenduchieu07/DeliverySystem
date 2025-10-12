@@ -16,8 +16,6 @@ public partial class Feedback : BaseEntity<Guid>
 
     public string? Comment { get; set; }
 
-    public DateTime CreatedAt { get; set; }
-
     public virtual User FromUser { get; set; } = null!;
 
     public virtual Order Order { get; set; } = null!;

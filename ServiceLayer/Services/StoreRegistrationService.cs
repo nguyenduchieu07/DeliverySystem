@@ -46,7 +46,7 @@ namespace ServiceLayer.Services
                     UserName = request.Email,
                     Email = request.Email,
                     PhoneNumber = request.PhoneNumber,
-                    Status = "Active",
+                    Status = StatusValue.Active,
                     UpdatedAt = DateTime.UtcNow
                 };
 
@@ -67,7 +67,7 @@ namespace ServiceLayer.Services
                     LegalName = request.LegalName,
                     LicenseNumber = request.LicenseNumber,
                     TaxNumber = request.TaxNumber,
-                    Status = "PendingKyc", // Initial status
+                    Status = StatusValue.PendingKyc, // Initial status
                     KycLevel = "None",
                     RatingAvg = 0,
                     RatingCount = 0,
@@ -102,7 +102,7 @@ namespace ServiceLayer.Services
                     OwnerId = store.Id,
                     Currency = "VND",
                     Balance = 0,
-                    Status = "Active"
+                    Status = StatusValue.Active
                 };
                 await _context.Wallets.AddAsync(wallet);
 
@@ -127,7 +127,7 @@ namespace ServiceLayer.Services
                     StoreId = store.Id,
                     StoreName = store.StoreName,
                     Status = store.Status,
-                    KycStatus = kycSubmission.Status.ToString(),
+                    KycStatus = (StatusValue)kycSubmission.Status,
                     Message = "Store registered successfully. Please submit KYC documents for verification."
                 };
             }

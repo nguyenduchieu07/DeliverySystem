@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Entities.Common;
+using DataAccessLayer.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -14,7 +15,7 @@ public partial class Wallet : BaseEntity<Guid>
 
     public decimal Balance { get; set; }
 
-    public string Status { get; set; } = null!;
+    public StatusValue Status { get; set; }
 
     public virtual ICollection<WalletTransaction> WalletTransactions { get; set; } = new List<WalletTransaction>();
 }

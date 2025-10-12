@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Entities.Common;
+using DataAccessLayer.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace DataAccessLayer.Entities
         public string? MapImageUrl { get; set; }     // sơ đồ (optional)
         public virtual Store Store { get; set; } = null!;
         public Address? Address { get; set; }
+        public StatusValue Status { get; set; }
         public virtual ICollection<WarehouseSlot> Slots { get; set; } = new List<WarehouseSlot>();
     }
 }
