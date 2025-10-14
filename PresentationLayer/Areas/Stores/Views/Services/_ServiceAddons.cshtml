@@ -1,0 +1,121 @@
+﻿@model PresentationLayer.Areas.Stores.Models.Services.ServiceEditViewModel
+
+<style>
+  /* ===== STABLE GRID FOR ADDONS (giữ type="text") ===== */
+  .matrix.addons{
+    --gap:8px; --act:44px;
+    display:grid;
+    grid-template-columns: 220px minmax(260px,1fr) 160px 140px var(--act);
+    gap:var(--gap); align-items:center;
+  }
+  .matrix.addons .head{
+    font-size:12px; color:var(--muted);
+    text-transform:uppercase; white-space:nowrap;
+  }
+  .matrix-row{ display:contents; }
+
+  /* Ép cell đúng cột */
+  .matrix.addons .c-name  { grid-column:1; }
+  .matrix.addons .c-desc  { grid-column:2; }
+  .matrix.addons .c-kind  { grid-column:3; }
+  .matrix.addons .c-value { grid-column:4; }
+  .matrix.addons .c-act   { grid-column:5; justify-self:end; }
+
+  .matrix.addons input, .matrix.addons select{
+    width:100%; min-width:0; height:38px;
+    padding:6px 10px; border-radius:12px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+  }
+
+  .btn-del{
+    width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:10px; border:1px solid var(--border);
+    background:rgba(255,107,107,.12); color:var(--danger);
+    cursor:pointer; font-size:18px; line-height:1; transition:.15s ease;
+  }
+  .btn-del:hover{ transform:translateY(-1px); border-color:#ff9a9a; }
+
+  .matrix-actions{ margin-top:10px; }
+  .matrix-actions .btn{ height:36px; }
+
+  /* Mobile: gom 2 cột */
+  @@media (max-width: 900px){
+    .matrix.addons{ grid-template-columns: 1fr 1fr; }
+    .matrix.addons .head{ display:none; }
+    .matrix.addons .c-name  { grid-column:1 / -1; }
+    .matrix.addons .c-desc  { grid-column:1 / -1; }
+    .matrix.addons .c-kind  { grid-column:1; }
+    .matrix.addons .c-value { grid-column:2; }
+    .matrix.addons .c-act   { grid-column:2; justify-self:end; }
+  }
+</style>
+
+<div class="matrix addons" id="addonsGrid">
+  <div class="head">Tên</div>
+  <div class="head">Mô tả</div>
+  <div class="head">Kiểu</div>
+  <div class="head">Giá trị</div>
+  <div class="head"></div>
+
+  @for (var i = 0; i < (Model.Addons?.Count ?? 0); i++)
+  {
+    <div class="matrix-row">
+      <input  class="c-name"  type="text" name="Addons[@i].Name"        value="@Model.Addons[i].Name" />
+      <input  class="c-desc"  type="text" name="Addons[@i].Description" value="@Model.Addons[i].Description" />
+      <select class="c-kind"  name="Addons[@i].IsPercentage">
+        <option value="false" selected="@(!Model.Addons[i].IsPercentage)">₫ (cố định)</option>
+        <option value="true"  selected="@( Model.Addons[i].IsPercentage)">% (theo %)</option>
+      </select>
+      <input  class="c-value" type="text" name="Addons[@i].Value"       value="@Model.Addons[i].Value" />
+      <button type="button" class="btn-del c-act" title="Xóa addon">×</button>
+    </div>
+  }
+</div>
+
+<div class="matrix-actions">
+  <button type="button" class="btn" id="btnAddAddon">+ Thêm addon</button>
+</div>
+
+<script>
+(function(){
+  const grid = document.getElementById('addonsGrid');
+  const btn  = document.getElementById('btnAddAddon');
+  if(!grid || !btn) return;
+
+  btn.addEventListener('click', () => {
+    const i = grid.querySelectorAll('.matrix-row').length;
+    const row = document.createElement('div');
+    row.className = 'matrix-row';
+    row.innerHTML = `
+      <input  class="c-name"  type="text" name="Addons[${i}].Name" />
+      <input  class="c-desc"  type="text" name="Addons[${i}].Description" />
+      <select class="c-kind"  name="Addons[${i}].IsPercentage">
+        <option value="false">₫ (cố định)</option>
+        <option value="true">% (theo %)</option>
+      </select>
+      <input  class="c-value" type="text" name="Addons[${i}].Value" />
+      <button type="button" class="btn-del c-act" title="Xóa addon">×</button>
+    `;
+    grid.appendChild(row);
+  });
+
+  grid.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-del')) {
+      const row = e.target.closest('.matrix-row');
+      if (row) row.remove();
+      reindex();
+    }
+  });
+
+  function reindex(){
+    const rows = grid.querySelectorAll('.matrix-row');
+    rows.forEach((row, idx) => {
+      row.querySelectorAll('input,select,textarea').forEach(el => {
+        const name = el.getAttribute('name');
+        if (!name) return;
+        el.setAttribute('name', name.replace(/Addons\[\d+\]/, `Addons[${idx}]`));
+      });
+    });
+  }
+})();
+</script>

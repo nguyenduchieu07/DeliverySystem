@@ -174,8 +174,8 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             );
 
             // (Optional) ServicePrice – không bắt buộc cho dashboard, seed 1 dòng minh họa
-            modelBuilder.Entity<ServicePrice>().HasData(
-                new ServicePrice
+            modelBuilder.Entity<ServicePriceRule>().HasData(
+                new ServicePriceRule
                 {
                     Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa14"),
                     ServiceId = svcPackId,

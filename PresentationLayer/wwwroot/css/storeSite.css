@@ -1062,3 +1062,159 @@ a {
     align-items: center;
     gap: 6px;
 }
+/* Chống mọi overlay vô tình đè inputs trong content */
+.content * {
+    pointer-events: auto !important;
+}
+
+.content .skeleton, .content .skeleton::after {
+    pointer-events: none !important;
+}
+
+.table td {
+    position: relative;
+}
+
+.table input, .table select, .table textarea {
+    position: relative;
+    z-index: 10;
+}
+
+label {
+    pointer-events: none;
+}
+
+    label > input, label > select, label > textarea {
+        pointer-events: auto;
+    }
+.table td {
+    position: relative;
+}
+
+.table input, .table select, .table textarea {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.skeleton, .skeleton::after {
+    pointer-events: none;
+}
+/* ===== MATRIX LISTS (áp dụng chung cho Sizes & Addons) ===== */
+.matrix {
+    --gap: 8px;
+    display: grid;
+    gap: var(--gap);
+    align-items: center;
+}
+
+    .matrix .head {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+    }
+
+/* mỗi hàng là "contents" để các ô bám lưới cha */
+.matrix-row {
+    display: contents;
+}
+
+/* cột cho từng màn (desktop) */
+.matrix.sizes {
+    --cols: 120px 1fr 110px 110px 120px 140px;
+}
+
+.matrix.addons {
+    --cols: 200px 1fr 140px 140px;
+}
+
+/* gán lưới */
+.matrix.sizes {
+    grid-template-columns: var(--cols);
+}
+
+.matrix.addons {
+    grid-template-columns: var(--cols);
+}
+
+/* input/ select trong lưới – đảm bảo click/focus, full width */
+.matrix input,
+.matrix select,
+.matrix textarea {
+    width: 100%;
+    min-width: 0; /* tránh tràn cột khi text dài */
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+}
+
+/* đồng bộ chiều cao */
+.matrix input,
+.matrix select {
+    height: 38px;
+}
+
+/* table fallback (nếu còn dùng table ở đâu) */
+.table td {
+    position: relative;
+}
+
+.table input, .table select, .table textarea {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    width: 100%;
+    min-width: 0;
+}
+
+/* chống mọi overlay vô tình đè lên input */
+.skeleton, .skeleton::after {
+    pointer-events: none;
+}
+
+/* Responsive: gom cột trên mobile */
+@media (max-width: 900px) {
+    .matrix.sizes {
+        --cols: 1fr 1fr 1fr;
+    }
+
+    .matrix.addons {
+        --cols: 1fr 1fr;
+    }
+    /* nhãn đầu dòng hiển thị theo hàng */
+    .matrix .head {
+        white-space: nowrap;
+    }
+}
+
+/* thêm một chút khoảng cách cho nút thêm dòng */
+.matrix-actions {
+    margin-top: 10px;
+}
+/* Size Options: cân cột đẹp hơn */
+.matrix.sizes {
+    /* code | name rộng | m3 | m2 | kg | price */
+    grid-template-columns: 120px minmax(280px,2fr) 110px 110px 120px 160px;
+}
+
+    /* header không bị xuống dòng lặt vặt */
+    .matrix.sizes .head {
+        white-space: nowrap;
+    }
+
+    /* canh phải các ô số cho dễ đọc */
+    .matrix.sizes input[type="number"] {
+        text-align: right;
+    }
+
+    /* khoảng cách dọc giữa 2 hàng cho thoáng */
+    .matrix.sizes .matrix-row > * {
+        margin-top: 4px;
+    }
+
+/* Mobile: gom 2–3 cột một hàng cho dễ nhập */
+@media (max-width: 900px) {
+    .matrix.sizes {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}

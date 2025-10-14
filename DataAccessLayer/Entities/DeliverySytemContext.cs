@@ -32,7 +32,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
     public virtual DbSet<Service> Services { get; set; }
 
-    public virtual DbSet<ServicePrice> ServicePrices { get; set; }
+    public virtual DbSet<ServicePriceRule> PriceRules { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
 
@@ -53,7 +53,9 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
     public virtual DbSet<KycDocument> KycDocuments { get; set; }    
 
     public virtual DbSet<KycSubmission> KycSubmissions {  get; set; }
+    public virtual DbSet<ServiceAddon> ServiceAddons { get; set; }
 
+    public virtual DbSet<ServiceSizeOption> ServiceSizeOptions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>
@@ -77,20 +79,30 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                 .HasConstraintName("FK_Addresses_Users");
         });
 
-        modelBuilder.Entity<Category>(entity =>
+        modelBuilder.Entity<Category>(b =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Categori__19093A0B3842868A");
+            b.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            b.Property(x => x.Slug).HasMaxLength(200);
+            b.Property(x => x.Path).HasMaxLength(1000);
+            b.Property(x => x.Icon).HasMaxLength(200);
+            b.Property(x => x.ThumbnailUrl).HasMaxLength(500);
 
-            entity.HasIndex(e => e.Slug, "UQ__Categori__BC7B5FB62D2959A5").IsUnique();
+            b.HasOne(x => x.Parent)
+             .WithMany(x => x.InverseParent)
+             .HasForeignKey(x => x.ParentId)
+             .OnDelete(DeleteBehavior.Restrict); // tránh cascade vòng
 
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.Name).HasMaxLength(120);
-            entity.Property(e => e.Slug).HasMaxLength(140);
-            entity.Property(e => e.SortOrder).HasDefaultValue(0);
+            // Index tối ưu
+            b.HasIndex(x => x.ParentId);
+            b.HasIndex(x => new { x.ParentId, x.SortOrder });
+            b.HasIndex(x => x.Path);
 
-            entity.HasOne(d => d.Parent).WithMany(p => p.InverseParent)
-                .HasForeignKey(d => d.ParentId)
-                .HasConstraintName("FK_Categories_Parent");
+
+            b.HasIndex(x => new { x.StoreId, x.Slug }).IsUnique();
+
+            // Check: ParentId != Id
+            b.ToTable(t => t.HasCheckConstraint("CK_Category_Parent_Not_Self", "[ParentId] IS NULL OR [ParentId] <> [Id]"));
+
         });
 
         modelBuilder.Entity<Customer>(entity =>
@@ -240,7 +252,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.HasKey(e => e.Id).HasName("PK__Services__C51BB00A8BC5FA65");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.BasePrice).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.BasePrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Name).HasMaxLength(150);
@@ -256,22 +268,65 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                 .HasForeignKey(d => d.StoreId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Services_Stores");
+            entity.HasMany(x => x.PriceRules)
+                .WithOne(r => r.Service)
+                .HasForeignKey(r => r.ServiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(x => x.Addons)
+                .WithOne(a => a.Service)
+                .HasForeignKey(a => a.ServiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(x => x.SizeOptions)
+                .WithOne(s => s.Service)
+                .HasForeignKey(s => s.ServiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
         });
 
-        modelBuilder.Entity<ServicePrice>(entity =>
+        modelBuilder.Entity<ServicePriceRule>(b =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ServiceP__49575BAFF20156A2");
+            b.Property(x => x.Price).HasColumnType("decimal(18,2)");
+            b.Property(x => x.MinVolumeM3).HasColumnType("decimal(18,4)");
+            b.Property(x => x.MaxVolumeM3).HasColumnType("decimal(18,4)");
+            b.Property(x => x.MinAreaM2).HasColumnType("decimal(18,4)");
+            b.Property(x => x.MaxAreaM2).HasColumnType("decimal(18,4)");
+            b.Property(x => x.MinQty).HasColumnType("decimal(18,2)");
+            b.Property(x => x.MaxQty).HasColumnType("decimal(18,2)");
 
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.MinQty).HasDefaultValue(1);
-            entity.Property(e => e.Price).HasColumnType("decimal(12, 2)");
+            // Index giúp tìm rule hiệu quả
+            b.HasIndex(x => new { x.ServiceId, x.ValidFrom, x.ValidTo });
+            b.HasIndex(x => new { x.ServiceId, x.MinVolumeM3, x.MaxVolumeM3, x.MinDays, x.MaxDays });
 
-            entity.HasOne(d => d.Service).WithMany(p => p.ServicePrices)
-                .HasForeignKey(d => d.ServiceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ServicePrices_Services");
+            // Check cơ bản để tránh range sai
+            b.ToTable(t => t.HasCheckConstraint("CK_ServicePriceRule_Ranges", @"
+            (MinVolumeM3 IS NULL OR MaxVolumeM3 IS NULL OR MinVolumeM3 <= MaxVolumeM3) AND
+            (MinAreaM2  IS NULL OR MaxAreaM2  IS NULL OR MinAreaM2  <= MaxAreaM2)  AND
+            (MinQty     IS NULL OR MaxQty     IS NULL OR MinQty     <= MaxQty)     AND
+            (MinDays    IS NULL OR MaxDays    IS NULL OR MinDays    <= MaxDays)
+        "));
         });
 
+        modelBuilder.Entity<ServiceAddon>(b =>
+        {
+            b.Property(x => x.Name).HasMaxLength(200);
+            b.Property(x => x.Value).HasColumnType("decimal(18,2)");
+            b.HasIndex(x => new { x.ServiceId, x.Name }).IsUnique();
+        });
+
+        modelBuilder.Entity<ServiceSizeOption>(b =>
+        {
+            b.Property(x => x.Code).HasMaxLength(50);
+            b.Property(x => x.DisplayName).HasMaxLength(200);
+            b.Property(x => x.VolumeM3).HasColumnType("decimal(18,4)");
+            b.Property(x => x.AreaM2).HasColumnType("decimal(18,4)");
+            b.Property(x => x.MaxWeightKg).HasColumnType("decimal(18,2)");
+            b.Property(x => x.PriceOverride).HasColumnType("decimal(18,2)");
+
+            b.HasIndex(x => new { x.ServiceId, x.Code }).IsUnique();
+        });
         modelBuilder.Entity<Store>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Stores__3B82F101588E2030");

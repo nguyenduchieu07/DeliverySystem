@@ -56,30 +56,6 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Categories",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
-                    Slug = table.Column<string>(type: "nvarchar(140)", maxLength: 140, nullable: true),
-                    SortOrder = table.Column<int>(type: "int", nullable: true, defaultValue: 0),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__Categori__19093A0B3842868A", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Categories_Parent",
-                        column: x => x.ParentId,
-                        principalTable: "Categories",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Wallets",
                 columns: table => new
                 {
@@ -242,7 +218,7 @@ namespace DataAccessLayer.Migrations
                     LegalName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
                     LicenseNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     TaxNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Status = table.Column<int>(type: "int", maxLength: 20, nullable: false, defaultValue: 2),
+                    Status = table.Column<int>(type: "int", maxLength: 20, nullable: false, defaultValue: 0),
                     KycLevel = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "None"),
                     RatingAvg = table.Column<decimal>(type: "decimal(3,2)", nullable: false),
                     RatingCount = table.Column<int>(type: "int", nullable: false),
@@ -309,6 +285,46 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Categories",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Slug = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Icon = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    ThumbnailUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    SortOrder = table.Column<int>(type: "int", nullable: true),
+                    Path = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    Level = table.Column<int>(type: "int", nullable: false),
+                    IsLeaf = table.Column<bool>(type: "bit", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Categories", x => x.Id);
+                    table.CheckConstraint("CK_Category_Parent_Not_Self", "[ParentId] IS NULL OR [ParentId] <> [Id]");
+                    table.ForeignKey(
+                        name: "FK_Categories_Categories_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Categories_Stores_StoreId",
+                        column: x => x.StoreId,
+                        principalTable: "Stores",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "KycSubmissions",
                 columns: table => new
                 {
@@ -366,39 +382,6 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Services",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Unit = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false, defaultValue: "Job"),
-                    BasePrice = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())"),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__Services__C51BB00A8BC5FA65", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Services_Categories",
-                        column: x => x.CategoryId,
-                        principalTable: "Categories",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Services_Stores",
-                        column: x => x.StoreId,
-                        principalTable: "Stores",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "StoreStaff",
                 columns: table => new
                 {
@@ -406,7 +389,7 @@ namespace DataAccessLayer.Migrations
                     StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Role = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Status = table.Column<int>(type: "int", maxLength: 20, nullable: false, defaultValue: 2),
+                    Status = table.Column<int>(type: "int", maxLength: 20, nullable: false, defaultValue: 0),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -457,6 +440,40 @@ namespace DataAccessLayer.Migrations
                         principalTable: "Stores",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Services",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
+                    StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Unit = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false, defaultValue: "Job"),
+                    BasePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PricingModel = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK__Services__C51BB00A8BC5FA65", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Services_Categories",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Services_Stores",
+                        column: x => x.StoreId,
+                        principalTable: "Stores",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -537,32 +554,6 @@ namespace DataAccessLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ServicePrices",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    ServiceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ValidFrom = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ValidTo = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
-                    MinQty = table.Column<int>(type: "int", nullable: true, defaultValue: 1),
-                    MaxQty = table.Column<int>(type: "int", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK__ServiceP__49575BAFF20156A2", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ServicePrices_Services",
-                        column: x => x.ServiceId,
-                        principalTable: "Services",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "WarehouseSlots",
                 columns: table => new
                 {
@@ -587,6 +578,96 @@ namespace DataAccessLayer.Migrations
                         principalTable: "Warehouses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ServiceAddon",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ServiceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsPercentage = table.Column<bool>(type: "bit", nullable: false),
+                    Value = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ServiceAddon", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ServiceAddon_Services_ServiceId",
+                        column: x => x.ServiceId,
+                        principalTable: "Services",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ServicePrices",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ServiceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ValidFrom = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ValidTo = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    MinVolumeM3 = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    MaxVolumeM3 = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    MinAreaM2 = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    MaxAreaM2 = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    MinQty = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    MaxQty = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    MinDays = table.Column<int>(type: "int", nullable: true),
+                    MaxDays = table.Column<int>(type: "int", nullable: true),
+                    TimeUnit = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ApplyModel = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ServicePrices", x => x.Id);
+                    table.CheckConstraint("CK_ServicePriceRule_Ranges", "\r\n            (MinVolumeM3 IS NULL OR MaxVolumeM3 IS NULL OR MinVolumeM3 <= MaxVolumeM3) AND\r\n            (MinAreaM2  IS NULL OR MaxAreaM2  IS NULL OR MinAreaM2  <= MaxAreaM2)  AND\r\n            (MinQty     IS NULL OR MaxQty     IS NULL OR MinQty     <= MaxQty)     AND\r\n            (MinDays    IS NULL OR MaxDays    IS NULL OR MinDays    <= MaxDays)\r\n        ");
+                    table.ForeignKey(
+                        name: "FK_ServicePrices_Services_ServiceId",
+                        column: x => x.ServiceId,
+                        principalTable: "Services",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ServiceSizeOption",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ServiceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    DisplayName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    VolumeM3 = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    AreaM2 = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
+                    MaxWeightKg = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    PriceOverride = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ServiceSizeOption", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ServiceSizeOption_Services_ServiceId",
+                        column: x => x.ServiceId,
+                        principalTable: "Services",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -664,7 +745,7 @@ namespace DataAccessLayer.Migrations
                     Method = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     Provider = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: true),
                     ProviderTxnId = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: true),
-                    Status = table.Column<int>(type: "int", maxLength: 20, nullable: false, defaultValue: 2),
+                    Status = table.Column<int>(type: "int", maxLength: 20, nullable: false, defaultValue: 0),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -752,32 +833,25 @@ namespace DataAccessLayer.Migrations
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "Status", "TwoFactorEnabled", "UpdatedAt", "UserName" },
                 values: new object[,]
                 {
-                    { new Guid("22222222-2222-2222-2222-222222222221"), 0, "con-blue", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "owner.blue@demo.local", true, false, null, "OWNER.BLUE@DEMO.LOCAL", "BLUEOWNER", "AQAAAAIAAYagAAAAEJ+DKkp0Wyk3hQ6qxhQAZ6QxIXCGYIOgbsD6fiYWmOAvWdSdHB17ODM9ETI/SaEp1Q==", null, false, "sec-blue", 8, false, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blueowner" },
-                    { new Guid("22222222-2222-2222-2222-222222222222"), 0, "con-fresh", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "owner.fresh@demo.local", true, false, null, "OWNER.FRESH@DEMO.LOCAL", "FRESHOWNER", "AQAAAAIAAYagAAAAEJ+DKkp0Wyk3hQ6qxhQAZ6QxIXCGYIOgbsD6fiYWmOAvWdSdHB17ODM9ETI/SaEp1Q==", null, false, "sec-fresh", 8, false, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "freshowner" },
-                    { new Guid("22222222-2222-2222-2222-222222222223"), 0, "con-prime", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "owner.prime@demo.local", true, false, null, "OWNER.PRIME@DEMO.LOCAL", "PRIMEOWNER", "AQAAAAIAAYagAAAAEJ+DKkp0Wyk3hQ6qxhQAZ6QxIXCGYIOgbsD6fiYWmOAvWdSdHB17ODM9ETI/SaEp1Q==", null, false, "sec-prime", 8, false, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "primeowner" },
-                    { new Guid("aaaaaaa1-0000-0000-0000-000000000001"), 0, "12db2a45-79e9-4a54-a067-b4d8ef5afd68", new DateTime(2025, 10, 12, 11, 25, 18, 927, DateTimeKind.Utc).AddTicks(5721), "store1@gmail.com", true, false, null, "store1@gmail.com", "store1", "AQAAAAIAAYagAAAAEGpjJaMQ8a0EMy53L9egTLMBFI+/2dzoqx5hYQHfB7Wgndz1qE6TcTNRrpYwQOrAzg==", null, false, null, 8, false, new DateTime(2025, 10, 12, 11, 25, 18, 927, DateTimeKind.Utc).AddTicks(5732), "store1" },
-                    { new Guid("aaaaaaa1-0000-0000-0000-000000000002"), 0, "75af921c-7eb8-4589-b753-30a5a3ba1b8e", new DateTime(2025, 10, 12, 11, 25, 19, 19, DateTimeKind.Utc).AddTicks(8381), "SystemAdmin@gmail.com", true, false, null, "SystemAdmin@gmail.com", "SystemAdmin", "AQAAAAIAAYagAAAAEABcmp7cNL3iIyismYl8j5N+ioqlo9tV/rCoV7eOoYMZx6s0nNSCsWG8IfRxaeaTKA==", null, false, null, 8, false, new DateTime(2025, 10, 12, 11, 25, 19, 19, DateTimeKind.Utc).AddTicks(8408), "SystemAdmin" },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01"), 0, "bfbc4234-1e35-4f62-bb88-1261ce815227", new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc), "owner@test.local", true, false, null, "OWNER@TEST.LOCAL", "STOREOWNER", "AQAAAA...", null, false, null, 8, false, new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc), "storeowner" },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), 0, "f6affb2b-a4ae-4677-9f75-80c86c82cbcc", new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc), "cust1@test.local", true, false, null, "CUST1@TEST.LOCAL", "CUSTOMER1", "AQAAAA...", null, false, null, 8, false, new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc), "customer1" }
+                    { new Guid("22222222-2222-2222-2222-222222222221"), 0, "con-blue", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "owner.blue@demo.local", true, false, null, "OWNER.BLUE@DEMO.LOCAL", "BLUEOWNER", "AQAAAAIAAYagAAAAEHKMQwEucanBL3693YknbnMvee6W39zbtsBE+Q8DxTid7K13PlYPQneuMWRp5U2nKQ==", null, false, "sec-blue", 8, false, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blueowner" },
+                    { new Guid("22222222-2222-2222-2222-222222222222"), 0, "con-fresh", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "owner.fresh@demo.local", true, false, null, "OWNER.FRESH@DEMO.LOCAL", "FRESHOWNER", "AQAAAAIAAYagAAAAEHKMQwEucanBL3693YknbnMvee6W39zbtsBE+Q8DxTid7K13PlYPQneuMWRp5U2nKQ==", null, false, "sec-fresh", 8, false, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "freshowner" },
+                    { new Guid("22222222-2222-2222-2222-222222222223"), 0, "con-prime", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "owner.prime@demo.local", true, false, null, "OWNER.PRIME@DEMO.LOCAL", "PRIMEOWNER", "AQAAAAIAAYagAAAAEHKMQwEucanBL3693YknbnMvee6W39zbtsBE+Q8DxTid7K13PlYPQneuMWRp5U2nKQ==", null, false, "sec-prime", 8, false, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "primeowner" },
+                    { new Guid("aaaaaaa1-0000-0000-0000-000000000001"), 0, "fc4a8f42-dca6-442e-85a5-10ca41b5da43", new DateTime(2025, 10, 14, 9, 14, 23, 253, DateTimeKind.Utc).AddTicks(73), "store1@gmail.com", true, false, null, "store1@gmail.com", "store1", "AQAAAAIAAYagAAAAEEzD0dCcX7PxABwl6gqPSD3iy/5Kj+v+2hG8Uh1JbypH3YWRJ1lEumx+yh+W3VNX8A==", null, false, null, 8, false, new DateTime(2025, 10, 14, 9, 14, 23, 253, DateTimeKind.Utc).AddTicks(77), "store1" },
+                    { new Guid("aaaaaaa1-0000-0000-0000-000000000002"), 0, "fe115472-067e-4419-b60c-2918d1c3092f", new DateTime(2025, 10, 14, 9, 14, 23, 350, DateTimeKind.Utc).AddTicks(1606), "SystemAdmin@gmail.com", true, false, null, "SystemAdmin@gmail.com", "SystemAdmin", "AQAAAAIAAYagAAAAEG1rrr1j/MtX3+Ofu8qwgHh8TUKtciWU4hwAyaVJEz0WqkIsOTmAKfFSEwImzUB8nw==", null, false, null, 8, false, new DateTime(2025, 10, 14, 9, 14, 23, 350, DateTimeKind.Utc).AddTicks(1610), "SystemAdmin" },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01"), 0, "59fc6ab3-d195-4c65-aafd-002ae379f451", new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc), "owner@test.local", true, false, null, "OWNER@TEST.LOCAL", "STOREOWNER", "AQAAAA...", null, false, null, 8, false, new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc), "storeowner" },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), 0, "61d2b551-28a3-40be-9fab-14bbe42a1108", new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc), "cust1@test.local", true, false, null, "CUST1@TEST.LOCAL", "CUSTOMER1", "AQAAAA...", null, false, null, 8, false, new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc), "customer1" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Categories",
-                columns: new[] { "Id", "CreatedAt", "DeletedAt", "Name", "ParentId", "Slug", "SortOrder", "UpdatedAt", "UpdatedBy" },
+                columns: new[] { "Id", "CreatedAt", "DeletedAt", "Description", "Icon", "IsActive", "IsLeaf", "Level", "Name", "ParentId", "Path", "Slug", "SortOrder", "Status", "StoreId", "ThumbnailUrl", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("aaaaaaa1-0000-0000-0000-000000000001"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(6806), null, "Dịch vụ vận chuyển", null, "van-chuyen", 1, null, null },
-                    { new Guid("aaaaaaa2-0000-0000-0000-000000000001"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(6849), null, "Lưu kho", null, "luu-kho", 2, null, null },
-                    { new Guid("aaaaaaa3-0000-0000-0000-000000000001"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(6852), null, "Dọn dẹp", null, "don-dep", 3, null, null }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Categories",
-                columns: new[] { "Id", "CreatedAt", "DeletedAt", "Name", "ParentId", "Slug", "UpdatedAt", "UpdatedBy" },
-                values: new object[,]
-                {
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"), new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3244), null, "Moving", null, null, null, null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa11"), new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3252), null, "Storage", null, null, null, null }
+                    { new Guid("aaaaaaa1-0000-0000-0000-000000000001"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(836), null, null, null, true, false, 0, "Dịch vụ vận chuyển", null, null, "van-chuyen", 1, 8, null, null, null, null },
+                    { new Guid("aaaaaaa2-0000-0000-0000-000000000001"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(859), null, null, null, true, false, 0, "Lưu kho", null, null, "luu-kho", 2, 8, null, null, null, null },
+                    { new Guid("aaaaaaa3-0000-0000-0000-000000000001"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(861), null, null, null, true, false, 0, "Dọn dẹp", null, null, "don-dep", 3, 8, null, null, null, null },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"), new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8540), null, null, null, true, false, 0, "Moving", null, null, null, null, 8, null, null, null, null },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa11"), new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8546), null, null, null, true, false, 0, "Storage", null, null, null, null, 8, null, null, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -785,8 +859,8 @@ namespace DataAccessLayer.Migrations
                 columns: new[] { "Id", "Active", "AddressLine", "City", "CreatedAt", "DeletedAt", "District", "IsDefault", "Label", "Latitude", "Longitude", "StoreId", "UpdatedAt", "UpdatedBy", "UserId", "Ward" },
                 values: new object[,]
                 {
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), true, "89 Trần Hưng Đạo", "Hà Nội", new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3191), null, "Hoàn Kiếm", true, "Home Pickup", 21.026, 105.84099999999999, null, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), "Cửa Nam" },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), true, "25 Lê Duẩn", "Hồ Chí Minh", new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3194), null, "Q.1", false, "New Apartment", 10.782, 106.7, null, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), "Bến Nghé" }
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), true, "89 Trần Hưng Đạo", "Hà Nội", new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8499), null, "Hoàn Kiếm", true, "Home Pickup", 21.026, 105.84099999999999, null, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), "Cửa Nam" },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), true, "25 Lê Duẩn", "Hồ Chí Minh", new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8503), null, "Q.1", false, "New Apartment", 10.782, 106.7, null, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), "Bến Nghé" }
                 });
 
             migrationBuilder.InsertData(
@@ -803,16 +877,16 @@ namespace DataAccessLayer.Migrations
 
             migrationBuilder.InsertData(
                 table: "Categories",
-                columns: new[] { "Id", "CreatedAt", "DeletedAt", "Name", "ParentId", "Slug", "SortOrder", "UpdatedAt", "UpdatedBy" },
+                columns: new[] { "Id", "CreatedAt", "DeletedAt", "Description", "Icon", "IsActive", "IsLeaf", "Level", "Name", "ParentId", "Path", "Slug", "SortOrder", "Status", "StoreId", "ThumbnailUrl", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("aaaaaaa1-0000-0000-0000-000000000002"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(6855), null, "Chuyển nhà", new Guid("aaaaaaa1-0000-0000-0000-000000000001"), "chuyen-nha", 1, null, null },
-                    { new Guid("aaaaaaa1-0000-0000-0000-000000000003"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(6858), null, "Chuyển văn phòng", new Guid("aaaaaaa1-0000-0000-0000-000000000001"), "chuyen-van-phong", 2, null, null },
-                    { new Guid("aaaaaaa1-0000-0000-0000-000000000004"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(6861), null, "Xe tải theo km", new Guid("aaaaaaa1-0000-0000-0000-000000000001"), "xe-tai-theo-km", 3, null, null },
-                    { new Guid("aaaaaaa2-0000-0000-0000-000000000002"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(6864), null, "Theo giờ", new Guid("aaaaaaa2-0000-0000-0000-000000000001"), "theo-gio", 1, null, null },
-                    { new Guid("aaaaaaa2-0000-0000-0000-000000000003"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(7017), null, "Theo ngày", new Guid("aaaaaaa2-0000-0000-0000-000000000001"), "theo-ngay", 2, null, null },
-                    { new Guid("aaaaaaa3-0000-0000-0000-000000000002"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(7021), null, "Vệ sinh nhà", new Guid("aaaaaaa3-0000-0000-0000-000000000001"), "ve-sinh-nha", 1, null, null },
-                    { new Guid("aaaaaaa3-0000-0000-0000-000000000003"), new DateTime(2025, 10, 12, 18, 25, 18, 927, DateTimeKind.Local).AddTicks(7024), null, "Vệ sinh văn phòng", new Guid("aaaaaaa3-0000-0000-0000-000000000001"), "ve-sinh-van-phong", 2, null, null }
+                    { new Guid("aaaaaaa1-0000-0000-0000-000000000002"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(864), null, null, null, true, false, 0, "Chuyển nhà", new Guid("aaaaaaa1-0000-0000-0000-000000000001"), null, "chuyen-nha", 1, 8, null, null, null, null },
+                    { new Guid("aaaaaaa1-0000-0000-0000-000000000003"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(867), null, null, null, true, false, 0, "Chuyển văn phòng", new Guid("aaaaaaa1-0000-0000-0000-000000000001"), null, "chuyen-van-phong", 2, 8, null, null, null, null },
+                    { new Guid("aaaaaaa1-0000-0000-0000-000000000004"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(869), null, null, null, true, false, 0, "Xe tải theo km", new Guid("aaaaaaa1-0000-0000-0000-000000000001"), null, "xe-tai-theo-km", 3, 8, null, null, null, null },
+                    { new Guid("aaaaaaa2-0000-0000-0000-000000000002"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(872), null, null, null, true, false, 0, "Theo giờ", new Guid("aaaaaaa2-0000-0000-0000-000000000001"), null, "theo-gio", 1, 8, null, null, null, null },
+                    { new Guid("aaaaaaa2-0000-0000-0000-000000000003"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(874), null, null, null, true, false, 0, "Theo ngày", new Guid("aaaaaaa2-0000-0000-0000-000000000001"), null, "theo-ngay", 2, 8, null, null, null, null },
+                    { new Guid("aaaaaaa3-0000-0000-0000-000000000002"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(877), null, null, null, true, false, 0, "Vệ sinh nhà", new Guid("aaaaaaa3-0000-0000-0000-000000000001"), null, "ve-sinh-nha", 1, 8, null, null, null, null },
+                    { new Guid("aaaaaaa3-0000-0000-0000-000000000003"), new DateTime(2025, 10, 14, 16, 14, 23, 253, DateTimeKind.Local).AddTicks(880), null, null, null, true, false, 0, "Vệ sinh văn phòng", new Guid("aaaaaaa3-0000-0000-0000-000000000001"), null, "ve-sinh-van-phong", 2, 8, null, null, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -825,48 +899,57 @@ namespace DataAccessLayer.Migrations
                 columns: new[] { "Id", "ActiveRegions", "BankAccountNumber", "BankName", "ContactEmail", "ContactPhone", "CreatedAt", "DeletedAt", "IsVerified", "Latitude", "LegalName", "LicenseExpiryDate", "LicenseNumber", "Longitude", "MaxOrdersPerDay", "OwnerUserId", "RatingAvg", "RatingCount", "ServiceTypes", "Status", "StoreName", "TaxNumber", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"), null, null, null, null, null, new DateTime(2025, 10, 12, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2694), null, false, null, null, null, null, null, null, new Guid("22222222-2222-2222-2222-222222222221"), 0m, 0, null, 9, "Blue Wash", null, new DateTime(2025, 10, 12, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2695), null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"), null, null, null, null, null, new DateTime(2025, 10, 12, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2717), null, false, null, null, null, null, null, null, new Guid("22222222-2222-2222-2222-222222222222"), 0m, 0, null, 9, "Fresh Laundry", null, new DateTime(2025, 10, 12, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2717), null }
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"), null, null, null, null, null, new DateTime(2025, 10, 14, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8031), null, false, null, null, null, null, null, null, new Guid("22222222-2222-2222-2222-222222222221"), 0m, 0, null, 9, "Blue Wash", null, new DateTime(2025, 10, 14, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8031), null },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"), null, null, null, null, null, new DateTime(2025, 10, 14, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8043), null, false, null, null, null, null, null, null, new Guid("22222222-2222-2222-2222-222222222222"), 0m, 0, null, 9, "Fresh Laundry", null, new DateTime(2025, 10, 14, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8044), null }
                 });
 
             migrationBuilder.InsertData(
                 table: "Stores",
                 columns: new[] { "Id", "ActiveRegions", "BankAccountNumber", "BankName", "ContactEmail", "ContactPhone", "CreatedAt", "DeletedAt", "IsVerified", "KycLevel", "Latitude", "LegalName", "LicenseExpiryDate", "LicenseNumber", "Longitude", "MaxOrdersPerDay", "OwnerUserId", "RatingAvg", "RatingCount", "ServiceTypes", "Status", "StoreName", "TaxNumber", "UpdatedAt", "UpdatedBy" },
-                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), "HN,HCM", null, null, null, null, new DateTime(2025, 9, 12, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2727), null, false, "Verified", null, null, null, null, null, 80, new Guid("22222222-2222-2222-2222-222222222223"), 0m, 0, null, 8, "Prime Cleaners", null, new DateTime(2025, 10, 12, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2735), null });
+                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), "HN,HCM", null, null, null, null, new DateTime(2025, 9, 14, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8050), null, false, "Verified", null, null, null, null, null, 80, new Guid("22222222-2222-2222-2222-222222222223"), 0m, 0, null, 8, "Prime Cleaners", null, new DateTime(2025, 10, 14, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8055), null });
 
             migrationBuilder.InsertData(
                 table: "Addresses",
                 columns: new[] { "Id", "Active", "AddressLine", "City", "CreatedAt", "DeletedAt", "District", "IsDefault", "Label", "Latitude", "Longitude", "StoreId", "UpdatedAt", "UpdatedBy", "UserId", "Ward" },
-                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa20"), true, "12 Nguyễn Huệ", "Hồ Chí Minh", new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3178), null, "Q.1", true, "Store HQ", 10.772, 106.70399999999999, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), null, null, null, "Bến Nghé" });
+                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa20"), true, "12 Nguyễn Huệ", "Hồ Chí Minh", new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8489), null, "Q.1", true, "Store HQ", 10.772, 106.70399999999999, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), null, null, null, "Bến Nghé" });
 
             migrationBuilder.InsertData(
                 table: "KycSubmissions",
                 columns: new[] { "Id", "AdminNote", "CreatedAt", "DeletedAt", "ReviewedAt", "ReviewedBy", "Status", "StoreId", "SubmittedAt", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"), null, new DateTime(2025, 10, 6, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2831), null, null, null, 0, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"), new DateTime(2025, 10, 6, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2828), null, null },
-                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2"), "Thiếu giấy tờ thuế / ảnh mờ, vui lòng bổ sung.", new DateTime(2025, 10, 7, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2837), null, new DateTime(2025, 10, 8, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2835), new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"), new DateTime(2025, 10, 7, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2834), null, null },
-                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"), "Ok", new DateTime(2025, 9, 27, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2872), null, new DateTime(2025, 9, 28, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2870), new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"), 2, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), new DateTime(2025, 9, 27, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2869), null, null }
+                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"), null, new DateTime(2025, 10, 8, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8138), null, null, null, 0, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"), new DateTime(2025, 10, 8, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8136), null, null },
+                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2"), "Thiếu giấy tờ thuế / ảnh mờ, vui lòng bổ sung.", new DateTime(2025, 10, 9, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8147), null, new DateTime(2025, 10, 10, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8144), new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"), new DateTime(2025, 10, 9, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8142), null, null },
+                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"), "Ok", new DateTime(2025, 9, 29, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8153), null, new DateTime(2025, 9, 30, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8151), new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"), 2, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), new DateTime(2025, 9, 29, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8150), null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "Orders",
                 columns: new[] { "Id", "CreatedAt", "CustomerId", "DeletedAt", "DeliveryDate", "DistanceKm", "DropoffAddressId", "EtaMinutes", "Note", "PickupAddressId", "PickupDate", "QuotationId", "Status", "StoreId", "TotalAmount", "UpdatedAt", "UpdatedBy" },
-                values: new object[,]
-                {
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa30"), new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), null, null, 7.2m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), 55, "August order", new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), null, null, 14, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), 2200000m, new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc), null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"), new DateTime(2025, 9, 29, 14, 30, 0, 0, DateTimeKind.Utc), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), null, null, 5.1m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), 45, "Yesterday pending", new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), null, null, 2, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), 1500000m, new DateTime(2025, 9, 29, 14, 30, 0, 0, DateTimeKind.Utc), null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa32"), new DateTime(2025, 9, 30, 8, 0, 0, 0, DateTimeKind.Utc), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), null, null, 3.4m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), 35, "Today completed", new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), null, null, 14, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), 2000000m, new DateTime(2025, 9, 30, 9, 0, 0, 0, DateTimeKind.Utc), null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa33"), new DateTime(2025, 9, 30, 9, 0, 0, 0, DateTimeKind.Utc), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), null, null, 9.0m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), 70, "Today pending", new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), null, null, 2, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), 3100000m, new DateTime(2025, 9, 30, 9, 40, 0, 0, DateTimeKind.Utc), null }
-                });
+                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa30"), new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), null, null, 7.2m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), 55, "August order", new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), null, null, 14, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), 2200000m, new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc), null });
+
+            migrationBuilder.InsertData(
+                table: "Orders",
+                columns: new[] { "Id", "CreatedAt", "CustomerId", "DeletedAt", "DeliveryDate", "DistanceKm", "DropoffAddressId", "EtaMinutes", "Note", "PickupAddressId", "PickupDate", "QuotationId", "StoreId", "TotalAmount", "UpdatedAt", "UpdatedBy" },
+                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"), new DateTime(2025, 9, 29, 14, 30, 0, 0, DateTimeKind.Utc), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), null, null, 5.1m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), 45, "Yesterday pending", new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), 1500000m, new DateTime(2025, 9, 29, 14, 30, 0, 0, DateTimeKind.Utc), null });
+
+            migrationBuilder.InsertData(
+                table: "Orders",
+                columns: new[] { "Id", "CreatedAt", "CustomerId", "DeletedAt", "DeliveryDate", "DistanceKm", "DropoffAddressId", "EtaMinutes", "Note", "PickupAddressId", "PickupDate", "QuotationId", "Status", "StoreId", "TotalAmount", "UpdatedAt", "UpdatedBy" },
+                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa32"), new DateTime(2025, 9, 30, 8, 0, 0, 0, DateTimeKind.Utc), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), null, null, 3.4m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), 35, "Today completed", new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), null, null, 14, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), 2000000m, new DateTime(2025, 9, 30, 9, 0, 0, 0, DateTimeKind.Utc), null });
+
+            migrationBuilder.InsertData(
+                table: "Orders",
+                columns: new[] { "Id", "CreatedAt", "CustomerId", "DeletedAt", "DeliveryDate", "DistanceKm", "DropoffAddressId", "EtaMinutes", "Note", "PickupAddressId", "PickupDate", "QuotationId", "StoreId", "TotalAmount", "UpdatedAt", "UpdatedBy" },
+                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa33"), new DateTime(2025, 9, 30, 9, 0, 0, 0, DateTimeKind.Utc), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"), null, null, 9.0m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"), 70, "Today pending", new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"), null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), 3100000m, new DateTime(2025, 9, 30, 9, 40, 0, 0, DateTimeKind.Utc), null });
 
             migrationBuilder.InsertData(
                 table: "Services",
-                columns: new[] { "Id", "BasePrice", "CategoryId", "CreatedAt", "DeletedAt", "Description", "IsActive", "Name", "Status", "StoreId", "Unit", "UpdatedAt", "UpdatedBy" },
+                columns: new[] { "Id", "BasePrice", "CategoryId", "CreatedAt", "DeletedAt", "Description", "IsActive", "Name", "PricingModel", "Status", "StoreId", "Unit", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"), 1500000m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"), new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc), null, "Local moving inside city", true, "House Moving (City)", 0, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), "Job", null, null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"), 300000m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"), new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc), null, "Boxes & packing", true, "Packing Service", 0, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), "Package", null, null }
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"), 1500000m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"), new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc), null, "Local moving inside city", true, "House Moving (City)", 3, 0, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), "Job", null, null },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"), 300000m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"), new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc), null, "Boxes & packing", true, "Packing Service", 3, 0, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), "Package", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -879,14 +962,14 @@ namespace DataAccessLayer.Migrations
                 columns: new[] { "Id", "CreatedAt", "DeletedAt", "DocType", "FilePath", "Hash", "KycSubmissionId", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc1"), new DateTime(2025, 10, 6, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2962), null, "License", "/uploads/kyc/blue/license.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"), null, null },
-                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc2"), new DateTime(2025, 10, 6, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2966), null, "ID", "/uploads/kyc/blue/id.jpg", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"), null, null },
-                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc3"), new DateTime(2025, 10, 6, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2969), null, "Tax", "/uploads/kyc/blue/tax.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"), null, null },
-                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc4"), new DateTime(2025, 10, 7, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2972), null, "License", "/uploads/kyc/fresh/license.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2"), null, null },
-                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc5"), new DateTime(2025, 10, 7, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2974), null, "ID", "/uploads/kyc/fresh/id.jpg", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2"), null, null },
-                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc6"), new DateTime(2025, 9, 27, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2977), null, "License", "/uploads/kyc/prime/license.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"), null, null },
-                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc7"), new DateTime(2025, 9, 27, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2980), null, "ID", "/uploads/kyc/prime/id.jpg", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"), null, null },
-                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc8"), new DateTime(2025, 9, 27, 11, 25, 19, 107, DateTimeKind.Utc).AddTicks(2982), null, "Tax", "/uploads/kyc/prime/tax.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"), null, null }
+                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc1"), new DateTime(2025, 10, 8, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8261), null, "License", "/uploads/kyc/blue/license.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"), null, null },
+                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc2"), new DateTime(2025, 10, 8, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8270), null, "ID", "/uploads/kyc/blue/id.jpg", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"), null, null },
+                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc3"), new DateTime(2025, 10, 8, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8278), null, "Tax", "/uploads/kyc/blue/tax.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"), null, null },
+                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc4"), new DateTime(2025, 10, 9, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8281), null, "License", "/uploads/kyc/fresh/license.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2"), null, null },
+                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc5"), new DateTime(2025, 10, 9, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8287), null, "ID", "/uploads/kyc/fresh/id.jpg", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2"), null, null },
+                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc6"), new DateTime(2025, 9, 29, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8290), null, "License", "/uploads/kyc/prime/license.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"), null, null },
+                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc7"), new DateTime(2025, 9, 29, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8293), null, "ID", "/uploads/kyc/prime/id.jpg", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"), null, null },
+                    { new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc8"), new DateTime(2025, 9, 29, 9, 14, 23, 454, DateTimeKind.Utc).AddTicks(8296), null, "Tax", "/uploads/kyc/prime/tax.pdf", null, new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"), null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -894,30 +977,30 @@ namespace DataAccessLayer.Migrations
                 columns: new[] { "Id", "CreatedAt", "DeletedAt", "OrderId", "Quantity", "ServiceId", "Subtotal", "UnitPrice", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa40"), new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3535), null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa30"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"), 2200000m, 2200000m, null, null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa41"), new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3540), null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"), 1200000m, 1200000m, null, null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa42"), new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3542), null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"), 300000m, 300000m, null, null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa43"), new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3544), null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa32"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"), 2000000m, 2000000m, null, null }
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa40"), new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8837), null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa30"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"), 2200000m, 2200000m, null, null },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa41"), new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8842), null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"), 1200000m, 1200000m, null, null },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa42"), new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8845), null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"), 300000m, 300000m, null, null },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa43"), new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8847), null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa32"), 1, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"), 2000000m, 2000000m, null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "ServicePrices",
-                columns: new[] { "Id", "CreatedAt", "DeletedAt", "MaxQty", "MinQty", "Price", "ServiceId", "UpdatedAt", "UpdatedBy", "ValidFrom", "ValidTo" },
-                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa14"), new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3390), null, 10, 3, 280000m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"), null, null, new DateTime(2025, 8, 1, 0, 0, 0, 0, DateTimeKind.Utc), new DateTime(2025, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc) });
+                columns: new[] { "Id", "ApplyModel", "CreatedAt", "DeletedAt", "MaxAreaM2", "MaxDays", "MaxQty", "MaxVolumeM3", "MinAreaM2", "MinDays", "MinQty", "MinVolumeM3", "Price", "ServiceId", "TimeUnit", "UpdatedAt", "UpdatedBy", "ValidFrom", "ValidTo" },
+                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa14"), 3, new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8688), null, null, null, 10m, null, null, null, 3m, null, 280000m, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"), 0, null, null, new DateTime(2025, 8, 1, 0, 0, 0, 0, DateTimeKind.Utc), new DateTime(2025, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc) });
 
             migrationBuilder.InsertData(
                 table: "Warehouses",
                 columns: new[] { "Id", "AddressRefId", "CoverImageUrl", "CreatedAt", "DeletedAt", "MapImageUrl", "Name", "Status", "StoreId", "UpdatedAt", "UpdatedBy" },
-                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa20"), null, new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3658), null, null, "Main Warehouse", 0, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), null, null });
+                values: new object[] { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa20"), null, new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8934), null, null, "Main Warehouse", 0, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), null, null });
 
             migrationBuilder.InsertData(
                 table: "WarehouseSlots",
                 columns: new[] { "Id", "Code", "CreatedAt", "CurrentOrderId", "DeletedAt", "ImageUrl", "Size", "Status", "UpdatedAt", "UpdatedBy", "WarehouseId" },
                 values: new object[,]
                 {
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa61"), "A1", new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3702), null, null, null, null, 4, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60") },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa62"), "A2", new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3705), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"), null, null, null, 5, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60") },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa63"), "B1", new DateTime(2025, 10, 12, 18, 25, 19, 107, DateTimeKind.Local).AddTicks(3707), null, null, null, null, 4, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60") }
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa61"), "A1", new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8971), null, null, null, null, 4, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60") },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa62"), "A2", new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8975), new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"), null, null, null, 5, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60") },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa63"), "B1", new DateTime(2025, 10, 14, 16, 14, 23, 454, DateTimeKind.Local).AddTicks(8977), null, null, null, null, 4, null, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60") }
                 });
 
             migrationBuilder.CreateIndex(
@@ -975,11 +1058,21 @@ namespace DataAccessLayer.Migrations
                 column: "ParentId");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Categori__BC7B5FB62D2959A5",
+                name: "IX_Categories_ParentId_SortOrder",
                 table: "Categories",
-                column: "Slug",
+                columns: new[] { "ParentId", "SortOrder" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Categories_Path",
+                table: "Categories",
+                column: "Path");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Categories_StoreId_Slug",
+                table: "Categories",
+                columns: new[] { "StoreId", "Slug" },
                 unique: true,
-                filter: "[Slug] IS NOT NULL");
+                filter: "[StoreId] IS NOT NULL AND [Slug] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Feedbacks_FromUserId",
@@ -1062,9 +1155,20 @@ namespace DataAccessLayer.Migrations
                 column: "StoreId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ServicePrices_ServiceId",
+                name: "IX_ServiceAddon_ServiceId_Name",
+                table: "ServiceAddon",
+                columns: new[] { "ServiceId", "Name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ServicePrices_ServiceId_MinVolumeM3_MaxVolumeM3_MinDays_MaxDays",
                 table: "ServicePrices",
-                column: "ServiceId");
+                columns: new[] { "ServiceId", "MinVolumeM3", "MaxVolumeM3", "MinDays", "MaxDays" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ServicePrices_ServiceId_ValidFrom_ValidTo",
+                table: "ServicePrices",
+                columns: new[] { "ServiceId", "ValidFrom", "ValidTo" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Services_CategoryId",
@@ -1075,6 +1179,12 @@ namespace DataAccessLayer.Migrations
                 name: "IX_Services_StoreId",
                 table: "Services",
                 column: "StoreId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ServiceSizeOption_ServiceId_Code",
+                table: "ServiceSizeOption",
+                columns: new[] { "ServiceId", "Code" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_SlotReservations_OrderId",
@@ -1165,7 +1275,13 @@ namespace DataAccessLayer.Migrations
                 name: "Payments");
 
             migrationBuilder.DropTable(
+                name: "ServiceAddon");
+
+            migrationBuilder.DropTable(
                 name: "ServicePrices");
+
+            migrationBuilder.DropTable(
+                name: "ServiceSizeOption");
 
             migrationBuilder.DropTable(
                 name: "SlotReservations");

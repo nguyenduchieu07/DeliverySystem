@@ -1,0 +1,127 @@
+﻿@model PresentationLayer.Areas.Stores.Models.Services.ServiceEditViewModel
+
+<style>
+  /* ===== STABLE GRID FOR SIZES (không đổi type input) ===== */
+  .matrix{
+    --gap:8px; --act:44px;
+    display:grid;
+    grid-template-columns:120px minmax(280px,1fr) 110px 110px 120px 160px var(--act);
+    gap:var(--gap); align-items:center;
+  }
+  .matrix .head{
+    font-size:12px; color:var(--muted);
+    text-transform:uppercase; white-space:nowrap;
+  }
+  .matrix-row{ display:contents; }
+
+  /* Ép cell vào đúng cột */
+  .matrix .c-code{grid-column:1;}
+  .matrix .c-name{grid-column:2;}
+  .matrix .c-v3{grid-column:3;}
+  .matrix .c-a2{grid-column:4;}
+  .matrix .c-kg{grid-column:5;}
+  .matrix .c-price{grid-column:6;}
+  .matrix .c-act{grid-column:7; justify-self:end;}
+
+  .matrix input,.matrix select{
+    width:100%; min-width:0; height:38px;
+    padding:6px 10px; border-radius:12px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+  }
+
+  .btn-del{
+    width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:10px; border:1px solid var(--border);
+    background:rgba(255,107,107,.12); color:var(--danger);
+    cursor:pointer; font-size:18px; line-height:1; transition:.15s ease;
+  }
+  .btn-del:hover{ transform:translateY(-1px); border-color:#ff9a9a; }
+
+  .matrix-actions{ margin-top:10px; }
+  .matrix-actions .btn{ height:36px; }
+
+  @@media (max-width: 900px){
+    .matrix{ grid-template-columns:1fr 1fr; }
+    .matrix .head:nth-child(n+3){ display:none; }
+
+    .matrix .c-code{grid-column:1;}
+    .matrix .c-name{grid-column:1 / -1;} /* tên chiếm trọn hàng */
+    .matrix .c-v3{grid-column:1;}
+    .matrix .c-a2{grid-column:2;}
+    .matrix .c-kg{grid-column:1;}
+    .matrix .c-price{grid-column:2;}
+    .matrix .c-act{grid-column:2; justify-self:end;}
+  }
+</style>
+
+<div class="matrix" id="sizesGrid">
+  <div class="head">Code</div>
+  <div class="head">Tên hiển thị</div>
+  <div class="head">m³</div>
+  <div class="head">m²</div>
+  <div class="head">Max Kg</div>
+  <div class="head">Giá override/ngày</div>
+  <div class="head"></div>
+
+  @for (var i = 0; i < (Model.SizeOptions?.Count ?? 0); i++)
+  {
+    <div class="matrix-row">
+      <input type="text" class="c-code"  name="SizeOptions[@i].Code"         value="@Model.SizeOptions[i].Code" />
+      <input type="text" class="c-name"  name="SizeOptions[@i].DisplayName"  value="@Model.SizeOptions[i].DisplayName" />
+      <input type="text" class="c-v3"    name="SizeOptions[@i].VolumeM3"     value="@(Model.SizeOptions[i].VolumeM3?.ToString())" />
+      <input type="text" class="c-a2"    name="SizeOptions[@i].AreaM2"       value="@(Model.SizeOptions[i].AreaM2?.ToString())" />
+      <input type="text" class="c-kg"    name="SizeOptions[@i].MaxWeightKg"  value="@(Model.SizeOptions[i].MaxWeightKg?.ToString())" />
+      <input type="text" class="c-price" name="SizeOptions[@i].PriceOverride" value="@(Model.SizeOptions[i].PriceOverride?.ToString())" />
+      <button type="button" class="btn-del c-act" title="Xóa dòng này">×</button>
+    </div>
+  }
+</div>
+
+<div class="matrix-actions">
+  <button type="button" class="btn" id="btnAddSize">+ Thêm size</button>
+</div>
+
+<script>
+(function(){
+  const grid = document.getElementById('sizesGrid');
+  const btn  = document.getElementById('btnAddSize');
+  if(!grid || !btn) return;
+
+  // thêm dòng (giữ nguyên type="text" như bạn đang dùng)
+  btn.addEventListener('click', () => {
+    const i = grid.querySelectorAll('.matrix-row').length;
+    const row = document.createElement('div');
+    row.className = 'matrix-row';
+    row.innerHTML = `
+      <input type="text" class="c-code"  name="SizeOptions[${i}].Code" />
+      <input type="text" class="c-name"  name="SizeOptions[${i}].DisplayName" />
+      <input type="text" class="c-v3"    name="SizeOptions[${i}].VolumeM3" />
+      <input type="text" class="c-a2"    name="SizeOptions[${i}].AreaM2" />
+      <input type="text" class="c-kg"    name="SizeOptions[${i}].MaxWeightKg" />
+      <input type="text" class="c-price" name="SizeOptions[${i}].PriceOverride" />
+      <button type="button" class="btn-del c-act" title="Xóa dòng này">×</button>
+    `;
+    grid.appendChild(row);
+  });
+
+  // xóa dòng + reindex
+  grid.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-del')) {
+      const row = e.target.closest('.matrix-row');
+      if (row) row.remove();
+      reindex();
+    }
+  });
+
+  function reindex(){
+    const rows = grid.querySelectorAll('.matrix-row');
+    rows.forEach((row, idx) => {
+      row.querySelectorAll('input,select,textarea').forEach(el => {
+        const name = el.getAttribute('name');
+        if (!name) return;
+        el.setAttribute('name', name.replace(/SizeOptions\[\d+\]/, `SizeOptions[${idx}]`));
+      });
+    });
+  }
+})();
+</script>
