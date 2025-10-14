@@ -1,0 +1,49 @@
+﻿@model PresentationLayer.Areas.Stores.Models.Services.ServiceEditViewModel
+
+<div class="matrix addons" id="addonsGrid">
+  <div class="head">Tên</div>
+  <div class="head">Mô tả</div>
+  <div class="head">Kiểu</div>
+  <div class="head">Giá trị</div>
+
+  @for (var i = 0; i < (Model.Addons?.Count ?? 0); i++)
+  {
+    <div class="matrix-row">
+      <input type="text" name="Addons[@i].Name" value="@Model.Addons[i].Name" />
+      <input type="text" name="Addons[@i].Description" value="@Model.Addons[i].Description" />
+      <select name="Addons[@i].IsPercentage">
+        <option value="false" selected="@(!Model.Addons[i].IsPercentage)">₫ (cố định)</option>
+        <option value="true"  selected="@(Model.Addons[i].IsPercentage)">% (theo %)</option>
+      </select>
+      <input type="number" step="0.01" min="0" name="Addons[@i].Value" value="@Model.Addons[i].Value" />
+    </div>
+  }
+</div>
+
+<div class="matrix-actions">
+  <button type="button" class="btn" id="btnAddAddon">+ Thêm addon</button>
+</div>
+
+<script>
+(function(){
+  const grid = document.getElementById('addonsGrid');
+  const btn  = document.getElementById('btnAddAddon');
+  if(!grid || !btn) return;
+
+  btn.addEventListener('click', () => {
+    const i = grid.querySelectorAll('.matrix-row').length;
+    const row = document.createElement('div');
+    row.className = 'matrix-row';
+    row.innerHTML = `
+      <input type="text" name="Addons[${i}].Name" />
+      <input type="text" name="Addons[${i}].Description" />
+      <select name="Addons[${i}].IsPercentage">
+        <option value="false">₫ (cố định)</option>
+        <option value="true">% (theo %)</option>
+      </select>
+      <input type="number" step="0.01" min="0" name="Addons[${i}].Value" />
+    `;
+    grid.appendChild(row);
+  });
+})();
+</script>

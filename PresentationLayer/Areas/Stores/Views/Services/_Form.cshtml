@@ -1,0 +1,41 @@
+﻿@model PresentationLayer.Areas.Stores.Models.Services.ServiceEditViewModel
+@using DataAccessLayer.Enums
+@{
+    var isEdit = Model.Id.HasValue;
+    var pricingItems = Enum.GetValues(typeof(PricingModel)).Cast<PricingModel>()
+        .Select(v => new SelectListItem { Value=((int)v).ToString(), Text=v.ToString(), Selected=(v==Model.PricingModel)}).ToList();
+}
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" class="grid" style="grid-template-columns:2fr 1fr">
+  @Html.AntiForgeryToken()
+  @if (isEdit) { <input type="hidden" asp-for="Id" /> }
+
+  <div class="card">
+    <div class="row">
+      <div><label>Tên dịch vụ</label><input asp-for="Name" /><span class="text-danger" asp-validation-for="Name"></span></div>
+      <div><label>Đơn vị</label><input asp-for="Unit" /><span class="text-danger" asp-validation-for="Unit"></span></div>
+      <div><label>Giá cơ bản (đ)</label><input asp-for="BasePrice" type="number" step="0.01" /><span class="text-danger" asp-validation-for="BasePrice"></span></div>
+    </div>
+    <div class="row">
+      <div><label>Pricing Model</label><select asp-for="PricingModel" asp-items="pricingItems"></select></div>
+      <div><label>Kích hoạt</label><select asp-for="IsActive"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+      <div><label>StoreId</label><input asp-for="StoreId" readonly /></div>
+    </div>
+    <label>Mô tả</label><textarea asp-for="Description"></textarea>
+    @Html.Partial("_CategoryPicker", Model)
+  </div>
+
+  <div class="card"><div class="section"><div class="header"><div class="title">Hành động</div></div>
+    <div style="padding:12px 14px; display:grid; gap:10px">
+      <button class="btn primary" type="submit">@(isEdit ? "Lưu thay đổi" : "Tạo dịch vụ")</button>
+      <a class="btn" href="@Url.Action("Index","Services", new { area="Stores", storeId = Model.StoreId })">Quay lại</a>
+    </div></div></div>
+
+  <div class="card"><div class="section"><div class="header"><div class="title">Size Options</div></div>
+    <div style="padding:12px 14px">@Html.Partial("_ServiceSizes", Model)</div></div></div>
+
+  <div class="card"><div class="section"><div class="header"><div class="title">Price Rules</div></div>
+    <div style="padding:12px 14px">@Html.Partial("_ServicePriceRules", Model)</div></div></div>
+
+  <div class="card"><div class="section"><div class="header"><div class="title">Addons</div></div>
+    <div style="padding:12px 14px">@Html.Partial("_ServiceAddons", Model)</div></div></div>
+</form>

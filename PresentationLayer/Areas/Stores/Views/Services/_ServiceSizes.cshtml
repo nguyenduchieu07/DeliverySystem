@@ -1,0 +1,49 @@
+﻿@model PresentationLayer.Areas.Stores.Models.Services.ServiceEditViewModel
+
+<div class="matrix sizes" id="sizesGrid">
+  <div class="head">Code</div>
+  <div class="head">Tên hiển thị</div>
+  <div class="head">m³</div>
+  <div class="head">m²</div>
+  <div class="head">Max Kg</div>
+  <div class="head">Giá override/ngày</div>
+
+  @for (var i = 0; i < (Model.SizeOptions?.Count ?? 0); i++)
+  {
+    <div class="matrix-row">
+      <input type="text" name="SizeOptions[@i].Code" value="@Model.SizeOptions[i].Code" />
+      <input type="text" name="SizeOptions[@i].DisplayName" value="@Model.SizeOptions[i].DisplayName" />
+      <input type="number" step="0.001" min="0" name="SizeOptions[@i].VolumeM3" value="@(Model.SizeOptions[i].VolumeM3?.ToString())" />
+      <input type="number" step="0.001" min="0" name="SizeOptions[@i].AreaM2" value="@(Model.SizeOptions[i].AreaM2?.ToString())" />
+      <input type="number" step="0.001" min="0" name="SizeOptions[@i].MaxWeightKg" value="@(Model.SizeOptions[i].MaxWeightKg?.ToString())" />
+      <input type="number" step="0.01"  min="0" name="SizeOptions[@i].PriceOverride" value="@(Model.SizeOptions[i].PriceOverride?.ToString())" />
+    </div>
+  }
+</div>
+
+<div class="matrix-actions">
+  <button type="button" class="btn" id="btnAddSize">+ Thêm size</button>
+</div>
+
+<script>
+(function(){
+  const grid = document.getElementById('sizesGrid');
+  const btn  = document.getElementById('btnAddSize');
+  if(!grid || !btn) return;
+
+  btn.addEventListener('click', () => {
+    const i = grid.querySelectorAll('.matrix-row').length;
+    const row = document.createElement('div');
+    row.className = 'matrix-row';
+    row.innerHTML = `
+      <input type="text" name="SizeOptions[${i}].Code" />
+      <input type="text" name="SizeOptions[${i}].DisplayName" />
+      <input type="number" step="0.001" min="0" name="SizeOptions[${i}].VolumeM3" />
+      <input type="number" step="0.001" min="0" name="SizeOptions[${i}].AreaM2" />
+      <input type="number" step="0.001" min="0" name="SizeOptions[${i}].MaxWeightKg" />
+      <input type="number" step="0.01"  min="0" name="SizeOptions[${i}].PriceOverride" />
+    `;
+    grid.appendChild(row);
+  });
+})();
+</script>

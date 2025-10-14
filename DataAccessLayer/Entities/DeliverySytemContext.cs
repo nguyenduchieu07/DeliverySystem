@@ -32,7 +32,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
     public virtual DbSet<Service> Services { get; set; }
 
-    public virtual DbSet<ServicePriceRule> ServicePrices { get; set; }
+    public virtual DbSet<ServicePriceRule> PriceRules { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
 
@@ -53,7 +53,9 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
     public virtual DbSet<KycDocument> KycDocuments { get; set; }    
 
     public virtual DbSet<KycSubmission> KycSubmissions {  get; set; }
+    public virtual DbSet<ServiceAddon> ServiceAddons { get; set; }
 
+    public virtual DbSet<ServiceSizeOption> ServiceSizeOptions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>

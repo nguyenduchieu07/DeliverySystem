@@ -1,0 +1,12 @@
+﻿@model PresentationLayer.Areas.Stores.Models.Services.ServiceEditViewModel
+@{
+    ViewBag.Title = "Tạo dịch vụ";
+}
+<div class="breadcrumb">
+    <a href="@Url.Action("Index","Services", new { area="Stores", storeId = Model.StoreId })">Dịch vụ</a> › <span>Tạo</span>
+</div>
+
+@Html.Partial("_Form", Model)
+
+@section Scripts {
+}
