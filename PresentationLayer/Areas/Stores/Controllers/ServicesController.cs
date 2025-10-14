@@ -151,7 +151,6 @@ namespace PresentationLayer.Areas.Stores.Controllers
             if (!ModelState.IsValid) return View(vm);
             if (vm.Id == null) return BadRequest();
 
-            // 1) Load entity theo Id + StoreId
             var s = await _db.Services
                 .AsTracking()
                 .FirstOrDefaultAsync(x => x.Id == vm.Id && x.StoreId == vm.StoreId);
@@ -170,14 +169,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
             await _db.ServiceSizeOptions.Where(x => x.ServiceId == s.Id).ExecuteDeleteAsync();
             await _db.PriceRules.Where(x => x.ServiceId == s.Id).ExecuteDeleteAsync();
             await _db.ServiceAddons.Where(x => x.ServiceId == s.Id).ExecuteDeleteAsync();
-
-            // 5) CHÈN LẠI SizeOptions
             foreach (var o in (vm.SizeOptions ?? Enumerable.Empty<ServiceSizeOptionVM>()))
             {
                 _db.ServiceSizeOptions.Add(new ServiceSizeOption
                 {
                     Id = o.Id ?? Guid.NewGuid(),
-                    ServiceId = s.Id,                          // <-- GÁN RÕ
+                    ServiceId = s.Id, 
                     Code = o.Code?.Trim() ?? string.Empty,
                     DisplayName = o.DisplayName?.Trim() ?? string.Empty,
                     VolumeM3 = o.VolumeM3,
@@ -193,7 +190,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 _db.PriceRules.Add(new ServicePriceRule
                 {
                     Id = r.Id ?? Guid.NewGuid(),
-                    ServiceId = s.Id,                           // <-- GÁN RÕ
+                    ServiceId = s.Id,                           
                     ValidFrom = r.ValidFrom,
                     ValidTo = r.ValidTo,
                     MinVolumeM3 = r.MinVolumeM3,
@@ -231,7 +228,6 @@ namespace PresentationLayer.Areas.Stores.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError("", "Bản ghi đã bị thay đổi hoặc xóa bởi người khác. Vui lòng tải lại trang và thử lại.");
-                // (tuỳ chọn) reload RowVersion mới để show lại, nhưng để ngắn gọn mình trả về view với vm hiện tại
                 return View(vm);
             }
         }
