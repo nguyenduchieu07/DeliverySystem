@@ -137,18 +137,6 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             warehouse.Id = Guid.NewGuid();
             _db.Warehouses.Add(warehouse);
-
-            //// Lưu tạm danh sách slot (nếu có)
-            //if (slots != null && slots.Count > 0)
-            //{
-            //    foreach (var s in slots)
-            //    {
-            //        s.Id = Guid.NewGuid();
-            //        s.WarehouseId = warehouse.Id;
-            //        _db.WarehouseSlots.Add(s);
-            //    }
-            //}
-
             await _db.SaveChangesAsync();
 
             TempData["Success"] = "Tạo kho mới thành công!";
