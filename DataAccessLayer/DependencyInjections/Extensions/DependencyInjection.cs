@@ -1,4 +1,4 @@
-﻿using DataAccessLayer.Abstractions.IRepositories;
+using DataAccessLayer.Abstractions.IRepositories;
 using DataAccessLayer.Configs;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Repositoies;
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ServiceLayer.Abstractions.IRepositories;
 
 namespace DataAccessLayer.DependencyInjections.Extensions
 {
@@ -16,8 +17,15 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             services.AddIdentity<User, IdentityRole<Guid>>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-
-            }).AddEntityFrameworkStores<DeliverySytemContext>()
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 6;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+                options.SignIn.RequireConfirmedEmail = false;
+                options.SignIn.RequireConfirmedPhoneNumber = false;
+            })
+            .AddEntityFrameworkStores<DeliverySytemContext>()
             .AddDefaultTokenProviders();
         }
 
@@ -33,8 +41,18 @@ namespace DataAccessLayer.DependencyInjections.Extensions
         {
             var cloudinaryConfig = configuration.GetSection("Cloudinary");
             services.Configure<CloudinaryConfig>(cloudinaryConfig);
+            // Đăng ký generic repository cho tất cả các entity cần thiết
             services.AddScoped(typeof(IBaseRepository<,>), typeof(BaseRepository<,>));
-            services.AddScoped<IUserRepository,UserRepository>();
+            // Đăng ký repository cụ thể
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IDeliveryRepository, DeliveryRepository>(); // Thêm đăng ký này
+            // Đăng ký repository cụ thể cho các entity liên quan đến order
+            services.AddScoped<IBaseRepository<Address, Guid>, BaseRepository<Address, Guid>>();
+            services.AddScoped<IBaseRepository<Order, Guid>, BaseRepository<Order, Guid>>();
+            services.AddScoped<IBaseRepository<OrderItem, Guid>, BaseRepository<OrderItem, Guid>>();
+            services.AddScoped<IBaseRepository<Category, Guid>, BaseRepository<Category, Guid>>();
+            services.AddScoped<IBaseRepository<Customer, Guid>, BaseRepository<Customer, Guid>>();
+            services.AddScoped<IBaseRepository<Store, Guid>, BaseRepository<Store, Guid>>();
         }
     }
 }

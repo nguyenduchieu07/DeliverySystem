@@ -10,8 +10,7 @@ namespace DataAccessLayer.Abstractions.IRepositories
 {
     public interface IUserRepository : IBaseRepository<User, Guid>
     {
-        public UserManager<User> UserManager { get; }
-
-        public SignInManager<User> SignInManager { get; }
+        UserManager<User> UserManager { get; }
+        SignInManager<User> SignInManager { get; }
     }
 }

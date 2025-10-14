@@ -19,7 +19,7 @@ namespace PresentationLayer.Areas.Admin.Controllers
             var vm = new DashboardVM
             {
                 PendingKyc = await _db.Set<KycSubmission>().CountAsync(x => x.Status == KycStatus.Pending),
-                ActiveStores = await _db.Stores.CountAsync(s => s.Status == "Active"),
+                ActiveStores = await _db.Stores.CountAsync(s => s.Status == StatusValue.Active),
                 OrdersToday = await _db.Orders.CountAsync(o => o.CreatedAt >= today && o.CreatedAt < today.AddDays(1)),
                 LowRatingCount = await _db.Feedbacks.CountAsync(f => f.Rating <= 2)
             };

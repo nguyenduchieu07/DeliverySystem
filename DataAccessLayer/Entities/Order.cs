@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Entities.Common;
+using DataAccessLayer.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -15,20 +16,17 @@ public partial class Order : BaseEntity<Guid>
     public Guid? PickupAddressId { get; set; }
 
     public Guid? DropoffAddressId { get; set; }
-
+    public DateTime? DeliveryDate { get; set; } // Thêm
+    public DateTime? PickupDate { get; set; }
     public decimal? DistanceKm { get; set; }
 
     public int? EtaMinutes { get; set; }
 
-    public string Status { get; set; } = null!;
+    public StatusValue Status { get; set; }
 
     public decimal TotalAmount { get; set; }
 
     public string? Note { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-
-    public DateTime UpdatedAt { get; set; }
 
     public virtual Customer Customer { get; set; } = null!;
 

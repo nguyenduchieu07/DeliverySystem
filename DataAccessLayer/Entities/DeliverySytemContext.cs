@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using DataAccessLayer.DependencyInjections.Extensions;
+using DataAccessLayer.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -95,8 +96,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Customer__A4AE64D8B858128B");
-
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedNever(); // Không tự động sinh, sử dụng giá trị từ User.Id
             entity.Property(e => e.FullName).HasMaxLength(150);
             entity.Property(e => e.KycLevel)
                 .HasMaxLength(20)
@@ -106,9 +106,12 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                 .HasMaxLength(20)
                 .HasDefaultValue("Basic");
 
-            entity.HasOne(d => d.CustomerNavigation).WithOne(p => p.Customer)
-                .HasForeignKey<Customer>(d => d.Id)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+            // Sửa: Xác định rõ mối quan hệ 1-1 với shared primary key
+            entity.HasOne(d => d.User)
+                .WithOne(p => p.Customer)
+                .HasForeignKey<Customer>(d => d.Id) // Sử dụng Id làm khóa ngoại
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Customers_Users");
         });
 
@@ -144,7 +147,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.Property(e => e.DistanceKm).HasColumnType("decimal(8, 2)");
             entity.Property(e => e.Status)
                 .HasMaxLength(30)
-                .HasDefaultValue("Draft");
+                .HasDefaultValue(StatusValue.Draft);
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
 
@@ -202,7 +205,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.Property(e => e.ProviderTxnId).HasMaxLength(120);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValue("Pending");
+                .HasDefaultValue(StatusValue.Pending);
 
             entity.HasOne(d => d.Order).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.OrderId)
@@ -218,7 +221,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValue("Sent");
+                .HasDefaultValue(StatusValue.Sent);
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(12, 2)");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Quotations)
@@ -283,7 +286,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.Property(e => e.RatingAvg).HasColumnType("decimal(3, 2)");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValue("Pending");
+                .HasDefaultValue(StatusValue.Pending);
             entity.Property(e => e.StoreName).HasMaxLength(150);
             entity.Property(e => e.TaxNumber).HasMaxLength(50);
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
@@ -306,7 +309,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.Property(e => e.Role).HasMaxLength(20);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValue("Active");
+                .HasDefaultValue(StatusValue.Pending);
 
             entity.HasOne(d => d.Store).WithMany(p => p.StoreStaffs)
                 .HasForeignKey(d => d.StoreId)
@@ -331,7 +334,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.Property(e => e.OwnerType).HasMaxLength(20);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValue("Active");
+                .HasDefaultValue(StatusValue.Active);
         });
 
         modelBuilder.Entity<WalletTransaction>(entity =>
@@ -344,7 +347,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.Property(e => e.ProviderTxnId).HasMaxLength(120);
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
-                .HasDefaultValue("Success");
+                .HasDefaultValue(StatusValue.Success);
             entity.Property(e => e.Type).HasMaxLength(20);
 
             entity.HasOne(d => d.Order).WithMany(p => p.WalletTransactions)

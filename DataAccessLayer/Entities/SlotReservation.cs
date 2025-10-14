@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Entities.Common;
+using DataAccessLayer.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,6 @@ namespace DataAccessLayer.Entities
         public Guid WarehouseSlotId { get; set; }
         public Guid? OrderId { get; set; }
         public DateTimeOffset ExpiresAt { get; set; } // now + 24h
-        public string Status { get; set; } = "Reserved"; // Reserved/Expired/Used
+        public StatusValue Status { get; set; } // Reserved/Expired/Used
     }
 }

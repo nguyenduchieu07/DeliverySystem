@@ -1,0 +1,157 @@
+﻿@using PresentationLayer.Areas.Stores.Models.WarehouseModels
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model WarehouseListVm
+
+<div class="breadcrumb">
+    <span>Store</span> <span>/</span> <span>Warehouses</span>
+</div>
+
+<div class="page-head">
+    <div class="page-title">Warehouses</div>
+    <div class="page-actions">
+        <a class="btn primary" asp-controller="Warehouse" asp-action="Create">
+            + New Warehouse
+        </a>
+    </div>
+</div>
+@if (TempData["Success"] != null || TempData["Error"] != null)
+{
+    <div id="toast" class="toast @(TempData["Error"] != null ? "error" : "success")">
+        <div class="toast-content">
+            <span>@(TempData["Success"] ?? TempData["Error"])</span>
+        </div>
+    </div>
+
+   
+}
+<div class="section">
+    <div class="header">
+        <div class="title">Filters</div>
+        <div class="muted">Total: @Model.Total</div>
+    </div>
+    <div class="content" style="padding:12px 14px;">
+        <form method="get" asp-action="Index" asp-controller="Warehouse"
+              class="grid" style="grid-template-columns: 2fr 2fr 1fr auto auto; gap:12px;">
+            <input type="hidden" name="storeId" value="@Model.StoreId" />
+            <div>
+                <label>Search</label>
+                <input type="text" name="q" value="@Model.Q" placeholder="Tên kho hoặc địa chỉ..." />
+            </div>
+            <div>
+                <label>Address</label>
+                <select name="addressId">
+                    <option value="">All</option>
+                    @foreach (var a in Model.AddressOptions)
+                    {
+                        <option value="@a.Id" selected="@(Model.AddressId == a.Id)">@a.Name</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label>Page Size</label>
+                <select name="pageSize">
+                    @{
+                        int[] sizes = new[] { 5, 10, 20, 30, 50 };
+                        foreach (var s in sizes)
+                        {
+                            <option value="@s" selected="@(Model.PageSize == s)">@s</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <label>&nbsp;</label>
+                <button class="btn">Apply</button>
+            </div>
+            <div>
+                <label>&nbsp;</label>
+                <a class="btn" asp-action="Index" asp-route-storeId="@Model.StoreId">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width:72px;"></th>
+                <th>Name</th>
+                <th>Address</th>
+                <th style="width:12%;">Slots</th>
+                <th style="width:18%;">Created</th>
+                <th style="width:18%;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="muted">No warehouses found.</td></tr>
+            }
+            else
+            {
+                foreach (var w in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(w.CoverImageUrl))
+                            {
+                                <img src="@(w.CoverImageUrl)" alt="cover"
+                                     style="width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--border);" />
+                            }
+                            else
+                            {
+                                <img src="@($"https://api.dicebear.com/7.x/initials/svg?seed={(w.Name)}&radius=50")" )" alt="cover"
+                                     style="width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--border);" />
+                            }
+                        </td>
+                        <td>@w.Name</td>
+                        <td>@w.AddressText</td>
+                        <td><span class="badge">@w.SlotCount</span></td>
+                        <td>@w.CreatedAt.LocalDateTime.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <a class="btn" asp-controller="Warehouse" asp-action="Details" asp-route-id="@w.Id">Details</a>
+                            @* <a class="btn" asp-controller="Warehouse/Slots" asp-action="Index" asp-route-warehouseId="@w.Id">Slots</a> *@
+                            <a class="btn" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@w.Id">Edit</a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    @if (Model.TotalPages > 1)
+    {
+        <div style="display:flex; gap:8px; justify-content:flex-end; padding-top:12px;">
+            @{
+                int cur = Model.Page, last = Model.TotalPages;
+                int start = Math.Max(1, cur - 2), end = Math.Min(last, cur + 2);
+                string baseRoute = Url.Action("Index", "Warehouse", new
+                {
+                    storeId = Model.StoreId,
+                    q = Model.Q,
+                    addressId = Model.AddressId,
+                    pageSize = Model.PageSize
+                })!;
+            }
+            <a class="btn @(cur==1?"disabled":null)" href="@(cur==1 ? "#" : $"{baseRoute}&page={cur-1}")">Prev</a>
+            @for (int p = start; p <= end; p++)
+            {
+                var active = p == cur ? "primary" : "";
+                <a class="btn @active" href="@(p==cur ? "#" : $"{baseRoute}&page={p}")">@p</a>
+            }
+            <a class="btn @(cur==last?"disabled":null)" href="@(cur==last ? "#" : $"{baseRoute}&page={cur+1}")">Next</a>
+        </div>
+    }
+</div>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toast = document.getElementById("toast");
+            if (toast) {
+                toast.classList.add("show");
+                setTimeout(() => toast.classList.remove("show"), 3500);
+            }
+        });
+    </script>
+}

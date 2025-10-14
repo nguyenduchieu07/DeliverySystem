@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Entities.Common;
+using DataAccessLayer.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -19,9 +20,7 @@ public partial class Service : BaseEntity<Guid>
     public decimal BasePrice { get; set; }
 
     public bool IsActive { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-
+    public StatusValue Status {  get; set; }
     public virtual Category? Category { get; set; }
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

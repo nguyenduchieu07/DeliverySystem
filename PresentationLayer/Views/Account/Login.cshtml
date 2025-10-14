@@ -1,0 +1,139 @@
+﻿@model PresentationLayer.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<div class="login-page">
+    <div class="background-illustration">
+        <div class="vehicle car1 animated" style="--rotation: -15deg;"></div>
+        <div class="vehicle van1 animated" style="--rotation: -10deg;"></div>
+        <div class="vehicle truck1 animated" style="--rotation: -20deg;"></div>
+        <div class="vehicle car2 animated" style="--rotation: -25deg;"></div>
+        <div class="vehicle van2 animated" style="--rotation: -5deg;"></div>
+        <div class="vehicle truck2 animated" style="--rotation: -15deg;"></div>
+    </div>
+    
+    <div class="login-container">
+        <div class="login-logo">
+            <div class="login-logo-text">
+                <div class="login-logo-icon"></div>
+                VCN
+            </div>
+        </div>
+        
+        @if (ViewBag.ErrorMessage != null)
+        {
+            <div class="alert-danger">
+                @ViewBag.ErrorMessage
+            </div>
+        }
+        
+        @if (ViewBag.SuccessMessage != null)
+        {
+            <div class="alert-success">
+                @ViewBag.SuccessMessage
+            </div>
+        }
+        
+        @using (Html.BeginForm("Login", "Account", FormMethod.Post, new { id = "loginForm" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.Hidden("ReturnUrl", ViewData["ReturnUrl"] as string)
+            
+            <div class="login-form-group">
+                <div class="country-phone-group">
+                    @Html.DropDownListFor(m => m.CountryCode, new SelectList(new[] {
+                        new { Value = "+84", Text = "Việt Nam (+84)" },
+                        new { Value = "+65", Text = "Singapore (+65)" },
+                        new { Value = "+66", Text = "Thailand (+66)" }
+                    }, "Value", "Text"), new { @class = "country-select" })
+                    
+                    @Html.TextBoxFor(m => m.PhoneOrEmail, new { 
+                        @class = "phone-email-input", 
+                        @placeholder = "Số điện thoại hoặc email"
+                    })
+                </div>
+                @Html.ValidationMessageFor(m => m.PhoneOrEmail, "", new { @class = "field-validation-error" })
+            </div>
+            
+            <div class="login-form-group">
+                <div class="password-field">
+                    @Html.PasswordFor(m => m.Password, new { 
+                        @class = "password-input", 
+                        @placeholder = "Mật khẩu",
+                        @id = "passwordField"
+                    })
+                    <button type="button" class="password-toggle-btn" onclick="togglePassword()">👁</button>
+                </div>
+                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation-error" })
+                
+                <div class="forgot-password-link">
+                    @Html.ActionLink("Quên mật khẩu?", "ForgotPassword", "Account")
+                </div>
+            </div>
+            
+            <button type="submit" class="login-submit-btn" id="loginBtn">
+                Đăng nhập
+            </button>
+        }
+        
+        <div class="or-divider">
+            <span>Hoặc</span>
+        </div>
+        
+        <a href="@Url.Action("FacebookLogin", "Account")" class="social-login-btn">
+            <span class="social-icon facebook-icon">f</span>
+            Tiếp tục với tài khoản Facebook
+        </a>
+        
+        <a href="@Url.Action("GoogleLogin", "Account")" class="social-login-btn">
+            <span class="social-icon google-icon">G</span>
+            Tiếp tục với tài khoản Google
+        </a>
+        
+        <div class="signup-section">
+            Bạn mới sử dụng VCN? 
+            @Html.ActionLink("Tạo tài khoản miễn phí ngay", "Register", "Account")
+        </div>
+        
+        <div class="footer-links">
+            @Html.ActionLink("Điều khoản và điều kiện", "Terms", "Home")
+            @Html.ActionLink("Chính sách bảo mật", "Privacy", "Home")
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('passwordField');
+        const toggleBtn = document.querySelector('.password-toggle-btn');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleBtn.textContent = '🙈';
+        } else {
+            passwordInput.type = 'password';
+            toggleBtn.textContent = '👁';
+        }
+    }
+    
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const loginBtn = document.getElementById('loginBtn');
+        loginBtn.textContent = 'Đang đăng nhập...';
+        loginBtn.disabled = true;
+    });
+    
+    window.addEventListener('load', function() {
+        const loginBtn = document.getElementById('loginBtn');
+        loginBtn.textContent = 'Đăng nhập';
+        loginBtn.disabled = false;
+    });
+</script>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/vcn-auth.js" asp-append-version="true"></script>
+}
+<link rel="stylesheet" href="~/css/vcn-auth.css" asp-append-version="true" />

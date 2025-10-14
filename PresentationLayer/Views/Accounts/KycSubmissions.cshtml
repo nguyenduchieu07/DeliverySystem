@@ -1,16 +1,16 @@
 ﻿@using ServiceLayer.Dtos.RegisterStore
+@using DataAccessLayer.Enums
 @model KycViewModel
 @{
     ViewData["Title"] = "Xác minh KYC";
-    string KycBadgeClass(string status)
+    string KycBadgeClass(StatusValue? status)
     {
-        status = status?.ToLowerInvariant() ?? "";
         return status switch
         {
-            "approved" => "badge bg-success",
-            "pending" => "badge bg-warning text-dark",
-            "rejected" => "badge bg-danger",
-            "notsubmitted" => "badge bg-secondary",
+            StatusValue.Approved => "badge bg-success",
+            StatusValue.Pending => "badge bg-warning text-dark",
+            StatusValue.Rejected => "badge bg-danger",
+            StatusValue.NotSubmitted => "badge bg-secondary",
             _ => "badge bg-light text-dark"
         };
     }

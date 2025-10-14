@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Entities.Common;
+using DataAccessLayer.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -13,7 +14,7 @@ public partial class StoreStaff : BaseEntity<Guid>
 
     public string Role { get; set; } = null!;
 
-    public string Status { get; set; } = null!;
+    public StatusValue Status { get; set; }
 
     public virtual Store Store { get; set; } = null!;
 

@@ -66,7 +66,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                 NormalizedEmail = "store1@gmail.com",
                 NormalizedUserName = "store1",
                 PasswordHash = hash,
-                Status = "Active"
+                Status =Enums.StatusValue.Active
             };
             modelBuilder.Entity<User>().HasData(user);
             modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid> { RoleId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002"), UserId = user.Id });
@@ -124,7 +124,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                 NormalizedEmail = "SystemAdmin@gmail.com",
                 NormalizedUserName = "SystemAdmin",
                 PasswordHash = hash,
-                Status = "Active",
+                Status = Enums.StatusValue.Active,
 
             };
             modelBuilder.Entity<User>().HasData(user);
@@ -153,7 +153,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     PasswordHash = hash,
                     SecurityStamp = "sec-blue",
                     ConcurrencyStamp = "con-blue",
-                    Status = "Active",
+                    Status = Enums.StatusValue.Active,
                     CreatedAt = new DateTime(2025, 01, 01),
                     UpdatedAt = new DateTime(2025, 01, 01)
                 },
@@ -168,7 +168,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     PasswordHash = hash,
                     SecurityStamp = "sec-fresh",
                     ConcurrencyStamp = "con-fresh",
-                    Status = "Active",
+                    Status = Enums.StatusValue.Active,
                     CreatedAt = new DateTime(2025, 01, 01),
                     UpdatedAt = new DateTime(2025, 01, 01)
                 },
@@ -183,7 +183,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                     PasswordHash = hash,
                     SecurityStamp = "sec-prime",
                     ConcurrencyStamp = "con-prime",
-                    Status = "Active",
+                    Status = Enums.StatusValue.Active,
                     CreatedAt = new DateTime(2025, 01, 01),
                     UpdatedAt = new DateTime(2025, 01, 01)
                 });
@@ -198,9 +198,9 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             var storePrimeId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3");
 
             b.Entity<Store>().HasData(
-                new Store { Id = storeBlueId, OwnerUserId = blueOwnerId, StoreName = "Blue Wash", Status = "Inactive", RatingCount= 0,RatingAvg=0, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new Store { Id = storeFreshId, OwnerUserId = freshOwnerId, StoreName = "Fresh Laundry", Status = "Inactive", RatingCount = 0, RatingAvg = 0, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new Store { Id = storePrimeId, OwnerUserId = primeOwnerId, StoreName = "Prime Cleaners", Status = "Active", RatingCount = 0, RatingAvg = 0, KycLevel = "Verified", MaxOrdersPerDay = 80, ActiveRegions = "HN,HCM", CreatedAt = DateTime.UtcNow.AddDays(-30), UpdatedAt = DateTime.UtcNow }
+                new Store { Id = storeBlueId, OwnerUserId = blueOwnerId, StoreName = "Blue Wash", Status = Enums.StatusValue.InActive, RatingCount= 0,RatingAvg=0, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new Store { Id = storeFreshId, OwnerUserId = freshOwnerId, StoreName = "Fresh Laundry", Status = Enums.StatusValue.InActive, RatingCount = 0, RatingAvg = 0, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new Store { Id = storePrimeId, OwnerUserId = primeOwnerId, StoreName = "Prime Cleaners", Status = Enums.StatusValue.Active, RatingCount = 0, RatingAvg = 0, KycLevel = "Verified", MaxOrdersPerDay = 80, ActiveRegions = "HN,HCM", CreatedAt = DateTime.UtcNow.AddDays(-30), UpdatedAt = DateTime.UtcNow }
             );
 
             var kycBlueId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1");

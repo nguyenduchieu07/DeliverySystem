@@ -120,7 +120,7 @@ namespace PresentationLayer.Controllers
                 DropoffAddressId = vm.DropoffAddressId,
                 DistanceKm = null, // can be filled later via routing service
                 EtaMinutes = null,
-                Status = "Pending", // created → pending review/quotation
+                Status = DataAccessLayer.Enums.StatusValue.Pending, // created → pending review/quotation
                 TotalAmount = 0m, // compute later or as estimate
                 Note = vm.Note,
                 CreatedAt = DateTime.UtcNow,
