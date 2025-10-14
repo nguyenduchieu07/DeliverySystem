@@ -1,0 +1,190 @@
+﻿@using DataAccessLayer.Enums
+@model ServiceEditViewModel
+
+<style>
+  /* ===== STABLE GRID FOR PRICE RULES (giữ nguyên type="text") ===== */
+  .rules-grid{
+    --gap:8px; --act:44px;
+    display:grid;
+    grid-template-columns:
+      160px 160px      /* ValidFrom, ValidTo */
+      90px  90px       /* Min/Max m3 */
+      90px  90px       /* Min/Max m2 */
+      90px  90px       /* Min/Max Qty */
+      80px  80px       /* Min/Max Days */
+      130px 150px      /* TimeUnit, ApplyModel */
+      120px            /* Price */
+      var(--act);      /* xóa */
+    gap:var(--gap);
+    align-items:center;
+  }
+  .rules-grid .head{
+    font-size:12px; color:var(--muted);
+    text-transform:uppercase; white-space:nowrap;
+  }
+  .rules-row{ display:contents; }
+
+  /* ép cell về đúng cột để không vỡ khi thiếu/thừa node */
+  .c-from   { grid-column: 1; }
+  .c-to     { grid-column: 2; }
+  .c-vmin   { grid-column: 3; }
+  .c-vmax   { grid-column: 4; }
+  .c-amin   { grid-column: 5; }
+  .c-amax   { grid-column: 6; }
+  .c-qmin   { grid-column: 7; }
+  .c-qmax   { grid-column: 8; }
+  .c-dmin   { grid-column: 9; }
+  .c-dmax   { grid-column:10; }
+  .c-unit   { grid-column:11; }
+  .c-model  { grid-column:12; }
+  .c-price  { grid-column:13; }
+  .c-act    { grid-column:14; justify-self:end; }
+
+  .rules-grid input,.rules-grid select{
+    width:100%; min-width:0; height:38px;
+    padding:6px 10px; border-radius:12px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+  }
+
+  .btn-del{
+    width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:10px; border:1px solid var(--border);
+    background:rgba(255,107,107,.12); color:var(--danger);
+    cursor:pointer; font-size:18px; line-height:1; transition:.15s ease;
+  }
+  .btn-del:hover{ transform:translateY(-1px); border-color:#ff9a9a; }
+
+  @@media (max-width: 1100px){
+    .rules-grid{
+      grid-template-columns: 1fr 1fr;   /* xếp 2 cột khi hẹp */
+    }
+    .rules-grid .head{ display:none; }   /* ẩn header để đỡ chật */
+
+    /* bố cục mobile: 1 block = 6 hàng */
+    .c-from { grid-column:1; }
+    .c-to   { grid-column:2; }
+    .c-vmin { grid-column:1; } .c-vmax { grid-column:2; }
+    .c-amin { grid-column:1; } .c-amax { grid-column:2; }
+    .c-qmin { grid-column:1; } .c-qmax { grid-column:2; }
+    .c-dmin { grid-column:1; } .c-dmax { grid-column:2; }
+    .c-unit { grid-column:1; } .c-model{ grid-column:2; }
+    .c-price{ grid-column:1 / -1; }
+    .c-act  { grid-column:2; justify-self:end; }
+  }
+</style>
+
+<div class="rules-grid" id="rulesGrid">
+  <div class="head">Valid From</div>
+  <div class="head">Valid To</div>
+  <div class="head">Min m³</div>
+  <div class="head">Max m³</div>
+  <div class="head">Min m²</div>
+  <div class="head">Max m²</div>
+  <div class="head">Min Qty</div>
+  <div class="head">Max Qty</div>
+  <div class="head">Min Days</div>
+  <div class="head">Max Days</div>
+  <div class="head">TimeUnit</div>
+  <div class="head">ApplyModel</div>
+  <div class="head">Price/ngày</div>
+  <div class="head"></div>
+
+  @for (var i = 0; i < (Model.PriceRules?.Count ?? 0); i++)
+  {
+    var r = Model.PriceRules[i];
+    <div class="rules-row">
+      <input class="c-from" type="datetime-local" name="PriceRules[@i].ValidFrom" value="@r.ValidFrom.ToString("yyyy-MM-ddTHH:mm")" />
+      <input class="c-to"   type="datetime-local" name="PriceRules[@i].ValidTo"   value="@(r.ValidTo?.ToString("yyyy-MM-ddTHH:mm"))" />
+
+      <input class="c-vmin" type="text" name="PriceRules[@i].MinVolumeM3" value="@(r.MinVolumeM3?.ToString())" />
+      <input class="c-vmax" type="text" name="PriceRules[@i].MaxVolumeM3" value="@(r.MaxVolumeM3?.ToString())" />
+
+      <input class="c-amin" type="text" name="PriceRules[@i].MinAreaM2" value="@(r.MinAreaM2?.ToString())" />
+      <input class="c-amax" type="text" name="PriceRules[@i].MaxAreaM2" value="@(r.MaxAreaM2?.ToString())" />
+
+      <input class="c-qmin" type="text" name="PriceRules[@i].MinQty"  value="@(r.MinQty?.ToString())" />
+      <input class="c-qmax" type="text" name="PriceRules[@i].MaxQty"  value="@(r.MaxQty?.ToString())" />
+
+      <input class="c-dmin" type="text" name="PriceRules[@i].MinDays" value="@(r.MinDays?.ToString())" />
+      <input class="c-dmax" type="text" name="PriceRules[@i].MaxDays" value="@(r.MaxDays?.ToString())" />
+
+      <select class="c-unit" name="PriceRules[@i].TimeUnit">
+        <option value="0" selected="@(r.TimeUnit==TimeUnit.Day)">Day</option>
+        <option value="1" selected="@(r.TimeUnit==TimeUnit.Week)">Week</option>
+        <option value="2" selected="@(r.TimeUnit==TimeUnit.Month)">Month</option>
+      </select>
+
+      <select class="c-model" name="PriceRules[@i].ApplyModel">
+        <option value="0" selected="@(r.ApplyModel==PricingModel.Flat)">Flat</option>
+        <option value="1" selected="@(r.ApplyModel==PricingModel.PerUnit)">PerUnit</option>
+        <option value="2" selected="@(r.ApplyModel==PricingModel.Tiered)">Tiered</option>
+        <option value="3" selected="@(r.ApplyModel==PricingModel.DimensionBased)">DimensionBased</option>
+        <option value="4" selected="@(r.ApplyModel==PricingModel.TimeBased)">TimeBased</option>
+      </select>
+
+      <input class="c-price" type="text" name="PriceRules[@i].Price" value="@r.Price" />
+      <button type="button" class="btn-del c-act" title="Xóa rule">×</button>
+    </div>
+  }
+</div>
+
+<div style="margin-top:8px">
+  <button type="button" class="btn" id="btnAddRule">+ Thêm rule</button>
+</div>
+
+<script>
+(function(){
+  const grid = document.getElementById('rulesGrid');
+  const btn  = document.getElementById('btnAddRule');
+  if(!grid || !btn) return;
+
+  // thêm dòng mới
+  btn.addEventListener('click', () => {
+    const i = grid.querySelectorAll('.rules-row').length;
+    const row = document.createElement('div');
+    row.className = 'rules-row';
+    row.innerHTML = `
+      <input class="c-from"  type="datetime-local" name="PriceRules[${i}].ValidFrom" />
+      <input class="c-to"    type="datetime-local" name="PriceRules[${i}].ValidTo" />
+      <input class="c-vmin"  type="text" name="PriceRules[${i}].MinVolumeM3" />
+      <input class="c-vmax"  type="text" name="PriceRules[${i}].MaxVolumeM3" />
+      <input class="c-amin"  type="text" name="PriceRules[${i}].MinAreaM2" />
+      <input class="c-amax"  type="text" name="PriceRules[${i}].MaxAreaM2" />
+      <input class="c-qmin"  type="text" name="PriceRules[${i}].MinQty" />
+      <input class="c-qmax"  type="text" name="PriceRules[${i}].MaxQty" />
+      <input class="c-dmin"  type="text" name="PriceRules[${i}].MinDays" />
+      <input class="c-dmax"  type="text" name="PriceRules[${i}].MaxDays" />
+      <select class="c-unit" name="PriceRules[${i}].TimeUnit">
+        <option value="0">Day</option><option value="1">Week</option><option value="2">Month</option>
+      </select>
+      <select class="c-model" name="PriceRules[${i}].ApplyModel">
+        <option value="0">Flat</option><option value="1">PerUnit</option>
+        <option value="2">Tiered</option><option value="3">DimensionBased</option><option value="4">TimeBased</option>
+      </select>
+      <input class="c-price" type="text" name="PriceRules[${i}].Price" />
+      <button type="button" class="btn-del c-act" title="Xóa rule">×</button>
+    `;
+    grid.appendChild(row);
+  });
+
+  // xóa dòng + reindex lại tên để model binder nhận đúng
+  grid.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-del')) {
+      const row = e.target.closest('.rules-row');
+      if (row) row.remove();
+      reindex();
+    }
+  });
+
+  function reindex(){
+    const rows = grid.querySelectorAll('.rules-row');
+    rows.forEach((row, idx) => {
+      row.querySelectorAll('input,select,textarea').forEach(el => {
+        const name = el.getAttribute('name');
+        if (!name) return;
+        el.setAttribute('name', name.replace(/PriceRules\[\d+\]/, `PriceRules[${idx}]`));
+      });
+    });
+  }
+})();
+</script>

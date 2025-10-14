@@ -1,0 +1,109 @@
+﻿@using PresentationLayer.Areas.Stores.Models.Services
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model ServiceEditViewModel
+
+<div class="card" id="catPickerRoot">
+    <label>Danh mục</label>
+    <div class="help">Chọn lần lượt: Cha → Con → Cháu ... đến khi hết nhánh. Hệ thống sẽ lưu ID danh mục cuối.</div>
+    <div data-cat-tree class="grid" style="grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px"></div>
+    <input type="hidden" name="CategoryId" value="@Model.CategoryId" />
+    <div style="margin-top:8px" class="muted">Đang chọn: <span data-crumb></span></div>
+</div>
+
+<script>
+(function () {
+    const root = document.getElementById('catPickerRoot');
+    if (!root) return;
+    const tree = root.querySelector('[data-cat-tree]');
+    const crumb = root.querySelector('[data-crumb]');
+    const hidden = root.querySelector('input[name="CategoryId"]');
+    const storeId = '@Model.StoreId';
+
+    // NOTE: nếu bạn dùng API prefix /api/categories, đổi endpoints bên dưới cho khớp.
+    const endpoints = {
+        roots: '@Url.Content("~/categories/roots")' + '?storeId=' + encodeURIComponent(storeId),
+        children: pid => '@Url.Content("~/categories/childrens")' + '?parentId=' + encodeURIComponent(pid),
+        path: cid => '@Url.Content("~/categories/path")' + '?categoryId=' + encodeURIComponent(cid)
+    };
+
+    function makeSelect(level) {
+        const wrap = document.createElement('div');
+        wrap.setAttribute('data-level', level);
+        const sel = document.createElement('select');
+        sel.innerHTML = '<option value>— Chọn —</option>';
+        sel.addEventListener('change', () => onChange(level, sel.value, sel.options[sel.selectedIndex]?.textContent || ''));
+        wrap.appendChild(sel);
+        return { wrap, sel };
+    }
+
+    function setOptions(sel, items) {
+        sel.innerHTML = '<option value>— Chọn —</option>';
+        (items || []).forEach(it => {
+            const o = document.createElement('option'); o.value = it.id; o.textContent = it.name; sel.appendChild(o);
+        });
+    }
+
+    function clearDeeper(level) {
+        const nodes = Array.from(tree.querySelectorAll('[data-level]'));
+        for (const n of nodes) { if (parseInt(n.getAttribute('data-level')) > level) { n.remove(); } }
+    }
+
+    function updateCrumb() {
+        const parts = []; const selects = tree.querySelectorAll('select');
+        selects.forEach(s => { const t = s.options[s.selectedIndex]?.textContent; if (s.value && t) parts.push(`<span class="pill">${t}</span>`); });
+        crumb.innerHTML = parts.length ? parts.join(' / ') : '<span class="muted">(chưa chọn)</span>';
+    }
+
+    async function load(level, parentId, preselect) {
+        let node = tree.querySelector(`[data-level="${level}"]`);
+        if (!node) { const c = makeSelect(level); tree.appendChild(c.wrap); node = c.wrap; }
+        const sel = node.querySelector('select');
+
+        sel.classList.add('hidden');
+        const sk = document.createElement('div'); sk.className = 'skeleton'; node.appendChild(sk);
+
+        const url = (parentId ? endpoints.children(parentId) : endpoints.roots);
+        const res = await fetch(url);
+        const data = await res.json();
+
+        node.removeChild(sk); sel.classList.remove('hidden');
+        setOptions(sel, data);
+
+        if (preselect) { sel.value = preselect; if (!sel.value) sel.selectedIndex = 0; }
+
+        if (!data || data.length === 0) { clearDeeper(level); }
+    }
+
+    async function onChange(level, id) {
+        clearDeeper(level);
+        hidden.value = id || '';
+        updateCrumb();
+
+        if (id) {
+            const nextLevel = level + 1;
+            await load(nextLevel, id, null);
+            const nextNode = tree.querySelector(`[data-level="${nextLevel}"] select`);
+            if (nextNode && nextNode.options.length > 1) { hidden.value = ''; }
+        }
+    }
+
+    async function init() {
+        const current = hidden.value;
+        if (current) {
+            const res = await fetch(endpoints.path(current));
+            const path = await res.json();
+            let prev = null; let level = 0;
+            for (const n of path) { await load(level, prev, n.id); prev = n.id; level++; }
+            updateCrumb();
+            await load(path.length, prev, null);
+            const extra = tree.querySelector(`[data-level="${path.length}"] select`);
+            if (extra && extra.options.length > 1) { hidden.value = ''; }
+        } else {
+            await load(0, null, null);
+        }
+        updateCrumb();
+    }
+
+    init();
+})();
+</script>

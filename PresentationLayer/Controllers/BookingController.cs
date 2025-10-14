@@ -131,7 +131,7 @@ namespace PresentationLayer.Controllers
             {
                 var svc = await _db.Services.FindAsync(it.ServiceId);
                 if (svc == null) continue;
-                var price = await _db.ServicePrices
+                var price = await _db.PriceRules
                     .Where(p => p.ServiceId == svc.Id && p.ValidFrom <= DateTime.UtcNow && p.ValidTo >= DateTime.UtcNow)
                     .OrderByDescending(p => p.ValidFrom)
                     .Select(p => p.Price)

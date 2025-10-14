@@ -8,9 +8,9 @@ namespace DataAccessLayer.Enums
 {
     public enum StatusValue
     {
-        Canceled,
-        Rejected,
         Pending,
+        Canceled,
+        Rejected,       
         Approved,
         Avalavaible,
         Reserved,
