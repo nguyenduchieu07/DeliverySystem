@@ -1,4 +1,5 @@
-﻿using DataAccessLayer.Entities;
+﻿using DataAccessLayer.Constants;
+using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ using System.Security.Claims;
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
-    [Authorize]
+    [Authorize(Roles = UserRoles.STORE)]
     public class HomeController : Controller
     {
         private readonly IDashboardService _dashboardService;

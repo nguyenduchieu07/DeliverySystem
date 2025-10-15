@@ -648,6 +648,7 @@ namespace PresentationLayer.Controllers
                 warehouse.AddressRefId = newAddress.Id;
             }
             warehouse.Id = Guid.NewGuid();
+            warehouse.Status = DataAccessLayer.Enums.StatusValue.Approved;
             await _db.Warehouses.AddAsync(warehouse);
             //if (slots != null && slots.Count > 0)
             //{
@@ -669,7 +670,9 @@ namespace PresentationLayer.Controllers
             try
             {
                 var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                request.StoreId = Guid.Parse(userId!);
+                var id = Guid.Parse(userId!);
+                var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
+                request.StoreId = storeId;
                 var data = await _storeService.SubmitKycDocumentsAsync(request);
                 return Ok("Gửi thành công.");
             }

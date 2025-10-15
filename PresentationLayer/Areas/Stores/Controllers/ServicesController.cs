@@ -1,4 +1,5 @@
-﻿using DataAccessLayer.Entities;
+﻿using DataAccessLayer.Constants;
+using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ using System.Security.Claims;
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
-    [Authorize]
+    [Authorize(Roles = UserRoles.STORE)]
     public class ServicesController : Controller
     {
         private readonly DeliverySytemContext _db;
