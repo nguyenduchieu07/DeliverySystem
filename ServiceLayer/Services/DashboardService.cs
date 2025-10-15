@@ -133,7 +133,7 @@ namespace ServiceLayer.Services
 
             var warehouse = await _context.Warehouses
                 .AsNoTracking()
-                .Where(w => w.StoreId == storeId)
+                .Where(w => w.StoreId == storeId && w.Status == Status.Approved)
                 .Select(w => new WareHouseDashboard
                 {
                     Address = (

@@ -66,7 +66,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     AddressText = w.Address != null ? w.Address.AddressLine : "(No address)",
                     SlotCount = w.Slots.Count,
                     CreatedAt = w.CreatedAt,
-                    CoverImageUrl = w.CoverImageUrl
+                    CoverImageUrl = w.CoverImageUrl,
+                    Status = w.Status
                 })
                 .ToListAsync();
 
@@ -133,7 +134,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 warehouse.MapImageUrl = mapImage;
             }
                 // Nếu người dùng nhập địa chỉ mới → tạo mới Address
-                if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
+            if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
             {
                 newAddress.Id = Guid.NewGuid();
                 newAddress.Active = true;
@@ -141,7 +142,6 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 await _db.SaveChangesAsync();
                 warehouse.AddressRefId = newAddress.Id;
             }
-            warehouse.Slots.Clear();
             warehouse.Id = Guid.NewGuid();
             warehouse.Status = DataAccessLayer.Enums.StatusValue.Pending;
             _db.Warehouses.Add(warehouse);
@@ -270,5 +270,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             return View(warehouse);
         }
+
+
     }
 }
