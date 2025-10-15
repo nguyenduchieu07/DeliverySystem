@@ -40,21 +40,11 @@ namespace ServiceLayer.Services
             try
             {
                 // 1. Add User
-                var user = new User
+                var user = await _userManager.FindByIdAsync(request.UserId.ToString()) ?? throw new Exception("Not found user");
+                var isStore = await _userManager.IsInRoleAsync(user!, UserRoles.STORE);
+                if (isStore)
                 {
-                    Id = Guid.NewGuid(),
-                    UserName = request.Email,
-                    Email = request.Email,
-                    PhoneNumber = request.PhoneNumber,
-                    Status = StatusValue.Active,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                // check add user success
-                var createUserResult = await _userManager.CreateAsync(user, request.Password);
-                if (!createUserResult.Succeeded)
-                {
-                    throw new Exception($"Failed to create user: {string.Join(", ", createUserResult.Errors.Select(e => e.Description))}");
+                    throw new Exception($"Failed to create store: user is store");
                 }
                 await _userManager.AddToRoleAsync(user,UserRoles.STORE);
 

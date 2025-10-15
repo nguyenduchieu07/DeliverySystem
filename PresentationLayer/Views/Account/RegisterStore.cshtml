@@ -142,14 +142,10 @@
     <div class="progress-indicator">
         <div class="step active">
             <div class="step-number">1</div>
-            <span>Tài khoản</span>
-        </div>
-        <div class="step active">
-            <div class="step-number">2</div>
             <span>Thông tin cửa hàng</span>
         </div>
         <div class="step active">
-            <div class="step-number">3</div>
+            <div class="step-number">2</div>
             <span>Địa chỉ</span>
         </div>
     </div>
@@ -161,55 +157,7 @@
         {
             <div class="validation-summary text-danger">@TempData["Error"]</div>
         }
-        <!-- Account Information -->
-        <fieldset>
-            <legend>
-                <i class="fas fa-user-circle me-2"></i>
-                Thông tin tài khoản
-            </legend>
-
-            <div class="row form-row">
-                <div class="col-md-4 mb-3">
-                    <label asp-for="Email" class="form-label">
-                        Email <span class="required-mark">*</span>
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-envelope"></i>
-                        </span>
-                        <input asp-for="Email" type="email" class="form-control" placeholder="email@example.com" required />
-                    </div>
-                    <span asp-validation-for="Email" class="text-danger field-validation-error"></span>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label asp-for="Password" class="form-label">
-                        Mật khẩu <span class="required-mark">*</span>
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-lock"></i>
-                        </span>
-                        <input asp-for="Password" type="password" class="form-control" placeholder="Tối thiểu 6 ký tự" minlength="6" required />
-                    </div>
-                    <span asp-validation-for="Password" class="text-danger field-validation-error"></span>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label asp-for="PhoneNumber" class="form-label">
-                        Số điện thoại <span class="required-mark">*</span>
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-phone"></i>
-                        </span>
-                        <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="0xxx xxx xxx" required />
-                    </div>
-                    <span asp-validation-for="PhoneNumber" class="text-danger field-validation-error"></span>
-                </div>
-            </div>
-        </fieldset>
-
+        <!-- Account Information -->      
         <!-- Store Information -->
         <fieldset>
             <legend>

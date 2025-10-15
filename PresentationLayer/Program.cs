@@ -15,7 +15,7 @@ builder.Services.AddServices(); // Đăng ký Service từ ServiceLayer
 // Register EmailSender with SMTP
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();
-
+builder.Services.AddSession();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -27,7 +27,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
+app.UseSession();
 app.UseRouting();
 
 // Quan trọng: UseAuthentication phải trước UseAuthorization

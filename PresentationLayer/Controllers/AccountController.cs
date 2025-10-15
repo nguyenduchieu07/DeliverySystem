@@ -3,12 +3,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PresentationLayer.Helpers;
 using PresentationLayer.Models;
 using ServiceLayer.Abstractions.IServices;
+using ServiceLayer.Dtos.RegisterStore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace PresentationLayer.Controllers
@@ -19,17 +22,25 @@ namespace PresentationLayer.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly IEmailSender _emailSender;
-
+        private readonly IStoreRegistrationService _storeService;
+        private readonly DeliverySytemContext _db;
+        private readonly ICloudinaryService _files;
         public AccountController(
             ICustomerService customerService,
             UserManager<User> userManager,
             SignInManager<User> signInManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            IStoreRegistrationService storeService,
+            DeliverySytemContext db,
+            ICloudinaryService files)
         {
             _customerService = customerService;
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _storeService = storeService;
+            _db = db;
+            _files = files;
         }
 
         #region Register
@@ -559,6 +570,116 @@ namespace PresentationLayer.Controllers
             await _userManager.AddToRoleAsync(user, role);
             return RedirectToAction("Profile", new { userId });
         }
+        #endregion
+
+
+        #region store
+        [HttpGet]
+        [Authorize]
+        public IActionResult RegisterStore()
+        {
+            ViewBag.Addresses = _db.Addresses
+                .Where(a => a.Active)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToList();
+            return View(new RegisterStoreRequest());
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> RegisterStore(RegisterStoreRequest request)
+        {
+            try
+            {
+                var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                request.UserId = Guid.Parse(userId!);
+                var data = await _storeService.RegisterStoreAsync(request);
+                var dto = new KycViewModel
+                {
+                    Response = data,
+                };
+                HttpContext.Session.SetObject("kyc", dto);
+                return View("RegisterWarehouse");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(RegisterStore), request);
+            }
+
+        }
+        [HttpGet]
+        [Authorize]
+        public IActionResult RegisterWarehouse()
+        {
+            ViewBag.Addresses = _db.Addresses
+                .Where(a => a.Active)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToList();
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> RegisterWarehouse([FromForm] Warehouse warehouse, [FromForm] Address? newAddress, [FromForm] List<WarehouseSlot> slots, [FromForm] IFormFile? CoverImage, [FromForm] IFormFile? MapImage)
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var id = Guid.Parse(userId!);
+            var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
+            warehouse.StoreId = storeId;
+            var dto = HttpContext.Session.GetObject<KycViewModel>("kyc");
+            if (CoverImage != null && CoverImage.Length > 0)
+            {
+                var coverImage = await _files.UploadImageFileAsync(CoverImage);
+                warehouse.CoverImageUrl = coverImage;
+            }
+            if (MapImage != null && MapImage.Length > 0)
+            {
+                var mapImage = await _files.UploadImageFileAsync(MapImage);
+                warehouse.MapImageUrl = mapImage;
+            }
+            // Nếu người dùng nhập địa chỉ mới → tạo mới Address
+            if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
+            {
+                newAddress.Id = Guid.NewGuid();
+                newAddress.Active = true;
+                _db.Addresses.Add(newAddress);
+                await _db.SaveChangesAsync();
+                warehouse.AddressRefId = newAddress.Id;
+            }
+            warehouse.Id = Guid.NewGuid();
+            await _db.Warehouses.AddAsync(warehouse);
+            //if (slots != null && slots.Count > 0)
+            //{
+            //    foreach (var s in slots)
+            //    {
+            //        s.Id = Guid.NewGuid();
+            //        s.WarehouseId = warehouse.Id;
+            //        _db.WarehouseSlots.Add(s);
+            //    }
+            //}
+
+            await _db.SaveChangesAsync();
+            return View("KycSubmissions",dto);
+        }
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> SubmitKyc(SubmitKycRequest request)
+        {
+            try
+            {
+                var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                request.StoreId = Guid.Parse(userId!);
+                var data = await _storeService.SubmitKycDocumentsAsync(request);
+                return Ok("Gửi thành công.");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return View("KycSubmissions", request);
+            }
+        }
+        
         #endregion
     }
 }
