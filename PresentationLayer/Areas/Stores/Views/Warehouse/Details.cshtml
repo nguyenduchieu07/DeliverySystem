@@ -34,7 +34,10 @@
 <div class="page-head">
     <div class="page-title">@Model.Name</div>
     <div class="page-actions">
-        <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+        @if(Model.Status == StatusValue.Approved)
+        {
+            <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+        }
         <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="Index">Back</a>
     </div>
 </div>
