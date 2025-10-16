@@ -8,11 +8,11 @@ namespace DataAccessLayer.Constants
 {
     public static class UserRoles
     {
-        public const string ADMIN = "ADMIN";
+        public const string ADMIN = "Admin";
 
-        public const string STORE = "STORE";
+        public const string STORE = "Store";
 
-        public const string CUSTOMER = "CUSTOMER";
+        public const string CUSTOMER = "Customer";
 
         public const string STORESTAFF = "StoreStaff";
     }

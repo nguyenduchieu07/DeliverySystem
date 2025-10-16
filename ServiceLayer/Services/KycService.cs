@@ -65,7 +65,7 @@ namespace ServiceLayer.Services
 
             
             var store = sub.Store;
-            store.Status = "Active";
+            store.Status = StatusValue.Active;
             store.KycLevel = "Verified"; 
             store.MaxOrdersPerDay = maxPerDay;
             store.ActiveRegions = regions != null ? string.Join(",", regions) : store.ActiveRegions;
@@ -103,7 +103,7 @@ namespace ServiceLayer.Services
             sub.ReviewedBy = adminId;
 
             
-            sub.Store.Status = "Inactive";
+            sub.Store.Status = StatusValue.InActive;
 
             await _db.SaveChangesAsync();
             await tx.CommitAsync();

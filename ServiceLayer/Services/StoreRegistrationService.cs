@@ -40,21 +40,11 @@ namespace ServiceLayer.Services
             try
             {
                 // 1. Add User
-                var user = new User
+                var user = await _userManager.FindByIdAsync(request.UserId.ToString()) ?? throw new Exception("Not found user");
+                var isStore = await _userManager.IsInRoleAsync(user!, UserRoles.STORE);
+                if (isStore)
                 {
-                    Id = Guid.NewGuid(),
-                    UserName = request.Email,
-                    Email = request.Email,
-                    PhoneNumber = request.PhoneNumber,
-                    Status = "Active",
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                // check add user success
-                var createUserResult = await _userManager.CreateAsync(user, request.Password);
-                if (!createUserResult.Succeeded)
-                {
-                    throw new Exception($"Failed to create user: {string.Join(", ", createUserResult.Errors.Select(e => e.Description))}");
+                    throw new Exception($"Failed to create store: user is store");
                 }
                 await _userManager.AddToRoleAsync(user,UserRoles.STORE);
 
@@ -67,7 +57,7 @@ namespace ServiceLayer.Services
                     LegalName = request.LegalName,
                     LicenseNumber = request.LicenseNumber,
                     TaxNumber = request.TaxNumber,
-                    Status = "PendingKyc", // Initial status
+                    Status = StatusValue.PendingKyc, // Initial status
                     KycLevel = "None",
                     RatingAvg = 0,
                     RatingCount = 0,
@@ -102,7 +92,7 @@ namespace ServiceLayer.Services
                     OwnerId = store.Id,
                     Currency = "VND",
                     Balance = 0,
-                    Status = "Active"
+                    Status = StatusValue.Active
                 };
                 await _context.Wallets.AddAsync(wallet);
 
@@ -127,7 +117,7 @@ namespace ServiceLayer.Services
                     StoreId = store.Id,
                     StoreName = store.StoreName,
                     Status = store.Status,
-                    KycStatus = kycSubmission.Status.ToString(),
+                    KycStatus = (StatusValue)kycSubmission.Status,
                     Message = "Store registered successfully. Please submit KYC documents for verification."
                 };
             }

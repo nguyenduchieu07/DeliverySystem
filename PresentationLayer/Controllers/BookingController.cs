@@ -120,7 +120,7 @@ namespace PresentationLayer.Controllers
                 DropoffAddressId = vm.DropoffAddressId,
                 DistanceKm = null, // can be filled later via routing service
                 EtaMinutes = null,
-                Status = "Pending", // created → pending review/quotation
+                Status = DataAccessLayer.Enums.StatusValue.Pending, // created → pending review/quotation
                 TotalAmount = 0m, // compute later or as estimate
                 Note = vm.Note,
                 CreatedAt = DateTime.UtcNow,
@@ -131,7 +131,7 @@ namespace PresentationLayer.Controllers
             {
                 var svc = await _db.Services.FindAsync(it.ServiceId);
                 if (svc == null) continue;
-                var price = await _db.ServicePrices
+                var price = await _db.PriceRules
                     .Where(p => p.ServiceId == svc.Id && p.ValidFrom <= DateTime.UtcNow && p.ValidTo >= DateTime.UtcNow)
                     .OrderByDescending(p => p.ValidFrom)
                     .Select(p => p.Price)

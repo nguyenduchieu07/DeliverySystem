@@ -1,4 +1,6 @@
-﻿namespace PresentationLayer.Areas.Stores.Models
+﻿using DataAccessLayer.Enums;
+
+namespace PresentationLayer.Areas.Stores.Models
 {
     public class WareHouseSlotDashboard
     {
@@ -6,7 +8,7 @@
 
         public string Code { get; set; }
 
-        public string Status { get; set; }
+        public StatusValue Status { get; set; }
 
     }
 }

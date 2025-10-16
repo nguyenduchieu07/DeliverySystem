@@ -25,7 +25,13 @@
     </div>
     
 
+    <!-- jQuery & validation (đặt TRƯỚC @@RenderSection("Scripts")) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" defer></script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 
 </html>

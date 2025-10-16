@@ -1,4 +1,6 @@
-﻿namespace PresentationLayer.Areas.Stores.Models.WarehouseModels
+﻿using DataAccessLayer.Enums;
+
+namespace PresentationLayer.Areas.Stores.Models.WarehouseModels
 {
     public class WarehouseListVm
     {
@@ -22,6 +24,7 @@
             public string Name { get; set; } = default!;
             public string AddressText { get; set; } = "";
             public int SlotCount { get; set; }
+            public StatusValue Status { get; set; }
             public DateTimeOffset CreatedAt { get; set; }
             public string? CoverImageUrl { get; set; }
         }

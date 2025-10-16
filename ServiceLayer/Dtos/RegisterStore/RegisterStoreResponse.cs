@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DataAccessLayer.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,8 +12,8 @@ namespace ServiceLayer.Dtos.RegisterStore
         public Guid UserId { get; set; }
         public Guid StoreId { get; set; }
         public string StoreName { get; set; }
-        public string Status { get; set; }
-        public string KycStatus { get; set; }
+        public StatusValue Status { get; set; }
+        public StatusValue KycStatus { get; set; }
         public string Message { get; set; }
     }
 }

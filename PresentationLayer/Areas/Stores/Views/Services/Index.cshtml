@@ -1,0 +1,46 @@
+﻿@model IEnumerable<Service>
+@{
+    ViewBag.Title = "Dịch vụ";
+    var storeId = (Guid)ViewBag.StoreId;
+}
+<div class="page-head">
+    <div class="page-title">Dịch vụ</div>
+    <div class="page-actions">
+        <a class="btn primary" href="@Url.Action("Create","Services", new { area="Stores", storeId })">+ Tạo dịch vụ</a>
+    </div>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên</th>
+                <th>Danh mục</th>
+                <th>Đơn vị</th>
+                <th>Giá cơ bản</th>
+                <th>Model</th>
+                <th>Trạng thái</th>
+                <th style="width:160px"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>@s.Name</td>
+                    <td>@(s.Category?.Name ?? "(none)")</td>
+                    <td>@s.Unit</td>
+                    <td>@s.BasePrice.ToString("#,0")</td>
+                    <td><span class="badge">@s.PricingModel</span></td>
+                    <td>
+                        @if (s.IsActive) { <span class="badge ok">Active</span> }
+                        else { <span class="badge warn">Inactive</span> }
+                    </td>
+                    <td>
+                        <a class="btn" href="@Url.Action("Edit","Services", new { area="Stores", storeId, id = s.Id })">Sửa</a>                       
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,13 @@
+﻿@model ServiceEditViewModel
+@{
+    ViewBag.Title = "Sửa dịch vụ";
+}
+<div class="breadcrumb">
+    <a href="@Url.Action("Index","Services", new { area="Stores", storeId = Model.StoreId })">Dịch vụ</a> › <span>Sửa</span>
+</div>
+
+@Html.Partial("_Form", Model)
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

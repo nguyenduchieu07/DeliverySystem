@@ -33,7 +33,7 @@ namespace ServiceLayer.Services
                 // Lưu order vào database
                 order.CreatedAt = DateTime.Now;
                 order.UpdatedAt = DateTime.Now;
-                order.Status = "Pending"; // Giả định trạng thái ban đầu
+                order.Status = DataAccessLayer.Enums.StatusValue.Pending; // Giả định trạng thái ban đầu
                 var createdOrder = await _deliveryRepository.AddOrderAsync(order);
                 _logger.LogInformation("Order {OrderId} created successfully.", createdOrder.Id);
                 return createdOrder;
@@ -131,7 +131,7 @@ namespace ServiceLayer.Services
                 DeliveryDate = dto.DeliveryDate,
                 PickupDate = dto.PickupDate,
                 Note = dto.Note,
-                Status = "Pending",
+                Status = DataAccessLayer.Enums.StatusValue.Pending,
                 TotalAmount = 0m,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,

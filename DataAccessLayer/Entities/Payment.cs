@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Entities.Common;
+using DataAccessLayer.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -16,9 +17,6 @@ public partial class Payment : BaseEntity<Guid>
 
     public string? ProviderTxnId { get; set; }
 
-    public string Status { get; set; } = null!;
-
-    public DateTime CreatedAt { get; set; }
-
+    public StatusValue Status { get; set; }
     public virtual Order Order { get; set; } = null!;
 }

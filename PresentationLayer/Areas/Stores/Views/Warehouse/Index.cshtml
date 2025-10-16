@@ -1,5 +1,4 @@
 ﻿@using PresentationLayer.Areas.Stores.Models.WarehouseModels
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @model WarehouseListVm
 
 <div class="breadcrumb">
@@ -79,7 +78,8 @@
                 <th>Name</th>
                 <th>Address</th>
                 <th style="width:12%;">Slots</th>
-                <th style="width:18%;">Created</th>
+                <th style="width:12%;">Status</th>
+                <th style="width:18%;">Created</th>               
                 <th style="width:18%;"></th>
             </tr>
         </thead>
@@ -108,11 +108,27 @@
                         <td>@w.Name</td>
                         <td>@w.AddressText</td>
                         <td><span class="badge">@w.SlotCount</span></td>
+                        <td>
+                            @{
+                                var status = w.Status.ToString() ?? "Pending";
+                                string badgeClass = status switch
+                                {
+                                    "Approved" => "badge success",
+                                    "Rejected" => "badge danger",
+                                    "Pending" => "badge warn",
+                                    _ => "badge"
+                                };
+                            }
+                            <span class="@badgeClass">@status</span>
+                        </td>
                         <td>@w.CreatedAt.LocalDateTime.ToString("dd/MM/yyyy HH:mm")</td>
                         <td>
                             <a class="btn" asp-controller="Warehouse" asp-action="Details" asp-route-id="@w.Id">Details</a>
                             @* <a class="btn" asp-controller="Warehouse/Slots" asp-action="Index" asp-route-warehouseId="@w.Id">Slots</a> *@
-                            <a class="btn" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@w.Id">Edit</a>
+                            @if(w.Status == StatusValue.Approved)
+                            {
+                                <a class="btn" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@w.Id">Edit</a>
+                            }
                         </td>
                     </tr>
                 }
