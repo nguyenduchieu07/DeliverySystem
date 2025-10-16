@@ -5,6 +5,13 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+@* Phần CSS được chuyển vào một section riêng để đưa lên thẻ <head> của trang.
+    Trong file _Layout.cshtml, bạn cần có @RenderSection("Styles", required: false) trong thẻ <head>.
+*@
+@section Styles {
+    <link rel="stylesheet" href="~/css/vcn-auth.css" asp-append-version="true" />
+}
+
 <div class="profile-container">
     <div class="profile-header">
         <div class="profile-avatar">@(Model.Customer?.FullName?.Substring(0, 1) ?? "K")</div>
@@ -26,7 +33,6 @@
             </div>
             <div class="form-group">
                 <label>Số điện thoại</label>
-                <!-- ✅ Đổi từ Phone → PhoneNumber -->
                 <input asp-for="Customer.PhoneNumber" class="form-control" readonly />
                 <span asp-validation-for="Customer.PhoneNumber" class="text-danger"></span>
             </div>
@@ -51,7 +57,7 @@
             foreach (var address in Model.Addresses)
             {
                 <div class="address-item">
-                    <span>(@address.Label),@address.AddressLine, @address.Ward, @address.District, @address.City</span>
+                    <span>(@address.Label), @address.AddressLine, @address.Ward, @address.District, @address.City</span>
                     <form asp-action="DeleteAddress" method="post" style="display:inline;">
                         <input type="hidden" name="addressId" value="@address.Id" />
                         <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
@@ -64,7 +70,6 @@
             <p class="text-muted">Bạn chưa thêm địa chỉ nào.</p>
         }
 
-        <!-- Form thêm địa chỉ -->
         <form asp-action="AddAddress" method="post" class="mt-3">
             @Html.AntiForgeryToken()
             <div class="form-group">
@@ -104,26 +109,27 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var order in Model.Orders)
+                @if (Model.Orders != null)
                 {
-                    <tr>
-                        <td>@order.Id</td>
-                        <!-- ✅ Đổi từ OrderDate → CreatedAt -->
-                        <td>@order.CreatedAt.ToString("dd/MM/yyyy")</td>
-                        <td>@order.TotalAmount.ToString("N0") VNĐ</td>
-                        <td>@order.Status</td>
-                    </tr>
+                    @foreach (var order in Model.Orders)
+                    {
+                        <tr>
+                            <td>@order.Id</td>
+                            <td>@order.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            <td>@order.TotalAmount.ToString("N0") VNĐ</td>
+                            <td>@order.Status</td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
     </div>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+@* Gộp hai section "Scripts" thành một.
+    Một trang chỉ có thể có một section với cùng một tên.
+*@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/vcn-auth.js" asp-append-version="true"></script>
 }
-<link rel="stylesheet" href="~/css/vcn-auth.css" asp-append-version="true" />
