@@ -98,7 +98,7 @@ namespace DataAccessLayer.Migrations
                             Active = true,
                             AddressLine = "12 Nguyễn Huệ",
                             City = "Hồ Chí Minh",
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(8892),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8313),
                             District = "Q.1",
                             IsDefault = true,
                             Label = "Store HQ",
@@ -113,7 +113,7 @@ namespace DataAccessLayer.Migrations
                             Active = true,
                             AddressLine = "89 Trần Hưng Đạo",
                             City = "Hà Nội",
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(8907),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8321),
                             District = "Hoàn Kiếm",
                             IsDefault = true,
                             Label = "Home Pickup",
@@ -128,7 +128,7 @@ namespace DataAccessLayer.Migrations
                             Active = true,
                             AddressLine = "25 Lê Duẩn",
                             City = "Hồ Chí Minh",
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(8911),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8324),
                             District = "Q.1",
                             IsDefault = false,
                             Label = "New Apartment",
@@ -223,7 +223,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1577),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5200),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -235,7 +235,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa2-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1592),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5207),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -247,7 +247,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa3-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1596),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5209),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -259,7 +259,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1640),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5211),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -272,7 +272,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1645),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5215),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -285,7 +285,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000004"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1648),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5217),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -298,7 +298,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa2-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1652),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5219),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -311,7 +311,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa2-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1654),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5221),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -324,7 +324,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa3-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1656),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5222),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -337,7 +337,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaa3-0000-0000-0000-000000000003"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 37, DateTimeKind.Local).AddTicks(1659),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 191, DateTimeKind.Local).AddTicks(5224),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -350,7 +350,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(8985),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8406),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -360,7 +360,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa11"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(8996),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8622),
                             IsActive = true,
                             IsLeaf = false,
                             Level = 0,
@@ -538,7 +538,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc1"),
-                            CreatedAt = new DateTime(2025, 10, 8, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8483),
+                            CreatedAt = new DateTime(2025, 10, 16, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8095),
                             DocType = "License",
                             FilePath = "/uploads/kyc/blue/license.pdf",
                             KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1")
@@ -546,7 +546,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc2"),
-                            CreatedAt = new DateTime(2025, 10, 8, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8490),
+                            CreatedAt = new DateTime(2025, 10, 16, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8099),
                             DocType = "ID",
                             FilePath = "/uploads/kyc/blue/id.jpg",
                             KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1")
@@ -554,7 +554,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc3"),
-                            CreatedAt = new DateTime(2025, 10, 8, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8510),
+                            CreatedAt = new DateTime(2025, 10, 16, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8101),
                             DocType = "Tax",
                             FilePath = "/uploads/kyc/blue/tax.pdf",
                             KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1")
@@ -562,7 +562,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc4"),
-                            CreatedAt = new DateTime(2025, 10, 9, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8515),
+                            CreatedAt = new DateTime(2025, 10, 17, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8103),
                             DocType = "License",
                             FilePath = "/uploads/kyc/fresh/license.pdf",
                             KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2")
@@ -570,7 +570,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc5"),
-                            CreatedAt = new DateTime(2025, 10, 9, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8519),
+                            CreatedAt = new DateTime(2025, 10, 17, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8106),
                             DocType = "ID",
                             FilePath = "/uploads/kyc/fresh/id.jpg",
                             KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2")
@@ -578,7 +578,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc6"),
-                            CreatedAt = new DateTime(2025, 9, 29, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8523),
+                            CreatedAt = new DateTime(2025, 10, 7, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8108),
                             DocType = "License",
                             FilePath = "/uploads/kyc/prime/license.pdf",
                             KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3")
@@ -586,7 +586,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc7"),
-                            CreatedAt = new DateTime(2025, 9, 29, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8527),
+                            CreatedAt = new DateTime(2025, 10, 7, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8110),
                             DocType = "ID",
                             FilePath = "/uploads/kyc/prime/id.jpg",
                             KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3")
@@ -594,7 +594,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc8"),
-                            CreatedAt = new DateTime(2025, 9, 29, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8531),
+                            CreatedAt = new DateTime(2025, 10, 7, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8112),
                             DocType = "Tax",
                             FilePath = "/uploads/kyc/prime/tax.pdf",
                             KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3")
@@ -650,32 +650,32 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"),
-                            CreatedAt = new DateTime(2025, 10, 8, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8318),
+                            CreatedAt = new DateTime(2025, 10, 16, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8033),
                             Status = 0,
                             StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"),
-                            SubmittedAt = new DateTime(2025, 10, 8, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8314)
+                            SubmittedAt = new DateTime(2025, 10, 16, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8029)
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2"),
                             AdminNote = "Thiếu giấy tờ thuế / ảnh mờ, vui lòng bổ sung.",
-                            CreatedAt = new DateTime(2025, 10, 9, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8330),
-                            ReviewedAt = new DateTime(2025, 10, 10, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8324),
+                            CreatedAt = new DateTime(2025, 10, 17, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8042),
+                            ReviewedAt = new DateTime(2025, 10, 18, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8037),
                             ReviewedBy = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
                             Status = 1,
                             StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"),
-                            SubmittedAt = new DateTime(2025, 10, 9, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8323)
+                            SubmittedAt = new DateTime(2025, 10, 17, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8036)
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"),
                             AdminNote = "Ok",
-                            CreatedAt = new DateTime(2025, 9, 29, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8345),
-                            ReviewedAt = new DateTime(2025, 9, 30, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8342),
+                            CreatedAt = new DateTime(2025, 10, 7, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8052),
+                            ReviewedAt = new DateTime(2025, 10, 8, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8051),
                             ReviewedBy = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
                             Status = 2,
                             StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
-                            SubmittedAt = new DateTime(2025, 9, 29, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8334)
+                            SubmittedAt = new DateTime(2025, 10, 7, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(8050)
                         });
                 });
 
@@ -866,7 +866,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa40"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9569),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8925),
                             OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa30"),
                             Quantity = 1,
                             ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"),
@@ -876,7 +876,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa41"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9574),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8930),
                             OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"),
                             Quantity = 1,
                             ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"),
@@ -886,7 +886,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa42"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9577),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8932),
                             OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"),
                             Quantity = 1,
                             ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"),
@@ -896,7 +896,7 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa43"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9579),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8933),
                             OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa32"),
                             Quantity = 1,
                             ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"),
@@ -1223,7 +1223,7 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa14"),
                             ApplyModel = 3,
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9362),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(8786),
                             MaxQty = 10m,
                             MinQty = 3m,
                             Price = 280000m,
@@ -1429,32 +1429,32 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"),
-                            CreatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(7967),
+                            CreatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(7881),
                             IsVerified = false,
                             OwnerUserId = new Guid("22222222-2222-2222-2222-222222222221"),
                             RatingAvg = 0m,
                             RatingCount = 0,
                             Status = 9,
                             StoreName = "Blue Wash",
-                            UpdatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(7968)
+                            UpdatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(7882)
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"),
-                            CreatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8153),
+                            CreatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(7891),
                             IsVerified = false,
                             OwnerUserId = new Guid("22222222-2222-2222-2222-222222222222"),
                             RatingAvg = 0m,
                             RatingCount = 0,
                             Status = 9,
                             StoreName = "Fresh Laundry",
-                            UpdatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8153)
+                            UpdatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(7891)
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
                             ActiveRegions = "HN,HCM",
-                            CreatedAt = new DateTime(2025, 9, 14, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8162),
+                            CreatedAt = new DateTime(2025, 9, 22, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(7896),
                             IsVerified = false,
                             KycLevel = "Verified",
                             MaxOrdersPerDay = 80,
@@ -1463,7 +1463,7 @@ namespace DataAccessLayer.Migrations
                             RatingCount = 0,
                             Status = 8,
                             StoreName = "Prime Cleaners",
-                            UpdatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 348, DateTimeKind.Utc).AddTicks(8172)
+                            UpdatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 348, DateTimeKind.Utc).AddTicks(7909)
                         });
                 });
 
@@ -1593,36 +1593,36 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "8797c4bb-4ac7-4718-a539-9834ba7886c9",
-                            CreatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 37, DateTimeKind.Utc).AddTicks(117),
+                            ConcurrencyStamp = "1ce12557-24e5-4d7f-ac18-554962ee6770",
+                            CreatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 191, DateTimeKind.Utc).AddTicks(4356),
                             Email = "store1@gmail.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "store1@gmail.com",
                             NormalizedUserName = "store1",
-                            PasswordHash = "AQAAAAIAAYagAAAAEBOUqJDYcdLaBJt3QLvm3/njR92ufOPq2Tkc+IIBB6HZ0grty1vaJtosVVgPPR3V6w==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEF9FnLhKeB7kwmgm6GWttptSABjTcY2wv2lDdBGe8MPPPDP3PphHjGS2fWpD93Nu3Q==",
                             PhoneNumberConfirmed = false,
                             Status = 8,
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 37, DateTimeKind.Utc).AddTicks(122),
+                            UpdatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 191, DateTimeKind.Utc).AddTicks(4362),
                             UserName = "store1"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaa1-0000-0000-0000-000000000002"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "1e500f72-3404-4afd-bed1-dcc6041be2b8",
-                            CreatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 180, DateTimeKind.Utc).AddTicks(3688),
+                            ConcurrencyStamp = "1ead1d32-2520-42ac-925c-011d6459feb2",
+                            CreatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 268, DateTimeKind.Utc).AddTicks(7407),
                             Email = "SystemAdmin@gmail.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "SystemAdmin@gmail.com",
                             NormalizedUserName = "SystemAdmin",
-                            PasswordHash = "AQAAAAIAAYagAAAAEIF/4MGj/lW1S6sieqvFUs8aRvcgxY52uWkrUABTIscF+oJWExnzC4/2kcuzjYp1ug==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGC+prIck85bTwzcm2ojcgCj17S9wJC1A1tTxO57PoehMsonzDXky9JLd3i2/GhQnQ==",
                             PhoneNumberConfirmed = false,
                             Status = 8,
                             TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2025, 10, 14, 9, 21, 11, 180, DateTimeKind.Utc).AddTicks(3694),
+                            UpdatedAt = new DateTime(2025, 10, 22, 4, 7, 35, 268, DateTimeKind.Utc).AddTicks(7415),
                             UserName = "SystemAdmin"
                         },
                         new
@@ -1636,7 +1636,7 @@ namespace DataAccessLayer.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "OWNER.BLUE@DEMO.LOCAL",
                             NormalizedUserName = "BLUEOWNER",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDnOontmGjpZRHUh2sxxYKWWFDfmsKjNHqis6bYcdOjfJlLTeZvJCdC7I0qc0I9HeA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAELgVs9gHSgUtNBPx17JWh0mVXBLKd1xMdLvvuzW0xGRN9Aoe5i082zCrCwB9qaH1JQ==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "sec-blue",
                             Status = 8,
@@ -1655,7 +1655,7 @@ namespace DataAccessLayer.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "OWNER.FRESH@DEMO.LOCAL",
                             NormalizedUserName = "FRESHOWNER",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDnOontmGjpZRHUh2sxxYKWWFDfmsKjNHqis6bYcdOjfJlLTeZvJCdC7I0qc0I9HeA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAELgVs9gHSgUtNBPx17JWh0mVXBLKd1xMdLvvuzW0xGRN9Aoe5i082zCrCwB9qaH1JQ==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "sec-fresh",
                             Status = 8,
@@ -1674,7 +1674,7 @@ namespace DataAccessLayer.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "OWNER.PRIME@DEMO.LOCAL",
                             NormalizedUserName = "PRIMEOWNER",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDnOontmGjpZRHUh2sxxYKWWFDfmsKjNHqis6bYcdOjfJlLTeZvJCdC7I0qc0I9HeA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAELgVs9gHSgUtNBPx17JWh0mVXBLKd1xMdLvvuzW0xGRN9Aoe5i082zCrCwB9qaH1JQ==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "sec-prime",
                             Status = 8,
@@ -1686,7 +1686,7 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "6af9370e-eea5-4c85-9215-5d6c48d49ff3",
+                            ConcurrencyStamp = "222ed2f0-88de-429b-a410-01ed310c4355",
                             CreatedAt = new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc),
                             Email = "owner@test.local",
                             EmailConfirmed = true,
@@ -1704,7 +1704,7 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "77f21814-ca98-4b1f-88dd-367494ae4a41",
+                            ConcurrencyStamp = "25b7e0e7-465a-4644-9591-110c8839029d",
                             CreatedAt = new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc),
                             Email = "cust1@test.local",
                             EmailConfirmed = true,
@@ -1842,6 +1842,12 @@ namespace DataAccessLayer.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("HeightM")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LengthM")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("MapImageUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -1861,6 +1867,9 @@ namespace DataAccessLayer.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("WidthM")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AddressRefId");
@@ -1874,10 +1883,13 @@ namespace DataAccessLayer.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"),
                             AddressRefId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa20"),
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9731),
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(9033),
+                            HeightM = 0m,
+                            LengthM = 0m,
                             Name = "Main Warehouse",
                             Status = 0,
-                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3")
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            WidthM = 0m
                         });
                 });
 
@@ -1887,9 +1899,15 @@ namespace DataAccessLayer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("BasePricePerHour")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Col")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1900,8 +1918,26 @@ namespace DataAccessLayer.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("HeightM")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LeaseEnd")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LeaseStart")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("LengthM")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Row")
+                        .HasColumnType("int");
 
                     b.Property<string>("Size")
                         .HasColumnType("nvarchar(max)");
@@ -1918,6 +1954,9 @@ namespace DataAccessLayer.Migrations
                     b.Property<Guid>("WarehouseId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("WidthM")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("WarehouseId", "Code")
@@ -1931,27 +1970,48 @@ namespace DataAccessLayer.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa61"),
+                            BasePricePerHour = 0m,
                             Code = "A1",
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9804),
+                            Col = 0,
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(9082),
+                            HeightM = 0m,
+                            IsBlocked = false,
+                            LengthM = 0m,
+                            Row = 0,
                             Status = 4,
-                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60")
+                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"),
+                            WidthM = 0m
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa62"),
+                            BasePricePerHour = 0m,
                             Code = "A2",
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9809),
+                            Col = 0,
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(9088),
                             CurrentOrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"),
+                            HeightM = 0m,
+                            IsBlocked = false,
+                            LengthM = 0m,
+                            Row = 0,
                             Status = 5,
-                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60")
+                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"),
+                            WidthM = 0m
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa63"),
+                            BasePricePerHour = 0m,
                             Code = "B1",
-                            CreatedAt = new DateTime(2025, 10, 14, 16, 21, 11, 348, DateTimeKind.Local).AddTicks(9812),
+                            Col = 0,
+                            CreatedAt = new DateTime(2025, 10, 22, 11, 7, 35, 348, DateTimeKind.Local).AddTicks(9089),
+                            HeightM = 0m,
+                            IsBlocked = false,
+                            LengthM = 0m,
+                            Row = 0,
                             Status = 4,
-                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60")
+                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"),
+                            WidthM = 0m
                         });
                 });
 

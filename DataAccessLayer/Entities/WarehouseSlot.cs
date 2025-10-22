@@ -16,11 +16,10 @@ namespace DataAccessLayer.Entities
         public string? ImageUrl { get; set; }
         public Guid? CurrentOrderId { get; set; }
         public StatusValue Status { get; set; }
-        // Layout kiểu rạp: hàng–cột
+
         public int Row { get; set; }      // bắt đầu từ 1
         public int Col { get; set; }      // bắt đầu từ 1
 
-        // Kích thước slot (mét)
         public decimal HeightM { get; set; } // Cao
         public decimal LengthM { get; set; } // Dài
         public decimal WidthM { get; set; } // Rộng

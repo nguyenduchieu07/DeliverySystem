@@ -29,6 +29,8 @@ namespace DataAccessLayer.Enums
         NotSubmitted,
         Draft,
         Sent,
-        Success
+        Success,
+        ExpiringSoon,
+        Blocked
     }
 }
