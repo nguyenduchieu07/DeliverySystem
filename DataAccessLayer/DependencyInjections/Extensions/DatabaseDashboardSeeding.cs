@@ -253,10 +253,10 @@ namespace DataAccessLayer.DependencyInjections.Extensions
 
             // ====== OrderItems (để dashboard lấy tên service) ======
             modelBuilder.Entity<OrderItem>().HasData(
-                new OrderItem { Id = oi1, OrderId = orderLastM, ServiceId = svcMoveId, Quantity = 1, UnitPrice = 2_200_000m, Subtotal = 2_200_000m },
-                new OrderItem { Id = oi2, OrderId = orderYest, ServiceId = svcMoveId, Quantity = 1, UnitPrice = 1_200_000m, Subtotal = 1_200_000m },
-                new OrderItem { Id = oi3, OrderId = orderYest, ServiceId = svcPackId, Quantity = 1, UnitPrice = 300_000m, Subtotal = 300_000m },
-                new OrderItem { Id = oi4, OrderId = orderToday1, ServiceId = svcMoveId, Quantity = 1, UnitPrice = 2_000_000m, Subtotal = 2_000_000m }
+                new OrderItem { Id = oi1, OrderId = orderLastM, ItemName = "Moving Service", ServiceId = svcMoveId, Quantity = 1, UnitPrice = 2_200_000m, Subtotal = 2_200_000m },
+                new OrderItem { Id = oi2, OrderId = orderYest, ItemName = "Moving Service", ServiceId = svcMoveId, Quantity = 1, UnitPrice = 1_200_000m, Subtotal = 1_200_000m },
+                new OrderItem { Id = oi3, OrderId = orderYest, ItemName = "Moving Service", ServiceId = svcPackId, Quantity = 1, UnitPrice = 300_000m, Subtotal = 300_000m },
+                new OrderItem { Id = oi4, OrderId = orderToday1, ItemName = "Moving Service", ServiceId = svcMoveId, Quantity = 1, UnitPrice = 2_000_000m, Subtotal = 2_000_000m }
             // orderToday2 cố tình không thêm item để test fallback "None" nếu anh muốn,
             // nếu muốn có tên dịch vụ thì thêm 1 item nữa tương tự.
             );

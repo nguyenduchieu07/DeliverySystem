@@ -188,21 +188,34 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__OrderIte__57ED0681941C3C3C");
+            entity.HasKey(e => e.Id);
 
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.Subtotal).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.ItemName)
+                  .IsRequired()
+                  .HasMaxLength(100);
 
-            entity.HasOne(d => d.Order).WithMany(p => p.OrderItems)
-                .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_OrderItems_Orders");
+            entity.Property(e => e.Description)
+                  .HasMaxLength(500);
 
-            entity.HasOne(d => d.Service).WithMany(p => p.OrderItems)
-                .HasForeignKey(d => d.ServiceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_OrderItems_Services");
+            entity.Property(e => e.LengthM).HasPrecision(5, 2);
+            entity.Property(e => e.WidthM).HasPrecision(5, 2);
+            entity.Property(e => e.HeightM).HasPrecision(5, 2);
+            entity.Property(e => e.WeightKg).HasPrecision(6, 2);
+
+            entity.Property(e => e.UnitPrice).HasPrecision(18, 2);
+            entity.Property(e => e.Subtotal).HasPrecision(18, 2);
+
+            // Quan hệ với Order (1-N)
+            entity.HasOne(d => d.Order)
+                  .WithMany(p => p.OrderItems)
+                  .HasForeignKey(d => d.OrderId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Quan hệ với Service (1-N, có thể null)
+            entity.HasOne(d => d.Service)
+                  .WithMany(p => p.OrderItems)
+                  .HasForeignKey(d => d.ServiceId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Payment>(entity =>
