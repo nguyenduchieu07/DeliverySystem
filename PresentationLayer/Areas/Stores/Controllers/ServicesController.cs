@@ -1,25 +1,31 @@
-﻿using DataAccessLayer.Entities;
+﻿using DataAccessLayer.Constants;
+using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Areas.Stores.Models.Services;
 using System;
+using System.Security.Claims;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
+    [Authorize(Roles = UserRoles.STORE)]
     public class ServicesController : Controller
     {
         private readonly DeliverySytemContext _db;
         public ServicesController(DeliverySytemContext db) => _db = db;
 
         // GET: /Stores/Services
-        public async Task<IActionResult> Index(Guid storeId)
+        public async Task<IActionResult> Index()
         {
-            var id = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAA3");
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var id = Guid.Parse(userId!);
+            var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
             var services = await _db.Services
                 .Include(s => s.Category)
-                .Where(s => s.StoreId == id)
+                .Where(s => s.StoreId == storeId)
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
 

@@ -150,7 +150,7 @@
                 </h5>
             </div>
 
-            <form asp-action="SubmitKyc" asp-controller="Accounts" method="post" enctype="multipart/form-data" id="kycForm">
+            <form asp-action="SubmitKyc" asp-controller="Account" method="post" enctype="multipart/form-data" id="kycForm">
                 <div class="card-body">
                     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
@@ -176,13 +176,13 @@
                                         <input type="hidden" name="Documents[@i].DocType" value="@defaults[i].Key" />
                                         <div class="col-md-4">
                                             <label class="form-label mb-1">@defaults[i].Label</label>
-                                            <div class="text-muted small">PDF/JPG/PNG — tối đa 10MB</div>
+                                            <div class="text-muted small">JPG/PNG — tối đa 10MB</div>
                                         </div>
                                         <div class="col-md-7">
                                             <input type="file"
                                                    class="form-control kyc-file"
                                                    name="Documents[@i].File"
-                                                   accept=".pdf,.jpg,.jpeg,.png" />
+                                                   accept=".jpg,.jpeg,.png" />
                                             <div class="preview mt-2"></div>
                                         </div>
                                         <div class="col-md-1 d-flex align-items-end justify-content-end">
@@ -242,7 +242,7 @@
             </div>
             <div class="col-md-7">
               <label class="form-label">Tệp đính kèm <span class="text-danger">*</span></label>
-              <input type="file" class="form-control kyc-file" name="Documents[${index}].File" accept=".pdf,.jpg,.jpeg,.png" required />
+              <input type="file" class="form-control kyc-file" name="Documents[${index}].File" accept=".jpg,.jpeg,.png" required />
               <div class="preview mt-2"></div>
             </div>
             <div class="col-md-1 d-flex align-items-end justify-content-end">

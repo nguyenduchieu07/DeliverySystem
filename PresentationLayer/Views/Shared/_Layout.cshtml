@@ -1,3 +1,5 @@
+@using DataAccessLayer.Constants
+@using System.Security.Claims
 <!DOCTYPE html>
 <html lang="vi-vn">
 <head>
@@ -122,9 +124,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="#">Ưu Đãi</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/Accounts/RegisterStore">Đăng ký cửa hàng</a>
-                        </li>
+                        
 
                     </ul>
                     <div class="d-flex">
@@ -138,6 +138,17 @@
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Hồ sơ</a></li>
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu</a></li>
+                                    @if (User.IsInRole("Store"))
+                                    {
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/Stores/Home">Trở về cửa hàng</a>
+                                        </li>
+                                    }else
+                                    {
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="/Account/RegisterStore">Đăng ký cửa hàng</a>
+                                        </li>
+                                    }
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" style="margin: 0;">
                                             @Html.AntiForgeryToken()

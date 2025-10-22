@@ -1,12 +1,16 @@
-﻿using DataAccessLayer.Entities;
+﻿using DataAccessLayer.Constants;
+using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Areas.Stores.Models.WarehouseModels;
 using ServiceLayer.Abstractions.IServices;
+using System.Security.Claims;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
+    [Authorize(Roles = UserRoles.STORE)]
     public class WarehouseController : Controller
     {
         private readonly DeliverySytemContext _db;
@@ -18,8 +22,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
         }
         public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] Guid? addressId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            
-            var storeId = Guid.Parse("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAA3");
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var id = Guid.Parse(userId!);
+            var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
             // Base query: chỉ lấy kho thuộc store
             var query = _db.Warehouses
                 .AsNoTracking()
@@ -110,7 +115,10 @@ namespace PresentationLayer.Areas.Stores.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromForm]Warehouse warehouse, [FromForm]Address? newAddress, [FromForm] List<WarehouseSlot> slots, [FromForm] IFormFile? CoverImage, [FromForm] IFormFile? MapImage)
         {
-            warehouse.StoreId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3");
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var id = Guid.Parse(userId!);
+            var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
+            warehouse.StoreId = storeId;
             //if (!ModelState.IsValid)
             //{
             //    ViewBag.Addresses = _db.Addresses.ToList();
@@ -135,9 +143,21 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 await _db.SaveChangesAsync();
                 warehouse.AddressRefId = newAddress.Id;
             }
-            warehouse.Status = DataAccessLayer.Enums.StatusValue.Pending; 
             warehouse.Id = Guid.NewGuid();
+            warehouse.Status = DataAccessLayer.Enums.StatusValue.Pending;
             _db.Warehouses.Add(warehouse);
+
+            // Lưu tạm danh sách slot (nếu có)
+            //if (slots != null && slots.Count > 0)
+            //{
+            //    foreach (var s in slots)
+            //    {
+            //        s.Id = Guid.NewGuid();
+            //        s.WarehouseId = warehouse.Id;
+            //        _db.WarehouseSlots.Add(s);
+            //    }
+            //}
+
             await _db.SaveChangesAsync();
 
             TempData["Success"] = "Tạo kho mới thành công!";

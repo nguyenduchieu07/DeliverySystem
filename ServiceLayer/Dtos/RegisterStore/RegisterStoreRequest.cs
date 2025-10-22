@@ -8,11 +8,7 @@ namespace ServiceLayer.Dtos.RegisterStore
 {
     public class RegisterStoreRequest
     {
-        // User Information
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string PhoneNumber { get; set; }
-
+        public Guid UserId { get; set; }    
         // Store Information
         public string StoreName { get; set; }
         public string LegalName { get; set; }
