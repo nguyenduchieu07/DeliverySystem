@@ -12,9 +12,8 @@ namespace PresentationLayer.Models
         public string Note { get; set; }
         public string VehicleType { get; set; }
 
-        // SỬA: Từ single value thành List
-        public List<Guid> ServiceCategoryIds { get; set; }  // Thay đổi từ Guid? thành List<Guid>
-        public List<int> ProductCategories { get; set; }     // Thay đổi từ ProductCategoryType? thành List<int>
+        // Chỉ giữ ProductCategories
+        public List<int> ProductCategories { get; set; }     // Loại hàng hóa
 
         public decimal? EstimatedWeight { get; set; }
         public List<OrderItemViewModel> Items { get; set; }

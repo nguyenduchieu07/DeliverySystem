@@ -146,7 +146,11 @@ namespace ServiceLayer.Services
                 TotalAmount = 0m,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
-                OrderItems = new List<OrderItem>()
+                OrderItems = new List<OrderItem>(),
+                // Lưu ProductCategories dạng JSON
+                ProductCategoryIds = dto.ProductCategories != null && dto.ProductCategories.Any() 
+                    ? JsonSerializer.Serialize(dto.ProductCategories) 
+                    : null
             };
 
             // ✅ CHỈ THÊM OrderItems NẾU có items hợp lệ

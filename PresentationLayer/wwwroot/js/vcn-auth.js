@@ -13,7 +13,100 @@ document.addEventListener('DOMContentLoaded', function () {
     initAddressAutocomplete();
     loadProductCategories();
     getCurrentLocation();
+    initPopupEvents();
 });
+
+// Utility function to force hide overlay
+function forceHideOverlay() {
+    const overlay = document.getElementById('popupOverlay');
+    if (overlay) {
+        overlay.classList.remove('show');
+        overlay.style.display = 'none';
+        overlay.style.visibility = 'hidden';
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+        
+        // Force remove all classes
+        overlay.className = 'popup-overlay';
+        
+        setTimeout(() => {
+            overlay.style.display = '';
+            overlay.style.visibility = '';
+            overlay.style.opacity = '';
+            overlay.style.pointerEvents = '';
+        }, 100);
+    }
+}
+
+// Function to completely reset overlay
+function resetOverlay() {
+    const overlay = document.getElementById('popupOverlay');
+    if (overlay) {
+        overlay.className = 'popup-overlay';
+        overlay.style.cssText = '';
+        overlay.classList.remove('show');
+    }
+}
+
+// Function to hide all popups and overlay
+function hideAllPopups() {
+    // Hide all popups
+    const popups = ['pickupInfoPopup', 'productCategoryPopup', 'serviceCategoryPopup'];
+    popups.forEach(popupId => {
+        const popup = document.getElementById(popupId);
+        if (popup) {
+            popup.classList.remove('show');
+        }
+    });
+    
+    // Reset overlay
+    resetOverlay();
+}
+
+// Function to update customer info display
+function updateCustomerInfoDisplay(name, phone, floor) {
+    const placeholder = document.getElementById('customerInfoPlaceholder');
+    const content = document.getElementById('customerInfoContent');
+    const nameEl = document.getElementById('customerName');
+    const phoneEl = document.getElementById('customerPhone');
+    const floorEl = document.getElementById('customerFloor');
+
+    if (placeholder && content && nameEl && phoneEl && floorEl) {
+        // Ẩn placeholder, hiện content
+        placeholder.style.display = 'none';
+        content.style.display = 'block';
+
+        // Cập nhật thông tin
+        nameEl.textContent = name;
+        phoneEl.textContent = `📞 ${phone}`;
+        floorEl.textContent = floor ? `🏢 ${floor}` : '';
+    }
+}
+
+// Initialize popup events
+function initPopupEvents() {
+    // Close popup when clicking overlay
+    const overlay = document.getElementById('popupOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            // Only close if clicking directly on overlay, not on popup content
+            if (e.target === overlay) {
+                hidePickupInfoPopup();
+            }
+        });
+    }
+    
+    // Close popup with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            // Check if pickup popup is open
+            const popup = document.getElementById('pickupInfoPopup');
+            if (popup && popup.classList.contains('show')) {
+                hidePickupInfoPopup();
+            }
+        }
+    });
+}
 
 // ============ MAP FUNCTIONS ============
 function initMap() {
@@ -157,7 +250,7 @@ function selectAddress(result, type) {
     if (type === 'pickup') {
         document.getElementById('pickupAddressInput').value = addressLine;
         setPickupLocation(lat, lng, addressLine);
-        showPickupInfoPopup();
+        // Không hiện popup nữa, chỉ set địa chỉ
     } else {
         document.getElementById('dropoffAddressInput').value = addressLine;
         setDropoffLocation(lat, lng, addressLine);
@@ -238,35 +331,143 @@ async function reverseGeocode(lat, lng) {
 
 // ============ PICKUP INFO POPUP ============
 function showPickupInfoPopup() {
-    document.getElementById('pickupInfoPopup').classList.add('show');
-    document.getElementById('popupOverlay').classList.add('show');
+    try {
+        console.log('Showing pickup info popup');
+        const popup = document.getElementById('pickupInfoPopup');
+        const overlay = document.getElementById('popupOverlay');
+        
+        if (!popup) {
+            console.error('pickupInfoPopup element not found!');
+            return;
+        }
+        
+        if (!overlay) {
+            console.error('popupOverlay element not found!');
+            return;
+        }
+        
+        popup.classList.add('show');
+        overlay.classList.add('show');
+        
+        // Pre-fill values if available
+        const nameField = document.getElementById('pickupName');
+        const phoneField = document.getElementById('pickupPhone');
+        const floorField = document.getElementById('pickupFloor');
+        
+        if (pickupData && pickupData.recipientName) {
+            nameField.value = pickupData.recipientName;
+            phoneField.value = pickupData.recipientPhone || '';
+            floorField.value = pickupData.floor || '';
+        } else {
+            nameField.value = '';
+            phoneField.value = '';
+            floorField.value = '';
+        }
+        
+        console.log('Pickup info popup shown successfully');
+    } catch (error) {
+        console.error('Error showing pickup info popup:', error);
+        alert('Có lỗi xảy ra khi hiển thị popup. Vui lòng thử lại.');
+    }
 }
 
 function hidePickupInfoPopup() {
-    document.getElementById('pickupInfoPopup').classList.remove('show');
-    if (!document.getElementById('serviceCategoryPopup').classList.contains('show') &&
-        !document.getElementById('productCategoryPopup').classList.contains('show')) {
-        document.getElementById('popupOverlay').classList.remove('show');
+    try {
+        console.log('Hiding pickup info popup');
+        const popup = document.getElementById('pickupInfoPopup');
+        const overlay = document.getElementById('popupOverlay');
+
+        // Kiểm tra và ẩn popup
+        if (popup) {
+            popup.classList.remove('show');
+            popup.style.display = 'none';
+        }
+
+        // Kiểm tra và ẩn overlay
+        if (overlay) {
+            overlay.classList.remove('show');
+            overlay.style.display = 'none';
+        } else {
+            console.warn('popupOverlay element not found');
+            // Tìm và ẩn tất cả overlay có thể
+            document.querySelectorAll('.popup-overlay').forEach(el => {
+                el.classList.remove('show');
+                el.style.display = 'none';
+            });
+        }
+
+        console.log('Pickup info popup hidden successfully');
+    } catch (error) {
+        console.error('Error hiding pickup info popup:', error);
     }
 }
 
 function savePickupInfo() {
-    const name = document.getElementById('pickupName').value.trim();
-    const phone = document.getElementById('pickupPhone').value.trim();
-    const floor = document.getElementById('pickupFloor').value.trim();
+    try {
+        const name = document.getElementById('pickupName').value.trim();
+        const phone = document.getElementById('pickupPhone').value.trim();
+        const floor = document.getElementById('pickupFloor').value.trim();
 
-    if (!name || !phone) {
-        alert('Vui lòng nhập đầy đủ tên và số điện thoại!');
-        return;
+        console.log('Saving pickup info:', { name, phone, floor });
+
+        if (!name || !phone) {
+            alert('Vui lòng nhập đầy đủ tên và số điện thoại!');
+            return;
+        }
+
+        // Validate phone number format
+        const phoneRegex = /^[0-9]{8,11}$/;
+        if (!phoneRegex.test(phone)) {
+            alert('Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại từ 8-11 chữ số.');
+            return;
+        }
+
+        if (pickupData) {
+            pickupData.recipientName = name;
+            pickupData.recipientPhone = phone;
+            pickupData.floor = floor;
+            console.log('Pickup data updated:', pickupData);
+        } else {
+            // Tạo pickupData mới nếu chưa có
+            pickupData = {
+                street: '',
+                lat: 0,
+                lng: 0,
+                recipientName: name,
+                recipientPhone: phone,
+                floor: floor
+            };
+        }
+
+        // Hiển thị thông tin khách hàng trong ô
+        updateCustomerInfoDisplay(name, phone, floor);
+
+        // Ẩn popup trước
+        const popup = document.getElementById('pickupInfoPopup');
+        if (popup) {
+            popup.classList.remove('show');
+            popup.style.display = 'none';
+        }
+
+        // Đợi một chút rồi ẩn overlay
+        setTimeout(() => {
+            const overlay = document.getElementById('popupOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+                overlay.style.display = 'none';
+            }
+            // Backup: ẩn tất cả popup-overlay
+            document.querySelectorAll('.popup-overlay').forEach(el => {
+                el.classList.remove('show');
+                el.style.display = 'none';
+            });
+        }, 100);
+
+        console.log('Pickup info saved successfully');
+    } catch (error) {
+        console.error('Error in savePickupInfo:', error);
+        alert('Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.');
     }
-
-    if (pickupData) {
-        pickupData.recipientName = name;
-        pickupData.recipientPhone = phone;
-        pickupData.floor = floor;
-    }
-
-    hidePickupInfoPopup();
 }
 
 // ============ PRODUCT CATEGORY (Multiple Selection) ============
@@ -349,15 +550,32 @@ function showProductCategoryPopup() {
         checkbox.checked = selectedProductCategories.some(c => c.id === id);
     });
 
-    document.getElementById('productCategoryPopup').classList.add('show');
-    document.getElementById('popupOverlay').classList.add('show');
+    const productPopup = document.getElementById('productCategoryPopup');
+    const overlay = document.getElementById('popupOverlay');
+    
+    if (productPopup) {
+        productPopup.classList.add('show');
+    }
+    
+    if (overlay) {
+        overlay.classList.add('show');
+    }
 }
 
 function hideProductCategoryPopup() {
-    document.getElementById('productCategoryPopup').classList.remove('show');
-    if (!document.getElementById('pickupInfoPopup').classList.contains('show') &&
-        !document.getElementById('serviceCategoryPopup').classList.contains('show')) {
-        document.getElementById('popupOverlay').classList.remove('show');
+    const productPopup = document.getElementById('productCategoryPopup');
+    const pickupPopup = document.getElementById('pickupInfoPopup');
+    const servicePopup = document.getElementById('serviceCategoryPopup');
+    const overlay = document.getElementById('popupOverlay');
+    
+    if (productPopup) {
+        productPopup.classList.remove('show');
+    }
+    
+    if (overlay && 
+        (!pickupPopup || !pickupPopup.classList.contains('show')) &&
+        (!servicePopup || !servicePopup.classList.contains('show'))) {
+        overlay.classList.remove('show');
     }
 }
 
@@ -429,9 +647,26 @@ function selectVehicle(element, vehicleType) {
 
 // ============ SUBMIT ORDER ============
 async function submitOrder() {
-    // Validation
-    if (!pickupData || !pickupData.recipientName || !pickupData.recipientPhone) {
-        alert('⚠️ Vui lòng nhập đầy đủ thông tin địa chỉ lấy hàng!');
+    // Validation - Kiểm tra thông tin khách hàng
+    const customerName = document.getElementById('customerName');
+    const customerPhone = document.getElementById('customerPhone');
+    const customerFloor = document.getElementById('customerFloor');
+    
+    console.log('Customer validation:', {
+        customerName: customerName?.textContent,
+        customerPhone: customerPhone?.textContent,
+        customerFloor: customerFloor?.textContent
+    });
+    
+    if (!customerName || !customerName.textContent || !customerPhone || !customerPhone.textContent) {
+        alert('⚠️ Vui lòng nhập đầy đủ thông tin khách hàng!');
+        return;
+    }
+
+    // Validation - Kiểm tra địa chỉ lấy hàng
+    const pickupAddress = document.getElementById('pickupAddressInput').value.trim();
+    if (!pickupAddress) {
+        alert('⚠️ Vui lòng chọn địa chỉ lấy hàng!');
         return;
     }
 
@@ -480,16 +715,16 @@ async function submitOrder() {
     const orderData = {
         pickupAddress: {
             stored: false,
-            addressLine: pickupData.street,
+            addressLine: pickupAddress,
             label: 'Điểm lấy hàng',
             ward: '',
             district: '',
             city: 'Hà Nội',
-            latitude: pickupData.lat,
-            longitude: pickupData.lng,
-            recipientName: pickupData.recipientName,
-            recipientPhone: pickupData.recipientPhone,
-            floor: pickupData.floor || ''
+            latitude: pickupData ? pickupData.lat : 0,
+            longitude: pickupData ? pickupData.lng : 0,
+            recipientName: customerName.textContent,
+            recipientPhone: customerPhone.textContent.replace('📞 ', ''),
+            floor: customerFloor ? customerFloor.textContent.replace('🏢 ', '') : ''
         },
         dropoffAddress: {
             stored: false,

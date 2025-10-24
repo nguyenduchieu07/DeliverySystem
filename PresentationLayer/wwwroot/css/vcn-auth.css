@@ -588,6 +588,68 @@
         box-shadow: 0 0 0 2px rgba(242, 103, 34, 0.1);
     }
 
+/* Customer Info Section */
+.customer-info-section {
+    margin-bottom: 25px;
+}
+
+.customer-info-display {
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+}
+
+.customer-info-display:hover {
+    border-color: #f26722;
+    background: #fff8f5;
+}
+
+.customer-info-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    width: 100%;
+}
+
+.placeholder-icon {
+    font-size: 20px;
+}
+
+.placeholder-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.customer-info-content {
+    width: 100%;
+}
+
+.customer-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.customer-phone {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.customer-floor {
+    font-size: 13px;
+    color: #999;
+    font-style: italic;
+}
+
 /* Location Section */
 .location-section {
     margin-bottom: 25px;
@@ -849,7 +911,29 @@
 .item-input-quantity {
     flex: 1;
 }
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1999;
+    display: none;
+    transition: opacity 0.3s ease;
+}
 
+    .popup-overlay.show {
+        display: block;
+        opacity: 1;
+    }
+
+    /* Đảm bảo khi không có class show thì overlay hoàn toàn ẩn */
+    .popup-overlay:not(.show) {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
 .btn-icon {
     width: 40px;
     height: 40px;

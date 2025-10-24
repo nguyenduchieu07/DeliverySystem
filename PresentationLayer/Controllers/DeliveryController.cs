@@ -72,12 +72,28 @@ namespace PresentationLayer.Controllers
                 return BadRequest("Dữ liệu không hợp lệ.");
             }
 
-            // ❌ BỎ: Validation cho ServiceCategoryIds
-
-            // ✅ GIỮ: Validate Product Category
+            // Validate Product Category
             if (viewModel.ProductCategories == null || !viewModel.ProductCategories.Any())
             {
                 return BadRequest("Loại hàng hóa là bắt buộc.");
+            }
+
+            // Validate addresses
+            if (viewModel.PickupAddress == null || viewModel.DropoffAddress == null)
+            {
+                return BadRequest("Địa chỉ lấy hàng và giao hàng là bắt buộc.");
+            }
+
+            // Validate pickup address
+            if (string.IsNullOrWhiteSpace(viewModel.PickupAddress.AddressLine))
+            {
+                return BadRequest("Địa chỉ lấy hàng không được để trống.");
+            }
+
+            // Validate dropoff address  
+            if (string.IsNullOrWhiteSpace(viewModel.DropoffAddress.AddressLine))
+            {
+                return BadRequest("Địa chỉ giao hàng không được để trống.");
             }
 
             Console.WriteLine($"Product Categories: {string.Join(", ", viewModel.ProductCategories)}");
@@ -172,8 +188,6 @@ namespace PresentationLayer.Controllers
                     Name = i.Name,
                     Quantity = i.Quantity
                 }).ToList()
-
-                // ❌ BỎ: ServiceCategoryIds
             };
         }
 

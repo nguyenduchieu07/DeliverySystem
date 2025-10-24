@@ -1,4 +1,4 @@
-﻿```html
+﻿
 @{
     ViewData["Title"] = "Đặt dịch vụ kho";
 }
@@ -37,6 +37,22 @@
                         <div class="date-group">
                             <label class="date-label">Ngày lấy đồ<span class="required">*</span></label>
                             <input type="date" class="date-input" id="pickupDate" name="PickupDate" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Info -->
+                <div class="customer-info-section">
+                    <div class="section-title">Thông tin khách hàng <span class="required">*</span></div>
+                    <div class="customer-info-display" id="customerInfoDisplay" onclick="showPickupInfoPopup()">
+                        <div class="customer-info-placeholder" id="customerInfoPlaceholder">
+                            <span class="placeholder-icon">👤</span>
+                            <span class="placeholder-text">Nhấn để nhập thông tin khách hàng</span>
+                        </div>
+                        <div class="customer-info-content" id="customerInfoContent" style="display: none;">
+                            <div class="customer-name" id="customerName"></div>
+                            <div class="customer-phone" id="customerPhone"></div>
+                            <div class="customer-floor" id="customerFloor"></div>
                         </div>
                     </div>
                 </div>
@@ -219,7 +235,7 @@
     </div>
     <div class="form-group">
         <label class="form-label">Phòng/Lô/Tầng</label>
-        <input type="text" class="form-input" id="pickupFloor" placeholder="Ví dụ: Tầng 3, Phòng 301">
+        <input type="text" class="form-input" id="pickupFloor" placeholder="Ví dụ: Tầng 3, Phòng 3011">
     </div>
     <div class="popup-buttons">
         <button type="button" class="popup-btn popup-btn-cancel" onclick="hidePickupInfoPopup()">Hủy</button>
