@@ -3,12 +3,14 @@
     ViewData["Title"] = "Đặt dịch vụ kho";
 }
 
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+@section styles {
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" asp-append-version="true" />
 
-<!-- Custom CSS -->
-<link rel="stylesheet" href="~/css/vcn-auth.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/vcn-auth.css" asp-append-version="true" />
+}
 
 <div class="delivery-page">
     <!-- Left Sidebar - Order Form (60%) -->
@@ -254,10 +256,11 @@
     </div>
 </div>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+@section scripts {
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-<!-- Custom JS -->
-<script src="~/js/vcn-auth.js"></script>
-```
+    <!-- Custom JS -->
+    <script src="~/js/vcn-auth.js"></script>
+}

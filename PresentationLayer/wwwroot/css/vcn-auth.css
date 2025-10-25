@@ -513,3 +513,10 @@
         min-width: 100%;
     }
 }
+
+.map-container {
+    height: 100vh; /* hoặc height: 600px nếu bạn muốn cố định */
+}
+#map {
+    height: 100%;
+}
