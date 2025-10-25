@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = "Chi tiết đơn hàng";
     var categories = new[]
-           {
+    {
         new { id = 1, name = "Thức ăn", icon = "🍔", description = "Thực phẩm, đồ ăn nhanh, đồ uống" },
         new { id = 2, name = "Đồ gia dụng", icon = "🏠", description = "Đồ dùng hàng ngày trong gia đình" },
         new { id = 3, name = "Đồ dễ vỡ", icon = "⚠️", description = "Đồ dễ vỡ, cần cẩn thận khi vận chuyển" },
@@ -18,11 +18,92 @@
     };
 }
 
+<style>
+    /* Tổng thể */
+    body {
+        background-color: #f9fafc;
+    }
+
+    .order-card {
+        border-radius: .35rem;
+        overflow: hidden;
+        border: none;
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .order-card:hover {
+            transform: translateY(-3px);
+        }
+
+    .card-header {
+        font-weight: 600;
+        background: linear-gradient(90deg, #f26722,#f26722);
+    }
+
+    .category-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: .35rem;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+        min-width: 200px;
+    }
+
+        .category-card:hover {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+    .category-icon {
+        font-size: 1.8rem;
+    }
+
+    .store-card {
+        border-radius: .35rem;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+        .store-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .store-card .card-footer {
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .store-card .btn {
+            border-radius: .35rem;
+            padding: 4px 12px;
+        }
+
+    .alert {
+        border-radius: .35rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .category-card
+
+    {
+        min-width: 100%;
+    }
+
+    .store-card {
+        margin-bottom: 16px;
+    }
+
+    }
+</style>
+
 <div class="container mt-4">
     <!-- Thông báo lỗi -->
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger" role="alert">
+        <div class="alert alert-danger shadow-sm" role="alert">
             @TempData["Error"]
         </div>
     }
@@ -35,11 +116,11 @@
     }
     else
     {
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
+        <div class="card order-card shadow-sm mb-4">
+            <div class="card-header text-white">
                 <h5 class="mb-0">Thông tin đơn hàng</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body bg-white">
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <strong>Mã đơn hàng:</strong> @Model.Order.Id
@@ -69,50 +150,49 @@
                         <strong>Ghi chú:</strong> @(!string.IsNullOrEmpty(Model.Order.Note) ? Model.Order.Note : "Không có ghi chú")
                     </div>
                 </div>
+
                 @if (!string.IsNullOrEmpty(Model.Order.ProductCategoryIds))
                 {
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0">📦 Loại hàng trong đơn</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex flex-wrap gap-3">
-                                @foreach (var catId in JsonSerializer.Deserialize<List<int>>(Model.Order.ProductCategoryIds) ?? [])
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-3">📦 Loại hàng trong đơn</h6>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var catId in JsonSerializer.Deserialize<List<int>>(Model.Order.ProductCategoryIds) ?? [])
+                            {
+                                var cat = categories.FirstOrDefault(c => c.id == catId);
+                                if (cat != null)
                                 {
-                                    var cat = categories.FirstOrDefault(c => c.id == catId);
-                                    if (cat != null)
-                                    {
-                                        <div class="border rounded px-3 py-2 bg-white shadow-sm" style="min-width: 180px;">
-                                            <span style="font-size: 1.5rem;">@cat.icon</span>
-                                            <strong class="ms-2">@cat.name</strong>
+                                    <div class="category-card shadow-sm">
+                                        <div class="category-icon">@cat.icon</div>
+                                        <div>
+                                            <div class="fw-semibold">@cat.name</div>
                                             <div class="text-muted small">@cat.description</div>
                                         </div>
-                                    }
+                                    </div>
                                 }
-                            </div>
+                            }
                         </div>
                     </div>
                 }
             </div>
         </div>
 
-        <h5 class="mb-3">🛍️ Cửa hàng gần địa chỉ giao hàng (bán kính 10km)</h5>
+        <h5 class="mb-3 fw-bold text-primary">🛍️ Cửa hàng gần địa chỉ giao hàng (bán kính 10km)</h5>
 
         @if (Model.NearbyStores == null || !Model.NearbyStores.Any())
         {
-            <div class="alert alert-info">Không tìm thấy cửa hàng nào gần địa chỉ giao hàng.</div>
+            <div class="alert alert-info shadow-sm">Không tìm thấy cửa hàng nào gần địa chỉ giao hàng.</div>
         }
         else
         {
             <div class="row">
                 @foreach (var store in Model.NearbyStores)
                 {
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100 shadow-sm border-0">
+                    <div class="col-md-4 col-sm-6 mb-4">
+                        <div class="card store-card h-100 shadow-sm border-0">
                             <div class="card-body">
-                                <h5 class="card-title">@store.StoreName</h5>
+                                <h5 class="card-title text-primary">@store.StoreName</h5>
                                 <p class="card-text text-muted mb-1">
-                                    <strong>Điện thoại:</strong> @(store.ContactPhone ?? "không có")
+                                    <strong>Điện thoại:</strong> @(store.ContactPhone ?? "Không có")
                                 </p>
                                 <p class="card-text text-muted mb-1">
                                     <strong>Email:</strong> @(store.ContactEmail ?? "Chưa có")
@@ -126,7 +206,9 @@
                                 </p>
                             </div>
                             <div class="card-footer bg-transparent text-end">
-                                <a href="/Store/Details/@store.Id" class="btn btn-outline-primary btn-sm">Xem đánh giá</a>
+                                <a href="/Delivery/StoreFeedback?storeId=@store.Id" class="btn btn-outline-primary btn-sm">
+                                    Xem đánh giá
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -135,5 +217,3 @@
         }
     }
 </div>
-
-

@@ -19,12 +19,14 @@ namespace PresentationLayer.Controllers
         private readonly ICustomerService _customerService;
         private readonly IDeliveryService _deliveryService;
         private readonly IOrderService _orderService;
+        private readonly IFeedbackService _feedbackService;
 
-        public DeliveryController(ICustomerService customerService, IDeliveryService deliveryService, IOrderService orderService)
+        public DeliveryController(ICustomerService customerService, IDeliveryService deliveryService, IOrderService orderService, IFeedbackService feedbackService)
         {
             _customerService = customerService;
             _deliveryService = deliveryService;
             _orderService = orderService;
+            _feedbackService = feedbackService;
         }
 
         public async Task<IActionResult> Index()
@@ -219,6 +221,12 @@ namespace PresentationLayer.Controllers
 
             vm.NearbyStores = nearbyStores;
             return View(vm);
+        }
+
+        public async Task<IActionResult> StoreFeedbackAsync(Guid storeId)
+        {
+            var feedbacks = await _feedbackService.GetAllFeedbacksByStoreId(storeId);
+            return View(feedbacks);
         }
 
         public IActionResult BookDelivery()

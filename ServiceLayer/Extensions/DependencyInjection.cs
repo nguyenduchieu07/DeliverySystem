@@ -20,6 +20,7 @@ namespace ServiceLayer.Extensions
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IDeliveryService, DeliveryService>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IFeedbackService, FeedbackService>();
         }
     }
 }
