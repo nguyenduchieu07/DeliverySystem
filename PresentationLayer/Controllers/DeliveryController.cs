@@ -197,7 +197,7 @@ namespace PresentationLayer.Controllers
 
         public async Task<IActionResult> OrderAsync(string orderId)
         {
-            double defaultRadius = 1000000.0;
+            double defaultRadius = 10.0;
             var vm = new DeliveryOrderViewModel();
 
             var canParse = Guid.TryParse(orderId, out Guid orderIdGuid);
