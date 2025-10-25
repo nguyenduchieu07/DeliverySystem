@@ -83,8 +83,7 @@ namespace ServiceLayer.Services
         public async Task NeedChangesAsync(Guid submissionId, string note, Guid adminId)
         {
             var sub = await _db.Set<KycSubmission>().FindAsync(submissionId) ?? throw new KeyNotFoundException();
-            if (sub.Status is not (KycStatus.Pending or KycStatus.NeedChanges)) throw new InvalidOperationException();
-
+           
             sub.Status = KycStatus.NeedChanges;
             sub.AdminNote = note;
             sub.ReviewedAt = DateTime.UtcNow;
@@ -101,7 +100,6 @@ namespace ServiceLayer.Services
                                .Include(s => s.Store)
                                .FirstOrDefaultAsync(s => s.Id == submissionId)
                       ?? throw new KeyNotFoundException();
-            if (sub.Status is not (KycStatus.Pending or KycStatus.NeedChanges)) throw new InvalidOperationException();
 
             sub.Status = KycStatus.Rejected;
             sub.AdminNote = note;

@@ -779,7 +779,7 @@ async function submitOrder() {
             const productNames = selectedProductCategories.map(c => c.name).join(', ');
 
             alert(`✅ ${result.message}\n\n📦 Mã đơn hàng: #${result.orderId}\n🏪 Số kho được thông báo: ${result.nearbyStoresCount}\n📅 Ngày vận chuyển: ${deliveryDate}\n📅 Ngày lấy đồ: ${pickupDate}\n 📦 Hàng hóa: ${productNames}`);
-            window.location.href = '/Delivery/Orders';
+            window.location.href = `/Delivery/Order?orderId=${result.orderId}`;
         } else {
             // Log full error for debugging
             console.error('Order submission failed:', result);
