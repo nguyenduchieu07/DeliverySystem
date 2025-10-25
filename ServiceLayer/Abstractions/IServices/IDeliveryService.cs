@@ -11,5 +11,6 @@ namespace ServiceLayer.Abstractions.IServices
         Task<int> NotifyNearbyWarehousesAsync(Guid orderId);
         Task<Guid> FindNearestStoreAsync(double latitude, double longitude);
         Task<Order> CreateOrderFromDto(CreateOrderDto dto, Guid userId, Guid storeId);
+        Task<List<Store>> GetNearbyStoresAsync(double latitude, double longitude, double radiusKm);
     }
 }
