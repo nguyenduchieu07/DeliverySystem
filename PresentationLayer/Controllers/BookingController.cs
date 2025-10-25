@@ -1,11 +1,12 @@
 ﻿using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Models;
 
 namespace PresentationLayer.Controllers
 {
-    [Authorize(Roles = "Customer")]
+
     public class BookingController : Controller
     {
         private readonly DeliverySytemContext _db;
