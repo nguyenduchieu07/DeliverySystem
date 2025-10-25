@@ -13,7 +13,7 @@ using DataAccessLayer.Enums;
 
 namespace PresentationLayer.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Customer")]
     public class DeliveryController : Controller
     {
         private readonly ICustomerService _customerService;

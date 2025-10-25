@@ -5,6 +5,7 @@ using PresentationLayer.Models;
 
 namespace PresentationLayer.Controllers
 {
+    [Authorize(Roles = "Customer")]
     public class BookingController : Controller
     {
         private readonly DeliverySytemContext _db;
