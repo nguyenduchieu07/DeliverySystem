@@ -1,17 +1,229 @@
 ﻿@using DataAccessLayer.Entities
 @model IEnumerable<KycSubmission>
-<table class="table" style="width:100%">
-    <thead><tr><th>Store</th><th>Submitted</th><th></th></tr></thead>
-    <tbody>
-        @foreach (var s in Model)
-        {
+
+<style>
+    .kyc-table-container {
+        background: #fff;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        overflow: hidden;
+        border: 1px solid #e3e6f0;
+    }
+
+    .kyc-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    .kyc-table thead {
+        background: linear-gradient(180deg, #e5501b 0%, #d26c45 100%);
+    }
+
+    .kyc-table th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.7rem;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+    }
+
+    .kyc-table th:last-child {
+        text-align: right;
+    }
+
+    .kyc-table tbody tr {
+        border-bottom: 1px solid #e3e6f0;
+        transition: all 0.2s ease;
+    }
+
+    .kyc-table tbody tr:hover {
+        background-color: #f8f9fc;
+    }
+
+    .kyc-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .kyc-table td {
+        padding: 1rem 1.25rem;
+        color: #5a5c69;
+        font-size: 0.875rem;
+        vertical-align: middle;
+        border: none;
+    }
+
+    .kyc-table td:last-child {
+        text-align: right;
+    }
+
+    .store-name {
+        font-weight: 600;
+        color: #3a3b45;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .store-id {
+        font-size: 0.75rem;
+        color: #858796;
+        font-weight: 400;
+    }
+
+    .submitted-date {
+        color: #858796;
+        font-size: 0.8125rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .date-main {
+        font-weight: 500;
+        color: #5a5c69;
+    }
+
+    .date-time {
+        font-size: 0.75rem;
+        color: #858796;
+    }
+
+    .review-btn {
+        display: inline-block;
+        padding: 0.5rem 1.25rem;
+        background-color: #e5501b;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 0.35rem;
+        font-weight: 400;
+        font-size: 0.8125rem;
+        transition: all 0.15s ease-in-out;
+        box-shadow: 0 0.125rem 0.25rem 0 rgba(229, 80, 27, 0.2);
+        border: none;
+    }
+
+    .review-btn:hover {
+        background-color: #d26c45;
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 0.25rem 0.5rem 0 rgba(229, 80, 27, 0.3);
+        text-decoration: none;
+    }
+
+    .review-btn i {
+        margin-right: 0.25rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 10rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .status-badge.pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #858796;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: #d1d3e2;
+        margin-bottom: 1rem;
+    }
+
+    .empty-text {
+        font-size: 1rem;
+        color: #858796;
+    }
+
+    @@media (max-width: 768px) {
+    .kyc-table th,
+    .kyc-table td {
+        padding: 0.75rem 1rem;
+    }
+
+    .kyc-table th:last-child,
+    .kyc-table td:last-child {
+        text-align: left;
+    }
+    }
+</style>
+
+<div class="kyc-table-container">
+    @if (Model != null && Model.Any())
+    {
+        <table class="kyc-table">
+            <thead>
             <tr>
-                <td>@s.Store.StoreName</td>
-                <td>@s.SubmittedAt.ToLocalTime()</td>
-                <td style="text-align:right">
-                    <a class="btn" asp-area="Admin" asp-controller="Kyc" asp-action="Index" asp-route-status="Pending">Review</a>
-                </td>
+                <th>Cửa hàng</th>
+                <th>Ngày nộp</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
             </tr>
-        }
-    </tbody>
-</table>
+            </thead>
+            <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>
+                        <div class="store-name">
+                            <i class="fas fa-store text-primary"></i>
+                            <div>
+                                <div>@s.Store.StoreName</div>
+                                <div class="store-id">ID: @s.Store.Id.ToString().Substring(0, 8)</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="submitted-date">
+                            <span class="date-main">@s.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                            <span class="date-time">@s.SubmittedAt.ToLocalTime().ToString("HH:mm")</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge pending">
+                            <i class="fas fa-clock"></i> Chờ duyệt
+                        </span>
+                    </td>
+                    <td>
+                        <a class="review-btn"
+                           asp-area="Admin"
+                           asp-controller="Kyc"
+                           asp-action="Index"
+                           asp-route-status="Pending">
+                            <i class="fas fa-eye"></i> Xem chi tiết
+                        </a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-inbox"></i>
+            </div>
+            <div class="empty-text">Không có yêu cầu KYC nào đang chờ xử lý</div>
+        </div>
+    }
+</div>

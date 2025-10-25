@@ -1,4 +1,5 @@
-﻿using DataAccessLayer.Entities;
+﻿using DataAccessLayer.Abstractions.IRepositories;
+using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
@@ -13,7 +14,12 @@ namespace ServiceLayer.Services
     public class KycService : IKycService
     {
         private readonly DeliverySytemContext _db;
-        public KycService(DeliverySytemContext db) => _db = db;
+        private readonly IKycRepository _kycRepository;
+        public KycService(DeliverySytemContext db, IKycRepository kycRepository)
+        {
+            _db = db;
+            _kycRepository = kycRepository;
+        }
         public async Task<KycSubmission> SubmitAsync(Guid storeId, IEnumerable<(string DocType, string FilePath, string? Hash)> docs, string? note)
         {
             
@@ -107,6 +113,11 @@ namespace ServiceLayer.Services
 
             await _db.SaveChangesAsync();
             await tx.CommitAsync();
+        }
+
+        public async Task<List<KycSubmission>> GetAllAsync(string storeName, KycStatus? status = null)
+        {
+            return await _kycRepository.GetAllAsync(storeName, status);
         }
     }
 }

@@ -9,12 +9,16 @@
   <ItemGroup>
     <Compile Remove="Areas\Admin\Data\**" />
     <Compile Remove="Areas\Stores\Data\**" />
+    <Compile Remove="wwwroot\wwwroot\**" />
     <Content Remove="Areas\Admin\Data\**" />
     <Content Remove="Areas\Stores\Data\**" />
+    <Content Remove="wwwroot\wwwroot\**" />
     <EmbeddedResource Remove="Areas\Admin\Data\**" />
     <EmbeddedResource Remove="Areas\Stores\Data\**" />
+    <EmbeddedResource Remove="wwwroot\wwwroot\**" />
     <None Remove="Areas\Admin\Data\**" />
     <None Remove="Areas\Stores\Data\**" />
+    <None Remove="wwwroot\wwwroot\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +32,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ServiceLayer\ServiceLayer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\image\" />
   </ItemGroup>
 
 </Project>
