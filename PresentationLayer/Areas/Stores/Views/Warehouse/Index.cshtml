@@ -1,4 +1,5 @@
 ﻿@using PresentationLayer.Areas.Stores.Models.WarehouseModels
+@using DataAccessLayer.Enums
 @model WarehouseListVm
 
 <div class="breadcrumb">
@@ -13,6 +14,7 @@
         </a>
     </div>
 </div>
+
 @if (TempData["Success"] != null || TempData["Error"] != null)
 {
     <div id="toast" class="toast @(TempData["Error"] != null ? "error" : "success")">
@@ -20,9 +22,8 @@
             <span>@(TempData["Success"] ?? TempData["Error"])</span>
         </div>
     </div>
-
-   
 }
+
 <div class="section">
     <div class="header">
         <div class="title">Filters</div>
@@ -77,16 +78,17 @@
                 <th style="width:72px;"></th>
                 <th>Name</th>
                 <th>Address</th>
-                <th style="width:12%;">Slots</th>
+                <th style="width:18%;">Dimensions (C×D×R)</th>
+                <th style="width:10%;">Slots</th>
                 <th style="width:12%;">Status</th>
-                <th style="width:18%;">Created</th>               
-                <th style="width:18%;"></th>
+                <th style="width:16%;">Created</th>
+                <th style="width:24%;"></th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="6" class="muted">No warehouses found.</td></tr>
+                <tr><td colspan="8" class="muted">No warehouses found.</td></tr>
             }
             else
             {
@@ -101,12 +103,24 @@
                             }
                             else
                             {
-                                <img src="@($"https://api.dicebear.com/7.x/initials/svg?seed={(w.Name)}&radius=50")" )" alt="cover"
+                                <img src="@($"https://api.dicebear.com/7.x/initials/svg?seed={(w.Name)}&radius=50")" ) alt="cover"
                                      style="width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--border);" />
                             }
                         </td>
                         <td>@w.Name</td>
                         <td>@w.AddressText</td>
+                        <td>
+                            @if (w.HeightM > 0 && w.LengthM > 0 && w.WidthM > 0)
+                            {
+                                <div>@w.HeightM m × @w.LengthM m × @w.WidthM m</div>
+                                <div class="muted" style="font-size:12px;">Vol: @(Math.Round(w.HeightM.Value * w.LengthM.Value * w.WidthM.Value, 3)) m³</div>
+                            }
+                            else
+                            {
+
+                                <span class="muted">—</span>
+                            }
+                        </td>
                         <td><span class="badge">@w.SlotCount</span></td>
                         <td>
                             @{
@@ -123,9 +137,8 @@
                         </td>
                         <td>@w.CreatedAt.LocalDateTime.ToString("dd/MM/yyyy HH:mm")</td>
                         <td>
-                            <a class="btn" asp-controller="Warehouse" asp-action="Details" asp-route-id="@w.Id">Details</a>
-                            @* <a class="btn" asp-controller="Warehouse/Slots" asp-action="Index" asp-route-warehouseId="@w.Id">Slots</a> *@
-                            @if(w.Status == StatusValue.Approved)
+                            <a class="btn" asp-controller="Warehouse" asp-action="Details" asp-route-id="@w.Id">Details</a>                            
+                            @if (w.Status == StatusValue.Approved)
                             {
                                 <a class="btn" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@w.Id">Edit</a>
                             }
@@ -150,16 +163,17 @@
                     pageSize = Model.PageSize
                 })!;
             }
-            <a class="btn @(cur==1?"disabled":null)" href="@(cur==1 ? "#" : $"{baseRoute}&page={cur-1}")">Prev</a>
+            <a class="btn @(cur == 1 ? "disabled" : null)" href="@(cur == 1 ? "#" : $"{baseRoute}&page={cur - 1}")">Prev</a>
             @for (int p = start; p <= end; p++)
             {
                 var active = p == cur ? "primary" : "";
-                <a class="btn @active" href="@(p==cur ? "#" : $"{baseRoute}&page={p}")">@p</a>
+                <a class="btn @active" href="@(p == cur ? "#" : $"{baseRoute}&page={p}")">@p</a>
             }
-            <a class="btn @(cur==last?"disabled":null)" href="@(cur==last ? "#" : $"{baseRoute}&page={cur+1}")">Next</a>
+            <a class="btn @(cur == last ? "disabled" : null)" href="@(cur == last ? "#" : $"{baseRoute}&page={cur + 1}")">Next</a>
         </div>
     }
 </div>
+
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", () => {

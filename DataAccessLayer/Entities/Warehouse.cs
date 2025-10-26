@@ -18,6 +18,12 @@ namespace DataAccessLayer.Entities
         public virtual Store Store { get; set; } = null!;
         public Address? Address { get; set; }
         public StatusValue Status { get; set; }
+        // NEW: kích thước kho (m)
+        public decimal HeightM { get; set; }
+        public decimal LengthM { get; set; }
+        public decimal WidthM { get; set; }
+        public decimal VolumeM3 => Math.Round(HeightM * LengthM * WidthM, 3);
+
         public virtual ICollection<WarehouseSlot> Slots { get; set; } = new List<WarehouseSlot>();
     }
 }

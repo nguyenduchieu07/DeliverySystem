@@ -27,6 +27,9 @@ namespace PresentationLayer.Areas.Stores.Models.WarehouseModels
             public StatusValue Status { get; set; }
             public DateTimeOffset CreatedAt { get; set; }
             public string? CoverImageUrl { get; set; }
+            public decimal? HeightM {  get; set; }
+            public decimal? LengthM { get; set; }
+            public decimal? WidthM { get; set; }
         }
     }
 }

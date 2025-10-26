@@ -14,10 +14,10 @@
 </head>
 <body>
     <div class="app">
-        @Html.Partial("_Topbar")
+        @await Html.PartialAsync("_Topbar")
         <input type="checkbox" id="navToggle" />
         <div class="body">
-            @Html.Partial("_Sidebar")
+            @await Html.PartialAsync("_Sidebar")
             <main class="content">
                 @RenderBody()
             </main>
