@@ -20,6 +20,7 @@ namespace ServiceLayer.Extensions
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IDeliveryService, DeliveryService>();
             services.AddScoped<IWarehouseSlotImportService, WarehouseSlotImportService>();
+            services.AddScoped<IWarehouseSlotExportService, WarehouseSlotExportService>();
         }
     }
 }

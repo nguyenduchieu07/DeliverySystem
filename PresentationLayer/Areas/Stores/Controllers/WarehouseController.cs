@@ -17,11 +17,16 @@ namespace PresentationLayer.Areas.Stores.Controllers
         private readonly DeliverySytemContext _db;
         private readonly ICloudinaryService _files;
         private readonly IWarehouseSlotImportService _import;
-        public WarehouseController(DeliverySytemContext deliverySytemContext, ICloudinaryService cloudinaryService, IWarehouseSlotImportService import)
+        private readonly IWarehouseSlotExportService _export;
+        public WarehouseController(DeliverySytemContext deliverySytemContext,
+            ICloudinaryService cloudinaryService,
+            IWarehouseSlotImportService import,
+            IWarehouseSlotExportService export)
         {
             _db = deliverySytemContext;
             _files = cloudinaryService;
             _import = import;
+            _export = export;
         }
         public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] Guid? addressId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -428,6 +433,38 @@ namespace PresentationLayer.Areas.Stores.Controllers
             await _db.SaveChangesAsync();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> DownloadSlotTemplate(CancellationToken ct)
+        {
+            var bytes = await _export.ExportTemplateAsync(ct);
+            var fileName = $"SlotTemplate_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            return File(bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
 
+        [HttpGet]
+        public async Task<IActionResult> ExportSlots(Guid id, CancellationToken ct) // id = warehouseId
+        {
+            var bytes = await _export.ExportWarehouseSlotsAsync(id, ct);
+            var fileName = $"WarehouseSlots_{id}_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            return File(bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
+
+        // (tuỳ chọn) xuất nhiều kho
+        [HttpPost]
+        public async Task<IActionResult> ExportMultiple([FromForm] Guid[] warehouseIds, CancellationToken ct)
+        {
+            if (warehouseIds == null || warehouseIds.Length == 0)
+                return BadRequest("Chọn ít nhất 1 kho.");
+
+            var bytes = await _export.ExportMultiWarehousesAsync(warehouseIds, ct);
+            var fileName = $"WarehouseSlots_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            return File(bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
     }
 }
