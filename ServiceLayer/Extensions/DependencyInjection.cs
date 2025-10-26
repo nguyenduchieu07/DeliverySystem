@@ -23,6 +23,7 @@ namespace ServiceLayer.Extensions
             services.AddScoped<IWarehouseSlotExportService, WarehouseSlotExportService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IFeedbackService, FeedbackService>();
+            services.AddScoped<IQuotationService, QuotationService>();
         }
     }
 }
