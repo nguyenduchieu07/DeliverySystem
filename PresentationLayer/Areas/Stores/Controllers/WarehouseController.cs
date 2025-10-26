@@ -1,4 +1,5 @@
-﻿using DataAccessLayer.Constants;
+﻿using ClosedXML.Excel;
+using DataAccessLayer.Constants;
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,15 +11,22 @@ using System.Security.Claims;
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
-    [Authorize(Roles = UserRoles.STORE)]
+    //[Authorize(Roles = UserRoles.STORE)]
     public class WarehouseController : Controller
     {
         private readonly DeliverySytemContext _db;
         private readonly ICloudinaryService _files;
-        public WarehouseController(DeliverySytemContext deliverySytemContext, ICloudinaryService cloudinaryService)
+        private readonly IWarehouseSlotImportService _import;
+        private readonly IWarehouseSlotExportService _export;
+        public WarehouseController(DeliverySytemContext deliverySytemContext,
+            ICloudinaryService cloudinaryService,
+            IWarehouseSlotImportService import,
+            IWarehouseSlotExportService export)
         {
             _db = deliverySytemContext;
             _files = cloudinaryService;
+            _import = import;
+            _export = export;
         }
         public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] Guid? addressId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -68,7 +76,10 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     SlotCount = w.Slots.Count,
                     CreatedAt = w.CreatedAt,
                     CoverImageUrl = w.CoverImageUrl,
-                    Status = w.Status
+                    Status = w.Status,
+                    HeightM = w.HeightM,
+                    LengthM = w.LengthM,
+                    WidthM = w.WidthM
                 })
                 .ToListAsync();
 
@@ -97,7 +108,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             return View(vm);
         }
 
-      
+
 
         // GET: /Warehouse/Create
         [HttpGet]
@@ -113,7 +124,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
         // POST: /Warehouse/Create
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm]Warehouse warehouse, [FromForm]Address? newAddress, [FromForm] List<WarehouseSlot> slots, [FromForm] IFormFile? CoverImage, [FromForm] IFormFile? MapImage)
+        public async Task<IActionResult> Create([FromForm] Warehouse warehouse, [FromForm] Address? newAddress, [FromForm] List<WarehouseSlot> slots, [FromForm] IFormFile? CoverImage, [FromForm] IFormFile? MapImage)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var id = Guid.Parse(userId!);
@@ -124,44 +135,52 @@ namespace PresentationLayer.Areas.Stores.Controllers
             //    ViewBag.Addresses = _db.Addresses.ToList();
             //    return View(warehouse);
             //}
-            if (CoverImage != null && CoverImage.Length > 0)
+            try
             {
-                var coverImage = await _files.UploadImageFileAsync(CoverImage);
-                warehouse.CoverImageUrl = coverImage;
-            }
-            if (MapImage != null && MapImage.Length > 0)
-            {
-                var mapImage = await _files.UploadImageFileAsync(MapImage);
-                warehouse.MapImageUrl = mapImage;
-            }
+                if (CoverImage != null && CoverImage.Length > 0)
+                {
+                    var coverImage = await _files.UploadImageFileAsync(CoverImage);
+                    warehouse.CoverImageUrl = coverImage;
+                }
+                if (MapImage != null && MapImage.Length > 0)
+                {
+                    var mapImage = await _files.UploadImageFileAsync(MapImage);
+                    warehouse.MapImageUrl = mapImage;
+                }
                 // Nếu người dùng nhập địa chỉ mới → tạo mới Address
-            if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
-            {
-                newAddress.Id = Guid.NewGuid();
-                newAddress.Active = true;
-                _db.Addresses.Add(newAddress);
+                if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
+                {
+                    newAddress.Id = Guid.NewGuid();
+                    newAddress.Active = true;
+                    _db.Addresses.Add(newAddress);
+                    await _db.SaveChangesAsync();
+                    warehouse.AddressRefId = newAddress.Id;
+                }
+                warehouse.Id = Guid.NewGuid();
+                warehouse.Status = DataAccessLayer.Enums.StatusValue.Pending;
+                _db.Warehouses.Add(warehouse);
+
+                // Lưu tạm danh sách slot (nếu có)
+                //if (slots != null && slots.Count > 0)
+                //{
+                //    foreach (var s in slots)
+                //    {
+                //        s.Id = Guid.NewGuid();
+                //        s.WarehouseId = warehouse.Id;
+                //        _db.WarehouseSlots.Add(s);
+                //    }
+                //}
+
                 await _db.SaveChangesAsync();
-                warehouse.AddressRefId = newAddress.Id;
+                await ReindexWarehouseSlotsAsync(warehouse.Id);
+                TempData["Success"] = "Tạo kho mới thành công!";
             }
-            warehouse.Id = Guid.NewGuid();
-            warehouse.Status = DataAccessLayer.Enums.StatusValue.Pending;
-            _db.Warehouses.Add(warehouse);
-
-            // Lưu tạm danh sách slot (nếu có)
-            //if (slots != null && slots.Count > 0)
-            //{
-            //    foreach (var s in slots)
-            //    {
-            //        s.Id = Guid.NewGuid();
-            //        s.WarehouseId = warehouse.Id;
-            //        _db.WarehouseSlots.Add(s);
-            //    }
-            //}
-
-            await _db.SaveChangesAsync();
-
-            TempData["Success"] = "Tạo kho mới thành công!";
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Tạo mới kho thất bại {ex.Message}";
+            }
             return RedirectToAction("Index");
+
         }
 
 
@@ -197,47 +216,56 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             existing.Name = warehouse.Name;
 
-            // update cover/map image if re-uploaded
-            if (CoverImage != null && CoverImage.Length > 0)
+            try
             {
-                var coverImage = await _files.UploadImageFileAsync(CoverImage);
-                warehouse.CoverImageUrl = coverImage;
-            }
-            if (MapImage != null && MapImage.Length > 0)
-            {
-                var mapImage = await _files.UploadImageFileAsync(MapImage);
-                warehouse.MapImageUrl = mapImage;
-            }
-
-            // Update Address (tự chọn hoặc tạo mới)
-            if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
-            {
-                newAddress.Id = Guid.NewGuid();
-                newAddress.Active = true;
-                _db.Addresses.Add(newAddress);
-                await _db.SaveChangesAsync();
-                existing.AddressRefId = newAddress.Id;
-            }
-            else
-            {
-                existing.AddressRefId = warehouse.AddressRefId;
-            }
-
-            // Cập nhật Slot (xoá hết và thêm lại)
-            _db.WarehouseSlots.RemoveRange(existing.Slots);
-            if (slots != null && slots.Count > 0)
-            {
-                foreach (var s in slots)
+                // update cover/map image if re-uploaded
+                if (CoverImage != null && CoverImage.Length > 0)
                 {
-                    s.Id = Guid.NewGuid();
-                    s.WarehouseId = existing.Id;
-                    _db.WarehouseSlots.Add(s);
+                    var coverImage = await _files.UploadImageFileAsync(CoverImage);
+                    existing.CoverImageUrl = coverImage;
                 }
-            }
+                if (MapImage != null && MapImage.Length > 0)
+                {
+                    var mapImage = await _files.UploadImageFileAsync(MapImage);
+                    existing.MapImageUrl = mapImage;
+                }
 
-            await _db.SaveChangesAsync();
-            TempData["Success"] = "Cập nhật kho thành công!";
+                // Update Address (tự chọn hoặc tạo mới)
+                if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
+                {
+                    newAddress.Id = Guid.NewGuid();
+                    newAddress.Active = true;
+                    _db.Addresses.Add(newAddress);
+                    await _db.SaveChangesAsync();
+                    existing.AddressRefId = newAddress.Id;
+                }
+                else
+                {
+                    existing.AddressRefId = warehouse.AddressRefId;
+                }
+
+                // Cập nhật Slot (xoá hết và thêm lại)
+                _db.WarehouseSlots.RemoveRange(existing.Slots);
+                if (slots != null && slots.Count > 0)
+                {
+                    foreach (var s in slots)
+                    {
+                        s.Id = Guid.NewGuid();
+                        s.WarehouseId = existing.Id;
+                        _db.WarehouseSlots.Add(s);
+                    }
+                }
+
+                await _db.SaveChangesAsync();
+                await ReindexWarehouseSlotsAsync(warehouse.Id);
+                TempData["Success"] = "Cập nhật kho thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Cập nhật kho thất bại! {ex.Message}";
+            }
             return RedirectToAction("Index");
+
         }
 
         // GET: /Warehouse/Delete/{id}
@@ -254,12 +282,44 @@ namespace PresentationLayer.Areas.Stores.Controllers
             return RedirectToAction("Index");
         }
 
+
         [HttpGet]
-        public async Task<IActionResult> Details(Guid id)
+        public async Task<IActionResult> GetSlotsPaged(Guid warehouseId, string? q, int page = 1, int pageSize = 10)
+        {
+            var query = _db.WarehouseSlots
+                .AsNoTracking()
+                .Where(s => s.WarehouseId == warehouseId);
+
+            // Tìm kiếm theo code
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = query.Where(s => EF.Functions.Like(s.Code.ToLower(), $"%{q.ToLower()}%"));
+            }
+
+            var total = await query.CountAsync();
+
+            var slots = await query
+                .OrderBy(s => s.Row)
+                .ThenBy(s => s.Col)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Json(new
+            {
+                slots,
+                total,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling(total / (double)pageSize)
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid id, string? slotSearch, int slotPage = 1, int slotPageSize = 10)
         {
             var warehouse = await _db.Warehouses
                 .Include(w => w.Address)
-                .Include(w => w.Slots)
                 .Include(w => w.Store)
                 .FirstOrDefaultAsync(w => w.Id == id);
 
@@ -269,9 +329,165 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 return RedirectToAction("Index");
             }
 
+            // Query slots với phân trang
+            var slotsQuery = _db.WarehouseSlots
+                .Where(s => s.WarehouseId == id);
+
+            if (!string.IsNullOrWhiteSpace(slotSearch))
+            {
+                slotsQuery = slotsQuery.Where(s =>
+                    EF.Functions.Like(s.Code.ToLower(), $"%{slotSearch.ToLower()}%"));
+            }
+
+            var totalSlots = await slotsQuery.CountAsync();
+
+            warehouse.Slots = await slotsQuery
+                .OrderBy(s => s.Row)
+                .ThenBy(s => s.Col)
+                .Skip((slotPage - 1) * slotPageSize)
+                .Take(slotPageSize)
+                .ToListAsync();
+
+            ViewBag.SlotSearch = slotSearch;
+            ViewBag.SlotPage = slotPage;
+            ViewBag.SlotPageSize = slotPageSize;
+            ViewBag.TotalSlots = totalSlots;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalSlots / (double)slotPageSize);
+
             return View(warehouse);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Grid(Guid warehouseId)
+        {
+            var slots = await _db.WarehouseSlots.Where(x => x.WarehouseId == warehouseId).ToListAsync();
+            if (!slots.Any()) return Json(new { rows = 0, cols = 0, cells = Array.Empty<object>() });
 
+            int rows = slots.Max(x => x.Row);
+            int cols = slots.Max(x => x.Col);
+            var today = DateTime.Today;
+
+            int WarningOf(WarehouseSlot s)
+            {
+                if (s.IsBlocked) return 3; // blocked
+                if (s.LeaseEnd is DateTime e && e < today) return 2; // expired
+                if (s.LeaseEnd is DateTime e2 && (e2 - today).TotalDays <= 7) return 1; // expiring
+                if (s.LeaseStart == null && s.LeaseEnd == null) return 4; // empty
+                return 0; // none
+            }
+
+            var cells = slots.Select(s => new {
+                s.Code,
+                s.Row,
+                s.Col,
+                Warning = WarningOf(s),
+                PricePreview = s.IsBlocked ? (decimal?)null : s.BasePricePerHour,
+                s.IsBlocked
+            });
+
+            return Json(new { rows, cols, cells });
+        }
+
+        // Import Excel theo template
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportSlots(Guid warehouseId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "File rỗng.";
+                return RedirectToAction("Details", new { id = warehouseId });
+            }
+
+            using var stream = file.OpenReadStream();
+            var result = await _import.ImportAsync(stream);
+
+            if (result.Errors.Any())
+            {
+                TempData["Error"] = $"Import lỗi {result.Errors.Count} dòng / {result.TotalRows}.";
+            }
+            else
+            {
+                TempData["Success"] = $"Import thành công {result.Success} dòng.";
+            }
+
+            return RedirectToAction("Details", new { id = warehouseId });
+        }
+        public static class WarehouseLayoutOptions
+        {
+            public const int MaxColsPerRow = 30;
+        }
+
+        public async Task ReindexWarehouseSlotsAsync(Guid warehouseId)
+        {
+            var slots = await _db.Set<WarehouseSlot>()
+                .Where(s => s.WarehouseId == warehouseId)
+                .OrderBy(s => s.CreatedAt)
+                .ToListAsync();
+
+            int maxCols = WarehouseLayoutOptions.MaxColsPerRow;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                slots[i].Row = (i / maxCols) + 1;
+                slots[i].Col = (i % maxCols) + 1;
+            }
+            await _db.SaveChangesAsync();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadSlotTemplate(CancellationToken ct)
+        {
+            var bytes = await _export.ExportTemplateAsync(ct);
+            var fileName = $"SlotTemplate_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            return File(bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportSlots(Guid id, CancellationToken ct) // id = warehouseId
+        {
+            var bytes = await _export.ExportWarehouseSlotsAsync(id, ct);
+            var fileName = $"WarehouseSlots_{id}_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            return File(bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
+
+        // (tuỳ chọn) xuất nhiều kho
+        [HttpGet]
+        public async Task<IActionResult> ExportMultiple([FromQuery] Guid[] warehouseIds, CancellationToken ct)
+        {
+            if (warehouseIds == null || warehouseIds.Length == 0)
+                return BadRequest("Chọn ít nhất 1 kho.");
+
+            var bytes = await _export.ExportMultiWarehousesAsync(warehouseIds, ct);
+            var fileName = $"WarehouseSlots_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            return File(bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
+
+        // Get all warehouses for selection
+        [HttpGet]
+        public async Task<IActionResult> GetAllWarehouses()
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var id = Guid.Parse(userId!);
+            var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
+
+            var warehouses = await _db.Warehouses
+                .Where(w => w.StoreId == storeId)
+                .Select(w => new
+                {
+                    Id = w.Id,
+                    Name = w.Name,
+                    Address = w.Address != null ? w.Address.AddressLine : null,
+                    SlotCount = w.Slots.Count
+                })
+                .OrderBy(w => w.Name)
+                .ToListAsync();
+
+            return Json(warehouses);
+        }
     }
 }

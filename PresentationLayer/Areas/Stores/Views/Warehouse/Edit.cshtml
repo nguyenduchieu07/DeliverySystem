@@ -2,235 +2,1214 @@
 @model DataAccessLayer.Entities.Warehouse
 @{
     ViewBag.Title = "Chỉnh sửa kho";
-    var addresses = ViewBag.Addresses as List<DataAccessLayer.Entities.Address>;
+    var addresses = (ViewBag.Addresses as List<DataAccessLayer.Entities.Address>) ?? new();
     var addr = Model.Address;
 }
 
-@section styles {
-    <link rel="stylesheet"
-          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          crossorigin="" />
-    <link rel="stylesheet"
-          href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <style>
-        #map {
-            height: 380px;
-            border-radius: var(--radius);
+        /* ===== Theme fallbacks to avoid hidden UI when CSS vars missing ===== */
+        :root {
+            --panel: #ffffff;
+            --border: #e5e7eb;
+            --background: #f8fafc;
+            --text: #111827;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --primary-rgb: 37, 99, 235;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        /* Layout Styles */
+        .edit-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .edit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .edit-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .breadcrumb {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; left: 0; right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Card Styles */
+        .card {
+            background: var(--panel);
             border: 1px solid var(--border);
-            margin-top: 12px;
+            border-radius: 12px;
+            padding: 24px;
             margin-bottom: 20px;
         }
 
-        .row-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px 20px;
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
         }
 
-            .row-2 > div {
-                display: flex;
-                flex-direction: column;
-            }
+        .card-title {
+            font-size: 16px; font-weight: 600; color: var(--text);
+            display: flex; align-items: center; gap: 8px;
+        }
 
-            .row-2 label {
-                color: var(--muted);
-                font-size: 12px;
-                text-transform: uppercase;
-                margin-bottom: 6px;
-            }
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
 
-            .row-2 input, .row-2 select {
-                width: 100%;
-                background: var(--panel-2);
-                border: 1px solid var(--border);
-                border-radius: 12px;
-                color: var(--text);
-                padding: 10px 12px;
-                font-size: 14px;
-            }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label {
+            font-size: 12px; font-weight: 500; color: var(--muted);
+            text-transform: uppercase; margin-bottom: 8px; letter-spacing: .5px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px 14px; background: var(--background);
+            border: 1px solid var(--border); border-radius: 8px;
+            font-size: 14px; color: var(--text); transition: all .2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .1);
+        }
 
-        form input[type="text"],
-        form input[type="file"],
-        form select {
+        /* Map Container */
+        #map {
+            height: 400px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-top: 16px;
+        }
+
+        /* Image Upload */
+        .image-upload {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;
+        }
+        .upload-box {
+            border: 2px dashed var(--border); border-radius: 8px; padding: 20px;
+            text-align: center; position: relative; transition: all .2s;
+        }
+        .upload-box:hover { border-color: var(--primary); background: rgba(var(--primary-rgb), .02); }
+        .upload-preview {
+            width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 12px;
+        }
+        .upload-label { display: block; cursor: pointer; color: var(--primary); font-size: 14px; font-weight: 500; }
+        .upload-box input[type="file"] { display: none; }
+
+        /* Slots Management */
+        .slots-toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-box { flex: 1; min-width: 250px; position: relative; }
+        .search-box input { width: 100%; padding: 10px 14px 10px 40px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+        .search-box::before { content: '🔍'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: .5; }
+
+        .slots-table { width: 100%; border-collapse: collapse; }
+        .slots-table thead { background: var(--background); }
+        .slots-table th {
+            padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; border-bottom: 2px solid var(--border);
+        }
+        .slots-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+        .slot-code { font-weight: 600; color: var(--text); }
+        .slot-dimensions { color: var(--muted); font-size: 13px; }
+        .slot-price { font-weight: 500; color: var(--success); }
+
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .status-badge.available { background: rgba(92, 211, 166, .15); color: var(--success); }
+        .status-badge.occupied { background: rgba(255, 204, 102, .15); color: var(--warning); }
+        .status-badge.maintenance { background: rgba(255, 107, 107, .15); color: var(--danger); }
+
+        /* Add Slot Form */
+        .add-slot-form { background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 20px; }
+
+        /* Action Buttons */
+        .form-actions {
+            display: flex; gap: 12px; justify-content: flex-end; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border);
+        }
+        .btn {
+            padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; border: 1px solid transparent;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(var(--primary-rgb), .3); }
+        .btn-outline { background: transparent; border-color: var(--border); color: var(--text); }
+        .btn-outline:hover { background: var(--background); }
+        .btn-danger { background: transparent; color: var(--danger); padding: 6px 12px; font-size: 13px; }
+        .btn-danger:hover { background: rgba(255, 107, 107, .1); }
+
+        /* Dimensions Info */
+        .dimensions-display {
+            display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--background);
+            border-radius: 8px; margin-top: 12px;
+        }
+        .volume-badge { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 20px; font-weight: 600; }
+
+        /* Pagination */
+        .pagination { display: flex; gap: 4px; justify-content: center; margin-top: 20px; }
+        .pagination button {
+            min-width: 36px; height: 36px; border: 1px solid var(--border); background: var(--panel); color: var(--text);
+            border-radius: 6px; cursor: pointer; font-size: 14px; transition: all .2s;
+        }
+        .pagination button:hover { background: var(--background); }
+        .pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* Alert */
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+        .alert-info { background: rgba(66, 153, 225, .1); border: 1px solid rgba(66, 153, 225, .3); color: #2b6cb0; }
+    </style>
+
+
+    <style>
+        /* Thêm vào phần Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            background: var(--panel-2);
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--panel);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .modal-header h3 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+            }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: var(--muted);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+            .modal-close:hover {
+                background: var(--background);
+                color: var(--text);
+            }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .ie-section {
+            margin-bottom: 24px;
+        }
+
+            .ie-section h4 {
+                margin-bottom: 16px;
+                color: var(--text);
+                font-size: 16px;
+            }
+
+        .ie-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ie-option {
+            background: var(--background);
             border: 1px solid var(--border);
             border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+            .ie-option:hover {
+                border-color: var(--primary);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+
+        .ie-option-header strong {
+            display: block;
+            margin-bottom: 4px;
             color: var(--text);
-            padding: 10px 12px;
-            font-size: 14px;
-            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .ie-option-header .muted {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 24px 0;
+        }
+
+        .file-upload-area {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+            .file-upload-area input[type="file"] {
+                position: absolute;
+                opacity: 0;
+                width: 100%;
+                height: 40px;
+                cursor: pointer;
+            }
+
+        .file-label {
+            display: block;
+            padding: 10px 16px;
+            background: var(--background);
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .file-label:hover {
+                border-color: var(--primary);
+                background: rgba(var(--primary-rgb), 0.02);
+            }
+
+        .file-name {
+            display: block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--success);
+        }
+
+        .warehouse-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--background);
+        }
+
+        .warehouse-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+            .warehouse-item:hover {
+                background: var(--panel);
+            }
+
+            .warehouse-item input[type="checkbox"] {
+                margin-right: 12px;
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+            }
+
+            .warehouse-item label {
+                cursor: pointer;
+                flex: 1;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+        .warehouse-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .warehouse-name {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .warehouse-meta {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
         }
     </style>
 }
 
-<h2 class="page-title">Chỉnh sửa kho</h2>
+<div class="edit-container">
+    <!-- Header -->
+    <div class="breadcrumb">
+        <a asp-area="Stores" asp-controller="Warehouse" asp-action="Index">Kho hàng</a> /
+        <span>Chỉnh sửa</span>
+    </div>
 
-<form asp-action="Edit" method="post" enctype="multipart/form-data">
-    <input type="hidden" asp-for="Id" />
-
-    <div class="card">
-        <label>Tên kho</label>
-        <input asp-for="Name" placeholder="VD: Kho Hà Đông" />
-
-        <label>Chọn địa chỉ có sẵn (tùy chọn)</label>
-        <select asp-for="AddressRefId">
-            <option value="">-- Không chọn (tự thêm) --</option>
-            @foreach (var a in addresses)
-            {
-                <option value="@a.Id" selected="@(a.Id == Model.AddressRefId)">
-                    @a.AddressLine (@a.City)
-                </option>
-            }
-        </select>
-
-        <hr />
-        <h4>Hoặc cập nhật địa chỉ mới</h4>
-
-        <div class="row-2">
-            <div>
-                <label>Địa chỉ chi tiết</label>
-                <input name="newAddress.AddressLine" id="addressLine" value="@addr?.AddressLine" />
-            </div>
-            <div>
-                <label>Tỉnh / Thành phố</label>
-                <input name="newAddress.City" id="city" value="@addr?.City" readonly />
-            </div>
-            <div>
-                <label>Quận / Huyện</label>
-                <input name="newAddress.District" id="district" value="@addr?.District" readonly />
-            </div>
-            <div>
-                <label>Phường / Xã</label>
-                <input name="newAddress.Ward" id="ward" value="@addr?.Ward" readonly />
-            </div>
-            <div>
-                <label>Latitude</label>
-                <input name="newAddress.Latitude" id="lat" value="@addr?.Latitude" readonly />
-            </div>
-            <div>
-                <label>Longitude</label>
-                <input name="newAddress.Longitude" id="lng" value="@addr?.Longitude" readonly />
-            </div>
-        </div>
-
-        <div id="map"></div>
-
-        <div class="row-2">
-            <div>
-                <label>Ảnh bìa kho</label>
-                <input type="file" name="CoverImage" accept="image/*" />
-                @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
-                {
-                    <img src="@Model.CoverImageUrl" style="width:100%;max-height:150px;margin-top:8px;border-radius:12px;" />
-                }
-            </div>
-            <div>
-                <label>Ảnh sơ đồ kho</label>
-                <input type="file" name="MapImage" accept="image/*" />
-                @if (!string.IsNullOrEmpty(Model.MapImageUrl))
-                {
-                    <img src="@Model.MapImageUrl" style="width:100%;max-height:150px;margin-top:8px;border-radius:12px;" />
-                }
-            </div>
+    <div class="edit-header">
+        <h1>📦 Chỉnh sửa kho: @Model.Name</h1>
+        <div>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline">👁️ Xem chi tiết</a>
         </div>
     </div>
 
-    <div class="card">
-        <h4>Quản lý Slot</h4>
-        <table class="table" id="slotTable">
-            <thead>
-                <tr><th>Mã</th><th>Kích thước</th><th>Trạng thái</th><th></th></tr>
-            </thead>
-            <tbody>
-                @for (int i = 0; i < Model.Slots.Count; i++)
-                {
-                    <tr>
-                        <td><input type="hidden" name="slots[@i].Code" value="@Model.Slots.ElementAt(i).Code" />@Model.Slots.ElementAt(i).Code</td>
-                        <td><input type="hidden" name="slots[@i].Size" value="@Model.Slots.ElementAt(i).Size" />@Model.Slots.ElementAt(i).Size</td>
-                        <td><input type="hidden" name="slots[@i].Status" value="@Model.Slots.ElementAt(i).Status" />@Model.Slots.ElementAt(i).Status</td>
-                        <td><button type="button" class="btn danger" onclick="this.closest('tr').remove()">X</button></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
-        <div class="row-2" style="margin-top:10px;">
-            <input type="text" id="slotCode" placeholder="Mã slot" />
-            <input type="text" id="slotSize" placeholder="Kích thước" />
-            <select id="slotStatus">
-                <option>Available</option>
-                <option>Occupied</option>
-                <option>Maintenance</option>
-            </select>
-            <button type="button" class="btn primary" id="btnAddSlot">+ Thêm Slot</button>
-        </div>
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+        <button type="button" class="tab-btn active" onclick="switchTab(event,'general')">Thông tin chung</button>
+        <button type="button" class="tab-btn" onclick="switchTab(event,'location')">Vị trí & Địa chỉ</button>
+        <button type="button" class="tab-btn" onclick="switchTab(event,'slots')">Quản lý Slots (@(Model.Slots?.Count ?? 0))</button>
+        <button type="button" class="tab-btn" onclick="switchTab(event,'images')">Hình ảnh</button>
     </div>
 
-    <button type="submit" class="btn primary">Lưu thay đổi</button>
-</form>
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <!-- Tab 1: Thông tin chung -->
+        <div class="tab-content active" id="tab-general">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📋 Thông tin cơ bản</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Tên kho *</label>
+                        <input asp-for="Name" placeholder="VD: Kho Hà Đông" required />
+                    </div>
+                </div>
+
+                <hr style="margin: 24px 0; border-color: var(--border);" />
+
+                <div class="card-header">
+                    <div class="card-title">📐 Kích thước kho</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Chiều cao (m)</label>
+                        <input type="number" asp-for="HeightM" min="0" step="0.01" placeholder="0.00" />
+                    </div>
+                    <div class="form-group">
+                        <label>Chiều dài (m)</label>
+                        <input type="number" asp-for="LengthM" min="0" step="0.01" placeholder="0.00" />
+                    </div>
+                    <div class="form-group">
+                        <label>Chiều rộng (m)</label>
+                        <input type="number" asp-for="WidthM" min="0" step="0.01" placeholder="0.00" />
+                    </div>
+                </div>
+
+                <div class="dimensions-display">
+                    <span>Thể tích kho:</span>
+                    <div class="volume-badge"><span id="volumeDisplay">0</span> m³</div>
+                    <span class="muted">(Cao × Dài × Rộng)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Vị trí & Địa chỉ -->
+        <div class="tab-content" id="tab-location">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📍 Địa chỉ kho</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Chọn địa chỉ có sẵn</label>
+                    <select asp-for="AddressRefId">
+                        <option value="">-- Tạo địa chỉ mới --</option>
+                        @foreach (var a in addresses)
+                        {
+                            <option value="@a.Id" selected="@(a.Id == Model.AddressRefId)">
+                                @a.AddressLine (@a.City)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 16px;">
+                    ℹ️ Nếu không chọn địa chỉ có sẵn, vui lòng nhập địa chỉ mới bên dưới
+                </div>
+
+                <hr style="margin: 24px 0; border-color: var(--border);" />
+
+                <h4 style="margin-bottom: 16px;">Tạo địa chỉ mới</h4>
+
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Địa chỉ chi tiết</label>
+                        <input name="newAddress.AddressLine" id="addressLine"
+                               value="@addr?.AddressLine"
+                               placeholder="Số nhà, tên đường, phường/xã..." />
+                    </div>
+                    <div class="form-group">
+                        <label>Tỉnh/Thành phố</label>
+                        <input name="newAddress.City" id="city" value="@addr?.City" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>Quận/Huyện</label>
+                        <input name="newAddress.District" id="district" value="@addr?.District" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>Phường/Xã</label>
+                        <input name="newAddress.Ward" id="ward" value="@addr?.Ward" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>Latitude</label>
+                        <input name="newAddress.Latitude" id="lat" value="@addr?.Latitude" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>Longitude</label>
+                        <input name="newAddress.Longitude" id="lng" value="@addr?.Longitude" readonly />
+                    </div>
+                </div>
+
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Quản lý Slots -->
+        <div class="tab-content" id="tab-slots">
+            <div class="card">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            📦 Danh sách Slots
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button type="button" class="btn btn-outline" onclick="showImportExportModal()">
+                                📊 Import/Export Excel
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="toggleAddSlotForm()">
+                                ➕ Thêm Slot mới
+                            </button>
+                        </div>
+                    </div>
+                    </div>
+                <!-- Search & Filter -->
+                <div class="slots-toolbar">
+                    <div class="search-box">
+                        <input type="text" id="slotSearchInput" placeholder="Tìm theo mã slot..." />
+                    </div>
+                    <select id="slotStatusFilter" onchange="filterSlots()">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="4">Available</option>
+                        <option value="17">Occupied</option>
+                        <option value="7">Maintenance</option>
+                    </select>
+                    <button type="button" class="btn btn-outline" onclick="clearFilters()">🔄 Xóa bộ lọc</button>
+                </div>
+
+                <!-- Slots Table -->
+                <div style="overflow-x: auto;">
+                    <table class="slots-table">
+                        <thead>
+                            <tr>
+                                <th>Mã Slot</th>
+                                <th>Vị trí</th>
+                                <th>Kích thước</th>
+                                <th>Giá/giờ</th>
+                                <th>Trạng thái</th>
+                                <th width="80">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="slotTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div id="slotPagination" class="pagination"></div>
+
+                <!-- Add Slot Form (Initially Hidden) -->
+                <div class="add-slot-form" id="addSlotForm" style="display: none;">
+                    <h4 style="margin-bottom: 16px;">➕ Thêm Slot mới</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Mã Slot *</label>
+                            <input type="text" id="slotCode" placeholder="VD: A1-01" />
+                        </div>
+                        <div class="form-group">
+                            <label>Cao (m)</label>
+                            <input type="number" id="slotH" min="0" step="0.01" placeholder="0.00" />
+                        </div>
+                        <div class="form-group">
+                            <label>Dài (m)</label>
+                            <input type="number" id="slotL" min="0" step="0.01" placeholder="0.00" />
+                        </div>
+                        <div class="form-group">
+                            <label>Rộng (m)</label>
+                            <input type="number" id="slotW" min="0" step="0.01" placeholder="0.00" />
+                        </div>
+                        <div class="form-group">
+                            <label>Giá/giờ (VNĐ)</label>
+                            <input type="number" id="slotPrice" min="0" step="1000" placeholder="50000" />
+                        </div>
+                        <div class="form-group">
+                            <label>Trạng thái</label>
+                            <select id="slotStatus">
+                                <option value="4">Available</option>
+                                <option value="17">Occupied</option>
+                                <option value="7">Maintenance</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <button type="button" class="btn btn-primary" onclick="addSlot()">✓ Thêm Slot</button>
+                        <button type="button" class="btn btn-outline" onclick="toggleAddSlotForm()">✕ Hủy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+
+        <!-- Multi-Warehouse Export Modal -->
+        <div id="multiWarehouseModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📚 Export nhiều kho</h3>
+                    <button type="button" class="modal-close" onclick="closeMultiWarehouseModal()">×</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="warehouse-list" id="warehouseList">
+                        <!-- Warehouses sẽ được load bằng Ajax -->
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="selectAllWarehouses()">
+                            ☑️ Chọn tất cả
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="exportMultipleWarehouses()">
+                            📊 Export đã chọn
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Tab 4: Hình ảnh -->
+        <div class="tab-content" id="tab-images">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🖼️ Quản lý hình ảnh</div>
+                </div>
+
+                <div class="image-upload">
+                    <div class="upload-box">
+                        @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+                        {
+                            <img src="@Model.CoverImageUrl" class="upload-preview" alt="Cover" />
+                        }
+                        else
+                        {
+                            <div class="upload-preview" style="background: var(--background); display: flex; align-items: center; justify-content: center;">
+                                <span style="color: var(--muted);">📷 Chưa có ảnh</span>
+                            </div>
+                        }
+                        <label class="upload-label">
+                            <input type="file" name="CoverImage" accept="image/*" onchange="previewImage(this, 0)" />
+                            📤 Tải lên ảnh bìa
+                        </label>
+                    </div>
+
+                    <div class="upload-box">
+                        @if (!string.IsNullOrEmpty(Model.MapImageUrl))
+                        {
+                            <img src="@Model.MapImageUrl" class="upload-preview" alt="Map" />
+                        }
+                        else
+                        {
+                            <div class="upload-preview" style="background: var(--background); display: flex; align-items: center; justify-content: center;">
+                                <span style="color: var(--muted);">🗺️ Chưa có sơ đồ</span>
+                            </div>
+                        }
+                        <label class="upload-label">
+                            <input type="file" name="MapImage" accept="image/*" onchange="previewImage(this, 1)" />
+                            📤 Tải lên sơ đồ kho
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden container for slots data -->
+        <div id="allSlotsHidden" style="display:none;"></div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a asp-action="Index" class="btn btn-outline">← Hủy</a>
+            <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
+        </div>
+    </form>
+    <!-- Import/Export Modal -->
+    <div id="importExportModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Import/Export Slots Excel</h3>
+                <button type="button" class="modal-close" onclick="closeImportExportModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Import Section -->
+                <div class="ie-section">
+                    <h4>📥 Import Slots</h4>
+                    <div class="ie-options">
+                        <div class="ie-option">
+                            <div class="ie-option-header">
+                                <strong>1. Tải Template Excel</strong>
+                                <p class="muted">Tải file mẫu với header và hướng dẫn</p>
+                            </div>
+                            <a href="@Url.Action("DownloadSlotTemplate", "Warehouse", new { area = "Stores" })"
+                               class="btn btn-outline" target="_blank">
+                                📄 Tải Template
+                            </a>
+                        </div>
+
+                        <div class="ie-option">
+                            <div class="ie-option-header">
+                                <strong>2. Upload File Excel</strong>
+                                <p class="muted">Header: WarehouseName, Code, Row, Col, HeightM, LengthM, WidthM, BasePricePerHour, LeaseStart, LeaseEnd, IsBlocked, ImageUrl</p>
+                            </div>
+                            <form id="importForm" method="post" enctype="multipart/form-data">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="warehouseId" value="@Model.Id" />
+                                <div class="file-upload-area">
+                                    <input type="file" id="importFile" name="file" accept=".xlsx,.xls" />
+                                    <label for="importFile" class="file-label">
+                                        📂 Chọn file Excel...
+                                    </label>
+                                    <span id="fileName" class="file-name"></span>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="importSlots()">
+                                    📥 Import Slots
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="divider" />
+
+                <!-- Export Section -->
+                <div class="ie-section">
+                    <h4>📤 Export Slots</h4>
+                    <div class="ie-options">
+                        <div class="ie-option">
+                            <div class="ie-option-header">
+                                <strong>Export kho hiện tại</strong>
+                                <p class="muted">Xuất tất cả slots của kho @Model.Name</p>
+                            </div>
+                            <a href="@Url.Action("ExportSlots", "Warehouse", new { area = "Stores", id = Model.Id })"
+                               class="btn btn-outline" target="_blank">
+                                📊 Export Excel
+                            </a>
+                        </div>
+
+                        <div class="ie-option">
+                            <div class="ie-option-header">
+                                <strong>Export nhiều kho</strong>
+                                <p class="muted">Chọn nhiều kho để xuất (mỗi kho 1 sheet)</p>
+                            </div>
+                            <button type="button" class="btn btn-outline" onclick="showMultiWarehouseModal()">
+                                📚 Chọn kho để Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script>
-        const map = L.map('map').setView([@addr?.Latitude ?? 21.0278, @addr?.Longitude ?? 105.8342], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+        // ---------------- Tabs ----------------
+        function switchTab(e, tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            const pane = document.getElementById(`tab-${tabName}`);
+            pane.classList.add('active');
 
-        let marker = L.marker([@addr?.Latitude ?? 21.0278, @addr?.Longitude ?? 105.8342], { draggable: true }).addTo(map);
+            if (tabName === 'location') {
+                if (!window.__leafletInited) initMap();
+                // repair size after show
+                setTimeout(() => window.__leaflet?.invalidateSize(), 60);
+            }
+        }
 
-        marker.on('dragend', function (e) {
-            const lat = e.target.getLatLng().lat.toFixed(6);
-            const lng = e.target.getLatLng().lng.toFixed(6);
-            document.getElementById("lat").value = lat;
-            document.getElementById("lng").value = lng;
-            fetchReverse(lat, lng);
+        // ---------------- Volume calculator ----------------
+        function calculateVolume() {
+            const h = parseFloat(document.querySelector('[name="HeightM"]')?.value) || 0;
+            const l = parseFloat(document.querySelector('[name="LengthM"]')?.value) || 0;
+            const w = parseFloat(document.querySelector('[name="WidthM"]')?.value) || 0;
+            const volume = (h * l * w);
+            document.getElementById('volumeDisplay').textContent = isFinite(volume) ? volume.toFixed(2) : '0';
+        }
+        document.querySelectorAll('[name="HeightM"], [name="LengthM"], [name="WidthM"]').forEach(input => {
+            input.addEventListener('input', calculateVolume);
         });
+        calculateVolume();
 
-        const geocoderControl = L.Control.geocoder({
-            geocoder: L.Control.Geocoder.nominatim(),
-            placeholder: '🔍 Tìm kiếm địa chỉ...',
-            defaultMarkGeocode: false
-        }).on('markgeocode', function (e) {
-            const latlng = e.geocode.center;
-            marker.setLatLng(latlng);
-            map.setView(latlng, 15);
-            document.getElementById("lat").value = latlng.lat.toFixed(6);
-            document.getElementById("lng").value = latlng.lng.toFixed(6);
-            fetchReverse(latlng.lat, latlng.lng);
-        }).addTo(map);
+        // ---------------- Leaflet lazy init ----------------
+        function initMap() {
+            if (window.__leafletInited) return;
+            window.__leafletInited = true;
 
-        function fetchReverse(lat, lng) {
+            const lat = @((addr?.Latitude ?? 21.0278).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            const lng = @((addr?.Longitude ?? 105.8342).ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+            window.__leaflet = L.map('map').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(window.__leaflet);
+
+            let marker = L.marker([lat, lng], { draggable: true }).addTo(window.__leaflet);
+
+            marker.on('dragend', function (e) {
+                const latlng = e.target.getLatLng();
+                document.getElementById('lat').value = latlng.lat.toFixed(6);
+                document.getElementById('lng').value = latlng.lng.toFixed(6);
+                reverseGeocode(latlng.lat, latlng.lng);
+            });
+
+            L.Control.geocoder({ defaultMarkGeocode: false })
+                .on('markgeocode', function (e) {
+                    const latlng = e.geocode.center;
+                    marker.setLatLng(latlng);
+                    window.__leaflet.setView(latlng, 15);
+                    document.getElementById('lat').value = latlng.lat.toFixed(6);
+                    document.getElementById('lng').value = latlng.lng.toFixed(6);
+                    reverseGeocode(latlng.lat, latlng.lng);
+                })
+                .addTo(window.__leaflet);
+        }
+
+        function reverseGeocode(lat, lng) {
             fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
                 .then(res => res.json())
-                .then(d => {
-                    const a = d.address || {};
-                    document.getElementById("addressLine").value = d.display_name;
-                    document.getElementById("city").value = a.city || a.state || '';
-                    document.getElementById("district").value = a.county || a.suburb || '';
-                    document.getElementById("ward").value = a.village || a.town || '';
+                .then(data => {
+                    const addr = data.address || {};
+                    document.getElementById('addressLine').value = data.display_name || '';
+                    document.getElementById('city').value = addr.city || addr.town || addr.state || '';
+                    document.getElementById('district').value = addr.district || addr.county || addr.suburb || '';
+                    document.getElementById('ward').value = addr.village || addr.suburb || addr.neighbourhood || '';
                 });
         }
 
-        // Add Slot dynamically
-        document.getElementById("btnAddSlot").addEventListener("click", function () {
-            const code = slotCode.value.trim();
-            const size = slotSize.value.trim();
-            const status = slotStatus.value;
-            if (!code) return alert("Nhập mã slot!");
-            const row = document.createElement("tr");
-            const index = document.querySelectorAll("#slotTable tbody tr").length;
-            row.innerHTML = `
-                        <td><input type="hidden" name="slots[${index}].Code" value="${code}" />${code}</td>
-                        <td><input type="hidden" name="slots[${index}].Size" value="${size}" />${size}</td>
-                        <td><input type="hidden" name="slots[${index}].Status" value="${status}" />${status}</td>
-                        <td><button type="button" class="btn danger" onclick="this.closest('tr').remove()">X</button></td>`;
-            document.querySelector("#slotTable tbody").appendChild(row);
-            slotCode.value = "";
-            slotSize.value = "";
-            slotStatus.value = "Available";
+        // ---------------- Slots (client-side paging) ----------------
+        let allSlots = [];
+        let currentPage = 1;
+        const pageSize = 10;
+
+        async function loadSlotsAllPages() {
+            const warehouseId = '@Model.Id';
+            allSlots = [];
+            // Tải tất cả slot (server có thể trả phân trang — lặp qua tất cả)
+            let page = 1, totalPages = 1, safePageSize = 200;
+            do {
+                const response = await fetch(`/Stores/Warehouse/GetSlotsPaged?warehouseId=${warehouseId}&page=${page}&pageSize=${safePageSize}`);
+                const data = await response.json();
+                totalPages = data.totalPages || 1;
+                (data.slots || []).forEach(s => allSlots.push(s));
+                page++;
+            } while (page <= totalPages);
+
+            currentPage = 1;
+            renderSlots();
+            renderPagination(Math.max(1, Math.ceil(allSlots.length / pageSize)));
+        }
+
+        function currentFiltered() {
+            const searchTerm = (document.getElementById('slotSearchInput')?.value || '').toLowerCase();
+            const statusFilter = document.getElementById('slotStatusFilter')?.value;
+            let filtered = allSlots;
+
+            if (searchTerm) {
+                filtered = filtered.filter(s => (s.code || '').toLowerCase().includes(searchTerm));
+            }
+            if (statusFilter) {
+                filtered = filtered.filter(s => String(s.status) === String(statusFilter));
+            }
+            return filtered;
+        }
+
+        function renderSlots() {
+            const tbody = document.getElementById('slotTableBody');
+            const filtered = currentFiltered();
+
+            const start = (currentPage - 1) * pageSize;
+            const pageItems = filtered.slice(start, start + pageSize);
+
+            tbody.innerHTML = pageItems.map(slot => `
+                <tr>
+                    <td class="slot-code">${escapeHtml(slot.code || '')}</td>
+                    <td>Row ${slot.row ?? ''}, Col ${slot.col ?? ''}</td>
+                    <td class="slot-dimensions">${toNum(slot.heightM)}×${toNum(slot.lengthM)}×${toNum(slot.widthM)}m</td>
+                    <td class="slot-price">${toCurrency(slot.basePricePerHour)} ₫</td>
+                    <td><span class="status-badge ${getStatusClass(slot.status)}">${getStatusText(slot.status)}</span></td>
+                    <td><button type="button" class="btn btn-danger" onclick="removeSlotByCode('${(slot.code||'').replace(/'/g, "\\'")}')">🗑️</button></td>
+                </tr>
+            `).join('');
+
+            // Update pagination based on filtered count
+            renderPagination(Math.max(1, Math.ceil(filtered.length / pageSize)));
+        }
+
+        function renderPagination(totalPages) {
+            const container = document.getElementById('slotPagination');
+            container.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = (i === currentPage) ? 'active' : '';
+                btn.textContent = i;
+                btn.type = 'button';
+                btn.onclick = () => { currentPage = i; renderSlots(); };
+                container.appendChild(btn);
+            }
+        }
+
+        function getStatusClass(status) {
+            switch (parseInt(status)) {
+                case 4: return 'available';
+                case 17: return 'occupied';
+                case 7: return 'maintenance';
+                default: return '';
+            }
+        }
+        function getStatusText(status) {
+            switch (parseInt(status)) {
+                case 4: return 'Available';
+                case 17: return 'Occupied';
+                case 7: return 'Maintenance';
+                default: return 'Unknown';
+            }
+        }
+
+        function toggleAddSlotForm() {
+            const form = document.getElementById('addSlotForm');
+            form.style.display = (form.style.display === 'none' || !form.style.display) ? 'block' : 'none';
+        }
+
+        function addSlot() {
+            const newSlot = {
+                code: document.getElementById('slotCode').value?.trim(),
+                heightM: parseFloat(document.getElementById('slotH').value),
+                lengthM: parseFloat(document.getElementById('slotL').value),
+                widthM: parseFloat(document.getElementById('slotW').value),
+                basePricePerHour: parseFloat(document.getElementById('slotPrice').value),
+                status: parseInt(document.getElementById('slotStatus').value)
+            };
+
+            // Validate
+            if (!newSlot.code) { alert('Vui lòng nhập mã slot'); return; }
+
+            // Duplicate
+            if (allSlots.some(s => (s.code || '').toLowerCase() === newSlot.code.toLowerCase())) {
+                alert('Mã slot đã tồn tại'); return;
+            }
+
+            allSlots.push(newSlot);
+
+            // Reset form
+            document.getElementById('slotCode').value = '';
+            document.getElementById('slotH').value = '';
+            document.getElementById('slotL').value = '';
+            document.getElementById('slotW').value = '';
+            document.getElementById('slotPrice').value = '';
+            document.getElementById('slotStatus').value = '4';
+            toggleAddSlotForm();
+
+            // Re-render
+            renderSlots();
+        }
+
+        function removeSlotByCode(code) {
+            if (!confirm('Xác nhận xóa slot này?')) return;
+            const idx = allSlots.findIndex(s => (s.code || '').toLowerCase() === (code || '').toLowerCase());
+            if (idx >= 0) {
+                allSlots.splice(idx, 1);
+                // Nếu xóa hết phần tử ở trang hiện tại, lùi trang
+                const filteredCount = currentFiltered().length;
+                const maxPage = Math.max(1, Math.ceil(filteredCount / pageSize));
+                if (currentPage > maxPage) currentPage = maxPage;
+                renderSlots();
+            }
+        }
+
+        function filterSlots() {
+            currentPage = 1;
+            renderSlots();
+        }
+
+        function clearFilters() {
+            const s = document.getElementById('slotSearchInput');
+            const f = document.getElementById('slotStatusFilter');
+            if (s) s.value = '';
+            if (f) f.value = '';
+            currentPage = 1;
+            renderSlots();
+        }
+
+        document.getElementById('slotSearchInput')?.addEventListener('input', filterSlots);
+
+        // ---------------- Image preview ----------------
+        function previewImage(input, index) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const previews = document.querySelectorAll('.upload-preview');
+                    const preview = previews[index];
+                    if (!preview) return;
+                    if (preview.tagName === 'IMG') {
+                        preview.src = e.target.result;
+                    } else {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'upload-preview';
+                        preview.replaceWith(img);
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // ---------------- Submit: serialize all slots ----------------
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const hiddenContainer = document.getElementById('allSlotsHidden');
+            hiddenContainer.innerHTML = '';
+
+            allSlots.forEach((slot, index) => {
+                hiddenContainer.innerHTML += `
+                    <input type="hidden" name="Slots[${index}].Code" value="${escapeAttr(slot.code)}" />
+                    <input type="hidden" name="Slots[${index}].HeightM" value="${numOrEmpty(slot.heightM)}" />
+                    <input type="hidden" name="Slots[${index}].LengthM" value="${numOrEmpty(slot.lengthM)}" />
+                    <input type="hidden" name="Slots[${index}].WidthM" value="${numOrEmpty(slot.widthM)}" />
+                    <input type="hidden" name="Slots[${index}].BasePricePerHour" value="${numOrEmpty(slot.basePricePerHour)}" />
+                    <input type="hidden" name="Slots[${index}].Status" value="${numOrEmpty(slot.status)}" />
+                `;
+            });
+        });
+
+        // ---------------- Helpers ----------------
+        function toNum(x) { const n = parseFloat(x); return isFinite(n) ? n.toFixed(2) : '0.00'; }
+        function toCurrency(x) { const n = parseFloat(x); return isFinite(n) ? n.toLocaleString('vi-VN') : '0'; }
+        function numOrEmpty(x) { const n = parseFloat(x); return isFinite(n) ? n : ''; }
+        function escapeHtml(s) { return (s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+        function escapeAttr(s) { return escapeHtml(String(s ?? '')); }
+
+        // Load slots on page load
+        loadSlotsAllPages();
+    </script>
+
+    <script>
+                // Thêm vào phần Scripts
+        // Import/Export Modal Functions
+        function showImportExportModal() {
+            document.getElementById('importExportModal').style.display = 'flex';
+        }
+
+        function closeImportExportModal() {
+            document.getElementById('importExportModal').style.display = 'none';
+        }
+
+        function showMultiWarehouseModal() {
+            closeImportExportModal();
+            document.getElementById('multiWarehouseModal').style.display = 'flex';
+            loadWarehouses();
+        }
+
+        function closeMultiWarehouseModal() {
+            document.getElementById('multiWarehouseModal').style.display = 'none';
+        }
+
+        // File input handling
+        document.getElementById('importFile')?.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || '';
+            document.getElementById('fileName').textContent = fileName ? `📄 ${fileName}` : '';
+        });
+
+        // Import slots
+        async function importSlots() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Vui lòng chọn file Excel');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('warehouseId', '@Model.Id');
+
+            try {
+                const response = await fetch('/Stores/Warehouse/ImportSlots', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('[name="__RequestVerificationToken"]').value
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Import thành công!');
+                    closeImportExportModal();
+                    location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Import thất bại: ' + error);
+                }
+            } catch (error) {
+                alert('Lỗi khi import: ' + error.message);
+            }
+        }
+
+        // Load warehouses for multi-export
+        async function loadWarehouses() {
+            try {
+                const response = await fetch('/Stores/Warehouse/GetAllWarehouses');
+                const warehouses = await response.json();
+
+                const listHtml = warehouses.map(w => `
+                    <div class="warehouse-item">
+                        <input type="checkbox" id="wh_${w.id}" value="${w.id}" />
+                        <label for="wh_${w.id}">
+                            <div class="warehouse-info">
+                                <span class="warehouse-name">${w.name}</span>
+                                <span class="warehouse-meta">${w.slotCount} slots • ${w.address || 'Không có địa chỉ'}</span>
+                            </div>
+                        </label>
+                    </div>
+                `).join('');
+
+                document.getElementById('warehouseList').innerHTML = listHtml;
+            } catch (error) {
+                console.error('Error loading warehouses:', error);
+            }
+        }
+
+        // Select all warehouses
+        function selectAllWarehouses() {
+            const checkboxes = document.querySelectorAll('#warehouseList input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+            });
+        }
+
+        // Export multiple warehouses
+        async function exportMultipleWarehouses() {
+            const selectedIds = Array.from(document.querySelectorAll('#warehouseList input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                alert('Vui lòng chọn ít nhất 1 kho');
+                return;
+            }
+
+            const params = selectedIds.map(id => `warehouseIds=${id}`).join('&');
+            window.open(`/Stores/Warehouse/ExportMultiple?${params}`, '_blank');
+            closeMultiWarehouseModal();
+        }
+
+        // Close modal on outside click
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
         });
     </script>
 }
