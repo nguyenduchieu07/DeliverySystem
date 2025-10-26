@@ -1,32 +1,72 @@
-﻿@model DataAccessLayer.Entities.Warehouse
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model DataAccessLayer.Entities.Warehouse
 @using DataAccessLayer.Enums
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     ViewBag.Title = "Warehouse Details";
 }
+
 <style>
     .badge.ok {
         background: rgba(92,211,166,.15);
-        border-color: rgba(92,211,166,.3);
+        border: 1px solid rgba(92,211,166,.3);
         color: var(--brand);
     }
 
     .badge.warn {
         background: rgba(255,204,102,.15);
-        border-color: rgba(255,204,102,.3);
+        border: 1px solid rgba(255,204,102,.3);
         color: var(--warn);
     }
 
     .badge.danger {
         background: rgba(255,107,107,.15);
-        border-color: rgba(255,107,107,.3);
+        border: 1px solid rgba(255,107,107,.3);
         color: var(--danger);
     }
 
+    .seat {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        font-size: 11px;
+        user-select: none
+    }
+
+        .seat.ok {
+            background: #e8fff1
+        }
+
+        .seat.expiring {
+            background: #fff6e0
+        }
+
+        .seat.expired {
+            background: #ffe5e5
+        }
+
+        .seat.blocked {
+            background: #f0f0f0;
+            color: #999;
+            text-decoration: line-through
+        }
+
+        .seat.small {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 6px;
+            border-radius: 4px
+        }
 </style>
+
 <div class="breadcrumb">
     <span>Store</span> <span>/</span>
-    <a asp-area="Stores" asp-controller="Warehouses" asp-action="Index" class="muted">Warehouses</a>
+    <a asp-area="Stores" asp-controller="Warehouse" asp-action="Index" class="muted">Warehouses</a>
     <span>/</span>
     <span>@Model.Name</span>
 </div>
@@ -34,7 +74,7 @@
 <div class="page-head">
     <div class="page-title">@Model.Name</div>
     <div class="page-actions">
-        @if(Model.Status == StatusValue.Approved)
+        @if (Model.Status == StatusValue.Approved)
         {
             <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
         }
@@ -44,19 +84,19 @@
 
 <div class="grid" style="gap:16px;">
 
-    <!-- ===== Thông tin chung ===== -->
+    <!-- Thông tin chung -->
     <div class="card" style="display:grid; grid-template-columns: 1fr 2fr; gap:16px;">
         <div>
             @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
             {
-                <img src="@Model.CoverImageUrl"
-                     alt="cover"
-                     style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border);" />
+                <img src="@Model.CoverImageUrl" alt="cover"
+                     style="width:30%;height:auto;border-radius:12px;border:1px solid var(--border);" />
             }
             else
             {
                 <img src="@($"https://api.dicebear.com/7.x/initials/svg?seed={Model.Name}&radius=50")"
-                     style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border);" />
+                     alt="cover"
+                     style="width:30%;height:auto;border-radius:12px;border:1px solid var(--border);" />
             }
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
@@ -64,28 +104,81 @@
             <div><strong>Thuộc cửa hàng:</strong> @Model.Store?.StoreName</div>
             <div><strong>Địa chỉ:</strong> @(Model.Address?.AddressLine ?? "—")</div>
             <div><strong>Thành phố:</strong> @(Model.Address?.City ?? "—")</div>
-            <div><strong>Toạ độ:</strong> @($"{Model.Address?.Latitude}, {Model.Address?.Longitude}")</div>
+            <div><strong>Toạ độ:</strong> @((Model.Address?.Latitude != null && Model.Address?.Longitude != null) ? $"{Model.Address.Latitude}, {Model.Address.Longitude}" : "—")</div>
+
+            @{
+                // Khối chuẩn hoá kích thước để tránh lỗi Razor/ngoặc
+                var h = (double?)Model?.HeightM ?? 0;
+                var l = (double?)Model?.LengthM ?? 0;
+                var w = (double?)Model?.WidthM ?? 0;
+                var hasDims = h > 0 && l > 0 && w > 0;
+            }
+            <div>
+                <strong>Kích thước:</strong>
+                @if (hasDims)
+                {
+                    var vol = Math.Round(h * l * w, 3);
+                    @($"{h} × {l} × {w} m")
+                    <span class="muted">(Vol: @vol m³)</span>
+                }
+                else
+                {
+                    <text>—</text>
+                }
+            </div>
+
             <div><strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
         </div>
     </div>
 
-    <!-- ===== Sơ đồ kho (nếu có) ===== -->
+    <!-- Ảnh sơ đồ nếu có -->
     @if (!string.IsNullOrEmpty(Model.MapImageUrl))
     {
         <div class="card">
-            <div class="title" style="font-weight:700;margin-bottom:10px;">Sơ đồ kho</div>
-            <img src="@Model.MapImageUrl" alt="map" style="width:100%;border-radius:12px;border:1px solid var(--border);" />
+            <div class="title" style="font-weight:700;margin-bottom:10px;">Sơ đồ kho (ảnh)</div>
+            <img src="@Model.MapImageUrl" alt="map" style="width:30%;border-radius:12px;border:1px solid var(--border);" />
         </div>
     }
 
-    <!-- ===== Danh sách Slot ===== -->
+    <!-- Import Excel -->
+    <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+                <h4 style="margin:0;">Import Slots (.xlsx)</h4>
+                <div class="muted" style="font-size:12px;">Header: WarehouseName, Code, Row, Col, HeightM, LengthM, WidthM, BasePricePerHour, LeaseStart, LeaseEnd, IsBlocked, ImageUrl</div>
+            </div>
+            <div>
+                <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="DownloadSlotTemplate">Tải template</a>
+            </div>
+        </div>
+        <form asp-area="Stores" asp-controller="Warehouse" asp-action="ImportSlots" method="post" enctype="multipart/form-data" style="margin-top:10px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="warehouseId" value="@Model.Id" />
+            <input type="file" name="file" accept=".xlsx,.xls" />
+            <button class="btn primary" type="submit">Upload & Import</button>
+        </form>
+    </div>
+
+    <!-- Sơ đồ ghế -->
+    <div class="card">
+        <div class="title" style="font-weight:700;margin-bottom:12px;">Sơ đồ kho (dạng ghế)</div>
+        <div id="slotLegend" class="muted" style="display:flex;gap:12px;margin-bottom:8px;font-size:12px;">
+            <span><span class="seat small ok"></span> OK</span>
+            <span><span class="seat small expiring"></span> Sắp hết hạn</span>
+            <span><span class="seat small expired"></span> Hết hạn</span>
+            <span><span class="seat small blocked"></span> Blocked</span>
+        </div>
+        <div id="slotGrid" style="display:grid; gap:8px;"></div>
+    </div>
+
+    <!-- Danh sách slots -->
     <div class="section">
         <div class="header">
             <div class="title">Warehouse Slots</div>
             <div class="muted">Total: @Model.Slots.Count</div>
         </div>
         <div class="content" style="padding:12px 14px;">
-            @if (Model.Slots.Count == 0)
+            @if (Model.Slots == null || Model.Slots.Count == 0)
             {
                 <div class="muted">No slots available.</div>
             }
@@ -95,24 +188,31 @@
                     <thead>
                         <tr>
                             <th>Code</th>
-                            <th>Size</th>
+                            <th>Row</th>
+                            <th>Col</th>
+                            <th>H×L×W (m)</th>
+                            <th>Giá/h</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var s in Model.Slots)
                         {
-                            var badgeClass = s.Status switch
+                            var statusText = s.Status.ToString();
+                            var badgeClass = statusText switch
                             {
-                                StatusValue.Avalavaible => "ok",
-                                StatusValue.Occupied => "warn",
-                                StatusValue.Maintenance => "danger",
+                                "Avalavaible" or "Available" => "ok",
+                                "Occupied" => "warn",
+                                "Maintenance" => "danger",
                                 _ => ""
                             };
                             <tr>
                                 <td>@s.Code</td>
-                                <td>@(string.IsNullOrEmpty(s.Size) ? "—" : s.Size)</td>
-                                <td><span class="badge @badgeClass">@s.Status</span></td>
+                                <td>@s.Row</td>
+                                <td>@s.Col</td>
+                                <td>@s.HeightM × @s.LengthM × @s.WidthM</td>
+                                <td>@((s.BasePricePerHour).ToString("N0")) ₫</td>
+                                <td><span class="badge @badgeClass">@statusText</span></td>
                             </tr>
                         }
                     </tbody>
@@ -121,3 +221,75 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (async function () {
+          const root = document.getElementById('slotGrid');
+          if (!root) return;
+
+          // Lấy data sơ đồ
+          const res = await fetch('@Url.Action("Grid", "Warehouse", new { area = "Stores", warehouseId = Model.Id })');
+          if (!res.ok) {
+            root.innerHTML = '<div class="muted">Không tải được sơ đồ.</div>';
+            return;
+          }
+          const data = await res.json();
+
+          // Helper: ưu tiên camelCase, fallback PascalCase
+          const pick = (o, camel, pascal) => (o && (camel in o)) ? o[camel] : (o ? o[pascal] : undefined);
+
+          // Chuẩn hoá cells
+          const cellsRaw = pick(data, 'cells', 'Cells') || [];
+          const rowsInput = pick(data, 'rows', 'Rows');
+          const colsInput = pick(data, 'cols', 'Cols');
+
+          const cells = cellsRaw.map(c => ({
+            row: pick(c,'row','Row') ?? 0,
+            col: pick(c,'col','Col') ?? 0,
+            code: pick(c,'code','Code') ?? '',
+            isBlocked: !!pick(c,'isBlocked','IsBlocked'),
+            warning: Number(pick(c,'warning','Warning') ?? 0), // 0 ok, 1 expiring, 2 expired
+            pricePreview: pick(c,'pricePreview','PricePreview')
+          }));
+
+          const rows = Number(rowsInput ?? (cells.length ? Math.max(...cells.map(x => Number(x.row)||0)) : 0));
+          const cols = Number(colsInput ?? (cells.length ? Math.max(...cells.map(x => Number(x.col)||0)) : 0));
+
+          if (!rows || !cols) {
+            root.innerHTML = '<div class="muted">Chưa có cấu hình hàng/cột cho sơ đồ.</div>';
+            return;
+          }
+
+          root.style.display = 'grid';
+          root.style.gridTemplateColumns = `repeat(${cols}, 42px)`;
+          root.style.gap = '8px';
+
+          const map = new Map(cells.map(c => [`${c.row}_${c.col}`, c]));
+
+          for (let r = 1; r <= rows; r++) {
+            for (let c = 1; c <= cols; c++) {
+              const key = `${r}_${c}`;
+              const cell = map.get(key);
+
+              const el = document.createElement('div');
+              const state = cell
+                ? (cell.isBlocked ? 'blocked'
+                    : (cell.warning === 2 ? 'expired'
+                        : (cell.warning === 1 ? 'expiring' : 'ok')))
+                : 'ok';
+
+              el.className = 'seat ' + state;
+              el.textContent = cell?.code || '';
+
+              const priceText = (cell?.pricePreview != null && cell.pricePreview !== '')
+                ? `\n${Number(cell.pricePreview).toLocaleString('vi-VN')} đ/giờ`
+                : '';
+              el.title = cell?.code ? (cell.code + priceText) : '';
+
+              root.appendChild(el);
+            }
+          }
+        })();
+    </script>
+}

@@ -19,6 +19,7 @@ namespace ServiceLayer.Extensions
             services.AddSingleton<ICloudinaryService, CloudinaryService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IDeliveryService, DeliveryService>();
+            services.AddScoped<IWarehouseSlotImportService, WarehouseSlotImportService>();
         }
     }
 }

@@ -134,21 +134,46 @@
                 }
             </div>
         </div>
+
+        <hr class="muted" />
+        <h4>Kích thước kho (m)</h4>
+        <div class="row-2">
+            <div><label>Cao (m)</label>  <input type="number" asp-for="HeightM" min="0" step="0.01" /></div>
+            <div><label>Dài (m)</label>  <input type="number" asp-for="LengthM" min="0" step="0.01" /></div>
+            <div><label>Rộng (m)</label> <input type="number" asp-for="WidthM" min="0" step="0.01" /></div>
+            <div style="align-self:end;"><div class="muted">Vol: @(Math.Round(Model.HeightM * Model.LengthM * Model.WidthM, 3)) m³</div></div>
+        </div>
     </div>
 
     <div class="card">
         <h4>Quản lý Slot</h4>
         <table class="table" id="slotTable">
             <thead>
-                <tr><th>Mã</th><th>Kích thước</th><th>Trạng thái</th><th></th></tr>
+                <tr>
+                    <th>Mã</th>
+                    <th>Row</th>
+                    <th>Col</th>
+                    <th>H</th>
+                    <th>L</th>
+                    <th>W</th>
+                    <th>Giá/h</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
                 @for (int i = 0; i < Model.Slots.Count; i++)
                 {
+                    var s = Model.Slots.ElementAt(i);
                     <tr>
-                        <td><input type="hidden" name="slots[@i].Code" value="@Model.Slots.ElementAt(i).Code" />@Model.Slots.ElementAt(i).Code</td>
-                        <td><input type="hidden" name="slots[@i].Size" value="@Model.Slots.ElementAt(i).Size" />@Model.Slots.ElementAt(i).Size</td>
-                        <td><input type="hidden" name="slots[@i].Status" value="@Model.Slots.ElementAt(i).Status" />@Model.Slots.ElementAt(i).Status</td>
+                        <td><input type="hidden" name="slots[@i].Code" value="@s.Code" />@s.Code</td>
+                        <td><input type="hidden" name="slots[@i].Row" value="@s.Row" />@s.Row</td>
+                        <td><input type="hidden" name="slots[@i].Col" value="@s.Col" />@s.Col</td>
+                        <td><input type="hidden" name="slots[@i].HeightM" value="@s.HeightM" />@s.HeightM</td>
+                        <td><input type="hidden" name="slots[@i].LengthM" value="@s.LengthM" />@s.LengthM</td>
+                        <td><input type="hidden" name="slots[@i].WidthM" value="@s.WidthM" />@s.WidthM</td>
+                        <td><input type="hidden" name="slots[@i].BasePricePerHour" value="@s.BasePricePerHour" />@s.BasePricePerHour.ToString("N0")</td>
+                        <td><input type="hidden" name="slots[@i].Status" value="@s.Status" />@s.Status</td>
                         <td><button type="button" class="btn danger" onclick="this.closest('tr').remove()">X</button></td>
                     </tr>
                 }
@@ -156,12 +181,19 @@
         </table>
 
         <div class="row-2" style="margin-top:10px;">
-            <input type="text" id="slotCode" placeholder="Mã slot" />
-            <input type="text" id="slotSize" placeholder="Kích thước" />
+            <input type="text" id="slotCode" placeholder="Mã (VD: A1-01)" />
+            <input type="number" id="slotRow" placeholder="Row" min="1" step="1" />
+            <input type="number" id="slotCol" placeholder="Col" min="1" step="1" />
+            <input type="number" id="slotH" placeholder="H (m)" min="0" step="0.01" />
+            <input type="number" id="slotL" placeholder="L (m)" min="0" step="0.01" />
+            <input type="number" id="slotW" placeholder="W (m)" min="0" step="0.01" />
+            <input type="number" id="slotPrice" placeholder="Giá (đ/giờ)" min="0" step="1000" />
             <select id="slotStatus">
-                <option>Available</option>
-                <option>Occupied</option>
-                <option>Maintenance</option>
+                <select id="slotStatus">
+                    <option value="4">Available</option>
+                    <option value="17">Occupied</option>
+                    <option value="7">Maintenance</option>
+                </select>
             </select>
             <button type="button" class="btn primary" id="btnAddSlot">+ Thêm Slot</button>
         </div>
@@ -214,23 +246,118 @@
                 });
         }
 
-        // Add Slot dynamically
+            // ===== Helpers =====
+        const tb = document.querySelector("#slotTable tbody");
+
+        // escape để an toàn khi chèn HTML
+        const esc = (v) => String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll('"',"&quot;");
+        const dash = (v) => (v === null || v === undefined || v === "" || Number.isNaN(v)) ? "—" : v;
+
+        // Tập đang có (kể cả slot từ DB đã render sẵn)
+        const existingCodes = new Set();
+        const existingPos   = new Set(); // set key = `${row}|${col}`
+
+        // Đọc các dòng hiện tại để fill tập ban đầu
+        function hydrateSetsFromTable() {
+            existingCodes.clear();
+            existingPos.clear();
+            tb.querySelectorAll("tr").forEach(tr => {
+                const code = tr.querySelector('input[name$=".Code"]')?.value?.toLowerCase()?.trim();
+                const row  = parseInt(tr.querySelector('input[name$=".Row"]')?.value || "0", 10);
+                const col  = parseInt(tr.querySelector('input[name$=".Col"]')?.value || "0", 10);
+                if (code) existingCodes.add(code);
+                if (row > 0 && col > 0) existingPos.add(`${row}|${col}`);
+            });
+        }
+        hydrateSetsFromTable();
+
+        // Re-index lại name="slots[i].Field" sau khi thêm/xoá để binder nhận đúng
+        function reindexTable() {
+            const rows = Array.from(tb.querySelectorAll("tr"));
+            rows.forEach((tr, i) => {
+                tr.querySelectorAll("input[type=hidden]").forEach(inp => {
+                    inp.name = inp.name.replace(/slots\[\d+\]\./, `slots[${i}].`);
+                });
+            });
+        }
+
+        // Thêm một dòng hiển thị + hidden inputs
+        function appendRow(data) {
+            const i = tb.querySelectorAll("tr").length;
+            const price = Number(data.BasePricePerHour || 0);
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><input type="hidden" name="slots[${i}].Code" value="${esc(data.Code)}" />${esc(data.Code)}</td>
+                <td><input type="hidden" name="slots[${i}].Row" value="${esc(data.Row)}" />${dash(data.Row)}</td>
+                <td><input type="hidden" name="slots[${i}].Col" value="${esc(data.Col)}" />${dash(data.Col)}</td>
+                <td><input type="hidden" name="slots[${i}].HeightM" value="${esc(data.HeightM)}" />${dash(data.HeightM)}</td>
+                <td><input type="hidden" name="slots[${i}].LengthM" value="${esc(data.LengthM)}" />${dash(data.LengthM)}</td>
+                <td><input type="hidden" name="slots[${i}].WidthM" value="${esc(data.WidthM)}" />${dash(data.WidthM)}</td>
+                <td><input type="hidden" name="slots[${i}].BasePricePerHour" value="${esc(price)}" />${price.toLocaleString('vi-VN')}</td>
+                <td><input type="hidden" name="slots[${i}].Status" value="${esc(data.Status)}" />${esc(data.Status)}</td>
+                <td><button type="button" class="btn danger" data-action="remove" aria-label="Xóa">X</button></td>
+            `;
+            tb.appendChild(tr);
+        }
+
+        // === Add Slot dynamically (đã thêm check “existing slot”) ===
         document.getElementById("btnAddSlot").addEventListener("click", function () {
             const code = slotCode.value.trim();
-            const size = slotSize.value.trim();
+            const row  = parseInt(slotRow.value || "0", 10);
+            const col  = parseInt(slotCol.value || "0", 10);
+            const h    = parseFloat(slotH.value || "0");
+            const l    = parseFloat(slotL.value || "0");
+            const w    = parseFloat(slotW.value || "0");
+            const price= parseFloat(slotPrice.value || "0");
             const status = slotStatus.value;
+
             if (!code) return alert("Nhập mã slot!");
-            const row = document.createElement("tr");
-            const index = document.querySelectorAll("#slotTable tbody tr").length;
-            row.innerHTML = `
-                        <td><input type="hidden" name="slots[${index}].Code" value="${code}" />${code}</td>
-                        <td><input type="hidden" name="slots[${index}].Size" value="${size}" />${size}</td>
-                        <td><input type="hidden" name="slots[${index}].Status" value="${status}" />${status}</td>
-                        <td><button type="button" class="btn danger" onclick="this.closest('tr').remove()">X</button></td>`;
-            document.querySelector("#slotTable tbody").appendChild(row);
-            slotCode.value = "";
-            slotSize.value = "";
-            slotStatus.value = "Available";
+            if (row <= 0 || col <= 0) return alert("Row/Col phải > 0");
+            if (h <= 0 || l <= 0 || w <= 0) return alert("Kích thước phải > 0");
+
+            // === CHECK TRÙNG: Code & (Row,Col) ===
+            const codeKey = code.toLowerCase();
+            const posKey  = `${row}|${col}`;
+
+            if (existingCodes.has(codeKey)) {
+                return alert(`Code "${code}" đã tồn tại.`);
+            }
+            if (existingPos.has(posKey)) {
+                return alert(`Vị trí (Row=${row}, Col=${col}) đã tồn tại.`);
+            }
+
+            // Thêm vào bảng + cập nhật tập
+            appendRow({
+                Code: code, Row: row, Col: col,
+                HeightM: h, LengthM: l, WidthM: w,
+                BasePricePerHour: price, Status: status
+            });
+            existingCodes.add(codeKey);
+            existingPos.add(posKey);
+
+            // Clear inputs
+            slotCode.value=""; slotRow.value=""; slotCol.value="";
+            slotH.value=""; slotL.value=""; slotW.value=""; slotPrice.value="";
+            slotStatus.value="4";
+        });
+
+        // Xoá dòng: cập nhật sets + reindex
+        tb.addEventListener("click", function (e) {
+            const btn = e.target.closest('button[data-action="remove"]');
+            if (!btn) return;
+
+            const tr = btn.closest("tr");
+            // Lấy giá trị hiện tại trước khi xoá để cập nhật set
+            const code = tr.querySelector('input[name$=".Code"]')?.value?.toLowerCase()?.trim();
+            const row  = parseInt(tr.querySelector('input[name$=".Row"]')?.value || "0", 10);
+            const col  = parseInt(tr.querySelector('input[name$=".Col"]')?.value || "0", 10);
+
+            tr.remove();
+            reindexTable();
+
+            if (code) existingCodes.delete(code);
+            if (row > 0 && col > 0) existingPos.delete(`${row}|${col}`);
         });
     </script>
 }

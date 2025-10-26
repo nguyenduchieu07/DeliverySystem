@@ -382,11 +382,10 @@
             } else {
                 setVal('AddressLine', displayName || '');
             }
-
             // Administrative levels
             const city = address?.city || address?.town || address?.village ||
                 address?.municipality || address?.province || address?.state || '';
-            const district = address?.city_district || address?.district || address?.county || '';
+            const district = address.district || address.county || address.suburb || '';
             const ward = address?.ward || address?.suburb || address?.quarter ||
                 address?.neighbourhood || address?.hamlet || '';
 

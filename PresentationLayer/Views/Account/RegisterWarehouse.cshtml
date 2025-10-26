@@ -8,8 +8,7 @@
 @section Styles {
     <link rel="stylesheet"
           href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin="" />
+          crossorigin />
     <link rel="stylesheet"
           href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <style>
@@ -36,7 +35,7 @@
             }
 
             /* ====== LABEL ====== */
-            .row-2 label {
+            .row-2 label, label {
                 color: var(--muted, #99a3b3);
                 font-size: 12px;
                 text-transform: uppercase;
@@ -47,6 +46,8 @@
             /* ====== INPUT BASE ====== */
             form input[type="text"],
             form input[type="file"],
+            form input[type="number"],
+            form input[type="date"],
             form select,
             .row-2 input {
                 width: 100%;
@@ -59,24 +60,25 @@
                 transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
             }
 
-                /* ====== HOVER ====== */
                 .row-2 input:hover,
                 form input[type="text"]:hover,
+                form input[type="number"]:hover,
+                form input[type="date"]:hover,
                 form select:hover {
                     border-color: #32405b;
                 }
 
-                /* ====== FOCUS ====== */
                 .row-2 input:focus,
                 form input[type="text"]:focus,
+                form input[type="number"]:focus,
+                form input[type="date"]:focus,
                 form select:focus {
-                    border-color: var(--brand-2, #c76227);
-                    box-shadow: 0 0 0 3px var(--ring, rgb#c76227);
+                    border-color: var(--brand-2, #ff9a3d);
+                    box-shadow: 0 0 0 3px rgba(255,123,0,.25);
                     outline: none;
-                    background: var(--panel-2, #fff); /* Giữ nguyên nền sáng khi focus */
+                    background: var(--panel-2, #fff);
                 }
 
-                /* ====== READONLY ====== */
                 .row-2 input[readonly] {
                     opacity: .85;
                     cursor: not-allowed;
@@ -89,78 +91,67 @@
             }
         }
 
-        /* ====== LEAFLET GEOCODER ====== */
+        /* ====== GEOCODER ====== */
         .leaflet-control-geocoder {
             max-width: 300px;
-            background: var(--panel-2, #1b2130);
+            background: var(--panel-2, #fff);
             border: 1px solid var(--border, #273044);
             border-radius: 8px;
             padding: 4px;
-            color: var(--text, #e7ecf3);
+            color: var(--text, #111);
         }
 
             .leaflet-control-geocoder input {
                 background: transparent;
                 border: none;
-                color: var(--text, #e7ecf3);
+                color: inherit;
             }
 
-        /* ====== CHỐNG AUTOFILL MÀU VÀNG ====== */
-        input:-webkit-autofill {
-            -webkit-text-fill-color: var(--text, #111);
-            transition: background-color 600000s 0s, color 600000s 0s;
-        }
         /* ===== BUTTONS ===== */
-button.btn,
-a.btn,
-.btn {
-  /* Khử ảnh hưởng của reset */
-  appearance: none;
-  -webkit-appearance: none;
-  text-decoration: none;
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1;
+            cursor: pointer;
+            background: var(--panel-2,#fff);
+            color: var(--text,#111);
+            border: 1px solid var(--border,#273044);
+            transition: filter .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
+        }
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+            .btn:hover {
+                border-color: #32405b;
+                filter: brightness(0.98);
+            }
 
-  padding: 10px 14px;
-  border-radius: 12px;
+            .btn:active {
+                filter: brightness(0.95);
+            }
 
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1;
+            .btn:disabled {
+                opacity: .6;
+                cursor: not-allowed;
+            }
 
-  cursor: pointer;
-  user-select: none;
+            .btn.primary {
+                background: var(--brand,#ff7b00);
+                border-color: var(--brand,#ff7b00);
+                color: #fff;
+            }
 
-  background: var(--panel-2, #fff);
-  color: var(--text, #111);
-  border: 1px solid var(--border, #273044);
+                .btn.primary:hover {
+                    filter: brightness(0.96);
+                }
 
-  transition: filter .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
-}
-
-.btn:hover { border-color: #32405b; filter: brightness(0.98); }
-.btn:active { filter: brightness(0.95); }
-.btn:disabled { opacity: .6; cursor: not-allowed; }
-
-/* Biến thể primary */
-.btn.primary {
-  background: var(--brand, #5cd3a6);
-  border-color: var(--brand, #5cd3a6);
-  color: var(--on-brand, #0b1220);
-}
-.btn.primary:hover { filter: brightness(0.96); }
-.btn.primary:active { filter: brightness(0.93); }
-
-/* Bảo đảm nút trong grid .row-2 nhìn gọn */
-.row-2 .btn { width: 100%; height: 40px; }
-@@media (min-width: 861px) {
-  /* Nếu muốn nút không full width trên desktop */
-  .row-2 .btn { width: auto; }
-}
-
+        .row-2 .btn {
+            height: 40px;
+        }
     </style>
 }
 
@@ -218,46 +209,206 @@ a.btn,
                 <input type="file" name="CoverImage" accept="image/*" />
             </div>
             <div>
-                <label>Ảnh sơ đồ kho</label>
+                <label>Ảnh sơ đồ kho (tùy chọn)</label>
                 <input type="file" name="MapImage" accept="image/*" />
             </div>
+        </div>
+
+        <hr class="muted" />
+        <h4>Kích thước kho (m) — tuỳ chọn</h4>
+        <div class="row-2">
+            <div><label>Cao (m)</label>  <input type="number" asp-for="HeightM" min="0" step="0.01" placeholder="VD: 8.5" /></div>
+            <div><label>Dài (m)</label>  <input type="number" asp-for="LengthM" min="0" step="0.01" placeholder="VD: 40" /></div>
+            <div><label>Rộng (m)</label> <input type="number" asp-for="WidthM" min="0" step="0.01" placeholder="VD: 20" /></div>
+            <div style="align-self:end;"><div class="muted">Để trống nếu chưa đo đạc; có thể cập nhật sau.</div></div>
         </div>
     </div>
 
     <div class="card">
         <h4>Thêm Slot trong kho</h4>
         <div class="row-2">
-            <input type="text" id="slotCode" placeholder="Mã slot (VD: A1)" />
-            <input type="text" id="slotSize" placeholder="Kích thước (VD: 2x3m)" />
-            <select id="slotStatus">
-                <option>Available</option>
-                <option>Occupied</option>
-                <option>Maintenance</option>
+            <input type="text" id="slotCode" placeholder="Mã slot (VD: A1-01)" />
+            <input type="number" id="slotRow" placeholder="Hàng (Row)" min="1" step="1" />
+            <input type="number" id="slotCol" placeholder="Cột (Col)" min="1" step="1" />
+            <input type="number" id="slotH" placeholder="Cao (m)" min="0" step="0.01" />
+            <input type="number" id="slotL" placeholder="Dài (m)" min="0" step="0.01" />
+            <input type="number" id="slotW" placeholder="Rộng (m)" min="0" step="0.01" />
+            <input type="number" id="slotPrice" placeholder="Giá (đ/giờ)" min="0" step="1000" />
+            <select id="slotStatus" title="Trạng thái">
+                <option value="4">Available</option>
+                <option value="17">Occupied</option>
+                <option value="7">Maintenance</option>
             </select>
             <button type="button" class="btn primary" id="btnAddSlot">+ Thêm Slot</button>
         </div>
 
-        <table class="table" id="slotTable">
+        <table class="table" id="slotTable" style="margin-top:10px;">
             <thead>
                 <tr>
                     <th>Mã</th>
-                    <th>Kích thước</th>
-                    <th>Trạng thái</th>
+                    <th>Row</th>
+                    <th>Col</th>
+                    <th>H</th>
+                    <th>L</th>
+                    <th>W</th>
+                    <th>Giá/h</th>
+                    <th>Status</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
+        <div class="muted" style="margin-top:8px;font-size:12px;">
+            Gợi ý: khi tạo từ phía Store, thường **không cần nhập Lease**. Chỉ cần nhập Lease nếu slot đã có hợp đồng sẵn.
+        </div>
     </div>
 
     <button type="submit" class="btn primary">Tạo Kho</button>
 </form>
 
 @section Scripts {
-    <link rel="stylesheet"
-          href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-    <script src="~/js/warehouse.js"></script>
+    <!-- Script map + thêm slot 3D, lease, blocked (đã chuẩn hoá) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          // ====== MAP ======
+          const map = L.map('map').setView([21.0278, 105.8342], 12);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+
+          // safe geocoder init
+          function initGeocoder(retry=0){
+            if (!L.Control || !L.Control.Geocoder) {
+              if (retry < 15) return setTimeout(()=>initGeocoder(retry+1), 200);
+              return;
+            }
+            L.Control.geocoder({
+              geocoder: L.Control.Geocoder.nominatim(),
+              placeholder: '🔍 Tìm kiếm địa chỉ...',
+              defaultMarkGeocode: false
+            }).on('markgeocode', function (e) {
+              const p = e.geocode.center;
+              setMarker(p, e.geocode.name);
+              map.setView(p, 15);
+              reverse(p.lat, p.lng, true);
+            }).addTo(map);
+          }
+          initGeocoder();
+
+          let marker;
+          function setMarker(latlng, name){
+            if (marker) map.removeLayer(marker);
+            marker = L.marker(latlng, { draggable:true }).addTo(map);
+            if (name) marker.bindPopup(name).openPopup();
+            setLatLngInputs(latlng);
+            marker.on('dragend', e=>{
+              const p=e.target.getLatLng();
+              setLatLngInputs(p);
+              reverse(p.lat, p.lng, true);
+            });
+          }
+          function setLatLngInputs(latlng){
+            const lat = document.getElementById("lat");
+            const lng = document.getElementById("lng");
+            if (lat) lat.value = Number(latlng.lat).toFixed(6);
+            if (lng) lng.value = Number(latlng.lng).toFixed(6);
+          }
+          map.on('click', e => { setMarker(e.latlng, "Vị trí đã chọn"); reverse(e.latlng.lat, e.latlng.lng, true); });
+
+          function reverse(lat,lng,writeLine){
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+            .then(r=>r.json())
+            .then(d=>{
+              const a=d.address||{};
+              const city = a.city || a.town || a.state || '';
+              const district = a.district || a.county || a.suburb || '';
+              const ward = a.ward || a.village || a.town || '';
+              const cityEl=document.getElementById("city");
+              const districtEl=document.getElementById("district");
+              const wardEl=document.getElementById("ward");
+              if (cityEl) cityEl.value = city;
+              if (districtEl) districtEl.value = district;
+              if (wardEl) wardEl.value = ward;
+              if (writeLine) {
+                const line=document.getElementById("addressLine");
+                if (line) line.value = d.display_name || [ward,district,city].filter(Boolean).join(', ');
+              }
+            });
+          }
+
+          // ====== SLOT TABLE (3D + price + lease + blocked) ======
+          const slotTableBody = document.querySelector("#slotTable tbody");
+          const slots = [];
+
+          const el = (id)=>document.getElementById(id);
+          const esc = (v)=>String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll('"',"&quot;");
+          const dash = (v)=> (v===null||v===undefined||v===""||Number.isNaN(v)) ? "—" : v;
+
+          const addBtn = document.getElementById("btnAddSlot");
+          if (addBtn) {
+            addBtn.addEventListener("click", function () {
+              const code = (el("slotCode")?.value || "").trim();
+              const row  = parseInt(el("slotRow")?.value || "0", 10);
+              const col  = parseInt(el("slotCol")?.value || "0", 10);
+              const h    = parseFloat(el("slotH")?.value || "0");
+              const l    = parseFloat(el("slotL")?.value || "0");
+              const w    = parseFloat(el("slotW")?.value || "0");
+              const price= parseFloat(el("slotPrice")?.value || "0");
+              const status  = (el("slotStatus")?.value || "0").trim();
+
+              if (!code) return alert("Nhập mã slot!");
+              if (row <= 0 || col <= 0) return alert("Row/Col phải > 0");
+              if (h <= 0 || l <= 0 || w <= 0) return alert("H/L/W phải > 0 (khi không Blocked)");
+
+              const dupCode = slots.some(s => s.Code.toLowerCase() === code.toLowerCase());
+              if (dupCode) return alert("Code đã tồn tại trong danh sách tạm.");
+              const dupPos = slots.some(s => s.Row === row && s.Col === col);
+              if (dupPos) return alert("Vị trí (Row,Col) đã tồn tại trong danh sách tạm.");
+
+              slots.push({ Code: code, Row: row, Col: col, HeightM: h, LengthM: l, WidthM: w,
+                           BasePricePerHour: price, Status: status });
+
+              renderSlots(); clearInputs();
+            });
+          }
+
+          function renderSlots(){
+            if (!slotTableBody) return;
+            slotTableBody.innerHTML = "";
+            slots.forEach((s,i)=>{
+              const tr = document.createElement("tr");
+              const price = Number(s.BasePricePerHour || 0);
+              tr.innerHTML = `
+                <td><input type="hidden" name="slots[${i}].Code" value="${esc(s.Code)}" />${esc(s.Code)}</td>
+                <td><input type="hidden" name="slots[${i}].Row" value="${esc(s.Row)}" />${dash(s.Row)}</td>
+                <td><input type="hidden" name="slots[${i}].Col" value="${esc(s.Col)}" />${dash(s.Col)}</td>
+                <td><input type="hidden" name="slots[${i}].HeightM" value="${esc(s.HeightM)}" />${dash(s.HeightM)}</td>
+                <td><input type="hidden" name="slots[${i}].LengthM" value="${esc(s.LengthM)}" />${dash(s.LengthM)}</td>
+                <td><input type="hidden" name="slots[${i}].WidthM" value="${esc(s.WidthM)}" />${dash(s.WidthM)}</td>
+                <td><input type="hidden" name="slots[${i}].BasePricePerHour" value="${esc(price)}" />${price.toLocaleString('vi-VN')}</td>                
+                <td><input type="hidden" name="slots[${i}].Status" value="${esc(s.Status)}" />${esc(s.Status)}</td>
+                <td><button type="button" class="btn danger" data-index="${i}" aria-label="Xóa">🗑</button></td>
+              `;
+              slotTableBody.appendChild(tr);
+            });
+            slotTableBody.querySelectorAll('button[data-index]').forEach(btn=>{
+              btn.addEventListener('click', e=>{
+                const idx = parseInt(e.currentTarget.getAttribute('data-index'),10);
+                if (!Number.isNaN(idx)) { slots.splice(idx,1); renderSlots(); }
+              });
+            });
+          }
+
+          function clearInputs(){
+            const set = (id,v)=>{ const x=el(id); if(x) x.value=v; };
+            set("slotCode",""); set("slotRow",""); set("slotCol","");
+            set("slotH",""); set("slotL",""); set("slotW","");
+            set("slotPrice",""); set("slotLeaseStart",""); set("slotLeaseEnd","");
+            const cb = el("slotBlocked"); if (cb) cb.checked = false;
+            set("slotStatus","0");
+          }
+        });
+    </script>
 }
