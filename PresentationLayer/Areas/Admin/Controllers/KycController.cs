@@ -1,7 +1,10 @@
 ﻿using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using PresentationLayer.Models;
 using ServiceLayer.Abstractions.IServices;
 using System;
 using System.Security.Claims;
@@ -9,6 +12,7 @@ using System.Security.Claims;
 namespace PresentationLayer.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = "Admin")]
     public class KycController : Controller
     {
         private readonly DeliverySytemContext _db;
@@ -18,17 +22,16 @@ namespace PresentationLayer.Areas.Admin.Controllers
             _db = db;
             _svc = svc;
         }
-        public async Task<IActionResult> Index(KycStatus status = KycStatus.Pending, string? q = null)
+        public async Task<IActionResult> Index(KycStatus? status = null, string? storeName = null)
         {
+            var vm = new KycSubmissionIndexViewModel();
 
-            var qry = _db.Set<KycSubmission>()
-                         .Include(x => x.Store)
-                         .Include(x => x.Documents)
-                         .Where(x => x.Status == status);
-            if (!string.IsNullOrWhiteSpace(q))
-                qry = qry.Where(x => x.Store.StoreName.Contains(q));
-            var list = await qry.OrderBy(x => x.SubmittedAt).Take(200).ToListAsync();
-            return View(list);
+            var list = await _svc.GetAllAsync(storeName, status);
+            vm.KycSubmissions = list;
+            vm.StoreName = storeName;
+            vm.Status = status;
+
+            return View(vm);
         }
 
         [HttpPost]
@@ -40,14 +43,15 @@ namespace PresentationLayer.Areas.Admin.Controllers
                 var regions = string.IsNullOrWhiteSpace(regionsCsv)
                 ? null
                 : regionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                var adminId = new Guid();
+                var adminIdStrClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var adminId = Guid.Parse(adminIdStrClaim);
                 await _svc.ApproveAsync(submissionId, maxPerDay, regions, adminId);
-                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+                return RedirectToAction(nameof(Index));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                TempData["Error"] = "Approve thất bại: " + ex.Message;
-                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+                TempData["Error"] = "Chấp thuận thất bại: " + ex.Message;
+                return RedirectToAction(nameof(Index));
             }
         }
 
@@ -57,14 +61,15 @@ namespace PresentationLayer.Areas.Admin.Controllers
         {
             try
             {
-                var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var adminIdStrClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var adminId = Guid.Parse(adminIdStrClaim);
                 await _svc.NeedChangesAsync(submissionId, note, adminId);
-                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+                return RedirectToAction(nameof(Index));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                TempData["Error"] = "Approve thất bại: " + ex.Message;
-                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+                TempData["Error"] = "Chính sửa thất bại: " + ex.Message;
+                return RedirectToAction(nameof(Index));
             }
         }
 
@@ -76,12 +81,12 @@ namespace PresentationLayer.Areas.Admin.Controllers
             {
                 var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
                 await _svc.RejectAsync(submissionId, note, adminId);
-                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+                return RedirectToAction(nameof(Index));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                TempData["Error"] = "Approve thất bại: " + ex.Message;
-                return RedirectToAction(nameof(Index), new { status = KycStatus.Pending });
+                TempData["Error"] = "Từ chối thất bại: " + ex.Message;
+                return RedirectToAction(nameof(Index));
             }
         }
     }

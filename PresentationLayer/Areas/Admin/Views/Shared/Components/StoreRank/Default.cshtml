@@ -1,0 +1,206 @@
+﻿@model System.Collections.Generic.Dictionary<string, int>
+
+<style>
+    .ranking-card {
+        background: #fff;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        overflow: hidden;
+        border: 1px solid #e3e6f0;
+        height: 100%;
+    }
+
+    .ranking-header {
+        background: linear-gradient(180deg, #e5501b 0%, #d26c45 100%);
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .ranking-header h6 {
+        margin: 0;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+
+    .ranking-body {
+        padding: 1.25rem;
+    }
+
+    .ranking-item {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem 1rem;
+        margin-bottom: 0.75rem;
+        background: #f8f9fc;
+        border-radius: 0.35rem;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #e3e6f0;
+    }
+
+    .ranking-item:hover {
+        transform: translateX(4px);
+        box-shadow: 0 0.125rem 0.25rem 0 rgba(58, 59, 69, 0.2);
+        border-color: #e5501b;
+    }
+
+    .ranking-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .ranking-badge {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.35rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .ranking-badge.rank-1 {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #fff;
+        box-shadow: 0 0.125rem 0.25rem 0 rgba(255, 215, 0, 0.5);
+    }
+
+    .ranking-badge.rank-2 {
+        background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+        color: #fff;
+        box-shadow: 0 0.125rem 0.25rem 0 rgba(192, 192, 192, 0.5);
+    }
+
+    .ranking-badge.rank-3 {
+        background: linear-gradient(135deg, #CD7F32, #B87333);
+        color: #fff;
+        box-shadow: 0 0.125rem 0.25rem 0 rgba(205, 127, 50, 0.5);
+    }
+
+    .ranking-badge.rank-other {
+        background: #e3e6f0;
+        color: #858796;
+    }
+
+    .ranking-info {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .ranking-name {
+        font-weight: 600;
+        color: #5a5c69;
+        font-size: 0.875rem;
+    }
+
+    .ranking-value {
+        font-weight: 700;
+        color: #e5501b;
+        font-size: 1.125rem;
+    }
+
+    .ranking-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #e5501b, #d26c45);
+        transition: width 0.8s ease;
+        opacity: 0.3;
+    }
+
+    .empty-ranking {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #858796;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: #d1d3e2;
+        margin-bottom: 1rem;
+    }
+
+    .empty-text {
+        font-size: 0.875rem;
+    }
+
+    .ranking-medal {
+        font-size: 1.25rem;
+    }
+</style>
+
+<!-- Ranking Chart -->
+<div class="col-xl-4 col-lg-5">
+    <div class="ranking-card">
+        <!-- Card Header -->
+        <div class="ranking-header d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0">🏆 Bảng xếp hạng kho</h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownRankingLink"
+                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v fa-sm fa-fw" style="color: rgba(255,255,255,0.8);"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                     aria-labelledby="dropdownRankingLink">
+                    <div class="dropdown-header">Tùy chọn:</div>
+                    <a class="dropdown-item" href="#">Xem tất cả</a>
+                    <a class="dropdown-item" href="#">Xuất báo cáo</a>
+                </div>
+            </div>
+        </div>
+        <!-- Card Body -->
+        <div class="ranking-body">
+            @if (Model != null && Model.Any())
+            {
+                var rank = 1;
+                var maxValue = Model.Max(x => x.Value);
+
+                foreach (var item in Model)
+                {
+                    var rankClass = rank == 1 ? "rank-1" : rank == 2 ? "rank-2" : rank == 3 ? "rank-3" : "rank-other";
+                    var progressWidth = maxValue > 0 ? (item.Value * 100.0 / maxValue) : 0;
+                    var medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : "";
+
+                    <div class="ranking-item">
+                        <div class="ranking-badge @rankClass">
+                            @if (!string.IsNullOrEmpty(medal))
+                            {
+                                <span class="ranking-medal">@medal</span>
+                            }
+                            else
+                            {
+                                <span>#@rank</span>
+                            }
+                        </div>
+                        <div class="ranking-info">
+                            <span class="ranking-name">@item.Key</span>
+                            <span class="ranking-value">@item.Value.ToString("N0")</span>
+                        </div>
+                        <div class="ranking-progress" style="width: @progressWidth%"></div>
+                    </div>
+
+                    rank++;
+                }
+            }
+            else
+            {
+                <div class="empty-ranking">
+                    <div class="empty-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="empty-text">Chưa có dữ liệu xếp hạng</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

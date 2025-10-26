@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Abstractions.IRepositories;
+using System.Text.Json;
 
 namespace ServiceLayer.Services
 {
@@ -30,12 +31,13 @@ namespace ServiceLayer.Services
 
             try
             {
-                // Lưu order vào database
                 order.CreatedAt = DateTime.Now;
                 order.UpdatedAt = DateTime.Now;
-                order.Status = DataAccessLayer.Enums.StatusValue.Pending; // Giả định trạng thái ban đầu
+                order.Status = DataAccessLayer.Enums.StatusValue.Pending;
+
                 var createdOrder = await _deliveryRepository.AddOrderAsync(order);
                 _logger.LogInformation("Order {OrderId} created successfully.", createdOrder.Id);
+
                 return createdOrder;
             }
             catch (Exception ex)
@@ -49,22 +51,27 @@ namespace ServiceLayer.Services
         {
             try
             {
-                // Lấy thông tin order
                 var order = await _deliveryRepository.GetOrderByIdAsync(orderId);
                 if (order == null)
                 {
                     throw new InvalidOperationException($"Order with ID {orderId} not found.");
                 }
-                // Giả lập logic tìm các kho lân cận (thay bằng logic thực tế)
-                var nearbyStores = await _deliveryRepository.GetNearbyStoresAsync(order.DropoffAddress?.Latitude ?? 0, order.DropoffAddress?.Longitude ?? 0, 10); // 10km radius
+
+                var nearbyStores = await _deliveryRepository.GetNearbyStoresAsync(
+                    order.DropoffAddress?.Latitude ?? 0,
+                    order.DropoffAddress?.Longitude ?? 0,
+                    10
+                );
+
                 if (nearbyStores == null || !nearbyStores.Any())
                 {
                     _logger.LogWarning("No nearby stores found for order {OrderId}.", orderId);
                     return 0;
                 }
-                // Giả lập thông báo cho các kho (thay bằng gọi API hoặc queue)
+
                 int notifiedCount = nearbyStores.Count();
                 _logger.LogInformation("Notified {Count} nearby stores for order {OrderId}.", notifiedCount, orderId);
+
                 return notifiedCount;
             }
             catch (Exception ex)
@@ -78,22 +85,26 @@ namespace ServiceLayer.Services
         {
             try
             {
-                // Giả lập logic tìm kho gần nhất (thay bằng thuật toán Haversine hoặc API)
                 var stores = await _deliveryRepository.GetAllStoresAsync();
                 if (stores == null || !stores.Any())
                 {
                     _logger.LogWarning("No stores available to find nearest.");
                     throw new InvalidOperationException("No stores available.");
                 }
+
                 var nearestStore = stores
                     .OrderBy(s => CalculateDistance(latitude, longitude, s.Latitude ?? 0, s.Longitude ?? 0))
                     .First();
-                _logger.LogInformation("Nearest store found: {StoreId} for location ({Latitude}, {Longitude}).", nearestStore.Id, latitude, longitude);
+
+                _logger.LogInformation("Nearest store found: {StoreId} for location ({Latitude}, {Longitude}).",
+                    nearestStore.Id, latitude, longitude);
+
                 return nearestStore.Id;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error finding nearest store for location ({Latitude}, {Longitude}): {Message}", latitude, longitude, ex.Message);
+                _logger.LogError(ex, "Error finding nearest store for location ({Latitude}, {Longitude}): {Message}",
+                    latitude, longitude, ex.Message);
                 throw;
             }
         }
@@ -135,22 +146,42 @@ namespace ServiceLayer.Services
                 TotalAmount = 0m,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
-                OrderItems = dto.Items?.Select(i => new OrderItem
-                {
-                    Id = Guid.NewGuid(),
-                    ServiceId = Guid.NewGuid(),
-                    Quantity = i.Quantity,
-                    UnitPrice = 0m,
-                    Subtotal = 0m
-                }).ToList() ?? new List<OrderItem>()
+                OrderItems = new List<OrderItem>(),
+                // Lưu ProductCategories dạng JSON
+                ProductCategoryIds = dto.ProductCategories != null && dto.ProductCategories.Any() 
+                    ? JsonSerializer.Serialize(dto.ProductCategories) 
+                    : null
             };
+
+            // ✅ CHỈ THÊM OrderItems NẾU có items hợp lệ
+            if (dto.Items != null && dto.Items.Any())
+            {
+                foreach (var itemDto in dto.Items)
+                {
+                    if (string.IsNullOrWhiteSpace(itemDto.Name) || itemDto.Quantity <= 0)
+                    {
+                        continue;
+                    }
+
+                    order.OrderItems.Add(new OrderItem
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderId = order.Id,
+                        ItemName = itemDto.Name.Trim(),
+                        ServiceId = null, // ✅ Để NULL, sẽ được warehouse điền sau
+                        Quantity = itemDto.Quantity,
+                        UnitPrice = 0m,
+                        Subtotal = 0m
+                    });
+                }
+            }
 
             return await CreateOrderAsync(order);
         }
 
         private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
         {
-            const double R = 6371; // Bán kính Trái Đất (km)
+            const double R = 6371;
             var dLat = ToRadian(lat2 - lat1);
             var dLon = ToRadian(lon2 - lon1);
             var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
@@ -163,6 +194,19 @@ namespace ServiceLayer.Services
         private double ToRadian(double degree)
         {
             return degree * Math.PI / 180;
+        }
+
+        public async Task<List<Store>> GetNearbyStoresAsync(double latitude, double longitude, double radiusKm)
+        {
+           
+            var nearbyStores = await _deliveryRepository.GetNearbyStoresAsync(
+               latitude,
+              longitude,
+                radiusKm
+            );
+
+            return nearbyStores;
+
         }
     }
 }

@@ -1,0 +1,273 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<style>
+    /* Orange Theme Colors */
+    .bg-gradient-primary {
+        background-color: #e5501b;
+        background-image: linear-gradient(180deg, #e5501b 10%, #d26c45 100%);
+        background-size: cover;
+    }
+
+    .sidebar-dark .nav-item .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .sidebar-dark .nav-item .nav-link:hover {
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-dark .nav-item .nav-link.active {
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .sidebar-dark .nav-item .nav-link[data-toggle="collapse"]::after {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .sidebar-dark .sidebar-brand {
+        color: #fff;
+    }
+
+    .sidebar-dark .sidebar-brand:hover {
+        color: #fff;
+    }
+
+    .sidebar-dark hr.sidebar-divider {
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .sidebar-dark .sidebar-heading {
+        color: rgba(255, 255, 255, 0.4);
+        text-transform: uppercase;
+        font-weight: 800;
+        font-size: 0.65rem;
+    }
+
+    .sidebar-dark .collapse-inner {
+        background-color: #fff;
+        border-radius: 0.35rem;
+    }
+
+    .sidebar-dark .collapse-item {
+        color: #3a3b45;
+        padding: 0.5rem 1rem;
+        display: block;
+        text-decoration: none;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .sidebar-dark .collapse-item:hover {
+        background-color: #f8f9fc;
+        color: #e5501b;
+    }
+
+    .sidebar-dark .collapse-item.active {
+        color: #e5501b;
+        font-weight: 700;
+    }
+
+    .sidebar-dark .collapse-header {
+        color: #858796;
+        text-transform: uppercase;
+        font-weight: 800;
+        font-size: 0.65rem;
+        padding: 0.5rem 1rem;
+        margin: 0;
+    }
+
+    #sidebarToggle {
+        background-color: rgba(255, 255, 255, 0.2);
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    #sidebarToggle:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    #sidebarToggle::after {
+        font-family: 'Font Awesome 5 Free';
+        content: '\f104';
+        font-weight: 900;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    #sidebarToggle:hover::after {
+        color: #fff;
+    }
+
+    .sidebar-brand-icon img {
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* Hover effect for nav items */
+    .sidebar-dark .nav-item .nav-link i {
+        color: rgba(255, 255, 255, 0.6);
+        transition: all 0.3s;
+    }
+
+    .sidebar-dark .nav-item .nav-link:hover i,
+    .sidebar-dark .nav-item .nav-link.active i {
+        color: #fff;
+    }
+</style>
+
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+    <!-- Sidebar - Brand -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-area="Admin" asp-controller="Home"
+       asp-action="Index">
+        <div class="sidebar-brand-icon">
+            <img width="48" class="rounded" alt="VNC Logo" src="~/favicon.ico" asp-append-version="true" />
+        </div>
+        <div class="sidebar-brand-text mx-3">VNC</div>
+    </a>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider my-0">
+
+    <!-- Nav Item - Dashboard -->
+    <li class="nav-item active">
+        <a class="nav-link" asp-area="Admin" asp-controller="Home" asp-action="Index">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Bảng điều khiển</span>
+        </a>
+    </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider">
+
+    <!-- Heading -->
+    <div class="sidebar-heading">
+        Quản trị
+    </div>
+
+    <!-- Nav Item - Business Management -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+           aria-expanded="true" aria-controls="collapseTwo">
+            <i class="fas fa-fw fa-store"></i>
+            <span>Quản lí kinh doanh</span>
+        </a>
+        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Danh mục cửa hàng</h6>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Store" asp-action="Index">
+                    <i class="fas fa-store"></i> Cửa hàng
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Kyc" asp-action="Index">
+                    <i class="fas fa-id-card"></i> Hồ sơ xác minh (KYC)
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Feedback" asp-action="Index">
+                    <i class="fas fa-comments"></i> Đánh giá
+                </a>
+                <h6 class="collapse-header">Danh mục kho</h6>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Warehouse" asp-action="Index">
+                    <i class="fas fa-warehouse"></i> Kho bãi
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Storage" asp-action="Index">
+                    <i class="fas fa-boxes"></i> Chỗ chứa
+                </a>
+                <h6 class="collapse-header">Danh mục địa chỉ</h6>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Address" asp-action="Index">
+                    <i class="fas fa-map-marker-alt"></i> Địa chỉ
+                </a>
+            </div>
+        </div>
+    </li>
+
+    <!-- Nav Item - User Management -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
+           aria-expanded="true" aria-controls="collapseUtilities">
+            <i class="fas fa-fw fa-users"></i>
+            <span>Quản lí người dùng</span>
+        </a>
+        <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities"
+             data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Danh mục khách hàng</h6>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Customer" asp-action="Index">
+                    <i class="fas fa-user"></i> Khách hàng
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Employee" asp-action="Index">
+                    <i class="fas fa-user-tie"></i> Nhân viên
+                </a>
+                <h6 class="collapse-header">Danh mục phân quyền</h6>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Banned" asp-action="Index">
+                    <i class="fas fa-ban"></i> Trung tâm cấm
+                </a>
+            </div>
+        </div>
+    </li>
+
+    <!-- Nav Item - Order Management -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseOrders"
+           aria-expanded="true" aria-controls="collapseOrders">
+            <i class="fas fa-fw fa-shopping-cart"></i>
+            <span>Quản lí đơn hàng</span>
+        </a>
+        <div id="collapseOrders" class="collapse" aria-labelledby="headingOrders"
+             data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Danh mục đơn hàng</h6>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Order" asp-action="Index">
+                    <i class="fas fa-box"></i> Đơn hàng
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Transaction" asp-action="Index">
+                    <i class="fas fa-exchange-alt"></i> Giao dịch
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Payment" asp-action="Index">
+                    <i class="fas fa-credit-card"></i> Thanh toán
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Quote" asp-action="Index">
+                    <i class="fas fa-file-invoice"></i> Báo giá
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Wallet" asp-action="Index">
+                    <i class="fas fa-wallet"></i> Ví tiền
+                </a>
+            </div>
+        </div>
+    </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider">
+
+    <!-- Heading -->
+    <div class="sidebar-heading">
+        Cấu hình
+    </div>
+
+    <!-- Nav Item - Configuration -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages"
+           aria-expanded="true" aria-controls="collapsePages">
+            <i class="fas fa-fw fa-cog"></i>
+            <span>Cấu hình kinh doanh</span>
+        </a>
+        <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Danh mục dịch vụ:</h6>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Service" asp-action="Index">
+                    <i class="fas fa-concierge-bell"></i> Dịch vụ
+                </a>
+                <a class="collapse-item" asp-area="Admin" asp-controller="ServiceType" asp-action="Index">
+                    <i class="fas fa-list"></i> Loại dịch vụ
+                </a>
+            </div>
+        </div>
+    </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider d-none d-md-block">
+
+    <!-- Sidebar Toggler (Sidebar) -->
+    <div class="text-center d-none d-md-inline">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>
+
+</ul>
