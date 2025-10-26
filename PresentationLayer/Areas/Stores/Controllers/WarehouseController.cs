@@ -454,8 +454,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
         }
 
         // (tuỳ chọn) xuất nhiều kho
-        [HttpPost]
-        public async Task<IActionResult> ExportMultiple([FromForm] Guid[] warehouseIds, CancellationToken ct)
+        [HttpGet]
+        public async Task<IActionResult> ExportMultiple([FromQuery] Guid[] warehouseIds, CancellationToken ct)
         {
             if (warehouseIds == null || warehouseIds.Length == 0)
                 return BadRequest("Chọn ít nhất 1 kho.");
@@ -465,6 +465,29 @@ namespace PresentationLayer.Areas.Stores.Controllers
             return File(bytes,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 fileName);
+        }
+
+        // Get all warehouses for selection
+        [HttpGet]
+        public async Task<IActionResult> GetAllWarehouses()
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var id = Guid.Parse(userId!);
+            var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
+
+            var warehouses = await _db.Warehouses
+                .Where(w => w.StoreId == storeId)
+                .Select(w => new
+                {
+                    Id = w.Id,
+                    Name = w.Name,
+                    Address = w.Address != null ? w.Address.AddressLine : null,
+                    SlotCount = w.Slots.Count
+                })
+                .OrderBy(w => w.Name)
+                .ToListAsync();
+
+            return Json(warehouses);
         }
     }
 }

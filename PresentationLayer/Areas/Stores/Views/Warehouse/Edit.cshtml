@@ -215,6 +215,218 @@
         .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
         .alert-info { background: rgba(66, 153, 225, .1); border: 1px solid rgba(66, 153, 225, .3); color: #2b6cb0; }
     </style>
+
+
+    <style>
+        /* Thêm vào phần Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--panel);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .modal-header h3 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+            }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: var(--muted);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+            .modal-close:hover {
+                background: var(--background);
+                color: var(--text);
+            }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .ie-section {
+            margin-bottom: 24px;
+        }
+
+            .ie-section h4 {
+                margin-bottom: 16px;
+                color: var(--text);
+                font-size: 16px;
+            }
+
+        .ie-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ie-option {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+            .ie-option:hover {
+                border-color: var(--primary);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+
+        .ie-option-header strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .ie-option-header .muted {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 24px 0;
+        }
+
+        .file-upload-area {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+            .file-upload-area input[type="file"] {
+                position: absolute;
+                opacity: 0;
+                width: 100%;
+                height: 40px;
+                cursor: pointer;
+            }
+
+        .file-label {
+            display: block;
+            padding: 10px 16px;
+            background: var(--background);
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .file-label:hover {
+                border-color: var(--primary);
+                background: rgba(var(--primary-rgb), 0.02);
+            }
+
+        .file-name {
+            display: block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--success);
+        }
+
+        .warehouse-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--background);
+        }
+
+        .warehouse-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+            .warehouse-item:hover {
+                background: var(--panel);
+            }
+
+            .warehouse-item input[type="checkbox"] {
+                margin-right: 12px;
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+            }
+
+            .warehouse-item label {
+                cursor: pointer;
+                flex: 1;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+        .warehouse-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .warehouse-name {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .warehouse-meta {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+    </style>
 }
 
 <div class="edit-container">
@@ -350,11 +562,21 @@
         <!-- Tab 3: Quản lý Slots -->
         <div class="tab-content" id="tab-slots">
             <div class="card">
-                <div class="card-header">
-                    <div class="card-title">📦 Danh sách Slots</div>
-                    <button type="button" class="btn btn-primary" onclick="toggleAddSlotForm()">➕ Thêm Slot mới</button>
-                </div>
-
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            📦 Danh sách Slots
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button type="button" class="btn btn-outline" onclick="showImportExportModal()">
+                                📊 Import/Export Excel
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="toggleAddSlotForm()">
+                                ➕ Thêm Slot mới
+                            </button>
+                        </div>
+                    </div>
+                    </div>
                 <!-- Search & Filter -->
                 <div class="slots-toolbar">
                     <div class="search-box">
@@ -430,6 +652,32 @@
             </div>
         </div>
 
+       
+
+        <!-- Multi-Warehouse Export Modal -->
+        <div id="multiWarehouseModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📚 Export nhiều kho</h3>
+                    <button type="button" class="modal-close" onclick="closeMultiWarehouseModal()">×</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="warehouse-list" id="warehouseList">
+                        <!-- Warehouses sẽ được load bằng Ajax -->
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="selectAllWarehouses()">
+                            ☑️ Chọn tất cả
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="exportMultipleWarehouses()">
+                            📊 Export đã chọn
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Tab 4: Hình ảnh -->
         <div class="tab-content" id="tab-images">
             <div class="card">
@@ -484,6 +732,84 @@
             <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
         </div>
     </form>
+    <!-- Import/Export Modal -->
+    <div id="importExportModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Import/Export Slots Excel</h3>
+                <button type="button" class="modal-close" onclick="closeImportExportModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Import Section -->
+                <div class="ie-section">
+                    <h4>📥 Import Slots</h4>
+                    <div class="ie-options">
+                        <div class="ie-option">
+                            <div class="ie-option-header">
+                                <strong>1. Tải Template Excel</strong>
+                                <p class="muted">Tải file mẫu với header và hướng dẫn</p>
+                            </div>
+                            <a href="@Url.Action("DownloadSlotTemplate", "Warehouse", new { area = "Stores" })"
+                               class="btn btn-outline" target="_blank">
+                                📄 Tải Template
+                            </a>
+                        </div>
+
+                        <div class="ie-option">
+                            <div class="ie-option-header">
+                                <strong>2. Upload File Excel</strong>
+                                <p class="muted">Header: WarehouseName, Code, Row, Col, HeightM, LengthM, WidthM, BasePricePerHour, LeaseStart, LeaseEnd, IsBlocked, ImageUrl</p>
+                            </div>
+                            <form id="importForm" method="post" enctype="multipart/form-data">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="warehouseId" value="@Model.Id" />
+                                <div class="file-upload-area">
+                                    <input type="file" id="importFile" name="file" accept=".xlsx,.xls" />
+                                    <label for="importFile" class="file-label">
+                                        📂 Chọn file Excel...
+                                    </label>
+                                    <span id="fileName" class="file-name"></span>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="importSlots()">
+                                    📥 Import Slots
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="divider" />
+
+                <!-- Export Section -->
+                <div class="ie-section">
+                    <h4>📤 Export Slots</h4>
+                    <div class="ie-options">
+                        <div class="ie-option">
+                            <div class="ie-option-header">
+                                <strong>Export kho hiện tại</strong>
+                                <p class="muted">Xuất tất cả slots của kho @Model.Name</p>
+                            </div>
+                            <a href="@Url.Action("ExportSlots", "Warehouse", new { area = "Stores", id = Model.Id })"
+                               class="btn btn-outline" target="_blank">
+                                📊 Export Excel
+                            </a>
+                        </div>
+
+                        <div class="ie-option">
+                            <div class="ie-option-header">
+                                <strong>Export nhiều kho</strong>
+                                <p class="muted">Chọn nhiều kho để xuất (mỗi kho 1 sheet)</p>
+                            </div>
+                            <button type="button" class="btn btn-outline" onclick="showMultiWarehouseModal()">
+                                📚 Chọn kho để Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -765,5 +1091,125 @@
 
         // Load slots on page load
         loadSlotsAllPages();
+    </script>
+
+    <script>
+                // Thêm vào phần Scripts
+        // Import/Export Modal Functions
+        function showImportExportModal() {
+            document.getElementById('importExportModal').style.display = 'flex';
+        }
+
+        function closeImportExportModal() {
+            document.getElementById('importExportModal').style.display = 'none';
+        }
+
+        function showMultiWarehouseModal() {
+            closeImportExportModal();
+            document.getElementById('multiWarehouseModal').style.display = 'flex';
+            loadWarehouses();
+        }
+
+        function closeMultiWarehouseModal() {
+            document.getElementById('multiWarehouseModal').style.display = 'none';
+        }
+
+        // File input handling
+        document.getElementById('importFile')?.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || '';
+            document.getElementById('fileName').textContent = fileName ? `📄 ${fileName}` : '';
+        });
+
+        // Import slots
+        async function importSlots() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Vui lòng chọn file Excel');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('warehouseId', '@Model.Id');
+
+            try {
+                const response = await fetch('/Stores/Warehouse/ImportSlots', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('[name="__RequestVerificationToken"]').value
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Import thành công!');
+                    closeImportExportModal();
+                    location.reload();
+                } else {
+                    const error = await response.text();
+                    alert('Import thất bại: ' + error);
+                }
+            } catch (error) {
+                alert('Lỗi khi import: ' + error.message);
+            }
+        }
+
+        // Load warehouses for multi-export
+        async function loadWarehouses() {
+            try {
+                const response = await fetch('/Stores/Warehouse/GetAllWarehouses');
+                const warehouses = await response.json();
+
+                const listHtml = warehouses.map(w => `
+                    <div class="warehouse-item">
+                        <input type="checkbox" id="wh_${w.id}" value="${w.id}" />
+                        <label for="wh_${w.id}">
+                            <div class="warehouse-info">
+                                <span class="warehouse-name">${w.name}</span>
+                                <span class="warehouse-meta">${w.slotCount} slots • ${w.address || 'Không có địa chỉ'}</span>
+                            </div>
+                        </label>
+                    </div>
+                `).join('');
+
+                document.getElementById('warehouseList').innerHTML = listHtml;
+            } catch (error) {
+                console.error('Error loading warehouses:', error);
+            }
+        }
+
+        // Select all warehouses
+        function selectAllWarehouses() {
+            const checkboxes = document.querySelectorAll('#warehouseList input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+            });
+        }
+
+        // Export multiple warehouses
+        async function exportMultipleWarehouses() {
+            const selectedIds = Array.from(document.querySelectorAll('#warehouseList input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                alert('Vui lòng chọn ít nhất 1 kho');
+                return;
+            }
+
+            const params = selectedIds.map(id => `warehouseIds=${id}`).join('&');
+            window.open(`/Stores/Warehouse/ExportMultiple?${params}`, '_blank');
+            closeMultiWarehouseModal();
+        }
+
+        // Close modal on outside click
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
     </script>
 }
