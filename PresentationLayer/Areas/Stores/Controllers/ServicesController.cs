@@ -29,7 +29,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
 
-            ViewBag.StoreId = id;
+            ViewBag.StoreId = storeId;
             return View(services);
         }
 
@@ -66,53 +66,53 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 Status = StatusValue.Active
             };
 
-            // Map SizeOptions
-            foreach (var size in vm.SizeOptions)
-            {
-                entity.SizeOptions.Add(new ServiceSizeOption
-                {
-                    Id = Guid.NewGuid(),
-                    Code = size.Code,
-                    DisplayName = size.DisplayName,
-                    VolumeM3 = size.VolumeM3,
-                    AreaM2 = size.AreaM2,
-                    MaxWeightKg = size.MaxWeightKg,
-                    PriceOverride = size.PriceOverride
-                });
-            }
+            //// Map SizeOptions
+            //foreach (var size in vm.SizeOptions)
+            //{
+            //    entity.SizeOptions.Add(new ServiceSizeOption
+            //    {
+            //        Id = Guid.NewGuid(),
+            //        Code = size.Code,
+            //        DisplayName = size.DisplayName,
+            //        VolumeM3 = size.VolumeM3,
+            //        AreaM2 = size.AreaM2,
+            //        MaxWeightKg = size.MaxWeightKg,
+            //        PriceOverride = size.PriceOverride
+            //    });
+            //}
 
-            // Map PriceRules
-            foreach (var rule in vm.PriceRules)
-            {
-                entity.PriceRules.Add(new ServicePriceRule
-                {
-                    Id = Guid.NewGuid(),
-                    ValidFrom = rule.ValidFrom,
-                    ValidTo = rule.ValidTo,
-                    MinVolumeM3 = rule.MinVolumeM3,
-                    MaxVolumeM3 = rule.MaxVolumeM3,
-                    MinAreaM2 = rule.MinAreaM2,
-                    MaxAreaM2 = rule.MaxAreaM2,
-                    Price = rule.Price,
-                    ApplyModel = rule.ApplyModel,
-                    TimeUnit = rule.TimeUnit
+            //// Map PriceRules
+            //foreach (var rule in vm.PriceRules)
+            //{
+            //    entity.PriceRules.Add(new ServicePriceRule
+            //    {
+            //        Id = Guid.NewGuid(),
+            //        ValidFrom = rule.ValidFrom,
+            //        ValidTo = rule.ValidTo,
+            //        MinVolumeM3 = rule.MinVolumeM3,
+            //        MaxVolumeM3 = rule.MaxVolumeM3,
+            //        MinAreaM2 = rule.MinAreaM2,
+            //        MaxAreaM2 = rule.MaxAreaM2,
+            //        Price = rule.Price,
+            //        ApplyModel = rule.ApplyModel,
+            //        TimeUnit = rule.TimeUnit
                     
-                });
-            }
+            //    });
+            //}
 
-            // map add on
+            //// map add on
 
-            foreach(var add in vm.Addons)
-            {
-                entity.Addons.Add(new ServiceAddon
-                {
-                    Id = Guid.NewGuid(),
-                    IsPercentage = add.IsPercentage,
-                    Name = add.Name,
-                    Value = add.Value,
-                    Description = add.Description,                    
-                });
-            }
+            //foreach(var add in vm.Addons)
+            //{
+            //    entity.Addons.Add(new ServiceAddon
+            //    {
+            //        Id = Guid.NewGuid(),
+            //        IsPercentage = add.IsPercentage,
+            //        Name = add.Name,
+            //        Value = add.Value,
+            //        Description = add.Description,                    
+            //    });
+            //}
             _db.Services.Add(entity);
             await _db.SaveChangesAsync();
 
