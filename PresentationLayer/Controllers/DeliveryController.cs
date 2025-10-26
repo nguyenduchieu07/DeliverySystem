@@ -13,16 +13,20 @@ using DataAccessLayer.Enums;
 
 namespace PresentationLayer.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Customer")]
     public class DeliveryController : Controller
     {
         private readonly ICustomerService _customerService;
         private readonly IDeliveryService _deliveryService;
+        private readonly IOrderService _orderService;
+        private readonly IFeedbackService _feedbackService;
 
-        public DeliveryController(ICustomerService customerService, IDeliveryService deliveryService)
+        public DeliveryController(ICustomerService customerService, IDeliveryService deliveryService, IOrderService orderService, IFeedbackService feedbackService)
         {
             _customerService = customerService;
             _deliveryService = deliveryService;
+            _orderService = orderService;
+            _feedbackService = feedbackService;
         }
 
         public async Task<IActionResult> Index()
@@ -191,9 +195,38 @@ namespace PresentationLayer.Controllers
             };
         }
 
-        public IActionResult Orders()
+        public async Task<IActionResult> OrderAsync(string orderId)
         {
-            return View();
+            double defaultRadius = 10.0;
+            var vm = new DeliveryOrderViewModel();
+
+            var canParse = Guid.TryParse(orderId, out Guid orderIdGuid);
+
+            if (!canParse)
+            {
+                TempData["Error"] = "KHông tìm tìm thấy đơn hàng. Mã đơn hàng không hợp lệ";
+                return View(vm);
+            }
+            var orderById = await _orderService.GetByIdAsync(orderIdGuid);
+
+            if (orderById == null)
+            {
+                TempData["Error"] = "KHông tìm tìm thấy đơn hàng.";
+                return View(vm);
+            }
+
+            vm.Order = orderById;
+
+            var nearbyStores = await _deliveryService.GetNearbyStoresAsync(orderById.DropoffAddress?.Latitude ?? 0, orderById.DropoffAddress?.Longitude ?? 0, defaultRadius);
+
+            vm.NearbyStores = nearbyStores;
+            return View(vm);
+        }
+
+        public async Task<IActionResult> StoreFeedbackAsync(Guid storeId)
+        {
+            var feedbacks = await _feedbackService.GetAllFeedbacksByStoreId(storeId);
+            return View(feedbacks);
         }
 
         public IActionResult BookDelivery()

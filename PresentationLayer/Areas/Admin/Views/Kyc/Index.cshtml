@@ -1,216 +1,575 @@
-﻿
-@using DataAccessLayer.Entities
-@model IEnumerable<KycSubmission>
+﻿@using PresentationLayer.Models
+@using DataAccessLayer.Enums
+@model KycSubmissionIndexViewModel;
 @{
     ViewBag.Title = "KYC chờ duyệt";
 }
+
 <style>
-    /* === ALERT (Orange–White Theme) === */
+    :root {
+        --brand: #e5501b;
+        --brand-light: #ffb380;
+        --brand-dark: #d26c45;
+        --text: #5a5c69;
+        --text-light: #858796;
+        --border: #e3e6f0;
+        --success: #1cc88a;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --light: #f8f9fc;
+    }
+
+    /* === PAGE HEADER === */
+    .page-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+        .page-heading h1 {
+            font-size: 1.75rem;
+            font-weight: 400;
+            color: var(--text);
+            margin: 0;
+        }
+
+    .btn-primary {
+        background-color: var(--brand);
+        border-color: var(--brand);
+    }
+
+        .btn-primary:hover {
+            background-color: var(--brand-dark);
+            border-color: var(--brand-dark);
+        }
+
+    /* === TABS === */
+    .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+
+        .tab a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .tab:hover {
+            color: var(--brand);
+            background: rgba(229, 80, 27, 0.05);
+        }
+
+        .tab.active {
+            color: var(--brand);
+            border-bottom-color: var(--brand);
+            background: rgba(229, 80, 27, 0.05);
+        }
+
+    /* === ALERTS === */
     .alert {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
-        padding: 12px 14px;
-        border-radius: 10px;
-        margin: 10px 0;
+        gap: 0.75rem;
+        padding: 0.875rem 1.125rem;
+        border-radius: 0.35rem;
+        margin-bottom: 1.25rem;
         border: 1px solid transparent;
-        font-size: 14px;
-        font-weight: 500;
-        transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        font-size: 0.875rem;
+        animation: slideDown 0.3s ease;
     }
 
-        /* Success (vàng sáng nhẹ) */
-        .alert.success {
-            background: #fff8e1; /* vàng nhạt */
-            border-color: #ffecb3;
-            color: #a36b00;
-            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.15);
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
         }
 
-        /* Error (đỏ nhạt sáng) */
-        .alert.error {
-            background: #ffeaea; /* hồng nhạt */
-            border-color: #ffc2c2;
-            color: #c62828;
-            box-shadow: 0 2px 6px rgba(239, 83, 80, 0.15);
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert.success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .alert.error {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .alert .close {
+        border: none;
+        background: transparent;
+        color: inherit;
+        font-size: 1.25rem;
+        cursor: pointer;
+        padding: 0 0.375rem;
+        transition: opacity 0.2s ease;
+        opacity: 0.7;
+        line-height: 1;
+    }
+
+        .alert .close:hover {
+            opacity: 1;
         }
 
-        /* Warning (cam nhẹ) */
-        .alert.warn {
-            background: #fff4e5;
-            border-color: #ffd8b0;
-            color: var(--brand);
-            box-shadow: 0 2px 6px rgba(255, 140, 0, 0.15);
+    /* === CARD === */
+    .card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        overflow: hidden;
+    }
+
+        .card .card-header {
+            background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%);
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: none;
         }
 
-        /* Info (vàng sáng hơn) */
-        .alert.info {
-            background: #fffbea;
-            border-color: #ffeab0;
-            color: #9c6d00;
-            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.12);
-        }
-
-        /* Hover: nhẹ hơn, sáng hơn */
-        .alert:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 123, 0, 0.12);
-        }
-
-        /* Close button */
-        .alert .close {
-            border: none;
-            background: transparent;
-            color: inherit;
-            font-size: 18px;
-            line-height: 1;
-            cursor: pointer;
-            padding: 0 6px;
-            transition: color 0.2s ease, transform 0.1s ease;
-        }
-
-            .alert .close:hover {
-                color: var(--brand);
-                transform: scale(1.2);
+            .card .card-header h3 {
+                color: #fff;
+                margin: 0;
+                font-size: 1rem;
+                font-weight: 700;
             }
 
-    /* === SELECT (Orange–White Theme) === */
-    select {
-        color: var(--text);
-        background-color: #fff;
-        border-radius: 10px;
-        width: 190px;
-        height: 36px;
-        padding: 8px 10px;
-        border: 1px solid var(--border);
-        box-sizing: border-box;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        appearance: none;
-        background-image: linear-gradient(45deg, transparent 50%, var(--brand) 50%), linear-gradient(135deg, var(--brand) 50%, transparent 50%), linear-gradient(to right, transparent, transparent);
-        background-position: calc(100% - 22px) 16px, calc(100% - 14px) 16px, 0 0;
-        background-size: 8px 8px, 8px 8px, 1px 1.6em;
-        background-repeat: no-repeat;
+    /* === FILTERS === */
+    .filters {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: center;
     }
 
-        /* Hover / Focus */
-        select:hover {
-            border-color: var(--brand);
+        .filters select,
+        .filters .input {
+            padding: 0.625rem 1rem;
+            border: none;
+            border-radius: 0.35rem;
+            font-size: 0.875rem;
+            background: rgba(255, 255, 255, 0.95);
+            transition: all 0.2s;
         }
 
-        select:focus {
+        .filters select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            padding-right: 2.25rem;
+            min-width: 11.25rem;
+        }
+
+            .filters select:focus,
+            .filters .input:focus {
+                outline: none;
+                background: #fff;
+                box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.3);
+            }
+
+        .filters .btn {
+            padding: 0.625rem 1.5rem;
+            background: #fff;
+            color: var(--brand);
+            border: none;
+            border-radius: 0.35rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.875rem;
+        }
+
+            .filters .btn:hover {
+                background: rgba(255, 255, 255, 0.9);
+                box-shadow: 0 0.125rem 0.25rem 0 rgba(58, 59, 69, 0.2);
+            }
+
+    /* === TABLE === */
+    .card .card-body {
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    .kyc-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+        .kyc-table thead {
+            background: var(--light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .kyc-table th {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.7rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .kyc-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s ease;
+        }
+
+            .kyc-table tbody tr:hover {
+                background: var(--light);
+            }
+
+        .kyc-table td {
+            padding: 1.25rem;
+            color: var(--text);
+            font-size: 0.875rem;
+            vertical-align: top;
+        }
+
+    /* === STORE INFO === */
+    .store-name {
+        font-weight: 600;
+        color: #3a3b45;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .store-id {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+
+    /* === DATE === */
+    .date-time {
+        color: var(--text-light);
+        font-size: 0.8125rem;
+    }
+
+    /* === DOCUMENTS === */
+    .doc-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .doc-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.625rem;
+        background: rgba(229, 80, 27, 0.1);
+        border-radius: 0.35rem;
+        color: var(--brand);
+        text-decoration: none;
+        font-size: 0.8125rem;
+        transition: all 0.2s;
+        width: fit-content;
+    }
+
+        .doc-item:hover {
+            background: rgba(229, 80, 27, 0.2);
+            transform: translateX(2px);
+            color: var(--brand-dark);
+        }
+
+    /* === CHIPS === */
+    .chip {
+        display: inline-block;
+        padding: 0.375rem 0.875rem;
+        border-radius: 10rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+        .chip.ok {
+            background: #d4edda;
+            color: #1cc88a;
+        }
+
+        .chip.danger {
+            background: #f8d7da;
+            color: #e74a3b;
+        }
+
+        .chip.pending {
+            background: #fff3cd;
+            color: #f6c23e;
+        }
+
+    /* === FORMS === */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .input {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        font-size: 0.8125rem;
+        transition: all 0.15s;
+        background: #fff;
+    }
+
+        .input:focus {
             outline: none;
             border-color: var(--brand);
-            box-shadow: 0 0 0 3px var(--ring);
+            box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
         }
 
-        /* Disabled */
-        select:disabled {
-            background: #f5f5f5;
-            color: #aaa;
+        .input:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .input.sm {
+            padding: 0.4375rem 0.625rem;
+            font-size: 0.75rem;
+        }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.35rem;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+
+        .btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-</style>
-<div class="tabs">
-    <div class="tab" data-tab="kyc"><a asp-area="Admin" asp-controller="Kyc" asp-action="Index">KYC</a></div>
-    <div class="tab" data-tab="feedback"><a asp-area="Admin" asp-controller="Reviews" asp-action="Index">Nhận xét</a></div>
-    <div class="tab active" data-tab="ban">Cấm</div>
-</div>
-@if (TempData["Success"] is string ok && !string.IsNullOrWhiteSpace(ok))
-{
-    <div class="alert success">
-        <span class="msg">@ok</span>
-        <button type="button" class="close" aria-label="Đóng" onclick="this.parentElement.remove()">×</button>
-    </div>
-}
-@if (TempData["Error"] is string err && !string.IsNullOrWhiteSpace(err))
-{
-    <div class="alert error">
-        <span class="msg">@err</span>
-        <button type="button" class="close" aria-label="Đóng" onclick="this.parentElement.remove()">×</button>
-    </div>
-}
+        .btn.success {
+            background: var(--success);
+            color: #fff;
+        }
 
-<section class="grid panel" id="panel-kyc">
-    <div class="card col-12">
-        <div class="head">
-            <h3>KYC chờ duyệt</h3>
+            .btn.success:hover:not(:disabled) {
+                background: #17a673;
+                box-shadow: 0 0.125rem 0.25rem 0 rgba(28, 200, 138, 0.5);
+            }
+
+        .btn.warn {
+            background: var(--warning);
+            color: #212529;
+        }
+
+            .btn.warn:hover:not(:disabled) {
+                background: #dda20a;
+                box-shadow: 0 0.125rem 0.25rem 0 rgba(246, 194, 62, 0.5);
+            }
+
+        .btn.danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+            .btn.danger:hover:not(:disabled) {
+                background: #c02c2c;
+                box-shadow: 0 0.125rem 0.25rem 0 rgba(231, 74, 59, 0.5);
+            }
+
+    /* === RESPONSIVE === */
+    @@media (max-width: 768px) {
+        .card .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filters {
+            width: 100%;
+        }
+
+            .filters select,
+            .filters .input {
+                flex: 1;
+                min-width: 0;
+            }
+    }
+</style>
+
+<!-- Page Heading -->
+<div class="page-heading">
+    <h1>KYC</h1>
+
+</div>
+
+<div class="kyc-container">
+
+    @if (TempData["Success"] is string ok && !string.IsNullOrWhiteSpace(ok))
+    {
+        <div class="alert success">
+            <span class="msg">
+                <i class="fas fa-check-circle"></i> @ok
+            </span>
+            <button type="button" class="close" aria-label="Đóng" onclick="this.parentElement.remove()">×</button>
+        </div>
+    }
+    @if (TempData["Error"] is string err && !string.IsNullOrWhiteSpace(err))
+    {
+        <div class="alert error">
+            <span class="msg">
+                <i class="fas fa-exclamation-circle"></i> @err
+            </span>
+            <button type="button" class="close" aria-label="Đóng" onclick="this.parentElement.remove()">×</button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header">
+            <h3>📝 KYC chờ duyệt</h3>
             <form method="get" class="filters">
-                <select name="status" value="@Context.Request.Query["status"]">
-                    <option value="Pending">Chưa giải quyết</option>
-                    <option value="NeedChanges">Cần thay đổi</option>
-                    <option value="Approved">Tán thành</option>
-                    <option value="Rejected">Từ chối</option>
+                <select name="status" class="input">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Pending" selected="@(Model.Status == KycStatus.Pending)">⏳ Chưa giải quyết</option>
+                    <option value="NeedChanges" selected="@(Model.Status == KycStatus.NeedChanges)">⚠️ Cần thay đổi</option>
+                    <option value="Approved" selected="@(Model.Status == KycStatus.Approved)">✅ Tán thành</option>
+                    <option value="Rejected" selected="@(Model.Status == KycStatus.Rejected)">❌ Từ chối</option>
                 </select>
-                <input class="input" name="q" placeholder="Tìm theo tên cửa hàng" value="@Context.Request.Query["q"]" />
+
+                <input class="input" name="storeName" placeholder="🔍 Tìm theo tên cửa hàng" value="@Model.StoreName" />
+
                 <button class="btn">Lọc</button>
             </form>
         </div>
-        <div class="body">
-            <table class="table kyc-table" style="width:80vw">
-
+        <div class="card-body">
+            <table class="kyc-table">
                 <thead>
                     <tr>
-                        <th>Cửa hàng</th>
-                        <th>Ngày nộp</th>
-                        <th>Giấy tờ</th>
-                        <th>Trạng thái</th>
-                        <th>Max/Day</th>
+                        <th style="width: 180px;">Cửa hàng</th>
+                        <th style="width: 120px;">Ngày nộp</th>
+                        <th style="width: 200px;">Giấy tờ</th>
+                        <th style="width: 120px;">Trạng thái</th>
+                        <th style="width: 280px;">Chấp thuận</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var s in Model)
+                    @foreach (var s in Model.KycSubmissions)
                     {
                         <tr>
-                            <td><b>@s.Store.StoreName</b> · @s.Store.Id.ToString().Substring(0, 4)</td>
-                            <td>@s.SubmittedAt.ToLocalTime()</td>
                             <td>
-                                @foreach (var d in s.Documents)
-                                {
-                                    <a href="@d.FilePath" target="_blank">@d.DocType</a>
-
-                                    @:
-                                }
+                                <span class="store-name">@s.Store.StoreName</span>
+                                <span class="store-id">ID: @s.Store.Id.ToString().Substring(0, 8)</span>
                             </td>
-                            <td><span class="chip @(s.Status==DataAccessLayer.Enums.KycStatus.Approved?"ok":s.Status==DataAccessLayer.Enums.KycStatus.Rejected ?"danger":"pending")">@s.Status</span></td>
                             <td>
-                                <form asp-area="Admin" asp-controller="Kyc" asp-action="Approve" method="post" class="inline">
+                                <span class="date-time">
+                                    @s.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy")<br>
+                                    @s.SubmittedAt.ToLocalTime().ToString("HH:mm")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="doc-list">
+                                    @foreach (var d in s.Documents)
+                                    {
+                                        <a href="@d.FilePath" target="_blank" class="doc-item">
+                                            <i class="fas fa-file-alt"></i>
+                                            <span>@d.DocType</span>
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <span class="chip @(s.Status == KycStatus.Approved ? "ok" : s.Status == KycStatus.Rejected ? "danger" : "pending")">
+                                    @s.Status.ToDisplayString()
+                                </span>
+                            </td>
+                            <td>
+                                <form asp-area="Admin" asp-controller="Kyc" asp-action="Approve" method="post">
                                     <input type="hidden" name="submissionId" value="@s.Id" />
-                                    <input class="input sm" name="maxPerDay" type="number" placeholder="Max/day" style="width:90px" />
-                                    <input class="input sm" name="regionsCsv" placeholder="HN,HCM,DN" style="width:140px" />
-                                    <button class="btn success">Chấp thuận</button>
+                                    <div class="form-group">
+                                        <div class="form-row">
+                                            <input class="input sm" name="maxPerDay" type="number" placeholder="Max/day" style="width:90px" @(s.Status == KycStatus.Approved ? "disabled" : "") />
+                                            <input class="input sm" name="regionsCsv" placeholder="HN,HCM,DN" style="flex: 1;" @(s.Status == KycStatus.Approved ? "disabled" : "") />
+                                        </div>
+                                        <button class="btn success" type="submit" @(s.Status == KycStatus.Approved ? "disabled" : "")>
+                                            <i class="fas fa-check"></i> Chấp thuận
+                                        </button>
+                                    </div>
                                 </form>
                             </td>
-                            <td class="actions">
-                                <div class="cell">
-                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post" class="inline">
+                            <td>
+                                <div class="form-group">
+                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post">
                                         <input type="hidden" name="submissionId" value="@s.Id" />
-                                        <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." />
-                                        <button class="btn warn">Cần thay đổi</button>
+                                        <div class="form-row">
+                                            <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." style="flex: 1;" @(s.Status == KycStatus.NeedChanges ? "disabled" : "") />
+                                            <button class="btn warn" @(s.Status == KycStatus.NeedChanges ? "disabled" : "")>
+                                                <i class="fas fa-exclamation-triangle"></i> Yêu cầu
+                                            </button>
+                                        </div>
                                     </form>
 
-                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post" class="inline">
+                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post">
                                         <input type="hidden" name="submissionId" value="@s.Id" />
-                                        <input class="input sm" name="note" placeholder="Lý do từ chối..." />
-                                        <button class="btn danger">Từ chối</button>
+                                        <div class="form-row">
+                                            <input class="input sm" name="note" placeholder="Lý do từ chối..." style="flex: 1;" @(s.Status == KycStatus.Rejected ? "disabled" : "") />
+                                            <button class="btn danger" @(s.Status == KycStatus.Rejected ? "disabled" : "")>
+                                                <i class="fas fa-times"></i> Từ chối
+                                            </button>
+                                        </div>
                                     </form>
                                 </div>
                             </td>
-
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
     </div>
-</section>
+</div>
+
 @section Scripts {
     <script>
         setTimeout(() => {
-            document.querySelectorAll('.alert').forEach(a => a.remove());
+            document.querySelectorAll('.alert').forEach(a => {
+                a.style.transition = 'opacity 0.3s ease';
+                a.style.opacity = '0';
+                setTimeout(() => a.remove(), 300);
+            });
         }, 4000);
     </script>
-
 }

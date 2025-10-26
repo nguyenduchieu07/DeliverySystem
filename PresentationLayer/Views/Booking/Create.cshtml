@@ -3,7 +3,7 @@
     <div class="grid two">
         <div>
             <h3 class="section-title">1) Chọn địa chỉ</h3>
-            @Html.Partial("_AddressPicker", Model)
+            @await Html.PartialAsync("_AddressPicker", Model)
 
             <div class="row-2">
                 <div>
@@ -31,7 +31,7 @@
                 <tbody>
                     @for (int i = 0; i < Model.Items.Count; i++)
                     {
-                        @Html.Partial("_ServiceRow", (i, Model.Items[i]))
+                        @await Html.PartialAsync("_ServiceRow", (i, Model.Items[i]))
                     }
                 </tbody>
             </table>
@@ -49,7 +49,7 @@
         <a class="btn ghost" href="@Url.Action("Index","Home")">Huỷ</a>
     </div>
 
-    @Html.Partial("~/Views/Shared/_ValidationScriptsPartial.cshtml")
+    @await Html.PartialAsync("~/Views/Shared/_ValidationScriptsPartial.cshtml")
 </form>
 @section scripts {
     <script>window.__services = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Services));</script>

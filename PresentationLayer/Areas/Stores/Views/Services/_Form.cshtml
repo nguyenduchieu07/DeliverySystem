@@ -21,7 +21,7 @@
       <div><label>StoreId</label><input asp-for="StoreId" readonly /></div>
     </div>
     <label>Mô tả</label><textarea asp-for="Description"></textarea>
-    @Html.Partial("_CategoryPicker", Model)
+    @await Html.PartialAsync("_CategoryPicker", Model)
   </div>
 
   <div class="card"><div class="section"><div class="header"><div class="title">Hành động</div></div>
@@ -31,11 +31,11 @@
     </div></div></div>
 
   <div class="card"><div class="section"><div class="header"><div class="title">Size Options</div></div>
-    <div style="padding:12px 14px">@Html.Partial("_ServiceSizes", Model)</div></div></div>
+    <div style="padding:12px 14px">@await Html.PartialAsync("_ServiceSizes", Model)</div></div></div>
 
   <div class="card"><div class="section"><div class="header"><div class="title">Price Rules</div></div>
-    <div style="padding:12px 14px">@Html.Partial("_ServicePriceRules", Model)</div></div></div>
+    <div style="padding:12px 14px">@await Html.PartialAsync("_ServicePriceRules", Model)</div></div></div>
 
   <div class="card"><div class="section"><div class="header"><div class="title">Addons</div></div>
-    <div style="padding:12px 14px">@Html.Partial("_ServiceAddons", Model)</div></div></div>
+    <div style="padding:12px 14px">@await Html.PartialAsync("_ServiceAddons", Model)</div></div></div>
 </form>

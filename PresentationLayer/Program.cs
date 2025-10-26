@@ -1,5 +1,6 @@
 using DataAccessLayer.DependencyInjections.Extensions;
 using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Extensions;
 using ServiceLayer.Services;
@@ -12,6 +13,18 @@ builder.Services.AddDatabaseConfiguration(builder.Configuration); // Đăng ký 
 builder.Services.AddIdentityFrameWork(); // Đăng ký Identity
 builder.Services.ConfigureRepositories(builder.Configuration);
 builder.Services.AddServices(); // Đăng ký Service từ ServiceLayer
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/Denied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(2);
+        options.SlidingExpiration = true;
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
 // Register EmailSender with SMTP
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();

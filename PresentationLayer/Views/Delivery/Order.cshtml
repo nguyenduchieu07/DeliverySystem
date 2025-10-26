@@ -1,0 +1,219 @@
+﻿@using System.Text.Json
+@model PresentationLayer.Models.DeliveryOrderViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+    var categories = new[]
+    {
+        new { id = 1, name = "Thức ăn", icon = "🍔", description = "Thực phẩm, đồ ăn nhanh, đồ uống" },
+        new { id = 2, name = "Đồ gia dụng", icon = "🏠", description = "Đồ dùng hàng ngày trong gia đình" },
+        new { id = 3, name = "Đồ dễ vỡ", icon = "⚠️", description = "Đồ dễ vỡ, cần cẩn thận khi vận chuyển" },
+        new { id = 4, name = "Đồ điện tử", icon = "📱", description = "Thiết bị điện tử, máy móc" },
+        new { id = 5, name = "Quần áo", icon = "👕", description = "Quần áo, giày dép, phụ kiện thời trang" },
+        new { id = 6, name = "Sách vở", icon = "📚", description = "Sách, tài liệu, văn phòng phẩm" },
+        new { id = 7, name = "Nội thất", icon = "🛋️", description = "Đồ nội thất, bàn ghế" },
+        new { id = 8, name = "Mỹ phẩm", icon = "💄", description = "Mỹ phẩm, chăm sóc cá nhân" },
+        new { id = 9, name = "Dược phẩm", icon = "💊", description = "Thuốc, dược phẩm, thiết bị y tế" },
+        new { id = 10, name = "Khác", icon = "📦", description = "Các loại hàng hóa khác" }
+    };
+}
+
+<style>
+    /* Tổng thể */
+    body {
+        background-color: #f9fafc;
+    }
+
+    .order-card {
+        border-radius: .35rem;
+        overflow: hidden;
+        border: none;
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .order-card:hover {
+            transform: translateY(-3px);
+        }
+
+    .card-header {
+        font-weight: 600;
+        background: linear-gradient(90deg, #f26722,#f26722);
+    }
+
+    .category-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: .35rem;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+        min-width: 200px;
+    }
+
+        .category-card:hover {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+    .category-icon {
+        font-size: 1.8rem;
+    }
+
+    .store-card {
+        border-radius: .35rem;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+        .store-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .store-card .card-footer {
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .store-card .btn {
+            border-radius: .35rem;
+            padding: 4px 12px;
+        }
+
+    .alert {
+        border-radius: .35rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .category-card
+
+    {
+        min-width: 100%;
+    }
+
+    .store-card {
+        margin-bottom: 16px;
+    }
+
+    }
+</style>
+
+<div class="container mt-4">
+    <!-- Thông báo lỗi -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger shadow-sm" role="alert">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (Model?.Order == null)
+    {
+        <div class="text-center text-muted mt-5">
+            <h5>Không có thông tin đơn hàng để hiển thị.</h5>
+        </div>
+    }
+    else
+    {
+        <div class="card order-card shadow-sm mb-4">
+            <div class="card-header text-white">
+                <h5 class="mb-0">Thông tin đơn hàng</h5>
+            </div>
+            <div class="card-body bg-white">
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <strong>Mã đơn hàng:</strong> @Model.Order.Id
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Trạng thái:</strong> @Model.Order.Status
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <strong>Tổng tiền:</strong> @Model.Order.TotalAmount.ToString("N0") đ
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Ngày giao hàng:</strong> @(Model.Order.DeliveryDate?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có")
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <strong>Địa chỉ lấy hàng:</strong> @(Model.Order.PickupAddress?.AddressLine ?? "Không xác định")
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Địa chỉ giao hàng:</strong> @(Model.Order.DropoffAddress?.AddressLine ?? "Không xác định")
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <strong>Ghi chú:</strong> @(!string.IsNullOrEmpty(Model.Order.Note) ? Model.Order.Note : "Không có ghi chú")
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Order.ProductCategoryIds))
+                {
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-3">📦 Loại hàng trong đơn</h6>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var catId in JsonSerializer.Deserialize<List<int>>(Model.Order.ProductCategoryIds) ?? [])
+                            {
+                                var cat = categories.FirstOrDefault(c => c.id == catId);
+                                if (cat != null)
+                                {
+                                    <div class="category-card shadow-sm">
+                                        <div class="category-icon">@cat.icon</div>
+                                        <div>
+                                            <div class="fw-semibold">@cat.name</div>
+                                            <div class="text-muted small">@cat.description</div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <h5 class="mb-3 fw-bold text-primary">🛍️ Cửa hàng gần địa chỉ giao hàng (bán kính 10km)</h5>
+
+        @if (Model.NearbyStores == null || !Model.NearbyStores.Any())
+        {
+            <div class="alert alert-info shadow-sm">Không tìm thấy cửa hàng nào gần địa chỉ giao hàng.</div>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var store in Model.NearbyStores)
+                {
+                    <div class="col-md-4 col-sm-6 mb-4">
+                        <div class="card store-card h-100 shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">@store.StoreName</h5>
+                                <p class="card-text text-muted mb-1">
+                                    <strong>Điện thoại:</strong> @(store.ContactPhone ?? "Không có")
+                                </p>
+                                <p class="card-text text-muted mb-1">
+                                    <strong>Email:</strong> @(store.ContactEmail ?? "Chưa có")
+                                </p>
+                                <p class="card-text text-muted mb-2">
+                                    <strong>Đánh giá:</strong> @(store.RatingAvg.ToString("0.0")) / 5 ⭐
+                                    (@store.RatingCount lượt)
+                                </p>
+                                <p class="card-text small text-secondary">
+                                    <strong>Khu vực hoạt động:</strong> @(store.ActiveRegions ?? "Chưa rõ")
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent text-end">
+                                <a href="/Delivery/StoreFeedback?storeId=@store.Id" class="btn btn-outline-primary btn-sm">
+                                    Xem đánh giá
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>

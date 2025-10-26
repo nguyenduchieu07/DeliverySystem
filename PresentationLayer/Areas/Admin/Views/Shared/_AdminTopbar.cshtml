@@ -1,0 +1,339 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<style>
+    /* Orange Theme for Topbar */
+    .btn-primary {
+        background-color: #e5501b !important;
+        border-color: #e5501b !important;
+    }
+
+    .btn-primary:hover {
+        background-color: #d26c45 !important;
+        border-color: #d26c45 !important;
+    }
+
+    .btn-primary:focus,
+    .btn-primary.focus {
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.5) !important;
+    }
+
+    .badge-danger {
+        background-color: #e5501b !important;
+    }
+
+    .badge-counter {
+        position: absolute;
+        transform: scale(0.7);
+        transform-origin: top right;
+        right: 0.25rem;
+        margin-top: -0.25rem;
+    }
+
+    .nav-link .badge-counter {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.25rem 0.4rem;
+        line-height: 1;
+        border-radius: 10rem;
+    }
+
+    .dropdown-list {
+        width: 20rem;
+    }
+
+    .dropdown-list .dropdown-header {
+        background-color: #e5501b !important;
+        border: 1px solid #e5501b !important;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+    }
+
+    .dropdown-list .dropdown-item {
+        white-space: normal;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-left: 1px solid #e3e6f0;
+        border-right: 1px solid #e3e6f0;
+        border-bottom: 1px solid #e3e6f0;
+        line-height: 1.3rem;
+    }
+
+    .dropdown-list .dropdown-item:hover {
+        background-color: #f8f9fc;
+    }
+
+    .dropdown-list .dropdown-item .icon-circle {
+        height: 2.5rem;
+        width: 2.5rem;
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dropdown-list .dropdown-item .icon-circle.bg-primary {
+        background-color: #e5501b !important;
+    }
+
+    .dropdown-list .dropdown-item .icon-circle.bg-success {
+        background-color: #1cc88a;
+    }
+
+    .dropdown-list .dropdown-item .icon-circle.bg-warning {
+        background-color: #f6c23e;
+    }
+
+    .topbar .nav-item.dropdown .dropdown-toggle::after {
+        display: none;
+    }
+
+    .topbar .nav-item .nav-link {
+        height: 4.375rem;
+        display: flex;
+        align-items: center;
+        padding: 0 0.75rem;
+    }
+
+    .topbar .nav-item .nav-link:focus {
+        outline: none;
+    }
+
+    .topbar .nav-item .nav-link:hover {
+        color: #e5501b;
+    }
+
+    .topbar-divider {
+        width: 0;
+        border-right: 1px solid #e3e6f0;
+        height: calc(4.375rem - 2rem);
+        margin: auto 1rem;
+    }
+
+    .modal-header {
+        background-color: #e5501b;
+        color: #fff;
+    }
+
+    .modal-header .close {
+        color: #fff;
+        opacity: 0.8;
+    }
+
+    .modal-header .close:hover {
+        opacity: 1;
+    }
+
+    #sidebarToggleTop {
+        color: #d1d3e2;
+    }
+
+    #sidebarToggleTop:hover {
+        color: #e5501b;
+    }
+
+    .navbar-search .form-control {
+        font-size: 0.85rem;
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+
+    .navbar-search .btn {
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+
+    @@media (max-width: 768px) {
+        .dropdown-list {
+            width: 15rem;
+        }
+    }
+</style>
+
+<nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+    <!-- Sidebar Toggle (Topbar) -->
+    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+        <i class="fa fa-bars"></i>
+    </button>
+
+    <!-- Topbar Search -->
+    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+        <div class="input-group">
+            <input type="text" class="form-control bg-light border-0 small" placeholder="Tìm kiếm..."
+                   aria-label="Search" aria-describedby="basic-addon2">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="button">
+                    <i class="fas fa-search fa-sm"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Topbar Navbar -->
+    <ul class="navbar-nav ml-auto">
+
+        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+        <li class="nav-item dropdown no-arrow d-sm-none">
+            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-search fa-fw"></i>
+            </a>
+            <!-- Dropdown - Messages -->
+            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+                 aria-labelledby="searchDropdown">
+                <form class="form-inline mr-auto w-100 navbar-search">
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-light border-0 small"
+                               placeholder="Tìm kiếm..." aria-label="Search"
+                               aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="button">
+                                <i class="fas fa-search fa-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </li>
+
+        <!-- Nav Item - Alerts -->
+        <li class="nav-item dropdown no-arrow mx-1">
+            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button"
+               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-bell fa-fw"></i>
+                <!-- Counter - Alerts -->
+                <span class="badge badge-danger badge-counter">3+</span>
+            </a>
+            <!-- Dropdown - Alerts -->
+            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                 aria-labelledby="alertsDropdown">
+                <h6 class="dropdown-header ">
+                    Trung tâm thông báo
+                </h6>
+                <a class="dropdown-item d-flex align-items-center" href="#">
+                    <div class="mr-3">
+                        <div class="icon-circle bg-primary">
+                            <i class="fas fa-file-alt text-white"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="small text-gray-500">25 Tháng 10, 2025</div>
+                        <span class="font-weight-bold">Có 5 đơn KYC mới cần xử lý!</span>
+                    </div>
+                </a>
+                <a class="dropdown-item d-flex align-items-center" href="#">
+                    <div class="mr-3">
+                        <div class="icon-circle bg-success">
+                            <i class="fas fa-check-circle text-white"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="small text-gray-500">24 Tháng 10, 2025</div>
+                        Hệ thống đã xử lý thành công 50 đơn hàng hôm nay
+                    </div>
+                </a>
+                <a class="dropdown-item d-flex align-items-center" href="#">
+                    <div class="mr-3">
+                        <div class="icon-circle bg-warning">
+                            <i class="fas fa-exclamation-triangle text-white"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="small text-gray-500">23 Tháng 10, 2025</div>
+                        Cảnh báo: Phát hiện 3 đánh giá thấp cần xem xét
+                    </div>
+                </a>
+                <a class="dropdown-item text-center small text-gray-500" href="#">Xem tất cả thông báo</a>
+            </div>
+        </li>
+
+        <!-- Nav Item - Messages -->
+        <li class="nav-item dropdown no-arrow mx-1">
+            <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button"
+               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-envelope fa-fw"></i>
+                <!-- Counter - Messages -->
+                <span class="badge badge-danger badge-counter">7</span>
+            </a>
+            <!-- Dropdown - Messages -->
+            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                 aria-labelledby="messagesDropdown">
+                <h6 class="dropdown-header">
+                    Trung tâm tin nhắn
+                </h6>
+                <a class="dropdown-item d-flex align-items-center" href="#">
+                    <div class="dropdown-list-image mr-3">
+                        <img class="rounded-circle"
+                             src="https://ui-avatars.com/api/?name=Store+Owner&background=e5501b&color=fff" alt="...">
+                        <div class="status-indicator bg-success"></div>
+                    </div>
+                    <div class="font-weight-bold">
+                        <div class="text-truncate">
+                            Xin chào! Tôi cần hỗ trợ về quy trình xác minh KYC.
+                        </div>
+                        <div class="small text-gray-500">Nguyễn Văn A · 25 phút</div>
+                    </div>
+                </a>
+                <a class="dropdown-item d-flex align-items-center" href="#">
+                    <div class="dropdown-list-image mr-3">
+                        <img class="rounded-circle"
+                             src="https://ui-avatars.com/api/?name=Customer+B&background=1cc88a&color=fff" alt="...">
+                        <div class="status-indicator"></div>
+                    </div>
+                    <div>
+                        <div class="text-truncate">
+                            Đơn hàng của tôi đã được giao chưa? Cảm ơn!
+                        </div>
+                        <div class="small text-gray-500">Trần Thị B · 1 giờ</div>
+                    </div>
+                </a>
+                <a class="dropdown-item d-flex align-items-center" href="#">
+                    <div class="dropdown-list-image mr-3">
+                        <img class="rounded-circle"
+                             src="https://ui-avatars.com/api/?name=Admin+Team&background=f6c23e&color=000" alt="...">
+                        <div class="status-indicator bg-warning"></div>
+                    </div>
+                    <div>
+                        <div class="text-truncate">
+                            Báo cáo tháng này trông rất tốt, tiếp tục phát huy!
+                        </div>
+                        <div class="small text-gray-500">Quản lý hệ thống · 2 giờ</div>
+                    </div>
+                </a>
+                <a class="dropdown-item text-center small text-gray-500" href="#">Xem thêm tin nhắn</a>
+            </div>
+        </li>
+
+        <div class="topbar-divider d-none d-sm-block"></div>
+
+        @await Component.InvokeAsync("UserAvatar")
+
+    </ul>
+
+</nav>
+
+<!-- Logout Modal-->
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Xác nhận đăng xuất</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">Chọn "Đăng xuất" nếu bạn muốn kết thúc phiên làm việc hiện tại.</div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Hủy</button>
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" id="logoutForm"
+                      style="margin: 0;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-primary">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

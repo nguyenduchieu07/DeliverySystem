@@ -679,7 +679,10 @@ namespace PresentationLayer.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                return View("KycSubmissions", request);
+                return View("KycSubmissions", new KycViewModel
+                {
+                    KycRequest = request,
+                });
             }
         }
         

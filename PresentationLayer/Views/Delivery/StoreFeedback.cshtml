@@ -1,0 +1,122 @@
+﻿@using DataAccessLayer.Entities;
+@model List<Feedback>
+
+@{
+    ViewData["Title"] = "Đánh giá cửa hàng";
+}
+
+<style>
+    body {
+        background-color: #f9fafc;
+    }
+
+    .feedback-container {
+        background: #ffffff;
+        border-radius: .35rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+    }
+
+    .feedback-title {
+        color: #f26722;
+        font-weight: 700;
+    }
+
+    .table {
+        border-radius: .35rem;
+        overflow: hidden;
+    }
+
+        .table thead {
+            background: linear-gradient(90deg, #6f42c1, #9b59b6);
+            color: white;
+            font-weight: 600;
+        }
+
+        .table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+            .table tbody tr:hover {
+                background-color: #f7f4fb;
+            }
+
+    .rating-stars {
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+    }
+
+    .alert {
+        border-radius: .35rem;
+        background-color: #f5f0ff;
+        border-color: #e0d4fa;
+        color: #5e3aa3;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .table
+
+    {
+        font-size: 0.9rem;
+    }
+
+    .feedback-container {
+        padding: 16px;
+    }
+
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="feedback-container">
+        <h4 class="feedback-title mb-4">
+            <i class="bi bi-chat-dots text-primary me-2"></i>Đánh giá cửa hàng
+        </h4>
+
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Người đánh giá</th>
+                            <th>Số sao</th>
+                            <th>Bình luận</th>
+                            <th>Ngày</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fb in Model)
+                        {
+                            <tr>
+                                <td>@(fb.FromUser?.Customer?.FullName ?? "Ẩn danh")</td>
+                                <td>
+                                    <div class="rating-stars">
+                                        @for (int i = 0; i < fb.Rating; i++)
+                                        {
+                                            <span class="text-warning">★</span>
+                                        }
+                                        @for (int i = fb.Rating; i < 5; i++)
+                                        {
+                                            <span class="text-muted">☆</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-start">@fb.Comment</td>
+                                <td>@fb.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert text-center mt-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Chưa có đánh giá nào cho cửa hàng này.
+            </div>
+        }
+    </div>
+</div>

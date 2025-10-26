@@ -195,5 +195,18 @@ namespace ServiceLayer.Services
         {
             return degree * Math.PI / 180;
         }
+
+        public async Task<List<Store>> GetNearbyStoresAsync(double latitude, double longitude, double radiusKm)
+        {
+           
+            var nearbyStores = await _deliveryRepository.GetNearbyStoresAsync(
+               latitude,
+              longitude,
+                radiusKm
+            );
+
+            return nearbyStores;
+
+        }
     }
 }

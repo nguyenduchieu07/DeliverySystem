@@ -12,7 +12,7 @@ namespace DataAccessLayer.Repositoies
 {
     public class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, TKey>, IDisposable where TEntity : class
     {
-        private readonly DeliverySytemContext _context;
+        protected readonly DeliverySytemContext _context;
         private bool _disposed = false;
 
         public BaseRepository(DeliverySytemContext context)
