@@ -171,55 +171,91 @@
         <div id="slotGrid" style="display:grid; gap:8px;"></div>
     </div>
 
-    <!-- Danh sách slots -->
-    <div class="section">
-        <div class="header">
-            <div class="title">Warehouse Slots</div>
-            <div class="muted">Total: @Model.Slots.Count</div>
-        </div>
-        <div class="content" style="padding:12px 14px;">
-            @if (Model.Slots == null || Model.Slots.Count == 0)
-            {
-                <div class="muted">No slots available.</div>
-            }
-            else
-            {
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Row</th>
-                            <th>Col</th>
-                            <th>H×L×W (m)</th>
-                            <th>Giá/h</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var s in Model.Slots)
-                        {
-                            var statusText = s.Status.ToString();
-                            var badgeClass = statusText switch
-                            {
-                                "Avalavaible" or "Available" => "ok",
-                                "Occupied" => "warn",
-                                "Maintenance" => "danger",
-                                _ => ""
-                            };
-                            <tr>
-                                <td>@s.Code</td>
-                                <td>@s.Row</td>
-                                <td>@s.Col</td>
-                                <td>@s.HeightM × @s.LengthM × @s.WidthM</td>
-                                <td>@((s.BasePricePerHour).ToString("N0")) ₫</td>
-                                <td><span class="badge @badgeClass">@statusText</span></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-        </div>
+    <!-- Danh sách slots trong Details.cshtml -->
+<div class="section">
+    <div class="header">
+        <div class="title">Warehouse Slots</div>
+        <div class="muted">Total: @ViewBag.TotalSlots</div>
     </div>
+    
+    <!--  form tìm kiếm -->
+    <div class="content" style="padding:12px 14px;">
+        <form method="get" asp-action="Details" class="search-form" style="margin-bottom:12px;">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" name="slotSearch" value="@ViewBag.SlotSearch" 
+                       placeholder="Tìm theo mã slot..." 
+                       style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;" />
+                <button type="submit" class="btn primary">Tìm kiếm</button>
+                @if (!string.IsNullOrWhiteSpace(ViewBag.SlotSearch))
+                {
+                    <a href="@Url.Action("Details", new { id = Model.Id })" class="btn">Xóa tìm kiếm</a>
+                }
+            </div>
+        </form>
+
+        @if (Model.Slots == null || Model.Slots.Count == 0)
+        {
+            <div class="muted">No slots found.</div>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Row</th>
+                        <th>Col</th>
+                        <th>H×L×W (m)</th>
+                        <th>Giá/h</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Slots)
+                    {
+                        var statusText = s.Status.ToString();
+                        var badgeClass = statusText switch
+                        {
+                            "Available" => "ok",
+                            "Occupied" => "warn",
+                            "Maintenance" => "danger",
+                            _ => ""
+                        };
+                        <tr>
+                            <td>@s.Code</td>
+                            <td>@s.Row</td>
+                            <td>@s.Col</td>
+                            <td>@s.HeightM × @s.LengthM × @s.WidthM</td>
+                            <td>@s.BasePricePerHour.ToString("N0") ₫</td>
+                            <td><span class="badge @badgeClass">@statusText</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- Phân trang -->
+            @if (ViewBag.TotalPages > 1)
+            {
+                <div class="pagination" style="margin-top:16px;display:flex;gap:4px;justify-content:center;">
+                    @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                    {
+                        <a href="@Url.Action("Details", new { 
+                            id = Model.Id, 
+                            slotSearch = ViewBag.SlotSearch, 
+                            slotPage = i, 
+                            slotPageSize = ViewBag.SlotPageSize 
+                        })" 
+                           class="btn @(i == ViewBag.SlotPage ? "primary" : "")" 
+                           style="padding:6px 12px;min-width:36px;">
+                            @i
+                        </a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
 </div>
 
 @section Scripts {

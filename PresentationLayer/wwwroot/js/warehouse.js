@@ -131,23 +131,19 @@
     if (addBtn) {
         addBtn.addEventListener("click", function () {
             const code = (el("slotCode")?.value || "").trim();
-            const row = parseInt(el("slotRow")?.value || "0", 10);
-            const col = parseInt(el("slotCol")?.value || "0", 10);
             const h = parseFloat(el("slotH")?.value || "0");
             const l = parseFloat(el("slotL")?.value || "0");
             const w = parseFloat(el("slotW")?.value || "0");
             const price = parseFloat(el("slotPrice")?.value || "0");
             const status = (el("slotStatus")?.value || "4").trim();
             if (!code) return alert("Nhập mã slot!");
-            if (row <= 0 || col <= 0) return alert("Row/Col phải > 0");
             if (h <= 0 || l <= 0 || w <= 0) return alert("Kích thước H/L/W phải > 0 khi không Blocked");
             const dupCode = slots.some(s => s.Code.toLowerCase() === code.toLowerCase());
             if (dupCode) return alert("Code đã tồn tại trong danh sách tạm.");
-            const dupPos = slots.some(s => s.Row === row && s.Col === col);
-            if (dupPos) return alert("Vị trí (Row,Col) đã tồn tại trong danh sách tạm.");
+            
 
             slots.push({
-                Code: code, Row: row, Col: col, HeightM: h, LengthM: l, WidthM: w,
+                Code: code, HeightM: h, LengthM: l, WidthM: w,
                 BasePricePerHour: price, Status: status
             });
 
@@ -165,8 +161,6 @@
     const price = Number(s.BasePricePerHour || 0);
     tr.innerHTML = `
     <td><input type="hidden" name="slots[${i}].Code" value="${esc(s.Code)}" />${esc(s.Code)}</td>
-    <td><input type="hidden" name="slots[${i}].Row" value="${esc(s.Row)}" />${dash(s.Row)}</td>
-    <td><input type="hidden" name="slots[${i}].Col" value="${esc(s.Col)}" />${dash(s.Col)}</td>
     <td><input type="hidden" name="slots[${i}].HeightM" value="${esc(s.HeightM)}" />${dash(s.HeightM)}</td>
     <td><input type="hidden" name="slots[${i}].LengthM" value="${esc(s.LengthM)}" />${dash(s.LengthM)}</td>
     <td><input type="hidden" name="slots[${i}].WidthM" value="${esc(s.WidthM)}" />${dash(s.WidthM)}</td>
@@ -192,7 +186,6 @@
     function clearSlotInputs() {
     const set = (id, v) => { const x = el(id); if (x) x.value = v; };
     set("slotCode", "");
-    set("slotRow", ""); set("slotCol", "");
     set("slotH", ""); set("slotL", ""); set("slotW", "");
     set("slotPrice", "");
     set("slotStatus", "0");

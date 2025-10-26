@@ -167,7 +167,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 //}
 
                 await _db.SaveChangesAsync();
-
+                await ReindexWarehouseSlotsAsync(warehouse.Id);
                 TempData["Success"] = "Tạo kho mới thành công!";
             }
             catch (Exception ex)
@@ -252,6 +252,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 }
 
                 await _db.SaveChangesAsync();
+                await ReindexWarehouseSlotsAsync(warehouse.Id);
                 TempData["Success"] = "Cập nhật kho thành công!";
             }
             catch (Exception ex)
@@ -276,12 +277,44 @@ namespace PresentationLayer.Areas.Stores.Controllers
             return RedirectToAction("Index");
         }
 
+
         [HttpGet]
-        public async Task<IActionResult> Details(Guid id)
+        public async Task<IActionResult> GetSlotsPaged(Guid warehouseId, string? q, int page = 1, int pageSize = 10)
+        {
+            var query = _db.WarehouseSlots
+                .AsNoTracking()
+                .Where(s => s.WarehouseId == warehouseId);
+
+            // Tìm kiếm theo code
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = query.Where(s => EF.Functions.Like(s.Code.ToLower(), $"%{q.ToLower()}%"));
+            }
+
+            var total = await query.CountAsync();
+
+            var slots = await query
+                .OrderBy(s => s.Row)
+                .ThenBy(s => s.Col)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Json(new
+            {
+                slots,
+                total,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling(total / (double)pageSize)
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid id, string? slotSearch, int slotPage = 1, int slotPageSize = 10)
         {
             var warehouse = await _db.Warehouses
                 .Include(w => w.Address)
-                .Include(w => w.Slots)
                 .Include(w => w.Store)
                 .FirstOrDefaultAsync(w => w.Id == id);
 
@@ -290,6 +323,31 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 TempData["Error"] = "Warehouse not found!";
                 return RedirectToAction("Index");
             }
+
+            // Query slots với phân trang
+            var slotsQuery = _db.WarehouseSlots
+                .Where(s => s.WarehouseId == id);
+
+            if (!string.IsNullOrWhiteSpace(slotSearch))
+            {
+                slotsQuery = slotsQuery.Where(s =>
+                    EF.Functions.Like(s.Code.ToLower(), $"%{slotSearch.ToLower()}%"));
+            }
+
+            var totalSlots = await slotsQuery.CountAsync();
+
+            warehouse.Slots = await slotsQuery
+                .OrderBy(s => s.Row)
+                .ThenBy(s => s.Col)
+                .Skip((slotPage - 1) * slotPageSize)
+                .Take(slotPageSize)
+                .ToListAsync();
+
+            ViewBag.SlotSearch = slotSearch;
+            ViewBag.SlotPage = slotPage;
+            ViewBag.SlotPageSize = slotPageSize;
+            ViewBag.TotalSlots = totalSlots;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalSlots / (double)slotPageSize);
 
             return View(warehouse);
         }
@@ -349,7 +407,27 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             return RedirectToAction("Details", new { id = warehouseId });
         }
+        public static class WarehouseLayoutOptions
+        {
+            public const int MaxColsPerRow = 30;
+        }
 
-       
+        public async Task ReindexWarehouseSlotsAsync(Guid warehouseId)
+        {
+            var slots = await _db.Set<WarehouseSlot>()
+                .Where(s => s.WarehouseId == warehouseId)
+                .OrderBy(s => s.CreatedAt)
+                .ToListAsync();
+
+            int maxCols = WarehouseLayoutOptions.MaxColsPerRow;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                slots[i].Row = (i / maxCols) + 1;
+                slots[i].Col = (i % maxCols) + 1;
+            }
+            await _db.SaveChangesAsync();
+        }
+
+
     }
 }

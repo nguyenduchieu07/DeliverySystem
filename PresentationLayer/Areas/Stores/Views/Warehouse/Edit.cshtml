@@ -144,42 +144,65 @@
             <div style="align-self:end;"><div class="muted">Vol: @(Math.Round(Model.HeightM * Model.LengthM * Model.WidthM, 3)) m³</div></div>
         </div>
     </div>
-
+    <!-- Import Excel -->
+    <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+                <h4 style="margin:0;">Import Slots (.xlsx)</h4>
+                <div class="muted" style="font-size:12px;">Header: WarehouseName, Code, Row, Col, HeightM, LengthM, WidthM, BasePricePerHour, LeaseStart, LeaseEnd, IsBlocked, ImageUrl</div>
+            </div>
+            <div>
+                <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="DownloadSlotTemplate">Tải template</a>
+            </div>
+        </div>
+        <form asp-area="Stores" asp-controller="Warehouse" asp-action="ImportSlots" method="post" enctype="multipart/form-data" style="margin-top:10px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="warehouseId" value="@Model.Id" />
+            <input type="file" name="file" accept=".xlsx,.xls" />
+            <button class="btn primary" type="submit">Upload & Import</button>
+        </form>
+    </div>
+    <!-- Thay thế phần Quản lý Slot trong Edit.cshtml -->
     <div class="card">
         <h4>Quản lý Slot</h4>
-        <table class="table" id="slotTable">
-            <thead>
-                <tr>
-                    <th>Mã</th>
-                    <th>Row</th>
-                    <th>Col</th>
-                    <th>H</th>
-                    <th>L</th>
-                    <th>W</th>
-                    <th>Giá/h</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (int i = 0; i < Model.Slots.Count; i++)
-                {
-                    var s = Model.Slots.ElementAt(i);
-                    <tr>
-                        <td><input type="hidden" name="slots[@i].Code" value="@s.Code" />@s.Code</td>
-                        <td><input type="hidden" name="slots[@i].Row" value="@s.Row" />@s.Row</td>
-                        <td><input type="hidden" name="slots[@i].Col" value="@s.Col" />@s.Col</td>
-                        <td><input type="hidden" name="slots[@i].HeightM" value="@s.HeightM" />@s.HeightM</td>
-                        <td><input type="hidden" name="slots[@i].LengthM" value="@s.LengthM" />@s.LengthM</td>
-                        <td><input type="hidden" name="slots[@i].WidthM" value="@s.WidthM" />@s.WidthM</td>
-                        <td><input type="hidden" name="slots[@i].BasePricePerHour" value="@s.BasePricePerHour" />@s.BasePricePerHour.ToString("N0")</td>
-                        <td><input type="hidden" name="slots[@i].Status" value="@s.Status" />@s.Status</td>
-                        <td><button type="button" class="btn danger" onclick="this.closest('tr').remove()">X</button></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
 
+        <!-- Search và filter -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <input type="text" id="slotSearchInput" placeholder="Tìm theo mã slot..."
+                   style="flex:1;padding:8px 12px;" />
+            <button type="button" class="btn" onclick="loadSlots(1)">Tìm kiếm</button>
+            <button type="button" class="btn" onclick="clearSearch()">Xóa</button>
+        </div>
+
+        <!-- Container cho bảng slots load động -->
+        <div id="slotsContainer">
+            <table class="table" id="slotTable">
+                <thead>
+                    <tr>
+                        <th>Mã</th>
+                        <th>Row</th>
+                        <th>Col</th>
+                        <th>H</th>
+                        <th>L</th>
+                        <th>W</th>
+                        <th>Giá/h</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="slotTableBody">
+                    <!-- Slots sẽ được load bằng Ajax -->
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div id="slotPagination" style="margin-top:12px;display:flex;gap:4px;justify-content:center;">
+            </div>
+        </div>
+
+        <!-- Form thêm slot mới -->
+        <hr />
+        <h5>Thêm slot mới</h5>
         <div class="row-2" style="margin-top:10px;">
             <input type="text" id="slotCode" placeholder="Mã (VD: A1-01)" />
             <input type="number" id="slotRow" placeholder="Row" min="1" step="1" />
@@ -189,16 +212,18 @@
             <input type="number" id="slotW" placeholder="W (m)" min="0" step="0.01" />
             <input type="number" id="slotPrice" placeholder="Giá (đ/giờ)" min="0" step="1000" />
             <select id="slotStatus">
-                <select id="slotStatus">
-                    <option value="4">Available</option>
-                    <option value="17">Occupied</option>
-                    <option value="7">Maintenance</option>
-                </select>
+                <option value="4">Available</option>
+                <option value="17">Occupied</option>
+                <option value="7">Maintenance</option>
             </select>
             <button type="button" class="btn primary" id="btnAddSlot">+ Thêm Slot</button>
         </div>
     </div>
 
+    <!-- Hidden container để lưu tất cả slots khi submit form -->
+    <div id="allSlotsHidden" style="display:none;">
+        <!-- Các input hidden sẽ được generate khi submit -->
+    </div>
     <button type="submit" class="btn primary">Lưu thay đổi</button>
 </form>
 
@@ -262,11 +287,8 @@
             existingCodes.clear();
             existingPos.clear();
             tb.querySelectorAll("tr").forEach(tr => {
-                const code = tr.querySelector('input[name$=".Code"]')?.value?.toLowerCase()?.trim();
-                const row  = parseInt(tr.querySelector('input[name$=".Row"]')?.value || "0", 10);
-                const col  = parseInt(tr.querySelector('input[name$=".Col"]')?.value || "0", 10);
+                const code = tr.querySelector('input[name$=".Code"]')?.value?.toLowerCase()?.trim();              
                 if (code) existingCodes.add(code);
-                if (row > 0 && col > 0) existingPos.add(`${row}|${col}`);
             });
         }
         hydrateSetsFromTable();
@@ -289,8 +311,6 @@
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td><input type="hidden" name="slots[${i}].Code" value="${esc(data.Code)}" />${esc(data.Code)}</td>
-                <td><input type="hidden" name="slots[${i}].Row" value="${esc(data.Row)}" />${dash(data.Row)}</td>
-                <td><input type="hidden" name="slots[${i}].Col" value="${esc(data.Col)}" />${dash(data.Col)}</td>
                 <td><input type="hidden" name="slots[${i}].HeightM" value="${esc(data.HeightM)}" />${dash(data.HeightM)}</td>
                 <td><input type="hidden" name="slots[${i}].LengthM" value="${esc(data.LengthM)}" />${dash(data.LengthM)}</td>
                 <td><input type="hidden" name="slots[${i}].WidthM" value="${esc(data.WidthM)}" />${dash(data.WidthM)}</td>
@@ -304,8 +324,6 @@
         // === Add Slot dynamically (đã thêm check “existing slot”) ===
         document.getElementById("btnAddSlot").addEventListener("click", function () {
             const code = slotCode.value.trim();
-            const row  = parseInt(slotRow.value || "0", 10);
-            const col  = parseInt(slotCol.value || "0", 10);
             const h    = parseFloat(slotH.value || "0");
             const l    = parseFloat(slotL.value || "0");
             const w    = parseFloat(slotW.value || "0");
@@ -313,23 +331,18 @@
             const status = slotStatus.value;
 
             if (!code) return alert("Nhập mã slot!");
-            if (row <= 0 || col <= 0) return alert("Row/Col phải > 0");
             if (h <= 0 || l <= 0 || w <= 0) return alert("Kích thước phải > 0");
 
             // === CHECK TRÙNG: Code & (Row,Col) ===
             const codeKey = code.toLowerCase();
-            const posKey  = `${row}|${col}`;
 
             if (existingCodes.has(codeKey)) {
                 return alert(`Code "${code}" đã tồn tại.`);
             }
-            if (existingPos.has(posKey)) {
-                return alert(`Vị trí (Row=${row}, Col=${col}) đã tồn tại.`);
-            }
 
             // Thêm vào bảng + cập nhật tập
             appendRow({
-                Code: code, Row: row, Col: col,
+                Code: code,
                 HeightM: h, LengthM: l, WidthM: w,
                 BasePricePerHour: price, Status: status
             });
@@ -337,7 +350,7 @@
             existingPos.add(posKey);
 
             // Clear inputs
-            slotCode.value=""; slotRow.value=""; slotCol.value="";
+            slotCode.value="";
             slotH.value=""; slotL.value=""; slotW.value=""; slotPrice.value="";
             slotStatus.value="4";
         });
@@ -350,14 +363,165 @@
             const tr = btn.closest("tr");
             // Lấy giá trị hiện tại trước khi xoá để cập nhật set
             const code = tr.querySelector('input[name$=".Code"]')?.value?.toLowerCase()?.trim();
-            const row  = parseInt(tr.querySelector('input[name$=".Row"]')?.value || "0", 10);
-            const col  = parseInt(tr.querySelector('input[name$=".Col"]')?.value || "0", 10);
-
             tr.remove();
             reindexTable();
 
             if (code) existingCodes.delete(code);
-            if (row > 0 && col > 0) existingPos.delete(`${row}|${col}`);
+        });
+    </script>
+    <script>
+                // Thêm vào phần Scripts của Edit.cshtml
+        let currentPage = 1;
+        let pageSize = 10;
+        let allSlots = []; // Lưu tất cả slots (cả từ DB và thêm mới)
+        let deletedSlots = []; // Lưu các slots đã xóa
+
+        // Load slots với phân trang
+        async function loadSlots(page = 1) {
+            const warehouseId = '@Model.Id';
+            const searchTerm = document.getElementById('slotSearchInput').value;
+
+            const response = await fetch(`/Stores/Warehouse/GetSlotsPaged?warehouseId=${warehouseId}&q=${searchTerm}&page=${page}&pageSize=${pageSize}`);
+            const data = await response.json();
+
+            currentPage = page;
+            renderSlots(data.slots);
+            renderPagination(data.totalPages, data.page);
+
+            // Lưu slots từ DB
+            if (page === 1 && !searchTerm) {
+                allSlots = [...data.slots];
+            }
+        }
+
+        // Render slots vào bảng
+        function renderSlots(slots) {
+            const tbody = document.getElementById('slotTableBody');
+            tbody.innerHTML = '';
+
+            slots.forEach((slot, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${slot.code}</td>
+                    <td>${slot.row}</td>
+                    <td>${slot.col}</td>
+                    <td>${slot.heightM}</td>
+                    <td>${slot.lengthM}</td>
+                    <td>${slot.widthM}</td>
+                    <td>${slot.basePricePerHour.toLocaleString('vi-VN')} ₫</td>
+                    <td>${getStatusText(slot.status)}</td>
+                    <td>
+                        <button type="button" class="btn danger" onclick="removeSlot('${slot.id}')">X</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Render phân trang
+        function renderPagination(totalPages, currentPage) {
+            const container = document.getElementById('slotPagination');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `btn ${i === currentPage ? 'primary' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => loadSlots(i);
+                container.appendChild(btn);
+            }
+        }
+
+        // Xóa slot
+        function removeSlot(slotId) {
+            if (confirm('Xác nhận xóa slot này?')) {
+                deletedSlots.push(slotId);
+                allSlots = allSlots.filter(s => s.id !== slotId);
+                loadSlots(currentPage);
+            }
+        }
+
+        // Clear search
+        function clearSearch() {
+            document.getElementById('slotSearchInput').value = '';
+            loadSlots(1);
+        }
+
+        // Thêm slot mới
+        document.getElementById('btnAddSlot').addEventListener('click', function() {
+            const newSlot = {
+                id: 'new_' + Date.now(),
+                code: document.getElementById('slotCode').value,
+                row: parseInt(document.getElementById('slotRow').value),
+                col: parseInt(document.getElementById('slotCol').value),
+                heightM: parseFloat(document.getElementById('slotH').value),
+                lengthM: parseFloat(document.getElementById('slotL').value),
+                widthM: parseFloat(document.getElementById('slotW').value),
+                basePricePerHour: parseFloat(document.getElementById('slotPrice').value),
+                status: parseInt(document.getElementById('slotStatus').value),
+                isNew: true
+            };
+
+            // Validate
+            if (!newSlot.code) {
+                alert('Vui lòng nhập mã slot');
+                return;
+            }
+
+            // Check duplicate
+            if (allSlots.some(s => s.code.toLowerCase() === newSlot.code.toLowerCase())) {
+                alert('Mã slot đã tồn tại');
+                return;
+            }
+
+            allSlots.push(newSlot);
+            loadSlots(currentPage);
+
+            // Clear form
+            document.getElementById('slotCode').value = '';
+            document.getElementById('slotRow').value = '';
+            document.getElementById('slotCol').value = '';
+            document.getElementById('slotH').value = '';
+            document.getElementById('slotL').value = '';
+            document.getElementById('slotW').value = '';
+            document.getElementById('slotPrice').value = '';
+        });
+
+        // Trước khi submit form, generate hidden inputs cho tất cả slots
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const hiddenContainer = document.getElementById('allSlotsHidden');
+            hiddenContainer.innerHTML = '';
+
+            // Generate hidden inputs cho tất cả slots
+            allSlots.forEach((slot, index) => {
+                if (!deletedSlots.includes(slot.id)) {
+                    hiddenContainer.innerHTML += `
+                        <input type="hidden" name="slots[${index}].Code" value="${slot.code}" />
+                        <input type="hidden" name="slots[${index}].Row" value="${slot.row}" />
+                        <input type="hidden" name="slots[${index}].Col" value="${slot.col}" />
+                        <input type="hidden" name="slots[${index}].HeightM" value="${slot.heightM}" />
+                        <input type="hidden" name="slots[${index}].LengthM" value="${slot.lengthM}" />
+                        <input type="hidden" name="slots[${index}].WidthM" value="${slot.widthM}" />
+                        <input type="hidden" name="slots[${index}].BasePricePerHour" value="${slot.basePricePerHour}" />
+                        <input type="hidden" name="slots[${index}].Status" value="${slot.status}" />
+                    `;
+                }
+            });
+        });
+
+        // Helper function
+        function getStatusText(status) {
+            switch(status) {
+                case 4: return 'Available';
+                case 17: return 'Occupied';
+                case 7: return 'Maintenance';
+                default: return 'Unknown';
+            }
+        }
+
+        // Load initial data
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSlots(1);
         });
     </script>
 }
