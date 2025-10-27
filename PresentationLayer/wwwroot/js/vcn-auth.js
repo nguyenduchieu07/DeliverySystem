@@ -5,6 +5,8 @@ let pickupData = null;
 let dropoffData = null;
 let selectedProductCategories = []; // Changed to array
 let estimatedWeight = null;
+let calculatedDistance = null;
+let calculatedEta = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function () {
@@ -14,6 +16,15 @@ document.addEventListener('DOMContentLoaded', function () {
     loadProductCategories();
     getCurrentLocation();
     initPopupEvents();
+    
+    // Check if we should calculate distance/time on page load
+    setTimeout(() => {
+        if (pickupData && dropoffData) {
+            calculateDistanceAndTime();
+        }
+        
+        // Debug buttons removed for production
+    }, 1000);
 });
 
 // Utility function to force hide overlay
@@ -76,11 +87,91 @@ function updateCustomerInfoDisplay(name, phone, floor) {
         placeholder.style.display = 'none';
         content.style.display = 'block';
 
-        // Cập nhật thông tin
-        nameEl.textContent = name;
-        phoneEl.textContent = `📞 ${phone}`;
-        floorEl.textContent = floor ? `🏢 ${floor}` : '';
+        // Cập nhật thông tin với khả năng edit
+        nameEl.innerHTML = `
+            <span class="customer-info-text">${name}</span>
+            <button type="button" class="btn-edit-customer" onclick="editCustomerInfoViaPopup()" title="Sửa thông tin khách hàng">✏️</button>
+        `;
+        phoneEl.innerHTML = `
+            <span class="customer-info-text">📞 ${phone}</span>
+        `;
+        floorEl.innerHTML = `
+            <span class="customer-info-text">${floor ? `🏢 ${floor}` : ''}</span>
+        `;
+        
+        // Add CSS for edit buttons
+        addCustomerEditStyles();
     }
+}
+
+// Function to edit customer info via popup
+function editCustomerInfoViaPopup() {
+    // Get current values
+    const nameEl = document.getElementById('customerName');
+    const phoneEl = document.getElementById('customerPhone');
+    const floorEl = document.getElementById('customerFloor');
+    
+    const getName = () => {
+        const textSpan = nameEl?.querySelector('.customer-info-text');
+        return textSpan ? textSpan.textContent : nameEl?.textContent || '';
+    };
+    
+    const getPhone = () => {
+        const textSpan = phoneEl?.querySelector('.customer-info-text');
+        return textSpan ? textSpan.textContent.replace('📞 ', '') : phoneEl?.textContent?.replace('📞 ', '') || '';
+    };
+    
+    const getFloor = () => {
+        const textSpan = floorEl?.querySelector('.customer-info-text');
+        return textSpan ? textSpan.textContent.replace('🏢 ', '') : floorEl?.textContent?.replace('🏢 ', '') || '';
+    };
+    
+    // Pre-fill the popup with current values
+    const nameInput = document.getElementById('pickupName');
+    const phoneInput = document.getElementById('pickupPhone');
+    const floorInput = document.getElementById('pickupFloor');
+    
+    if (nameInput) nameInput.value = getName();
+    if (phoneInput) phoneInput.value = getPhone();
+    if (floorInput) floorInput.value = getFloor();
+    
+    // Show the popup
+    showPickupInfoPopup();
+}
+
+// Add CSS styles for customer edit buttons
+function addCustomerEditStyles() {
+    // Only add styles once
+    if (document.getElementById('customerEditStyles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'customerEditStyles';
+    style.textContent = `
+        .btn-edit-customer {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 8px;
+            opacity: 0.8;
+            transition: all 0.2s;
+        }
+        
+        .btn-edit-customer:hover {
+            opacity: 1;
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        
+        .customer-info-text {
+            display: inline-block;
+        }
+    `;
+    
+    document.head.appendChild(style);
 }
 
 // Initialize popup events
@@ -135,7 +226,6 @@ function getCurrentLocation() {
                 setPickupLocation(lat, lng);
             },
             function (error) {
-                console.log('Không thể lấy vị trí hiện tại:', error);
             }
         );
     }
@@ -265,11 +355,17 @@ function setPickupLocation(lat, lng, addressLine = null) {
             document.getElementById('pickupAddressInput').value = address;
             document.getElementById('selectedPickupAddress').innerHTML = address;
             document.getElementById('selectedPickupAddress').classList.add('show');
+            
+            // Calculate distance and time if both locations are set
+            setTimeout(() => checkAndUpdateDistanceTime(), 100);
         });
     } else {
         pickupData = { street: addressLine, lat: lat, lng: lng };
         document.getElementById('selectedPickupAddress').innerHTML = addressLine;
         document.getElementById('selectedPickupAddress').classList.add('show');
+        
+        // Calculate distance and time if both locations are set
+        setTimeout(() => calculateDistanceAndTime(), 100);
     }
 
     if (pickupMarker) {
@@ -294,11 +390,17 @@ function setDropoffLocation(lat, lng, addressLine = null) {
             document.getElementById('dropoffAddressInput').value = address;
             document.getElementById('selectedDropoffAddress').innerHTML = address;
             document.getElementById('selectedDropoffAddress').classList.add('show');
+            
+            // Calculate distance and time if both locations are set
+            setTimeout(() => checkAndUpdateDistanceTime(), 100);
         });
     } else {
         dropoffData = { street: addressLine, lat: lat, lng: lng };
         document.getElementById('selectedDropoffAddress').innerHTML = addressLine;
         document.getElementById('selectedDropoffAddress').classList.add('show');
+        
+        // Calculate distance and time if both locations are set
+        setTimeout(() => calculateDistanceAndTime(), 100);
     }
 
     if (dropoffMarker) {
@@ -329,51 +431,283 @@ async function reverseGeocode(lat, lng) {
     }
 }
 
+// ============ DISTANCE & TIME CALCULATION ============
+function calculateDistanceAndTime() {
+    if (!pickupData || !dropoffData) {
+        // Hide display if we don't have both locations
+        const displayElement = document.getElementById('distanceTimeDisplay');
+        if (displayElement) {
+            displayElement.style.display = 'none';
+        }
+        return;
+    }
+
+    // Calculate distance using Haversine formula
+    const distance = calculateHaversineDistance(
+        pickupData.lat, pickupData.lng,
+        dropoffData.lat, dropoffData.lng
+    );
+    
+    // Calculate estimated time based on distance and vehicle type
+    const vehicleType = document.getElementById('selectedVehicle')?.value;
+    const eta = calculateEstimatedTime(distance, vehicleType);
+    
+    calculatedDistance = distance;
+    calculatedEta = eta;
+    
+    // Update UI to show distance and time
+    updateDistanceTimeDisplay(distance, eta);
+}
+
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+}
+
+function calculateEstimatedTime(distanceKm, vehicleType) {
+    // Base speed in km/h for different vehicle types
+    const speeds = {
+        'van1000': 30, 'pickup': 25, 'truck1500': 20, 'truck3000': 18, 'container': 15,
+        'xe_may': 30, 'xe_tai_nho': 25, 'xe_tai_lon': 20, 'xe_container': 15
+    };
+    
+    const baseSpeed = speeds[vehicleType] || 25;
+    const timeHours = distanceKm / baseSpeed;
+    const timeMinutes = Math.round(timeHours * 60);
+    
+    // Buffer time for loading/unloading
+    const bufferMinutes = {
+        'van1000': 15, 'pickup': 30, 'truck1500': 45, 'truck3000': 50, 'container': 60,
+        'xe_may': 15, 'xe_tai_nho': 30, 'xe_tai_lon': 45, 'xe_container': 60
+    };
+    
+    const buffer = bufferMinutes[vehicleType] || 30;
+    
+    // Traffic factor based on distance
+    let trafficFactor = 1.0;
+    if (distanceKm > 10) trafficFactor = 1.3;
+    else if (distanceKm > 5) trafficFactor = 1.2;
+    
+    return Math.round((timeMinutes * trafficFactor) + buffer);
+}
+
+function updateDistanceTimeDisplay(distance, eta) {
+    // Create or update distance/time display
+    let displayElement = document.getElementById('distanceTimeDisplay');
+    
+    if (!displayElement) {
+        // Create display element if it doesn't exist
+        displayElement = document.createElement('div');
+        displayElement.id = 'distanceTimeDisplay';
+        displayElement.className = 'distance-time-info';
+        displayElement.style.cssText = `
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            color: white;
+        `;
+        
+        // Try to find the vehicle selection section and insert after it
+        const vehicleSection = document.querySelector('.vehicle-selection') || 
+                              document.querySelector('[class*="vehicle"]') ||
+                              document.querySelector('.section-title');
+        
+        if (vehicleSection && vehicleSection.parentNode) {
+            // Insert after the vehicle section
+            vehicleSection.parentNode.insertBefore(displayElement, vehicleSection.nextSibling);
+        } else {
+            // Fallback: insert at the beginning of the form
+            const form = document.getElementById('booking-form') || document.querySelector('form');
+            if (form) {
+                form.insertBefore(displayElement, form.firstChild);
+            }
+        }
+    }
+    
+    // Show the display element with animation
+    displayElement.style.display = 'block';
+    displayElement.style.opacity = '0';
+    displayElement.style.transform = 'translateY(-10px)';
+    
+    // Animate in
+    setTimeout(() => {
+        displayElement.style.transition = 'all 0.3s ease';
+        displayElement.style.opacity = '1';
+        displayElement.style.transform = 'translateY(0)';
+    }, 10);
+    
+    const hours = Math.floor(eta / 60);
+    const minutes = eta % 60;
+    const timeText = hours > 0 ? `${hours}h ${minutes}p` : `${minutes}p`;
+    
+    // Get vehicle type display name
+    const vehicleNames = {
+        'van1000': '🚐 Van 1000kg',
+        'pickup': '🚛 Pickup Truck',
+        'truck1500': '🚚 Truck 1500kg',
+        'truck3000': '🚛 Truck 3000kg',
+        'container': '📦 Container',
+        // Legacy support
+        'xe_may': '🏍️ Xe máy',
+        'xe_tai_nho': '🚛 Xe tải nhỏ', 
+        'xe_tai_lon': '🚚 Xe tải lớn',
+        'xe_container': '📦 Container'
+    };
+    
+    const selectedVehicle = document.getElementById('selectedVehicle')?.value;
+    const vehicleName = vehicleNames[selectedVehicle] || '🚗 Phương tiện';
+    
+    displayElement.innerHTML = `
+        <div style="display: flex; justify-content: space-around; align-items: center; color: white;">
+            <div style="text-align: center;">
+                <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">📏 ${distance.toFixed(1)} km</div>
+                <div style="font-size: 14px; opacity: 0.9;">Khoảng cách</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">⏱️ ${timeText}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Thời gian ước tính</div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 10px; font-size: 12px; opacity: 0.8;">
+            ${vehicleName} • 💡 Thông tin này sẽ được lưu vào đơn hàng
+        </div>
+    `;
+    
+}
+
+// Function to check and update distance/time when needed
+function checkAndUpdateDistanceTime() {
+    // Only calculate if we have both locations and a vehicle selected
+    if (pickupData && dropoffData && document.getElementById('selectedVehicle')?.value) {
+        calculateDistanceAndTime();
+    }
+}
+
+
+
+// Create pickup info popup dynamically
+function createPickupInfoPopup() {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'popupOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: none;
+    `;
+    
+    // Create popup
+    const popup = document.createElement('div');
+    popup.id = 'pickupInfoPopup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        min-width: 400px;
+        display: none;
+    `;
+    
+    popup.innerHTML = `
+        <h3>Thông tin khách hàng</h3>
+        <div style="margin-bottom: 15px;">
+            <label>Tên khách hàng:</label>
+            <input type="text" id="pickupName" placeholder="Nhập tên khách hàng" style="width: 100%; padding: 8px; margin-top: 5px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>Số điện thoại:</label>
+            <input type="tel" id="pickupPhone" placeholder="Nhập số điện thoại" style="width: 100%; padding: 8px; margin-top: 5px;">
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label>Tầng (tùy chọn):</label>
+            <input type="text" id="pickupFloor" placeholder="Nhập tầng" style="width: 100%; padding: 8px; margin-top: 5px;">
+        </div>
+        <div style="text-align: right;">
+            <button type="button" onclick="hidePickupInfoPopup()" style="padding: 8px 16px; margin-right: 10px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Hủy</button>
+            <button type="button" onclick="saveCustomerInfo()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Lưu thông tin</button>
+        </div>
+    `;
+    
+    // Add to body
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
+    
+    // Add click outside to close
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            hidePickupInfoPopup();
+        }
+    };
+    
+    // Show popup
+    showPickupInfoPopup();
+}
+
+
 // ============ PICKUP INFO POPUP ============
 function showPickupInfoPopup() {
-    try {
-        console.log('Showing pickup info popup');
-        const popup = document.getElementById('pickupInfoPopup');
-        const overlay = document.getElementById('popupOverlay');
+    const popup = document.getElementById('pickupInfoPopup');
+    const overlay = document.getElementById('popupOverlay');
+    
+    if (!popup || !overlay) {
+        createPickupInfoPopup();
+        return;
+    }
+    
+    // Hide any existing popups
+    hideAllPopups();
+    
+    // Show popup
+    overlay.style.display = 'block';
+    overlay.style.visibility = 'visible';
+    overlay.style.opacity = '1';
+    overlay.style.zIndex = '9999';
+    overlay.classList.add('show');
+    
+    popup.style.display = 'block';
+    popup.style.visibility = 'visible';
+    popup.style.opacity = '1';
+    popup.style.zIndex = '10000';
+    popup.classList.add('show');
         
-        if (!popup) {
-            console.error('pickupInfoPopup element not found!');
-            return;
-        }
-        
-        if (!overlay) {
-            console.error('popupOverlay element not found!');
-            return;
-        }
-        
-        popup.classList.add('show');
-        overlay.classList.add('show');
-        
-        // Pre-fill values if available
-        const nameField = document.getElementById('pickupName');
-        const phoneField = document.getElementById('pickupPhone');
-        const floorField = document.getElementById('pickupFloor');
-        
-        if (pickupData && pickupData.recipientName) {
-            nameField.value = pickupData.recipientName;
-            phoneField.value = pickupData.recipientPhone || '';
-            floorField.value = pickupData.floor || '';
-        } else {
-            nameField.value = '';
-            phoneField.value = '';
-            floorField.value = '';
-        }
-        
-        console.log('Pickup info popup shown successfully');
-    } catch (error) {
-        console.error('Error showing pickup info popup:', error);
-        alert('Có lỗi xảy ra khi hiển thị popup. Vui lòng thử lại.');
+    // Pre-fill values if available
+    const nameField = document.getElementById('pickupName');
+    const phoneField = document.getElementById('pickupPhone');
+    const floorField = document.getElementById('pickupFloor');
+    
+    if (pickupData && pickupData.recipientName) {
+        if (nameField) nameField.value = pickupData.recipientName;
+        if (phoneField) phoneField.value = pickupData.recipientPhone || '';
+        if (floorField) floorField.value = pickupData.floor || '';
+    } else {
+        if (nameField) nameField.value = '';
+        if (phoneField) phoneField.value = '';
+        if (floorField) floorField.value = '';
     }
 }
 
 function hidePickupInfoPopup() {
     try {
-        console.log('Hiding pickup info popup');
         const popup = document.getElementById('pickupInfoPopup');
         const overlay = document.getElementById('popupOverlay');
 
@@ -396,7 +730,6 @@ function hidePickupInfoPopup() {
             });
         }
 
-        console.log('Pickup info popup hidden successfully');
     } catch (error) {
         console.error('Error hiding pickup info popup:', error);
     }
@@ -408,7 +741,6 @@ function savePickupInfo() {
         const phone = document.getElementById('pickupPhone').value.trim();
         const floor = document.getElementById('pickupFloor').value.trim();
 
-        console.log('Saving pickup info:', { name, phone, floor });
 
         if (!name || !phone) {
             alert('Vui lòng nhập đầy đủ tên và số điện thoại!');
@@ -426,7 +758,6 @@ function savePickupInfo() {
             pickupData.recipientName = name;
             pickupData.recipientPhone = phone;
             pickupData.floor = floor;
-            console.log('Pickup data updated:', pickupData);
         } else {
             // Tạo pickupData mới nếu chưa có
             pickupData = {
@@ -463,7 +794,6 @@ function savePickupInfo() {
             });
         }, 100);
 
-        console.log('Pickup info saved successfully');
     } catch (error) {
         console.error('Error in savePickupInfo:', error);
         alert('Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.');
@@ -640,9 +970,19 @@ function showVehicleSuggestions(weight) {
 }
 
 function selectVehicle(element, vehicleType) {
+    // Update UI
     document.querySelectorAll('.vehicle-option').forEach(opt => opt.classList.remove('active'));
     element.classList.add('active');
     document.getElementById('selectedVehicle').value = vehicleType;
+    
+    
+    // Recalculate distance and time when vehicle type changes
+    // Use setTimeout to ensure DOM is updated first
+    setTimeout(() => {
+        if (pickupData && dropoffData) {
+            calculateDistanceAndTime();
+        }
+    }, 100);
 }
 
 // ============ SUBMIT ORDER ============
@@ -652,13 +992,28 @@ async function submitOrder() {
     const customerPhone = document.getElementById('customerPhone');
     const customerFloor = document.getElementById('customerFloor');
     
-    console.log('Customer validation:', {
-        customerName: customerName?.textContent,
-        customerPhone: customerPhone?.textContent,
-        customerFloor: customerFloor?.textContent
-    });
+    // Get actual text content (handle both text and span elements)
+    const getName = () => {
+        const textSpan = customerName?.querySelector('.customer-info-text');
+        return textSpan ? textSpan.textContent : customerName?.textContent || '';
+    };
     
-    if (!customerName || !customerName.textContent || !customerPhone || !customerPhone.textContent) {
+    const getPhone = () => {
+        const textSpan = customerPhone?.querySelector('.customer-info-text');
+        return textSpan ? textSpan.textContent.replace('📞 ', '') : customerPhone?.textContent?.replace('📞 ', '') || '';
+    };
+    
+    const getFloor = () => {
+        const textSpan = customerFloor?.querySelector('.customer-info-text');
+        return textSpan ? textSpan.textContent.replace('🏢 ', '') : customerFloor?.textContent?.replace('🏢 ', '') || '';
+    };
+    
+    const nameValue = getName();
+    const phoneValue = getPhone();
+    const floorValue = getFloor();
+    
+    
+    if (!nameValue || !phoneValue) {
         alert('⚠️ Vui lòng nhập đầy đủ thông tin khách hàng!');
         return;
     }
@@ -722,9 +1077,9 @@ async function submitOrder() {
             city: 'Hà Nội',
             latitude: pickupData ? pickupData.lat : 0,
             longitude: pickupData ? pickupData.lng : 0,
-            recipientName: customerName.textContent,
-            recipientPhone: customerPhone.textContent.replace('📞 ', ''),
-            floor: customerFloor ? customerFloor.textContent.replace('🏢 ', '') : ''
+            recipientName: nameValue,
+            recipientPhone: phoneValue,
+            floor: floorValue
         },
         dropoffAddress: {
             stored: false,
@@ -742,7 +1097,10 @@ async function submitOrder() {
         vehicleType: selectedVehicle,
         productCategories: selectedProductCategories.map(c => c.id),  // Array of IDs
         estimatedWeight: estimatedWeight,
-        items: items
+        items: items,
+        // Add calculated distance and time
+        distanceKm: calculatedDistance,
+        etaMinutes: calculatedEta
     };
 
     const bookBtn = document.getElementById('bookBtn');
