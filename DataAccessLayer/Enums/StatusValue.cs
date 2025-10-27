@@ -31,6 +31,7 @@ namespace DataAccessLayer.Enums
         Sent,
         Success,
         ExpiringSoon,
-        Blocked
+        Blocked,
+        Revised
     }
 }
