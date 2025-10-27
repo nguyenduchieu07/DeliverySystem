@@ -24,6 +24,8 @@ namespace ServiceLayer.Extensions
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IFeedbackService, FeedbackService>();
             services.AddScoped<IQuotationService, QuotationService>();
+            services.AddScoped<IUserContextService, UserContextService>();
+            services.AddHttpContextAccessor();
         }
     }
 }

@@ -13,10 +13,11 @@ namespace ServiceLayer.Services
         private const int FREE_DAYS = 2;
         private const decimal VAT_RATE = 0.10m;
         private const int VALIDITY_HOURS = 48;
-
-        public QuotationService(DeliverySytemContext db)
+        private readonly IUserContextService _context;
+        public QuotationService(DeliverySytemContext db, IUserContextService context)
         {
             _db = db;
+            _context = context;
         }
 
         public async Task<QuoteResultVm> CalculateAndCreateQuotationAsync(
@@ -27,6 +28,7 @@ namespace ServiceLayer.Services
             var slots = await _db.WarehouseSlots
                 .Where(s => req.SlotIds.Contains(s.Id))
                 .ToListAsync(ct);
+            var userId = Guid.Parse(_context.GetUserId()!);
 
             // Calculate days
             var totalDays = (req.EndDate - req.StartDate).Days;
@@ -86,10 +88,10 @@ namespace ServiceLayer.Services
             {
                 Id = Guid.NewGuid(),
                 StoreId = req.StoreId,
-                CustomerId = Guid.Empty, // Get from authenticated user
+                CustomerId = userId, // Get from authenticated user
                 TotalAmount = total,
                 ValidUntil = DateTime.UtcNow.AddHours(VALIDITY_HOURS),
-                Status = StatusValue.Active,
+                Status = StatusValue.Draft,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -135,7 +137,17 @@ namespace ServiceLayer.Services
 
         public async Task<bool> CreateTempReservationAsync(HoldTempVm vm, CancellationToken ct)
         {
-            // Implementation for temporary reservation
+            var slots = await _db.WarehouseSlots.Where(e => vm.SlotIds.Contains(e.Id)).ToListAsync();
+            var quotation = await _db.Quotations.Where(e => e.Id == vm.QuotationId).FirstOrDefaultAsync();
+
+            foreach(var slot in slots)
+            {
+                slot.Status = StatusValue.Blocked;
+                slot.LeaseStart = DateTime.UtcNow;
+                slot.LeaseEnd = DateTime.UtcNow.AddMinutes(vm.HoldMinutes);
+            }
+            quotation!.Status = StatusValue.Sent;
+            await _db.SaveChangesAsync(ct);
             return true;
         }
 
@@ -151,7 +163,10 @@ namespace ServiceLayer.Services
 
         public async Task<bool> RequestRevisionAsync(RequestRevisionVm vm, CancellationToken ct)
         {
-            // Implementation for revision request
+            var quotation = await _db.Quotations.FindAsync(vm.QuotationId);
+            if (quotation == null) return false;
+            quotation.Status = StatusValue.Revised;
+            await _db.SaveChangesAsync(ct);
             return true;
         }
     }

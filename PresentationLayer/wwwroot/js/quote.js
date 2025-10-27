@@ -436,7 +436,7 @@ async function handleFormSubmit(e) {
     });
 
     const payload = {
-        storeId: '00000000-0000-0000-0000-000000000001',
+        storeId: selectedWarehouse.storeId,
         warehouseId: selectedWarehouse.id,
         startDate: document.getElementById('startDate').value,
         endDate: document.getElementById('endDate').value,
@@ -445,7 +445,7 @@ async function handleFormSubmit(e) {
         customerName: name,
         customerPhone: phone
     };
-
+    console.log(payload);
     const submitBtn = e.submitter || document.querySelector('#quoteForm button[type=submit]');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang tính…'; }
 
@@ -624,3 +624,101 @@ async function submitNegotiate() {
 function closeSlotDetailModal() {
     document.getElementById('slotDetailModal').classList.remove('active');
 }
+// ---- CONFIG (có thể reuse CONFIG hiện có) ----
+const EST_CFG = {
+    VAT_RATE: 0.10,     // 10%
+    FREE_DAYS: 2        // miễn phí 2 ngày đầu
+};
+
+// ---- STATE TỐI THIỂU (nếu đã có thì dùng state sẵn có) ----
+window.selectedSlots = window.selectedSlots || [];     // mỗi slot: { basePricePerHour, volumeM3, ... }
+window.selectedWarehouse = window.selectedWarehouse || null;
+
+// ---- HELPERS ----
+function toNumber(v) { return Number(v || 0); }
+function vnd(n) { return new Intl.NumberFormat('vi-VN').format(Math.round(toNumber(n))) + ' đ'; }
+function daysExclusive(start, end) {
+    const s = new Date(start), e = new Date(end);
+    if (isNaN(s) || isNaN(e)) return 0;
+    const diff = e - s;
+    if (diff <= 0) return 0;
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+// ---- CORE: TÍNH TOÁN + CẬP NHẬT UI ----
+function recalcEstimation() {
+    const startDate = document.getElementById('startDate')?.value;
+    const endDate = document.getElementById('endDate')?.value;
+
+    const totalDays = daysExclusive(startDate, endDate);
+    const chargeableDays = Math.max(0, totalDays - EST_CFG.FREE_DAYS);
+    const hours = chargeableDays * 24;
+
+    // Tính phí slot & tổng m3
+    let slotFee = 0;
+    let totalM3 = 0;
+    for (const s of selectedSlots) {
+        slotFee += toNumber(s.basePricePerHour) * hours;
+        totalM3 += toNumber(s.volumeM3);
+    }
+
+    // Tính addons
+    let addons = 0;
+    document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => {
+        if (!cb.checked) return;
+        const val = toNumber(cb.value);
+        if (cb.id === 'coldStorage') {
+            // tính theo m³/ngày
+            addons += val * totalM3 * chargeableDays;
+        } else {
+            // phí một lần
+            addons += val;
+        }
+    });
+
+    const subtotal = slotFee + addons;
+    const vat = subtotal * EST_CFG.VAT_RATE;
+    const total = subtotal + vat;
+
+    // ---- ĐỔ VÀO CARD ----
+    document.getElementById('estWarehouse').textContent = selectedWarehouse?.name || 'Chưa chọn';
+    document.getElementById('estDistance').textContent = (selectedWarehouse?.distanceKm != null)
+        ? `${Number(selectedWarehouse.distanceKm).toFixed(1)} km` : '--';
+    document.getElementById('estSlotCount').textContent = selectedSlots.length;
+    document.getElementById('estVolume').textContent = `${totalM3.toFixed(1)} m³`;
+    document.getElementById('estDays').textContent = `${totalDays} ngày`;
+    document.getElementById('estSlotFee').textContent = vnd(slotFee);
+    document.getElementById('estAddons').textContent = vnd(addons);
+    document.getElementById('estSubtotal').textContent = vnd(subtotal);
+    document.getElementById('estVAT').textContent = vnd(vat);
+    document.getElementById('estTotal').textContent = vnd(total);
+}
+
+// ---- GẮN SỰ KIỆN TỰ TÍNH ----
+function initEstimationAutoCalc() {
+    // đổi ngày → tính lại
+    ['startDate', 'endDate'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', recalcEstimation);
+    });
+    // tick addon → tính lại
+    document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', recalcEstimation);
+    });
+
+    // Nếu app của bạn có các điểm sau, nhớ gọi recalcEstimation():
+    // - sau khi chọn kho:
+    //     selectedWarehouse = warehouse; recalcEstimation();
+    // - sau khi chọn/bỏ slot:
+    //     selectedSlots.push(...) / splice(...); recalcEstimation();
+
+    recalcEstimation(); // tính lần đầu
+}
+
+// ---- Gọi khi DOM sẵn sàng ----
+document.addEventListener('DOMContentLoaded', initEstimationAutoCalc);
+
+// ---- Ví dụ: hook vào chỗ chọn kho/slot có sẵn của bạn ----
+// function selectWarehouse(wh) { selectedWarehouse = wh; /* ... UI ... */ recalcEstimation(); }
+// function toggleSlotSelection(slot) { /* thêm/bớt vào selectedSlots */ recalcEstimation(); }
+// function removeSlot(id) { /* lọc selectedSlots */ recalcEstimation(); }

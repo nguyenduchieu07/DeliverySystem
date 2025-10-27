@@ -35,7 +35,7 @@ namespace PresentationLayer.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var result = await _svc.CalculateAndCreateQuotationAsync(req, ct);
-            return Ok(result); // trả JSON để render Breakdown
+            return Ok(result);
         }
 
         // Bước 4A: Giữ chỗ tạm (2h)
