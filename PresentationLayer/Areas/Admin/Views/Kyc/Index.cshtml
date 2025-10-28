@@ -9,9 +9,7 @@
     :root {
         --brand: #e5501b;
         --brand-light: #ffb380;
-        --brand-dark: #d26c45;
         --text: #5a5c69;
-        --text-light: #858796;
         --border: #e3e6f0;
         --success: #1cc88a;
         --warning: #f6c23e;
@@ -40,8 +38,8 @@
     }
 
         .btn-primary:hover {
-            background-color: var(--brand-dark);
-            border-color: var(--brand-dark);
+            background-color: var(#d26c45);
+            border-color: var(#d26c45);
         }
 
     /* === TABS === */
@@ -58,7 +56,7 @@
         border-bottom: 2px solid transparent;
         transition: all 0.2s ease;
         font-weight: 500;
-        color: var(--text-light);
+        color: var(#858796);
         font-size: 0.875rem;
     }
 
@@ -142,7 +140,7 @@
     }
 
         .card .card-header {
-            background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%);
+            background: linear-gradient(180deg, var(--brand) 0%, var(#d26c45) 100%);
             padding: 1rem 1.25rem;
             display: flex;
             justify-content: space-between;
@@ -264,12 +262,12 @@
 
     .store-id {
         font-size: 0.75rem;
-        color: var(--text-light);
+        color: var(#858796);
     }
 
     /* === DATE === */
     .date-time {
-        color: var(--text-light);
+        color: var(#858796);
         font-size: 0.8125rem;
     }
 
@@ -297,7 +295,7 @@
         .doc-item:hover {
             background: rgba(229, 80, 27, 0.2);
             transform: translateX(2px);
-            color: var(--brand-dark);
+            color: var(#d26c45);
         }
 
     /* === CHIPS === */
