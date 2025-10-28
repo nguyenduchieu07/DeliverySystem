@@ -138,9 +138,11 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                 .HasForeignKey(d => d.FromUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Feedbacks_Users");
-
-            entity.HasOne(d => d.Order).WithMany(p => p.Feedbacks)
+            
+            entity.HasOne(d => d.Order)
+                .WithMany(p => p.Feedbacks)
                 .HasForeignKey(d => d.OrderId)
+                .IsRequired(false)                       // ← bắt buộc thêm
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Feedbacks_Orders");
 
@@ -487,8 +489,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
         modelBuilder.SeedingDataForStore();
         modelBuilder.SeedingDashboards();
         base.OnModelCreating(modelBuilder);
-        OnModelCreatingPartial(modelBuilder);
+       
     }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+    
 }

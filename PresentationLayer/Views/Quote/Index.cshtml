@@ -708,36 +708,4 @@
 
 @section Scripts {
     <script src="~/js/quote.js" defer></script>
-    <script>
-        async function submitFeedback() {
-            const comment = document.getElementById('writeFeedbackComment').value.trim();
-            if (selectedRating <= 0) return alert('Vui lòng chọn số sao đánh giá!');
-            if (!comment) return alert('Vui lòng nhập nhận xét!');
-
-            const payload = {
-                OrderId: 'PUT_ORDER_ID_HERE',
-                FromUserId: 'PUT_USER_ID_HERE',
-                ToStoreId: 'PUT_STORE_ID_HERE',
-                Rating: selectedRating,
-                Comment: comment
-            };
-
-            try {
-                const res = await fetch('/api/feedbacks', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    alert('✅ Gửi đánh giá thành công!');
-                    closeFeedbackModal();
-                } else {
-                    alert('❌ Gửi đánh giá thất bại!');
-                }
-            } catch (err) {
-                console.error(err);
-                alert('❌ Lỗi khi gửi đánh giá!');
-            }
-}
-    </script>
 }

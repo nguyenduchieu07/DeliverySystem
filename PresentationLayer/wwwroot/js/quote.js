@@ -604,6 +604,41 @@ function closeFeedbackModal() {
     document.getElementById('writeFeedbackNote').value = '';
 }
 
+let selectedRating = 0;
+
+// Lấy tất cả star và add sự kiện click
+document.querySelectorAll('#feedbackRating .star').forEach(star => {
+    star.addEventListener('click', function () {
+        selectedRating = parseInt(this.dataset.value);
+
+        // Highlight sao đã chọn
+        document.querySelectorAll('#feedbackRating .star').forEach(s => {
+            s.textContent = s.dataset.value <= selectedRating ? '★' : '☆';
+        });
+    });
+});
+async function submitFeedback() {
+    const comment = document.getElementById('writeFeedbackComment').value.trim();
+    if (selectedRating <= 0) return alert('Vui lòng chọn số sao đánh giá!');
+    if (!comment) return alert('Vui lòng nhập nhận xét!');
+    try {
+        const ok = await fetch(CONFIG.API_BASE + '/Quote/Feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                quotationId: currentQuotationId, // từ biến global hoặc data-attribute
+                comment: comment,                // thêm comment
+                rating: selectedRating           // thêm rating
+            })
+        });
+        if (ok.ok) { alert('Đã gửi đánh giá'); closeFeedbackModal(); }
+        else alert('❌ Không thể gửi đánh giá');
+    } catch (err) {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra!');
+    }
+}
+
 // Negotiate
 function showNegotiateModal() {
     document.getElementById('negotiateModal').classList.add('active');

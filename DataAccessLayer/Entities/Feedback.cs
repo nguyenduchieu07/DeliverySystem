@@ -1,12 +1,16 @@
 ﻿using DataAccessLayer.Entities.Common;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DataAccessLayer.Entities;
 
 public partial class Feedback : BaseEntity<Guid>
 {
     public Guid? OrderId { get; set; }
+
+    [ForeignKey(nameof(OrderId))]
+    public virtual Order? Order { get; set; }
 
     public Guid FromUserId { get; set; }
 
@@ -17,8 +21,6 @@ public partial class Feedback : BaseEntity<Guid>
     public string? Comment { get; set; }
 
     public virtual User FromUser { get; set; } = null!;
-
-    public virtual Order? Order { get; set; } = null!;
 
     public virtual Store ToStore { get; set; } = null!;
 }
