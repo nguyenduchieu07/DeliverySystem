@@ -480,11 +480,11 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             e.Property(x => x.DocType).HasMaxLength(40);
             e.Property(x => x.FilePath).HasMaxLength(512);
         });
-        modelBuilder.Seeding();
+        modelBuilder.SeedingRoles();
         modelBuilder.SeedingStoreData();
         modelBuilder.SeedingCategoryData();
         modelBuilder.SeedingAdminData();
-        modelBuilder.SeedingDataToTestAdmin();
+        modelBuilder.SeedingDataForStore();
         modelBuilder.SeedingDashboards();
         base.OnModelCreating(modelBuilder);
         OnModelCreatingPartial(modelBuilder);
