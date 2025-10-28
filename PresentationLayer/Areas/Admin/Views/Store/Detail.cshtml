@@ -1,4 +1,5 @@
-﻿@using DataAccessLayer.Enums
+﻿@using DataAccessLayer.Constants
+@using DataAccessLayer.Enums
 @model PresentationLayer.Models.AdminStoreDetailViewModel
 @{
     ViewBag.Title = "Chi tiết cửa hàng";
@@ -6,12 +7,14 @@
 
 <style>
     :root {
+        --primary: #e5501b;
         --success: #1cc88a;
         --warning: #f6c23e;
         --danger: #e74a3b;
         --text: #5a5c69;
         --border: #e3e6f0;
         --white: #ffffff;
+        --gray: #858796;
         --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
     }
 
@@ -36,7 +39,7 @@
     }
 
     .page-header h1 i {
-        color: var(#e5501b);
+        color: var(--primary);
     }
 
     /* Back Button */
@@ -56,8 +59,8 @@
 
     .btn-back:hover {
         background: var(#f8f9fc);
-        border-color: var(#e5501b);
-        color: var(#e5501b);
+        border-color: var(--primary);
+        color: var(--primary);
         transform: translateY(-1px);
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
@@ -83,8 +86,7 @@
     }
 
     .card-header {
-        background: linear-gradient(180deg, var(#e5501b) 0%, var(#d26c45) 100%);
-        color: var(--white);
+        background: linear-gradient(180deg, var(--primary) 0%, var(#d26c45) 100%);
         padding: 0.75rem 1.25rem;
         border-bottom: none;
         border-radius: 0.35rem 0.35rem 0 0;
@@ -93,6 +95,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+       
     }
 
     .card-body {
@@ -117,7 +120,7 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: var(#858796);
+        color: var(--gray);
     }
 
     .detail-value {
@@ -130,7 +133,7 @@
         flex-wrap: wrap;
     }
 
-    /* Badge Styles */
+    /* Badges */
     .badge {
         display: inline-block;
         padding: 0.375rem 0.875rem;
@@ -148,7 +151,7 @@
     }
 
     .badge-inactive {
-        background: var(#858796);
+        background: var(--gray);
         color: var(--white);
     }
 
@@ -158,7 +161,7 @@
     }
 
     .badge-kyc {
-        background: var(#e5501b);
+        background: var(--primary);
         color: var(--white);
     }
 
@@ -187,7 +190,7 @@
 
     /* Links */
     .detail-value a {
-        color: var(#e5501b);
+        color: var(--primary);
         text-decoration: none;
         transition: all 0.15s ease-in-out;
         font-weight: 600;
@@ -199,7 +202,7 @@
     }
 
     .text-muted {
-        color: var(#858796);
+        color: var(--gray);
         font-style: italic;
     }
 
@@ -228,13 +231,12 @@
     }
 
     .btn-primary {
-        background: var(#e5501b);
+        background: var(--primary);
         color: var(--white);
     }
 
     .btn-primary:hover {
-        background: #cc4517;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        background: var(#d26c45);
         transform: translateY(-1px);
     }
 
@@ -266,14 +268,14 @@
 
     .btn-outline:hover {
         background: var(#f8f9fc);
-        border-color: var(#e5501b);
-        color: var(#e5501b);
+        border-color: var(--primary);
+        color: var(--primary);
     }
 
     /* Info Box */
     .info-box {
         background: var(#f8f9fc);
-        border-left: 4px solid var(#e5501b);
+        border-left: 4px solid var(--primary);
         padding: 1rem;
         border-radius: 0.35rem;
         margin-top: 1rem;
@@ -289,30 +291,30 @@
     }
 
     .info-box-content {
-        color: var(#858796);
+        color: var(--gray);
         font-size: 0.875rem;
         line-height: 1.6;
     }
 
     /* Responsive */
     @@media (max-width: 768px) {
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 
-        .detail-grid {
-            grid-template-columns: 1fr;
-        }
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
 
-        .action-buttons {
-            flex-direction: column;
-        }
+    .action-buttons {
+        flex-direction: column;
+    }
 
-        .btn {
-            width: 100%;
-            justify-content: center;
-        }
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
     }
 
     /* Map Link Styling */
@@ -324,18 +326,17 @@
         background: var(#f8f9fc);
         border: 1px solid var(--border);
         border-radius: 0.35rem;
-        color: var(#e5501b);
+        color: var(--primary);
         text-decoration: none;
         font-weight: 600;
         transition: all 0.15s ease-in-out;
     }
 
     .map-link:hover {
-        background: var(#e5501b);
-        border-color: var(#e5501b);
+        background: var(--primary);
+        border-color: var(--primary);
         color: var(--white);
         transform: translateY(-1px);
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
 
     /* Stats Overview */
@@ -362,14 +363,14 @@
 
     .stat-mini-icon {
         font-size: 1.5rem;
-        color: var(#e5501b);
+        color: var(--primary);
         margin-bottom: 0.5rem;
     }
 
     .stat-mini-label {
         font-size: 0.7rem;
         text-transform: uppercase;
-        color: var(#858796);
+        color: var(--gray);
         letter-spacing: 0.5px;
         font-weight: 700;
     }
@@ -380,13 +381,45 @@
         color: var(--text);
         margin-top: 0.25rem;
     }
+    .doc-checklist {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .doc-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .doc-item label {
+        font-weight: 600;
+    }
+    .doc-item .desc {
+        font-size: 0.85em;
+        color: #666;
+    }
+    .doc-item .view-link {
+        margin-left: auto;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .doc-item .missing {
+        color: #c0392b;
+        margin-left: auto;
+    }
+
 </style>
 
 <div class="page-header">
     <h1>Chi Tiết Cửa Hàng</h1>
-    <a asp-area="Admin" asp-controller="Store" asp-action="Index" class="btn-back">
-        Quay lại danh sách
-    </a>
+    <div>
+        <a id="btnEditStore" data-id="@Model.Store.Id" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Chỉnh sửa thông tin
+        </a>
+        <a asp-area="Admin" asp-controller="Store" asp-action="Index" class="btn-back">
+            Quay lại danh sách
+        </a>
+    </div>
 </div>
 
 <!-- Quick Stats -->
@@ -442,15 +475,19 @@
                     { 
                         <span class="badge badge-pending">Chờ duyệt</span> 
                     }
+                    else if (Model.Store.Status == StatusValue.InActive)
+                    { 
+                        <span class="badge badge-pending">Không hoạt động</span> 
+                    }
                     else
                     { 
-                        <span class="badge badge-inactive">Ngừng hoạt động</span> 
+                        <span class="badge badge-inactive">Không rõ</span> 
                     }
                 </div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">KYC Level</div>
-                <div class="detail-value"><span class="badge badge-kyc">Level @Model.Store.KycLevel</span></div>
+                <div class="detail-value"><span class="badge badge-kyc">@Model.Store.KycLevel</span></div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Đã xác minh</div>
@@ -597,7 +634,7 @@
                             }
                         }
                     </div>
-                    <span>@($"{Model.Store.RatingAvg:F1}") / 5 (@Model.Store.RatingCount lượt)</span>
+                    <span>@($"{Model.Store.RatingAvg:F1}") / 5 (@Model.ReviewCount lượt)</span>
                     <a asp-area="Admin" asp-controller="Store" asp-action="GetFeedbacksByStore" asp-route-storeId="@Model.Store.Id" style="margin-left: 0.5rem;">Xem đánh giá <i class="fas fa-chevron-right"></i></a>
                 </div>
             </div>
@@ -621,28 +658,637 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="action-buttons">
-            <a asp-area="Admin" asp-controller="Store" asp-action="Detail" asp-route-id="@Model.Store.Id" class="btn btn-primary">
-                <i class="fas fa-edit"></i> Chỉnh sửa thông tin
-            </a>
-            @if (Model.Store.IsVerified)
+        @* <div class="action-buttons"> *@
+        @*      *@
+        @*     <button type="button" class="btn btn-outline"> *@
+        @*         <i class="fas fa-history"></i> Xem lịch sử hoạt động *@
+        @*     </button> *@
+        @*     <button type="button" class="btn btn-outline"> *@
+        @*         <i class="fas fa-file-alt"></i> Xuất báo cáo *@
+        @*     </button> *@
+        @* </div> *@
+    </div>
+</div>
+
+<style>
+    :root {
+        --success: #1cc88a;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --info: #36b9cc;
+        --text: #5a5c69;
+        #858796: #858796;
+        --border: #e3e6f0;
+        #f8f9fc: #f8f9fc;
+        --white: #ffffff;
+        --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    /* Card Styles */
+    .card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        box-shadow: var(--shadow);
+        margin-top: 1.25rem;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+
+    .card-header {
+        background: linear-gradient(180deg, var(#e5501b) 0%, var( #d26c45) 100%);
+        padding: 0.75rem 1.25rem;
+        border-bottom: none;
+        border-radius: 0.35rem 0.35rem 0 0;
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body {
+        padding: 1.25rem;
+    }
+
+    /* Detail Grid */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .detail-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(#858796);
+    }
+
+    .detail-value {
+        font-size: 0.875rem;
+        color: var(--text);
+        font-weight: 600;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.875rem;
+        border-radius: 10rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pending {
+        background: rgba(246, 194, 62, 0.15);
+        color: var(--warning);
+        border: 1px solid var(--warning);
+    }
+
+    .status-approved {
+        background: rgba(28, 200, 138, 0.15);
+        color: var(--success);
+        border: 1px solid var(--success);
+    }
+
+    .status-rejected {
+        background: rgba(231, 74, 59, 0.15);
+        color: var(--danger);
+        border: 1px solid var(--danger);
+    }
+
+    .status-changes {
+        background: rgba(54, 185, 204, 0.15);
+        color: var(--info);
+        border: 1px solid var(--info);
+    }
+
+    /* Empty State */
+    .empty-kyc {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: var(#f8f9fc);
+        border-radius: 0.35rem;
+        border: 2px dashed var(--border);
+    }
+
+    .empty-kyc i {
+        font-size: 3rem;
+        color: var(#858796);
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+
+    .empty-kyc p {
+        color: var(#858796);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* Section Divider */
+    hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 1.5rem 0;
+    }
+
+    /* Section Title */
+    h6 {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    h6 i {
+        color: var(#e5501b);
+    }
+
+    /* Document Checklist */
+    .doc-checklist {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .doc-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        background: var(#f8f9fc);
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .doc-item:hover {
+        background: var(--white);
+        border-color: var(#e5501b);
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .doc-item input[type="checkbox"] {
+        width: 1.125rem;
+        height: 1.125rem;
+        cursor: default;
+        accent-color: var(--success);
+    }
+
+    .doc-item label {
+        font-weight: 700;
+        color: var(--text);
+        font-size: 0.875rem;
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    .doc-item .desc {
+        color: var(#858796);
+        font-size: 0.75rem;
+        font-style: italic;
+        flex-grow: 1;
+    }
+
+    .doc-item .view-link {
+        color: var(#e5501b);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.15s ease-in-out;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        background: var(--white);
+        border: 1px solid var(#e5501b);
+        border-radius: 0.35rem;
+    }
+
+    /*.doc-item .view-link:hover {*/
+    /*    background: var(#e5501b);*/
+    /*    color: var(--white);*/
+    /*    transform: translateY(-1px);*/
+    /*    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);*/
+    /*}*/
+
+    .doc-item .missing {
+        font-size: 1.25rem;
+        color: var(--danger);
+    }
+
+    /* Admin Note Box */
+    .admin-note-box {
+        background: rgba(229, 80, 27, 0.05);
+        border-left: 4px solid var(#e5501b);
+        padding: 1rem;
+        border-radius: 0.35rem;
+        margin-top: 1rem;
+    }
+
+    .admin-note-box .detail-label {
+        color: var(#e5501b);
+        margin-bottom: 0.5rem;
+    }
+
+    .admin-note-box .detail-value {
+        color: var(--text);
+        font-weight: 400;
+        line-height: 1.6;
+        font-style: italic;
+    }
+
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+        text-decoration: none;
+        margin-top: 1rem;
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: var(--white);
+    }
+
+    .btn-success:hover {
+        background: #17a673;
+        transform: translateY(-1px);
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .btn-danger {
+        background: var(--danger);
+        color: var(--white);
+    }
+
+    .btn-danger:hover {
+        background: #c23321;
+        transform: translateY(-1px);
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .btn-warning {
+        background: var(--warning);
+        color: var(--white);
+    }
+
+    .btn-warning:hover {
+        background: #dda20a;
+        transform: translateY(-1px);
+    }
+
+    .btn-outline {
+        background: var(--white);
+        border: 1px solid var(--border);
+        color: var(--text);
+    }
+
+    .btn-outline:hover {
+        background: var(#f8f9fc);
+        border-color: var(#e5501b);
+        color: var(#e5501b);
+    }
+
+    /* Action Buttons Group */
+    .action-buttons-group {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+    }
+
+    /* KYC Timeline */
+    .kyc-timeline {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: var(#f8f9fc);
+        border-radius: 0.35rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-step {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.75rem;
+        color: var(#858796);
+    }
+
+    .timeline-step.active {
+        color: var(#e5501b);
+        font-weight: 700;
+    }
+
+    .timeline-step i {
+        font-size: 1rem;
+    }
+
+    .timeline-arrow {
+        color: var(--border);
+        margin: 0 0.25rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .doc-item {
+            flex-wrap: wrap;
+        }
+
+        .doc-item label {
+            flex-basis: 100%;
+        }
+
+        .action-buttons-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="card mt-4">
+    <div class="card-header"><i class="fas fa-id-card"></i> Hồ Sơ KYC</div>
+    <div class="card-body">
+        @if (Model.KycSubmission == null)
+        {
+            <div class="empty-kyc">
+                <i class="fas fa-folder-open"></i>
+                <p>Chưa có hồ sơ KYC nào được gửi. Vui lòng yêu cầu cửa hàng hoàn tất quy trình xác minh.</p>
+            </div>
+        }
+        else
+        {
+            <!-- KYC Timeline -->
+            @* <div class="kyc-timeline"> *@
+            @*     <div class="timeline-step @(Model.KycSubmission.Status != DataAccessLayer.Enums.KycStatus.Pending ? "active" : "")"> *@
+            @*         <i class="fas fa-upload"></i> *@
+            @*         <span>Đã gửi</span> *@
+            @*     </div> *@
+            @*     <i class="fas fa-chevron-right timeline-arrow"></i> *@
+            @*     <div class="timeline-step @(Model.KycSubmission.ReviewedAt.HasValue ? "active" : "")"> *@
+            @*         <i class="fas fa-search"></i> *@
+            @*         <span>Đang xét duyệt</span> *@
+            @*     </div> *@
+            @*     <i class="fas fa-chevron-right timeline-arrow"></i> *@
+            @*     <div class="timeline-step @(Model.KycSubmission.Status == DataAccessLayer.Enums.KycStatus.Approved ? "active" : "")"> *@
+            @*         <i class="fas fa-check-circle"></i> *@
+            @*         <span>Hoàn tất</span> *@
+            @*     </div> *@
+            @* </div> *@
+
+            <!-- KYC Status Info -->
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Trạng thái hồ sơ</div>
+                    <div class="detail-value">
+                        @{
+                            var statusClass = Model.KycSubmission.Status switch
+                            {
+                                DataAccessLayer.Enums.KycStatus.Pending => "status-pending",
+                                DataAccessLayer.Enums.KycStatus.NeedChanges => "status-changes",
+                                DataAccessLayer.Enums.KycStatus.Approved => "status-approved",
+                                DataAccessLayer.Enums.KycStatus.Rejected => "status-rejected",
+                                _ => ""
+                            };
+
+                            var statusIcon = Model.KycSubmission.Status switch
+                            {
+                                DataAccessLayer.Enums.KycStatus.Pending => "fa-clock",
+                                DataAccessLayer.Enums.KycStatus.NeedChanges => "fa-edit",
+                                DataAccessLayer.Enums.KycStatus.Approved => "fa-check-circle",
+                                DataAccessLayer.Enums.KycStatus.Rejected => "fa-times-circle",
+                                _ => "fa-question-circle"
+                            };
+                        }
+                        <span class="status-badge @statusClass">
+                            <i class="fas @statusIcon"></i>
+                            @Model.KycSubmission.Status.ToDisplayString()
+                        </span>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Ngày gửi hồ sơ</div>
+                    <div class="detail-value">
+                        <i class="far fa-calendar-alt" style="color: var(#e5501b); margin-right: 0.25rem;"></i>
+                        @Model.KycSubmission.SubmittedAt.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                </div>
+
+                @if (Model.KycSubmission.ReviewedAt.HasValue)
+                {
+                    <div class="detail-item">
+                        <div class="detail-label">Ngày xét duyệt</div>
+                        <div class="detail-value">
+                            <i class="far fa-calendar-check" style="color: var(--success); margin-right: 0.25rem;"></i>
+                            @Model.KycSubmission.ReviewedAt?.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+                }
+
+                <div class="detail-item">
+                    <div class="detail-label">Tổng số tài liệu</div>
+                    <div class="detail-value">
+                        <i class="fas fa-file-alt" style="color: var(#e5501b); margin-right: 0.25rem;"></i>
+                        @Model.KycSubmission.Documents.Count / @KycDocumentConstant.Types.Count tài liệu
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.KycSubmission.AdminNote))
             {
-                <button type="button" class="btn btn-danger">
-                    <i class="fas fa-ban"></i> Hủy xác minh
-                </button>
+                <div class="admin-note-box">
+                    <div class="detail-label">
+                        <i class="fas fa-comment-dots"></i> Ghi chú của quản trị viên
+                    </div>
+                    <div class="detail-value">@Model.KycSubmission.AdminNote</div>
+                </div>
             }
-            else
-            {
-                <button type="button" class="btn btn-success">
-                    <i class="fas fa-check"></i> Xác minh cửa hàng
-                </button>
-            }
-            @* <button type="button" class="btn btn-outline"> *@
-            @*     <i class="fas fa-history"></i> Xem lịch sử hoạt động *@
-            @* </button> *@
-            @* <button type="button" class="btn btn-outline"> *@
-            @*     <i class="fas fa-file-alt"></i> Xuất báo cáo *@
-            @* </button> *@
+
+            <hr />
+
+            <!-- Document List -->
+            <h6><i class="fas fa-file-alt"></i> Danh Sách Tài Liệu KYC</h6>
+            <div class="doc-checklist mt-3">
+                @foreach (var doc in KycDocumentConstant.Types)
+                {
+                    var hasFile = Model.KycSubmission.Documents.Any(d => d.DocType == doc.Key);
+                    <div class="doc-item">
+                        <input type="checkbox" disabled @(hasFile ? "checked" : "") />
+                        <label>@doc.Key</label>
+                        <span class="desc">(@doc.Value.Description)</span>
+
+                        @if (hasFile)
+                        {
+                            var file = Model.KycSubmission.Documents.First(d => d.DocType == doc.Key);
+                            <a href="@Url.Content(file.FilePath)" target="_blank" class="view-link">
+                                <i class="fas fa-eye"></i> Xem tài liệu
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons-group">
+                @if (Model.KycSubmission.Status == DataAccessLayer.Enums.KycStatus.Pending)
+                {
+                    <button type="button" class="btn btn-success">
+                        <i class="fas fa-check"></i> Phê duyệt hồ sơ
+                    </button>
+                    <button type="button" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Từ chối hồ sơ
+                    </button>
+                    @* <button type="button" class="btn btn-warning"> *@
+                    @*     <i class="fas fa-edit"></i> Yêu cầu chỉnh sửa *@
+                    @* </button> *@
+                }
+                else if (Model.KycSubmission.Status == DataAccessLayer.Enums.KycStatus.Approved)
+                {
+                    @if (Model.Store.IsVerified)
+                    {
+                        <button type="button" class="btn btn-danger">
+                            <i class="fas fa-ban"></i> Hủy xác minh cửa hàng
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-success">
+                            <i class="fas fa-check-circle"></i> Xác minh cửa hàng
+                        </button>
+                    }
+                }
+                
+                @* <button type="button" class="btn btn-outline"> *@
+                @*     <i class="fas fa-download"></i> Tải xuống hồ sơ *@
+                @* </button> *@
+                @* <button type="button" class="btn btn-outline"> *@
+                @*     <i class="fas fa-history"></i> Xem lịch sử thay đổi *@
+                @* </button> *@
+            </div>
+        }
+    </div>
+</div>
+<div class="modal fade" id="editStoreModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="modalContent">
+            <!-- nội dung partial sẽ được load vào đây -->
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById("btnEditStore").addEventListener("click", function () {
+        const id = this.getAttribute("data-id");
+
+        fetch(`/Admin/Store/Edit/${id}`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById("modalContent").innerHTML = html;
+
+                // Hiển thị modal (Bootstrap 5+)
+                const modal = new bootstrap.Modal(document.getElementById("editStoreModal"));
+                modal.show();
+            })
+            .catch(err => {
+                console.error("Không thể load form chỉnh sửa:", err);
+                alert("Đã xảy ra lỗi khi tải biểu mẫu chỉnh sửa.");
+            });
+    });
+
+    document.addEventListener("submit", async function (e) {
+        const form = e.target;
+        if (form.id !== "editStoreForm") return;
+        e.preventDefault();
+
+        // Xóa lỗi cũ
+        form.querySelectorAll("span.text-danger").forEach(el => el.textContent = "");
+
+        // Lấy các checkbox được chọn
+        const checkboxes = form.querySelectorAll("#serviceTypeCheckboxes input[type='checkbox']:checked");
+        const selected = Array.from(checkboxes).map(c => parseInt(c.value));
+        form.querySelector("#hiddenServiceTypes").value = JSON.stringify(selected);
+
+        const id = form.querySelector("input[name='Id']").value;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(`/Admin/Store/Edit/${id}`, {
+                method: "POST",
+                body: formData
+            });
+
+            const res = await response.json();
+
+            if (res.success) {
+                alert("✅ Cập nhật thành công!");
+                location.reload();
+            } else if (res.errors) {
+                for (const [key, messages] of Object.entries(res.errors)) {
+                    const errorSpan = form.querySelector(`span[data-valmsg-for='${key}']`);
+                    if (errorSpan) errorSpan.textContent = messages.join(", ");
+                }
+            } else if (res.message) {
+                alert(res.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ Lỗi khi gửi dữ liệu.");
+        }
+    });
+
+    function prefillServiceTypes(serviceTypesJson) {
+        try {
+            const selected = JSON.parse(serviceTypesJson || "[]");
+            selected.forEach(id => {
+                const checkbox = document.querySelector(`#serviceTypeCheckboxes input[value='${id}']`);
+                if (checkbox) checkbox.checked = true;
+            });
+        } catch {
+            console.warn("ServiceTypes parse error");
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+        const serviceTypesValue = "@(Model.Store.ServiceTypes ?? "[]")";
+        prefillServiceTypes(serviceTypesValue);
+    });
+</script>
