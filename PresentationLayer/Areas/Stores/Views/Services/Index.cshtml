@@ -2,6 +2,13 @@
 @{
     ViewBag.Title = "Dịch vụ";
     var storeId = (Guid)ViewBag.StoreId;
+    var viPricing = new Dictionary<PricingModel, string> {
+        { PricingModel.Flat, "Cố định" },
+        { PricingModel.PerUnit, "Theo đơn vị" },
+        { PricingModel.Tiered, "Theo bậc giá" },
+        { PricingModel.DimensionBased, "Theo kích thước" },
+        { PricingModel.TimeBased, "Theo thời gian" }
+    };
 }
 <div class="page-head">
     <div class="page-title">Dịch vụ</div>
@@ -31,7 +38,7 @@
                     <td>@(s.Category?.Name ?? "(none)")</td>
                     <td>@s.Unit</td>
                     <td>@s.BasePrice.ToString("#,0")</td>
-                    <td><span class="badge">@s.PricingModel</span></td>
+                    <td><span class="badge">@viPricing[s.PricingModel]</span></td>
                     <td>
                         @if (s.IsActive) { <span class="badge ok">Active</span> }
                         else { <span class="badge warn">Inactive</span> }
