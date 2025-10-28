@@ -26,5 +26,11 @@ namespace DataAccessLayer.Repositoies
             var list = await qry.OrderByDescending(x => x.SubmittedAt).Take(200).ToListAsync();
             return list;
         }
+        
+        public async Task<KycSubmission> GetKycSubmissionByStoreId(Guid storeId)
+        {
+            var qry = _context.KycSubmissions.AsNoTracking();
+            return await qry.Include(k => k.Documents).SingleOrDefaultAsync(x => x.StoreId.Equals(storeId));
+        }
     }
 }

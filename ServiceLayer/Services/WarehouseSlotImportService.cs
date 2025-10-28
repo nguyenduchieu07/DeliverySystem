@@ -179,7 +179,7 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                     LeaseEnd = dto.LeaseEnd,
                     IsBlocked = dto.IsBlocked,
                     ImageUrl = dto.ImageUrl,
-                    Status = StatusValue.Avalavaible
+                    Status = StatusValue.Available
                 };
 
                 _db.WarehouseSlots.Add(entity);

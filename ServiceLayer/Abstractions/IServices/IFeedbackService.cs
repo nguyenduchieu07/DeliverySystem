@@ -10,5 +10,6 @@ namespace ServiceLayer.Abstractions.IServices
     public interface IFeedbackService
     {
         Task<List<Feedback>> GetAllFeedbacksByStoreId(Guid storeId);
+        Task<Feedback> CreateFeedbackAsync(Feedback feedback);
     }
 }

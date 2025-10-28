@@ -169,5 +169,12 @@ namespace ServiceLayer.Services
             await _db.SaveChangesAsync(ct);
             return true;
         }
+
+        public async Task<Quotation> GetByIdAsync(Guid id, CancellationToken ct)
+        {
+            var quotation = await _db.Quotations.FindAsync(id, ct);
+            if (quotation == null) return null;
+            return quotation;
+        }
     }
 }
