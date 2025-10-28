@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Mvc;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Dtos.Quotes;
 
@@ -7,10 +8,12 @@ namespace PresentationLayer.Controllers
     public class QuoteController : Controller
     {
         private readonly IQuotationService _svc;
+        private readonly IFeedbackService _feedbackService;
 
-        public QuoteController(IQuotationService svc)
+        public QuoteController(IQuotationService svc, IFeedbackService feedbackService)
         {
             _svc = svc;
+            _feedbackService =  feedbackService;    
         }
 
         // Bước 1–2: Trang form báo giá (UI theo layout của bạn)
@@ -60,6 +63,33 @@ namespace PresentationLayer.Controllers
         {
             var ok = await _svc.RequestRevisionAsync(vm, ct);
             return ok ? Ok() : BadRequest("Không gửi yêu cầu chỉnh giá được.");
+        }
+
+        public class CreateFeedbackDto
+        {
+            public Guid QuotationId { get; set; }
+            public string Comment { get; set; }
+            public int Rating { get; set; }
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> Feedback([FromBody] CreateFeedbackDto data)
+        {
+            var quotationInfo = await _svc.GetByIdAsync(data.QuotationId, CancellationToken.None);
+            if(quotationInfo == null) return BadRequest("Thông tin báo giá bị thiếu. Tạo thất bại");
+
+            var feedback = new Feedback
+            {
+                Id = Guid.NewGuid(),
+                FromUserId = quotationInfo.CustomerId,
+                ToStoreId = quotationInfo.StoreId,
+                Rating = data.Rating,
+                Comment = data.Comment,
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            var rs = await _feedbackService.CreateFeedbackAsync(feedback);
+            return rs != null ? Ok() : BadRequest("Không gửi được đánh giá");
         }
 
     }

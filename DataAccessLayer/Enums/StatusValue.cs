@@ -12,7 +12,7 @@ namespace DataAccessLayer.Enums
         Canceled,
         Rejected,       
         Approved,
-        Avalavaible,
+        Available,
         Reserved,
         InUse,
         Maintenance,

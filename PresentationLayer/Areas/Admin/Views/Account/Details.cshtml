@@ -1,0 +1,592 @@
+﻿@using DataAccessLayer.Entities
+@using DataAccessLayer.Enums
+@{
+    var scope = (string)ViewBag.Scope;
+    ViewBag.Title = scope == nameof(TargetType.Customer)
+        ? "Chi tiết tài khoản khách hàng"
+        : "Chi tiết cửa hàng";
+}
+
+<div class="container-fluid">
+@if (scope == nameof(TargetType.Customer))
+{
+    var user = (User)Model;
+
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            Chi tiết tài khoản khách hàng
+        </h1>
+        <!-- Back Button -->
+        <div class="text-center">
+            <a asp-area="Admin" asp-controller="Account" asp-action="Index" class="btn btn-secondary btn-icon-split">
+                <span class="icon text-white-50">
+                    <i class="fas fa-arrow-left"></i>
+                </span>
+                <span class="text">Quay lại danh sách</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="row">
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body text-center">
+                    <div class="profile-avatar mb-3">
+                        <div class="avatar-wrapper">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-weight-bold text-gray-800 mb-2">@user.UserName</h4>
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-envelope fa-sm"></i> @user.Email
+                    </p>
+
+                    <div class="mb-3">
+                        @if (user.Status == StatusValue.Active)
+                        {
+                            <span class="badge badge-success badge-lg">
+                                <i class="fas fa-check-circle"></i> Hoạt động
+                            </span>
+                        }
+                        else if (user.Status == StatusValue.Ban)
+                        {
+                            <span class="badge badge-danger badge-lg">
+                                <i class="fas fa-ban"></i> Bị cấm
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-warning badge-lg">
+                                <i class="fas fa-clock"></i> Chờ xác minh
+                            </span>
+                        }
+                    </div>
+
+                    <div class="border-top pt-3">
+                        @if (user.EmailConfirmed)
+                        {
+                            <div class="d-flex align-items-center justify-content-center text-success mb-2">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <span class="font-weight-bold">Email đã xác nhận</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center text-danger mb-2">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                <span class="font-weight-bold">Email chưa xác nhận</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 col-lg-7">
+            <!-- Statistics Row -->
+            <div class="row">
+                <div class="col-xl-4 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Cửa hàng
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @(user.Stores?.Count() ?? 0)
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-store fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Phản hồi
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @(user.Feedbacks?.Count() ?? 0)
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-comment-dots fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Ngày tham gia
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @((DateTime.Now - user.CreatedAt).Days) ngày
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Information -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Thông tin chi tiết
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <tbody>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700" width="35%">
+                                    <i class="fas fa-user-tag text-primary"></i> Tên người dùng
+                                </td>
+                                <td class="text-gray-800">@user.UserName</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700">
+                                    <i class="fas fa-envelope text-success"></i> Email
+                                </td>
+                                <td class="text-gray-800">@user.Email</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700">
+                                    <i class="fas fa-calendar-plus text-info"></i> Ngày tạo
+                                </td>
+                                <td class="text-gray-800">@user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700">
+                                    <i class="fas fa-sync-alt text-warning"></i> Cập nhật gần nhất
+                                </td>
+                                <td class="text-gray-800">@user.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    var store = (Store)Model;
+
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-store text-primary"></i> Chi tiết cửa hàng
+        </h1>
+    </div>
+
+    <!-- Store Profile Card -->
+    <div class="row">
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body text-center">
+                    <div class="profile-avatar store-avatar mb-3">
+                        <div class="avatar-wrapper">
+                            <i class="fas fa-store"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-weight-bold text-gray-800 mb-2">@store.StoreName</h4>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-user-tie fa-sm"></i> Owner: @store.OwnerUserId
+                    </p>
+                    <p class="mb-3">
+                        <span class="text-warning font-weight-bold">
+                            <i class="fas fa-star"></i> @store.RatingAvg.ToString("F1")
+                        </span>
+                        <span class="text-muted small">(@store.RatingCount đánh giá)</span>
+                    </p>
+
+                    <div class="mb-3">
+                        @if (store.Status == StatusValue.Active)
+                        {
+                            <span class="badge badge-success badge-lg mr-1 mb-1">
+                                <i class="fas fa-check-circle"></i> Hoạt động
+                            </span>
+                        }
+                        else if (store.Status == StatusValue.Ban)
+                        {
+                            <span class="badge badge-danger badge-lg mr-1 mb-1">
+                                <i class="fas fa-ban"></i> Bị cấm
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-warning badge-lg mr-1 mb-1">
+                                <i class="fas fa-clock"></i> Chờ xác minh
+                            </span>
+                        }
+
+                        @if (store.IsVerified)
+                        {
+                            <span class="badge badge-info badge-lg mr-1 mb-1">
+                                <i class="fas fa-check-double"></i> Đã xác minh
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrEmpty(store.KycLevel))
+                        {
+                            <span class="badge badge-primary badge-lg mr-1 mb-1">
+                                <i class="fas fa-shield-alt"></i> KYC: @store.KycLevel
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 col-lg-7">
+            <!-- Statistics Row -->
+            <div class="row">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Kho hàng
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @(store.Warehouses?.Count() ?? 0)
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-warehouse fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Đơn hàng
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @(store.Orders?.Count() ?? 0)
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Dịch vụ
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @(store.Services?.Count() ?? 0)
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-concierge-bell fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Đánh giá TB
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        @store.RatingAvg.ToString("F1") ⭐
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-star fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Information -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Thông tin chi tiết
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <tbody>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700" width="35%">
+                                    <i class="fas fa-store-alt text-primary"></i> Tên cửa hàng
+                                </td>
+                                <td class="text-gray-800">@store.StoreName</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700">
+                                    <i class="fas fa-user-tie text-success"></i> Chủ sở hữu
+                                </td>
+                                <td class="text-gray-800">@store.OwnerUserId</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700">
+                                    <i class="fas fa-shield-alt text-info"></i> Mức KYC
+                                </td>
+                                <td class="text-gray-800">@(store.KycLevel ?? "Chưa xác minh")</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700">
+                                    <i class="fas fa-check-circle text-warning"></i> Trạng thái xác minh
+                                </td>
+                                <td class="text-gray-800">@(store.IsVerified ? "Đã xác minh" : "Chưa xác minh")</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700">
+                                    <i class="fas fa-calendar-plus text-danger"></i> Ngày tạo
+                                </td>
+                                <td class="text-gray-800">@store.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold text-gray-700">
+                                    <i class="fas fa-sync-alt text-secondary"></i> Cập nhật gần nhất
+                                </td>
+                                <td class="text-gray-800">@(store.UpdatedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+</div>
+
+<style>
+    /* === SB Admin 2 Theme Colors === */
+    :root {
+        --primary: #4e73df;
+        --success: #1cc88a;
+        --info: #36b9cc;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --secondary: #858796;
+        --gray-800: #5a5c69;
+        --gray-700: #6e707e;
+        --gray-300: #dddfeb;
+    }
+
+    /* Typography */
+    .text-gray-800 { color: #5a5c69 !important; }
+    .text-gray-700 { color: #6e707e !important; }
+
+    /* Profile Avatar */
+    .profile-avatar {
+        display: inline-block;
+    }
+
+    .avatar-wrapper {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #ff6600 10%, #ff6600 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .store-avatar .avatar-wrapper {
+        background: linear-gradient(180deg, #ff6600 10%, #dda20a 100%);
+    }
+
+    .avatar-wrapper i {
+        font-size: 3.5rem;
+        color: #fff;
+    }
+
+    /* Cards */
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+    }
+
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .shadow {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+    }
+
+    /* Border Left Cards */
+    .border-left-primary {
+        border-left: 0.25rem solid #ff6600 !important;
+    }
+
+    .border-left-success {
+        border-left: 0.25rem solid #ff6600 !important;
+    }
+
+    .border-left-info {
+        border-left: 0.25rem solid #ff6600 !important;
+    }
+
+    .border-left-warning {
+        border-left: 0.25rem solid #ff6600 !important;
+    }
+
+    /* Text Colors */
+    .text-primary { color: #ff6600 !important; }
+    .text-success { color: #ff6600 !important; }
+    .text-info { color: #ff6600 !important; }
+    .text-warning { color: #ff6600 !important; }
+    .text-danger { color: #ff6600 !important; }
+    .text-secondary { color: #ff6600 !important; }
+
+    /* Badges */
+    .badge-lg {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.75rem;
+        border-radius: 10rem;
+    }
+
+    .badge-success {
+        background-color: #1cc88a;
+    }
+
+    .badge-danger {
+        background-color: #e74a3b;
+    }
+
+    .badge-warning {
+        background-color: #f6c23e;
+        color: #fff;
+    }
+
+    .badge-info {
+        background-color: #36b9cc;
+    }
+
+    .badge-primary {
+        background-color: #4e73df;
+    }
+
+    /* Buttons */
+    .btn-secondary {
+        background-color: #ff6600;
+        border-color: #ff6600;
+        color: #fff;
+    }
+
+    .btn-secondary:hover {
+        background-color: #ff6600;
+        border-color: #ff6600;
+    }
+
+    .btn-icon-split {
+        padding: 0;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: stretch;
+        border-radius: 0.35rem;
+    }
+
+    .btn-icon-split .icon {
+        background: rgba(0, 0, 0, 0.15);
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+    }
+
+    .btn-icon-split .text {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+    }
+
+    /* Table */
+    .table-borderless tbody tr {
+        border-bottom: 1px solid #f8f9fc;
+    }
+
+    .table-borderless tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .table-borderless td {
+        padding: 0.75rem;
+        vertical-align: middle;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+    .avatar-wrapper {
+        width: 100px;
+        height: 100px;
+    }
+
+    .avatar-wrapper i {
+        font-size: 2.5rem;
+    }
+
+    .table-responsive table {
+        font-size: 0.875rem;
+    }
+
+    .table-responsive td {
+        display: block;
+        width: 100%;
+        padding: 0.5rem;
+    }
+
+    .table-responsive tr {
+        margin-bottom: 1rem;
+        display: block;
+        border-bottom: 2px solid #e3e6f0;
+    }
+    }
+</style>

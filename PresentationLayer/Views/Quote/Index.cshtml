@@ -679,6 +679,29 @@
     </div>
 </div>
 
+<div id="writeFeedbackModal" class="modal">
+    <div class="modal-content" style="max-width: 500px; padding: 20px;">
+        <h3>💬 Viết đánh giá</h3>
+        <p style="color: #666; margin-bottom: 10px;">Chọn đánh giá:</p>
+        <div id="feedbackRating" style="display: flex; gap: 5px; margin-bottom: 15px;">
+            <!-- Stars will be clickable -->
+            <span class="star" data-value="1" style="font-size: 1.5rem; cursor: pointer;">☆</span>
+            <span class="star" data-value="2" style="font-size: 1.5rem; cursor: pointer;">☆</span>
+            <span class="star" data-value="3" style="font-size: 1.5rem; cursor: pointer;">☆</span>
+            <span class="star" data-value="4" style="font-size: 1.5rem; cursor: pointer;">☆</span>
+            <span class="star" data-value="5" style="font-size: 1.5rem; cursor: pointer;">☆</span>
+        </div>
+
+        <p style="color: #666; margin-bottom: 10px;">Nhập nhận xét:</p>
+        <textarea id="writeFeedbackComment" class="form-control" rows="5" placeholder="Ví dụ: Dịch vụ tốt, nhân viên nhiệt tình"></textarea>
+
+        <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <button class="submit-btn" style="flex: 1; background: #ccc;" onclick="closeFeedbackModal()">Hủy</button>
+            <button class="submit-btn" style="flex: 1; background: #667eea; color: #fff;" onclick="submitFeedback()">Gửi đánh giá</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>

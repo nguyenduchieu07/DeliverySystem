@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DataAccessLayer.Entities;
 
 namespace ServiceLayer.Abstractions.IServices
 {
@@ -13,5 +14,6 @@ namespace ServiceLayer.Abstractions.IServices
         Task<bool> CreateTempReservationAsync(HoldTempVm vm, CancellationToken ct);
         Task<bool> AcceptQuotationAsync(AcceptQuoteVm vm, CancellationToken ct);
         Task<bool> RequestRevisionAsync(RequestRevisionVm vm, CancellationToken ct);
+        Task<Quotation> GetByIdAsync(Guid id, CancellationToken ct);
     }
 }

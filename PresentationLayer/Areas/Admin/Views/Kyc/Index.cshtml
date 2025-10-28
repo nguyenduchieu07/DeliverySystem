@@ -1,4 +1,5 @@
-﻿@using PresentationLayer.Models
+﻿@using DataAccessLayer.Constants
+@using PresentationLayer.Models
 @using DataAccessLayer.Enums
 @model KycSubmissionIndexViewModel;
 @{
@@ -8,7 +9,6 @@
 <style>
     :root {
         --brand: #e5501b;
-        --brand-light: #ffb380;
         --brand-dark: #d26c45;
         --text: #5a5c69;
         --text-light: #858796;
@@ -19,7 +19,7 @@
         --light: #f8f9fc;
     }
 
-    /* === PAGE HEADER === */
+    /* Page Header */
     .page-heading {
         display: flex;
         align-items: center;
@@ -27,60 +27,17 @@
         margin-bottom: 1.5rem;
     }
 
-        .page-heading h1 {
-            font-size: 1.75rem;
-            font-weight: 400;
-            color: var(--text);
-            margin: 0;
-        }
-
-    .btn-primary {
-        background-color: var(--brand);
-        border-color: var(--brand);
+    .page-heading h1 {
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: var(--text);
+        margin: 0;
     }
 
-        .btn-primary:hover {
-            background-color: var(--brand-dark);
-            border-color: var(--brand-dark);
-        }
-
-    /* === TABS === */
-    .tabs {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .tab {
-        padding: 0.75rem 1.5rem;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        transition: all 0.2s ease;
-        font-weight: 500;
-        color: var(--text-light);
-        font-size: 0.875rem;
-    }
-
-        .tab a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .tab:hover {
-            color: var(--brand);
-            background: rgba(229, 80, 27, 0.05);
-        }
-
-        .tab.active {
-            color: var(--brand);
-            border-bottom-color: var(--brand);
-            background: rgba(229, 80, 27, 0.05);
-        }
-
-    /* === ALERTS === */
+    /* Alerts */
     .alert {
         display: flex;
+        width: 100%;
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
@@ -97,7 +54,6 @@
             opacity: 0;
             transform: translateY(-10px);
         }
-
         to {
             opacity: 1;
             transform: translateY(0);
@@ -123,16 +79,15 @@
         font-size: 1.25rem;
         cursor: pointer;
         padding: 0 0.375rem;
-        transition: opacity 0.2s ease;
         opacity: 0.7;
         line-height: 1;
     }
 
-        .alert .close:hover {
-            opacity: 1;
-        }
+    .alert .close:hover {
+        opacity: 1;
+    }
 
-    /* === CARD === */
+    /* Card */
     .card {
         background: #fff;
         border: 1px solid var(--border);
@@ -141,120 +96,61 @@
         overflow: hidden;
     }
 
-        .card .card-header {
-            background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%);
-            padding: 1rem 1.25rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            border-bottom: none;
-        }
-
-            .card .card-header h3 {
-                color: #fff;
-                margin: 0;
-                font-size: 1rem;
-                font-weight: 700;
-            }
-
-    /* === FILTERS === */
-    .filters {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-        align-items: center;
+    .card-header {
+        background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%);
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-        .filters select,
-        .filters .input {
-            padding: 0.625rem 1rem;
-            border: none;
-            border-radius: 0.35rem;
-            font-size: 0.875rem;
-            background: rgba(255, 255, 255, 0.95);
-            transition: all 0.2s;
-        }
-
-        .filters select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            padding-right: 2.25rem;
-            min-width: 11.25rem;
-        }
-
-            .filters select:focus,
-            .filters .input:focus {
-                outline: none;
-                background: #fff;
-                box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.3);
-            }
-
-        .filters .btn {
-            padding: 0.625rem 1.5rem;
-            background: #fff;
-            color: var(--brand);
-            border: none;
-            border-radius: 0.35rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-            font-size: 0.875rem;
-        }
-
-            .filters .btn:hover {
-                background: rgba(255, 255, 255, 0.9);
-                box-shadow: 0 0.125rem 0.25rem 0 rgba(58, 59, 69, 0.2);
-            }
-
-    /* === TABLE === */
-    .card .card-body {
-        padding: 0;
-        overflow-x: auto;
-    }
-
-    .kyc-table {
-        width: 100%;
-        border-collapse: collapse;
+    .card-header h3 {
+        color: #fff;
         margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
     }
 
-        .kyc-table thead {
-            background: var(--light);
-            border-bottom: 1px solid var(--border);
-        }
+    .card-body {
+        padding: 1.25rem;
+    }
 
-        .kyc-table th {
-            padding: 1rem 1.25rem;
-            text-align: left;
-            font-weight: 700;
-            font-size: 0.7rem;
-            color: var(--text);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
+    /* Table */
+    .kyc-table {
+        width: 100% !important;
+        border-collapse: collapse;
+    }
 
-        .kyc-table tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: background 0.15s ease;
-        }
+    .kyc-table thead {
+        background: var(--light);
+        border-bottom: 1px solid var(--border);
+    }
 
-            .kyc-table tbody tr:hover {
-                background: var(--light);
-            }
+    .kyc-table th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.7rem;
+        color: var(--text);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 
-        .kyc-table td {
-            padding: 1.25rem;
-            color: var(--text);
-            font-size: 0.875rem;
-            vertical-align: top;
-        }
+    .kyc-table tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.15s ease;
+    }
 
-    /* === STORE INFO === */
+    .kyc-table tbody tr:hover {
+        background: var(--light);
+    }
+
+    .kyc-table td {
+        padding: 1.25rem;
+        color: var(--text);
+        font-size: 0.875rem;
+        vertical-align: top;
+    }
+
+    /* Store Info */
     .store-name {
         font-weight: 600;
         color: #3a3b45;
@@ -267,13 +163,13 @@
         color: var(--text-light);
     }
 
-    /* === DATE === */
+    /* Date */
     .date-time {
         color: var(--text-light);
         font-size: 0.8125rem;
     }
 
-    /* === DOCUMENTS === */
+    /* Documents */
     .doc-list {
         display: flex;
         flex-direction: column;
@@ -294,13 +190,13 @@
         width: fit-content;
     }
 
-        .doc-item:hover {
-            background: rgba(229, 80, 27, 0.2);
-            transform: translateX(2px);
-            color: var(--brand-dark);
-        }
+    .doc-item:hover {
+        background: rgba(229, 80, 27, 0.2);
+        transform: translateX(2px);
+        color: var(--brand-dark);
+    }
 
-    /* === CHIPS === */
+    /* Chips */
     .chip {
         display: inline-block;
         padding: 0.375rem 0.875rem;
@@ -311,22 +207,22 @@
         letter-spacing: 0.3px;
     }
 
-        .chip.ok {
-            background: #d4edda;
-            color: #1cc88a;
-        }
+    .chip.ok {
+        background: #d4edda;
+        color: var(--success);
+    }
 
-        .chip.danger {
-            background: #f8d7da;
-            color: #e74a3b;
-        }
+    .chip.danger {
+        background: #f8d7da;
+        color: var(--danger);
+    }
 
-        .chip.pending {
-            background: #fff3cd;
-            color: #f6c23e;
-        }
+    .chip.pending {
+        background: #fff3cd;
+        color: var(--warning);
+    }
 
-    /* === FORMS === */
+    /* Forms */
     .form-group {
         display: flex;
         flex-direction: column;
@@ -348,23 +244,23 @@
         background: #fff;
     }
 
-        .input:focus {
-            outline: none;
-            border-color: var(--brand);
-            box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
-        }
+    .input:focus {
+        outline: none;
+        border-color: var(--brand);
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
+    }
 
-        .input:disabled {
-            background: #e9ecef;
-            color: #6c757d;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
+    .input:disabled {
+        background: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
 
-        .input.sm {
-            padding: 0.4375rem 0.625rem;
-            font-size: 0.75rem;
-        }
+    .input.sm {
+        padding: 0.4375rem 0.625rem;
+        font-size: 0.75rem;
+    }
 
     .btn {
         padding: 0.5rem 1rem;
@@ -377,68 +273,207 @@
         white-space: nowrap;
     }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn.success {
-            background: var(--success);
-            color: #fff;
-        }
-
-            .btn.success:hover:not(:disabled) {
-                background: #17a673;
-                box-shadow: 0 0.125rem 0.25rem 0 rgba(28, 200, 138, 0.5);
-            }
-
-        .btn.warn {
-            background: var(--warning);
-            color: #212529;
-        }
-
-            .btn.warn:hover:not(:disabled) {
-                background: #dda20a;
-                box-shadow: 0 0.125rem 0.25rem 0 rgba(246, 194, 62, 0.5);
-            }
-
-        .btn.danger {
-            background: var(--danger);
-            color: #fff;
-        }
-
-            .btn.danger:hover:not(:disabled) {
-                background: #c02c2c;
-                box-shadow: 0 0.125rem 0.25rem 0 rgba(231, 74, 59, 0.5);
-            }
-
-    /* === RESPONSIVE === */
-    @@media (max-width: 768px) {
-        .card .card-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .filters {
-            width: 100%;
-        }
-
-            .filters select,
-            .filters .input {
-                flex: 1;
-                min-width: 0;
-            }
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
+
+    .btn.success {
+        background: var(--success);
+        color: #fff;
+    }
+
+    .btn.success:hover:not(:disabled) {
+        background: #17a673;
+        box-shadow: 0 0.125rem 0.25rem 0 rgba(28, 200, 138, 0.5);
+    }
+
+    .btn.warn {
+        background: var(--warning);
+        color: #212529;
+    }
+
+    .btn.warn:hover:not(:disabled) {
+        background: #dda20a;
+        box-shadow: 0 0.125rem 0.25rem 0 rgba(246, 194, 62, 0.5);
+    }
+
+    .btn.danger {
+        background: var(--danger);
+        color: #fff;
+    }
+
+    .btn.danger:hover:not(:disabled) {
+        background: #c02c2c;
+        box-shadow: 0 0.125rem 0.25rem 0 rgba(231, 74, 59, 0.5);
+    }
+
+    /* DataTables Styling */
+    .dataTables_wrapper .dataTables_length select {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+        margin-left: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+        outline: none;
+        border-color: var(--brand);
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.375rem 0.75rem;
+        margin: 0 0.125rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        background: #fff;
+        color: var(--text);
+        font-size: 0.875rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: var(--light);
+        border-color: var(--brand);
+        color: var(--brand);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: var(--brand) !important;
+        border-color: var(--brand) !important;
+        color: #fff !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: var(--brand-dark) !important;
+        border-color: var(--brand-dark) !important;
+    }
+    
+    .mini-doc-table-vertical {
+        border-collapse: collapse;
+        background: transparent;
+        font-size: 0.85rem;
+        width: auto;
+    }
+
+    .mini-doc-table-vertical th,
+    .mini-doc-table-vertical td {
+        border: none !important;
+        padding: 0.25rem 0.5rem;
+        vertical-align: middle;
+    }
+
+    .mini-doc-table-vertical th {
+        font-weight: 600;
+        color: #555;
+        text-align: left;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.4px;
+        width: 70px;
+    }
+
+    .mini-doc-table-vertical td {
+        text-align: center;
+    }
+
+    .has-doc {
+        color: #1cc88a; /* tick xanh */
+        font-size: 1rem;
+    }
+
+    .no-doc {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+    }
+
+    /* === STATS CARDS === */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: #ffffff;
+        border-left: 4px solid #e5501b;
+        padding: 1rem;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        transition: all 0.15s ease-in-out;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #e5501b;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #5a5c69;
+    }
+
+    @@media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        #storeDataTable thead th,
+        #storeDataTable tbody td {
+            padding: 0.75rem;
+            font-size: 0.75rem;
+        }
+    }
+    
 </style>
 
 <!-- Page Heading -->
 <div class="page-heading">
-    <h1>KYC</h1>
-
+    <h1>Hồ sơ xác minh (KYC)</h1>
 </div>
 
-<div class="kyc-container">
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Tổng Hồ Sơ</div>
+        <div class="stat-value">@Model.KycSubmissions.Count()</div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--success);">
+        <div class="stat-label" style="color: var(--success);">Đã Xác Minh</div>
+        <div class="stat-value">@Model.KycSubmissions.Count(s => s.Status == KycStatus.Approved)</div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--danger);">
+        <div class="stat-label" style="color: var(--danger);">Chưa Xác Minh</div>
+        <div class="stat-value">@Model.KycSubmissions.Count(s => s.Status == KycStatus.Rejected)</div>
+    </div>
+</div>
 
+
+<div class="kyc-container">
     @if (TempData["Success"] is string ok && !string.IsNullOrWhiteSpace(ok))
     {
         <div class="alert success">
@@ -461,101 +496,108 @@
     <div class="card">
         <div class="card-header">
             <h3>📝 KYC chờ duyệt</h3>
-            <form method="get" class="filters">
-                <select name="status" class="input">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="Pending" selected="@(Model.Status == KycStatus.Pending)">⏳ Chưa giải quyết</option>
-                    <option value="NeedChanges" selected="@(Model.Status == KycStatus.NeedChanges)">⚠️ Cần thay đổi</option>
-                    <option value="Approved" selected="@(Model.Status == KycStatus.Approved)">✅ Tán thành</option>
-                    <option value="Rejected" selected="@(Model.Status == KycStatus.Rejected)">❌ Từ chối</option>
-                </select>
-
-                <input class="input" name="storeName" placeholder="🔍 Tìm theo tên cửa hàng" value="@Model.StoreName" />
-
-                <button class="btn">Lọc</button>
-            </form>
         </div>
         <div class="card-body">
-            <table class="kyc-table">
+            <table id="kycDatatable" class="kyc-table">
                 <thead>
-                    <tr>
-                        <th style="width: 180px;">Cửa hàng</th>
-                        <th style="width: 120px;">Ngày nộp</th>
-                        <th style="width: 200px;">Giấy tờ</th>
-                        <th style="width: 120px;">Trạng thái</th>
-                        <th style="width: 280px;">Chấp thuận</th>
-                        <th>Hành động</th>
-                    </tr>
+                <tr>
+                    <th>Cửa hàng</th>
+                    <th>Ngày nộp</th>
+                    <th>Giấy tờ</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
                 </thead>
                 <tbody>
-                    @foreach (var s in Model.KycSubmissions)
-                    {
-                        <tr>
-                            <td>
-                                <span class="store-name">@s.Store.StoreName</span>
-                                <span class="store-id">ID: @s.Store.Id.ToString().Substring(0, 8)</span>
-                            </td>
-                            <td>
-                                <span class="date-time">
-                                    @s.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy")<br>
-                                    @s.SubmittedAt.ToLocalTime().ToString("HH:mm")
-                                </span>
-                            </td>
-                            <td>
-                                <div class="doc-list">
-                                    @foreach (var d in s.Documents)
+                @foreach (var s in Model.KycSubmissions)
+                {
+                    <tr>
+                        <td>
+                            <span class="store-name">@s.Store.StoreName</span>
+                            <span class="store-id">ID: @s.Store.Id.ToString().Substring(0, 8)</span>
+                        </td>
+                        <td>
+                            <span class="date-time">
+                                @s.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy")<br>
+                                @s.SubmittedAt.ToLocalTime().ToString("HH:mm")
+                            </span>
+                        </td>
+                        <td>
+                            <div class="doc-list">
+                                <table class="mini-doc-table-vertical">
+                                    <tbody>
+                                    @foreach (var type in KycDocumentConstant.Types)
                                     {
-                                        <a href="@d.FilePath" target="_blank" class="doc-item">
-                                            <i class="fas fa-file-alt"></i>
-                                            <span>@d.DocType</span>
-                                        </a>
+                                        var doc = s.Documents.FirstOrDefault(d => d.DocType == type.Key);
+                                        <tr>
+                                            <th>@type.Key</th>
+                                            <td>
+                                                @if (doc != null)
+                                                {
+                                                    <a href="@doc.FilePath" target="_blank" title="Xem tài liệu">
+                                                        <i class="fas fa-check-circle has-doc"></i>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="no-doc"></span>
+                                                }
+                                            </td>
+                                        </tr>
                                     }
-                                </div>
-                            </td>
-                            <td>
-                                <span class="chip @(s.Status == KycStatus.Approved ? "ok" : s.Status == KycStatus.Rejected ? "danger" : "pending")">
-                                    @s.Status.ToDisplayString()
-                                </span>
-                            </td>
-                            <td>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                        <td>
+                            <span
+                                class="chip @(s.Status == KycStatus.Approved ? "ok" : s.Status == KycStatus.Rejected ? "danger" : "pending")">
+                                @s.Status.ToDisplayString()
+                            </span>
+                        </td>
+                        <td>
+                            <div class="form-group">
+                                @* <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post"> *@
+                                @*     <input type="hidden" name="submissionId" value="@s.Id"/> *@
+                                @*     <div class="form-row"> *@
+                                @*         <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." style="flex: 1;" *@
+                                @*                @(s.Status == KycStatus.NeedChanges ? "disabled" : "")/> *@
+                                @*         <button class="btn warn" @(s.Status == KycStatus.NeedChanges ? "disabled" : "")> *@
+                                @*             <i class="fas fa-exclamation-triangle"></i> Yêu cầu *@
+                                @*         </button> *@
+                                @*     </div> *@
+                                @* </form> *@
+
                                 <form asp-area="Admin" asp-controller="Kyc" asp-action="Approve" method="post">
-                                    <input type="hidden" name="submissionId" value="@s.Id" />
+                                    <input type="hidden" name="submissionId" value="@s.Id"/>
                                     <div class="form-group">
                                         <div class="form-row">
-                                            <input class="input sm" name="maxPerDay" type="number" placeholder="Max/day" style="width:90px" @(s.Status == KycStatus.Approved ? "disabled" : "") />
-                                            <input class="input sm" name="regionsCsv" placeholder="HN,HCM,DN" style="flex: 1;" @(s.Status == KycStatus.Approved ? "disabled" : "") />
+                                            <input class="input sm" name="maxPerDay" type="number" placeholder="Max/day"
+                                                   style="width:90px" @(s.Status == KycStatus.Approved ? "disabled" : "")/>
+                                            <input class="input sm" name="regionsCsv" placeholder="HN,HCM,DN" style="flex: 1;"
+                                                   @(s.Status == KycStatus.Approved ? "disabled" : "")/>
                                         </div>
-                                        <button class="btn success" type="submit" @(s.Status == KycStatus.Approved ? "disabled" : "")>
+                                        <button class="btn success" type="submit"
+                                                @(s.Status == KycStatus.Approved ? "disabled" : "")>
                                             <i class="fas fa-check"></i> Chấp thuận
                                         </button>
                                     </div>
                                 </form>
-                            </td>
-                            <td>
-                                <div class="form-group">
-                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="NeedChanges" method="post">
-                                        <input type="hidden" name="submissionId" value="@s.Id" />
-                                        <div class="form-row">
-                                            <input class="input sm" name="note" placeholder="Thiếu giấy tờ..." style="flex: 1;" @(s.Status == KycStatus.NeedChanges ? "disabled" : "") />
-                                            <button class="btn warn" @(s.Status == KycStatus.NeedChanges ? "disabled" : "")>
-                                                <i class="fas fa-exclamation-triangle"></i> Yêu cầu
-                                            </button>
-                                        </div>
-                                    </form>
 
-                                    <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post">
-                                        <input type="hidden" name="submissionId" value="@s.Id" />
-                                        <div class="form-row">
-                                            <input class="input sm" name="note" placeholder="Lý do từ chối..." style="flex: 1;" @(s.Status == KycStatus.Rejected ? "disabled" : "") />
-                                            <button class="btn danger" @(s.Status == KycStatus.Rejected ? "disabled" : "")>
-                                                <i class="fas fa-times"></i> Từ chối
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    }
+                                <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post">
+                                    <input type="hidden" name="submissionId" value="@s.Id"/>
+                                    <div class="form-row">
+                                        <input class="input sm" name="note" placeholder="Lý do từ chối..." style="flex: 1;"
+                                               @(s.Status == KycStatus.Rejected ? "disabled" : "")/>
+                                        <button class="btn danger" @(s.Status == KycStatus.Rejected ? "disabled" : "")>
+                                            <i class="fas fa-times"></i> Từ chối
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
                 </tbody>
             </table>
         </div>
@@ -564,12 +606,40 @@
 
 @section Scripts {
     <script>
-        setTimeout(() => {
-            document.querySelectorAll('.alert').forEach(a => {
-                a.style.transition = 'opacity 0.3s ease';
-                a.style.opacity = '0';
-                setTimeout(() => a.remove(), 300);
-            });
-        }, 4000);
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(a => {
+            a.style.transition = 'opacity 0.3s ease';
+            a.style.opacity = '0';
+            setTimeout(() => a.remove(), 300);
+        });
+    }, 4000);
     </script>
+
+    <script>
+    $(document).ready(function () {
+        $('#kycDatatable').DataTable({
+            pageLength: 10,
+            order: [[0, 'asc']],
+            language: {
+                lengthMenu: "Hiển thị _MENU_ mục",
+                info: "Hiển thị _START_ đến _END_ trong tổng _TOTAL_ mục",
+                infoEmpty: "Hiển thị 0 đến 0 trong tổng 0 mục",
+                infoFiltered: "(lọc từ _MAX_ mục)",
+                emptyTable: "Không có dữ liệu",
+                search: "🔍",
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    previous: '<i class="fas fa-angle-left"></i>',
+                    next: '<i class="fas fa-angle-right"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>'
+                },
+                zeroRecords: "Không tìm thấy kết quả phù hợp"
+            },
+            responsive: true,
+            columnDefs: [
+                {orderable: false, targets: [1, 3, 4]}
+            ]
+        });
+    });
+</script>
 }
