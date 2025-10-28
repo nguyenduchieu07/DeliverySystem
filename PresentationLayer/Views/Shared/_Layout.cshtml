@@ -129,7 +129,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="#">Ưu Đãi</a>
                         </li>
-                        
+                        <li class="nav-item">
+                            <a asp-controller="Tracking" asp-action="Track" class="nav-link">
+                                <i class="fas fa-search"></i> Tra cứu
+                            </a>
+                        </li>
 
                     </ul>
                     <div class="d-flex">
@@ -143,6 +147,11 @@
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Hồ sơ</a></li>
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">Đổi mật khẩu</a></li>
+                                    <li class="nav-item">
+                                        <a asp-controller="Tracking" asp-action="Index" class="nav-link">
+                                            <i class="fas fa-truck"></i> Theo dõi đơn hàng
+                                        </a>
+                                    </li>
                                     @if (User.IsInRole("Store"))
                                     {
                                         <li class="nav-item">

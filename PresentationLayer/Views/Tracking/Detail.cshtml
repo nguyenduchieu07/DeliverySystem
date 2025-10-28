@@ -1,0 +1,283 @@
+﻿@using ServiceLayer.Dtos.OrderTracking
+@model OrderTrackingViewModel
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+}
+
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3>Chi tiết đơn hàng <code>@Model.OrderCode</code></h3>
+                <div>
+                    <span class="badge bg-@Model.StatusColor fs-6">@Model.StatusDisplay</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column: Order Info & Timeline -->
+        <div class="col-lg-8">
+            <!-- Order Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Thông tin đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Khách hàng:</strong> @Model.CustomerName<br>
+                            <strong>Số điện thoại:</strong> @Model.CustomerPhone<br>
+                            <strong>Cửa hàng:</strong> @Model.StoreName
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")<br>
+                            <strong>Tổng tiền:</strong> <span class="text-danger fw-bold">@Model.TotalAmount.ToString("N0") VNĐ</span><br>
+                            @if (Model.DistanceKm.HasValue)
+                            {
+                                <strong>Khoảng cách:</strong> 
+                                @Model.DistanceKm.Value.ToString("F1")
+                                @::km
+                                                        }
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <h6 class="text-primary"><i class="fas fa-map-marker-alt"></i> Địa chỉ giao hàng</h6>
+                                <p class="mb-0">@Model.DropoffAddress</p>
+                                @if (Model.DeliveryDate.HasValue)
+                                {
+                                    <small class="text-muted">Ngày lấy: @Model.DeliveryDate.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <h6 class="text-success"><i class="fas fa-map-marker-alt"></i> Địa chỉ nhận hàng</h6>
+                                <p class="mb-0">@Model.PickupAddress</p>
+                                @if (Model.PickupDate.HasValue)
+                                {
+                                    <small class="text-muted">Ngày trả: @Model.PickupDate.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check-in/Check-out Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Thông tin Check-in / Check-out</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-sign-in-alt text-primary fs-3 me-3"></i>
+                                <div>
+                                    <strong>Check-in:</strong><br>
+                                    @if (Model.CheckOutTime.HasValue)
+                                    {
+                                        <span class="text-success">@Model.CheckOutTime.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa check-in</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-sign-out-alt text-success fs-3 me-3"></i>
+                                <div>
+                                    <strong>Check-out:</strong><br>
+                                    @if (Model.CheckInTime.HasValue)
+                                    {
+                                        <span class="text-success">@Model.CheckInTime.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa check-out</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items List -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-box"></i> Danh sách hàng hóa</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tên hàng</th>
+                                    <th>Mô tả</th>
+                                    <th>SL</th>
+                                    <th>Khối lượng</th>
+                                    <th>Thể tích</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>@item.ItemName</td>
+                                        <td>@item.Description</td>
+                                        <td>@item.Quantity</td>
+                                        <td>@(item.WeightKg?.ToString("F2") ?? "-") kg</td>
+                                        <td>@(item.VolumeM3?.ToString("F3") ?? "-") m³</td>
+                                        <td>@(item.Subtotal?.ToString("N0") ?? "-") VNĐ</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Timeline & Contract -->
+        <div class="col-lg-4">
+            <!-- Contract Info -->
+            @if (Model.ContractInfo != null)
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-file-contract"></i> Thông tin hợp đồng</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-5">Mã báo giá:</dt>
+                            <dd class="col-7"><code>@Model.ContractInfo.QuotationId?.ToString().Substring(0, 8).ToUpper()</code></dd>
+
+                            <dt class="col-5">Hiệu lực đến:</dt>
+                            <dd class="col-7">
+                                @Model.ContractInfo.ValidUntil?.ToString("dd/MM/yyyy")
+                                @if (Model.ContractInfo.IsExpired)
+                                {
+                                    <span class="badge bg-danger">Hết hạn</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Còn @Model.ContractInfo.DaysRemaining ngày</span>
+                                }
+                            </dd>
+
+                            <dt class="col-5">Trạng thái:</dt>
+                            <dd class="col-7">
+                                <span class="badge bg-info">@Model.ContractInfo.ContractStatus</span>
+                            </dd>
+
+                            <dt class="col-5">Giá trị:</dt>
+                            <dd class="col-7 text-danger fw-bold">@Model.ContractInfo.ContractAmount.ToString("N0") VNĐ</dd>
+                        </dl>
+                    </div>
+                </div>
+            }
+
+            <!-- Timeline -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Lịch sử theo dõi</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        @foreach (var evt in Model.TrackingEvents)
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-@evt.Color">
+                                    <i class="fas @evt.Icon"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">@evt.EventType</h6>
+                                    <p class="mb-1">@evt.Description</p>
+                                    @if (!string.IsNullOrEmpty(evt.Location))
+                                    {
+                                        <small class="text-muted"><i class="fas fa-map-marker-alt"></i> @evt.Location</small>
+                                
+                                        <br>
+                                    }
+                                    <small class="text-muted">@evt.EventTime.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 40px;
+    }
+
+        .timeline:before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 30px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -30px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+    }
+
+    .timeline-content {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .bg-warning {
+        background-color: #ffc107 !important;
+    }
+
+    .bg-info {
+        background-color: #0dcaf0 !important;
+    }
+
+    .bg-primary {
+        background-color: #0d6efd !important;
+    }
+
+    .bg-success {
+        background-color: #198754 !important;
+    }
+
+    .bg-danger {
+        background-color: #dc3545 !important;
+    }
+</style>

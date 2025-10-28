@@ -1,0 +1,111 @@
+﻿@using ServiceLayer.Dtos.OrderTracking
+@model OrderTrackingViewModel
+@{
+    ViewData["Title"] = "Theo dõi đơn hàng";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0 text-center">
+                        <i class="fas fa-truck"></i> Theo dõi đơn hàng <code class="text-white">@Model.OrderCode</code>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Status Badge -->
+                    <div class="text-center mb-4">
+                        <span class="badge bg-@Model.StatusColor fs-5">@Model.StatusDisplay</span>
+                    </div>
+
+                    <!-- Basic Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <strong>Khách hàng:</strong> @Model.CustomerName<br>
+                            <strong>Cửa hàng:</strong> @Model.StoreName
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Ngày lấy hàng:</strong>
+                            @(Model.PickupDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")<br>
+                            <strong>Ngày trả hàng:</strong>
+                            @(Model.DeliveryDate?.ToString("dd/MM/yyyy") ?? "Chưa xác định")
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <h5 class="mb-3"><i class="fas fa-history"></i> Tiến trình xử lý</h5>
+                    <div class="timeline-public">
+                        @foreach (var evt in Model.TrackingEvents)
+                        {
+                            <div class="timeline-step">
+                                <div class="timeline-icon bg-@evt.Color">
+                                    <i class="fas @evt.Icon"></i>
+                                </div>
+                                <div class="timeline-info">
+                                    <h6>@evt.EventType</h6>
+                                    <p>@evt.Description</p>
+                                    <small class="text-muted">@evt.EventTime.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline-public {
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .timeline-step {
+        display: flex;
+        align-items: start;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+        .timeline-step:not(:last-child):after {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 40px;
+            bottom: -30px;
+            width: 2px;
+            background: #dee2e6;
+        }
+
+    .timeline-icon {
+        min-width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .timeline-info {
+        flex: 1;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+        .timeline-info h6 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .timeline-info p {
+            margin-bottom: 5px;
+            color: #666;
+        }
+</style>
