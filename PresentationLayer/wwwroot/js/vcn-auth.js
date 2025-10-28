@@ -668,45 +668,7 @@ function createPickupInfoPopup() {
 
 // ============ PICKUP INFO POPUP ============
 function showPickupInfoPopup() {
-<<<<<<< HEAD
-    try {
-        console.log('Showing pickup info popup');
-        const popup = document.getElementById('pickupInfoPopup');
-        const overlay = document.getElementById('popupOverlay');
 
-        if (!popup) {
-            console.error('pickupInfoPopup element not found!');
-            return;
-        }
-
-        if (!overlay) {
-            console.error('popupOverlay element not found!');
-            return;
-        }
-
-        popup.classList.add('show');
-        overlay.classList.add('show');
-
-        // Pre-fill values if available
-        const nameField = document.getElementById('pickupName');
-        const phoneField = document.getElementById('pickupPhone');
-        const floorField = document.getElementById('pickupFloor');
-
-        if (pickupData && pickupData.recipientName) {
-            nameField.value = pickupData.recipientName;
-            phoneField.value = pickupData.recipientPhone || '';
-            floorField.value = pickupData.floor || '';
-        } else {
-            nameField.value = '';
-            phoneField.value = '';
-            floorField.value = '';
-        }
-
-        console.log('Pickup info popup shown successfully');
-    } catch (error) {
-        console.error('Error showing pickup info popup:', error);
-        alert('Có lỗi xảy ra khi hiển thị popup. Vui lòng thử lại.');
-=======
     const popup = document.getElementById('pickupInfoPopup');
     const overlay = document.getElementById('popupOverlay');
     
@@ -744,7 +706,6 @@ function showPickupInfoPopup() {
         if (nameField) nameField.value = '';
         if (phoneField) phoneField.value = '';
         if (floorField) floorField.value = '';
->>>>>>> origin/Tuanlmhe
     }
 }
 
@@ -1033,16 +994,7 @@ async function submitOrder() {
     const customerName = document.getElementById('customerName');
     const customerPhone = document.getElementById('customerPhone');
     const customerFloor = document.getElementById('customerFloor');
-<<<<<<< HEAD
 
-    console.log('Customer validation:', {
-        customerName: customerName?.textContent,
-        customerPhone: customerPhone?.textContent,
-        customerFloor: customerFloor?.textContent
-    });
-
-    if (!customerName || !customerName.textContent || !customerPhone || !customerPhone.textContent) {
-=======
     
     // Get actual text content (handle both text and span elements)
     const getName = () => {
@@ -1066,7 +1018,6 @@ async function submitOrder() {
     
     
     if (!nameValue || !phoneValue) {
->>>>>>> origin/Tuanlmhe
         alert('⚠️ Vui lòng nhập đầy đủ thông tin khách hàng!');
         return;
     }

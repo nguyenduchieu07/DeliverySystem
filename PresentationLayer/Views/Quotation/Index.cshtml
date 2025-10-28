@@ -1,0 +1,241 @@
+﻿@using ServiceLayer.Dtos.Quotes
+@* Views/Quotation/Index.cshtml *@
+@model IEnumerable<QuotationListDto>
+
+@{
+    ViewBag.Title = "Danh Sách Báo Giá";
+    var currentFilter = ViewBag.CurrentFilter as string ?? "all";
+}
+
+@section styles {
+    <style>
+        .quotation-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: box-shadow 0.3s;
+        }
+
+            .quotation-card:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+
+        .badge-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-approved {
+            background-color: #28a745;
+        }
+
+        .badge-rejected {
+            background-color: #dc3545;
+        }
+
+        .badge-expired {
+            background-color: #6c757d;
+        }
+
+        .filter-tabs {
+            margin-bottom: 30px;
+        }
+
+        .rating-stars {
+            color: #ffc107;
+        }
+    </style>
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-file-invoice-dollar me-2"></i>
+                Danh Sách Báo Giá
+            </h2>
+
+            <!-- Filter Tabs -->
+            <ul class="nav nav-tabs filter-tabs">
+                <li class="nav-item">
+                    <a class="nav-link @(currentFilter == "all" ? "active" : "")"
+                       asp-action="Index" asp-route-status="all">
+                        Tất cả
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentFilter == "pending" ? "active" : "")"
+                       asp-action="Index" asp-route-status="pending">
+                        Chờ xử lý
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentFilter == "approved" ? "active" : "")"
+                       asp-action="Index" asp-route-status="approved">
+                        Đã chấp nhận
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentFilter == "rejected" ? "active" : "")"
+                       asp-action="Index" asp-route-status="rejected">
+                        Đã từ chối
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentFilter == "expired" ? "active" : "")"
+                       asp-action="Index" asp-route-status="expired">
+                        Hết hạn
+                    </a>
+                </li>
+            </ul>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Quotation List -->
+            @if (Model.Any())
+            {
+                foreach (var quotation in Model)
+                {
+                    <div class="quotation-card">
+                        <div class="row align-items-center">
+                            <!-- Store Info -->
+                            <div class="col-md-4">
+                                <h5 class="mb-2">
+                                    <i class="fas fa-store me-2 text-primary"></i>
+                                    @quotation.StoreName
+                                </h5>
+                                <div class="rating-stars mb-2">
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        if (i < Math.Floor(quotation.StoreRatingAvg))
+                                        {
+                                            <i class="fas fa-star"></i>
+                                        }
+                                        else if (i < quotation.StoreRatingAvg)
+                                        {
+                                            <i class="fas fa-star-half-alt"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="far fa-star"></i>
+                                        }
+                                    }
+                                    <small class="text-muted ms-1">
+                                        (@quotation.StoreRatingAvg.ToString("F1") - @quotation.StoreRatingCount đánh giá)
+                                    </small>
+                                </div>
+                                <p class="mb-1">
+                                    <i class="fas fa-phone me-2"></i>
+                                    <small>@quotation.StoreContactPhone</small>
+                                </p>
+                                <p class="mb-0">
+                                    <i class="fas fa-box me-2"></i>
+                                    <small>@quotation.ServiceCount dịch vụ</small>
+                                </p>
+                            </div>
+
+                            <!-- Price & Status -->
+                            <div class="col-md-3">
+                                <h4 class="text-primary mb-2">
+                                    @quotation.TotalAmount.ToString("N0") VNĐ
+                                </h4>
+                                <span class="badge badge-@(quotation.Status.ToString().ToLower()) mb-2">
+                                    @quotation.StatusDisplay
+                                </span>
+                                @if (quotation.IsExpired && quotation.Status == DataAccessLayer.Enums.StatusValue.Pending)
+                                {
+                                    <span class="badge badge-expired">Hết hạn</span>
+                                }
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="col-md-3">
+                                <p class="mb-1">
+                                    <small class="text-muted">
+                                        <i class="far fa-calendar me-2"></i>
+                                        Tạo: @quotation.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                </p>
+                                <p class="mb-0">
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-2"></i>
+                                        Hết hạn: @quotation.ValidUntil.ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                </p>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="col-md-2 text-end">
+                                <a asp-action="Detail" asp-route-id="@quotation.Id"
+                                   class="btn btn-outline-primary btn-sm mb-2 w-100">
+                                    <i class="fas fa-eye me-1"></i> Chi tiết
+                                </a>
+                                @if (quotation.CanAccept)
+                                {
+                                    <button type="button"
+                                            class="btn btn-success btn-sm w-100"
+                                            onclick="acceptQuotation('@quotation.Id')">
+                                        <i class="fas fa-check me-1"></i> Chấp nhận
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Không có báo giá nào
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function acceptQuotation(quotationId) {
+            if (confirm('Bạn có chắc chắn muốn chấp nhận báo giá này?')) {
+                $.ajax({
+                    url: '@Url.Action("Accept", "Quotation")',
+                    type: 'POST',
+                    data: {
+                        id: quotationId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+                    }
+                });
+            }
+        }
+    </script>
+    @Html.AntiForgeryToken()
+}
