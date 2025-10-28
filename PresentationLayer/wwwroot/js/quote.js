@@ -538,6 +538,7 @@ function showBreakdownPage(result) {
             <button class="action-btn secondary" onclick="handleTempReservation()">🕐 Giữ chỗ tạm (2h)</button>
             <button class="action-btn primary" onclick="handleAcceptQuote()">✅ Chấp nhận báo giá</button>
             <button class="action-btn outline" onclick="showNegotiateModal()">💬 Yêu cầu chỉnh giá</button>
+            <button class="action-btn outline" onclick="showFeedbackModal()">💬 Viết đánh giá</button>
         </div>
 
         <button class="action-btn outline" onclick="backToForm()" style="margin-top:20px;width:100%;">← Quay lại chỉnh sửa</button>
@@ -592,6 +593,15 @@ async function handleAcceptQuote() {
         console.error('Error:', error);
         alert('Có lỗi xảy ra!');
     }
+}
+
+//Write feedback
+function showFeedbackModal() {
+    document.getElementById('writeFeedbackModal').classList.add('active');
+}
+function closeFeedbackModal() {
+    document.getElementById('writeFeedbackModal').classList.remove('active');
+    document.getElementById('writeFeedbackNote').value = '';
 }
 
 // Negotiate
