@@ -20,10 +20,7 @@ public class StoresAvailableViewComponent : ViewComponent
             .Include(s => s.Warehouses)
             .ThenInclude(w => w.Slots)
             .Where(s => s.Status ==StatusValue.Active && s.Warehouses.Any(w =>
-                w.Status == StatusValue.Active &&
-                w.Slots.Any(slot =>
-                    slot.IsBlocked == false &&
-                    slot.Status == StatusValue.Available)
+                w.Status != StatusValue.InActive && w.Slots.Any(slot => !slot.IsBlocked && slot.Status == StatusValue.Available)
             ))
             .Select(s => new
             {
