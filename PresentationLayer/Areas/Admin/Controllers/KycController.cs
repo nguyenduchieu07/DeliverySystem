@@ -8,6 +8,8 @@ using PresentationLayer.Models;
 using ServiceLayer.Abstractions.IServices;
 using System;
 using System.Security.Claims;
+using DataAccessLayer.Constants;
+using ServiceLayer.Extensions;
 
 namespace PresentationLayer.Areas.Admin.Controllers
 {
@@ -17,11 +19,13 @@ namespace PresentationLayer.Areas.Admin.Controllers
     {
         private readonly DeliverySytemContext _db;
         private readonly IKycService _svc;
+
         public KycController(DeliverySytemContext db, IKycService svc)
         {
             _db = db;
             _svc = svc;
         }
+
         public async Task<IActionResult> Index(KycStatus? status = null, string? storeName = null)
         {
             var vm = new KycSubmissionIndexViewModel();
@@ -41,10 +45,24 @@ namespace PresentationLayer.Areas.Admin.Controllers
             try
             {
                 var regions = string.IsNullOrWhiteSpace(regionsCsv)
-                ? null
-                : regionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    ? null
+                    : regionsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 var adminIdStrClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var adminId = Guid.Parse(adminIdStrClaim);
+
+                var kycDocuments = await _db.KycDocuments.Where(x => x.KycSubmissionId == submissionId).ToListAsync();
+
+                foreach (var type in KycDocumentConstant.Types)
+                {
+                    var document = kycDocuments.FirstOrDefault(d => d.DocType == type.Key);
+
+                    if (document == null)
+                    {
+                        TempData["Error"] = $"Chấp thuận thất bại do thiếu tài liệu {type.Key}.";
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+
                 await _svc.ApproveAsync(submissionId, maxPerDay, regions, adminId);
                 return RedirectToAction(nameof(Index));
             }
@@ -80,6 +98,13 @@ namespace PresentationLayer.Areas.Admin.Controllers
             try
             {
                 var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var submission = await _db.KycSubmissions.FirstOrDefaultAsync(x => x.StoreId == submissionId);
+                if (submission != null && submission.Status == KycStatus.Approved)
+                {
+                    
+                    TempData["Error"] = $"Chấp thuận thất bại do đơn đã được duyệt.";
+                    return RedirectToAction(nameof(Index));
+                }
                 await _svc.RejectAsync(submissionId, note, adminId);
                 return RedirectToAction(nameof(Index));
             }

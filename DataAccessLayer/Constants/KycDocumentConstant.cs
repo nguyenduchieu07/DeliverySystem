@@ -10,6 +10,7 @@ public class KycDocumentConstant
             // { "LegalName", (false, "The registered legal name of the business or company.") },
             { "LicenseNumber", (false, "The business license number, if applicable.") },
             { "TaxNumber", (false, "The tax identification number (TIN) of the store.") },
+            { "ID", (false, "The ID card of owner.") },
 
             // --- Address & Location ---
             // { "AddressLine", (true, "Street address of the store (house number and street name).") },

@@ -1,4 +1,5 @@
-﻿@using PresentationLayer.Models
+﻿@using DataAccessLayer.Constants
+@using PresentationLayer.Models
 @using DataAccessLayer.Enums
 @model KycSubmissionIndexViewModel;
 @{
@@ -523,17 +524,13 @@
                         </td>
                         <td>
                             <div class="doc-list">
-                                @{
-                                    var docTypes = new[] { "License", "ID", "Tax" };
-                                }
-
                                 <table class="mini-doc-table-vertical">
                                     <tbody>
-                                    @foreach (var type in docTypes)
+                                    @foreach (var type in KycDocumentConstant.Types)
                                     {
-                                        var doc = s.Documents.FirstOrDefault(d => d.DocType == type);
+                                        var doc = s.Documents.FirstOrDefault(d => d.DocType == type.Key);
                                         <tr>
-                                            <th>@type</th>
+                                            <th>@type.Key</th>
                                             <td>
                                                 @if (doc != null)
                                                 {
