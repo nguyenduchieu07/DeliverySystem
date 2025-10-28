@@ -31,6 +31,7 @@
         box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
         overflow: hidden;
         width: 100%;
+        margin-bottom: 2rem;
     }
 
     .container-header {
@@ -244,16 +245,11 @@
     }
 </style>
 
-<!-- Page Heading -->
-<div class="page-heading">
-    <h1>🏪 Cửa hàng có kho khả dụng</h1>
-</div>
-
 <!-- Main Container -->
 <div class="main-container">
     <!-- Container Header -->
     <div class="container-header">
-        <h6>📦 Danh sách cửa hàng</h6>
+        <h6>📦 Danh sách cửa hàng có kho khả dụng</h6>
         <div class="dropdown no-arrow">
             <a class="dropdown-toggle" href="#" role="button" id="dropdownMainContainer"
                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -262,13 +258,9 @@
             <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
                  aria-labelledby="dropdownMainContainer">
                 <div class="dropdown-header">Tùy chọn:</div>
-                <a class="dropdown-item" href="#">
-                    <i class="fas fa-sync fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Làm mới
-                </a>
-                <a class="dropdown-item" href="#">
-                    <i class="fas fa-download fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Xuất báo cáo
+                <a class="dropdown-item" asp-area="Admin" asp-controller="Store" asp-action="Index">
+                    <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+                    Xem tất cả
                 </a>
             </div>
         </div>
@@ -287,13 +279,12 @@
         }
         else
         {
-            <table id="storeDataTable" class="dataTable table">
+            <table id="storeAvailableDataTable" class="dataTable table">
                 <thead>
                 <tr>
                     <th>Cửa hàng</th>
                     <th>Số lượng kho</th>
                     <th>Danh sách kho</th>
-                    <th>Hành động</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -305,7 +296,7 @@
                         <td>
                             <div class="store-name-cell">
                                 <i class="fas fa-store store-icon"></i>
-                                <span>@store.StoreName</span>
+                                <a asp-area="Admin" asp-controller="Store" asp-action="Detail" asp-route-storeId="@store.Id" class="store-name-link">@store.StoreName</a>
                             </div>
                         </td>
                         <td>
@@ -322,13 +313,6 @@
                                 }
                             </div>
                         </td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn-action btn-view" onclick="viewStore('@store.Id')">
-                                    <i class="fas fa-eye"></i> Xem chi tiết
-                                </button>
-                            </div>
-                        </td>
                     </tr>
                 }
                 </tbody>
@@ -336,33 +320,3 @@
         }
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        $(document).ready(function () {
-            $('#storeDataTable').DataTable({
-                pageLength: 10,
-                order: [[0, 'asc']],
-                language: {
-                    lengthMenu: "Hiển thị _MENU_ mục",
-                    search: "Tìm kiếm:",
-                    info: "Hiển thị _START_ đến _END_ trong tổng _TOTAL_ mục",
-                    infoEmpty: "Hiển thị 0 đến 0 trong tổng 0 mục",
-                    infoFiltered: "(lọc từ _MAX_ mục)",
-                    paginate: {
-                        first: "Đầu",
-                        last: "Cuối",
-                        next: "Sau",
-                        previous: "Trước"
-                    },
-                    emptyTable: "Không có dữ liệu",
-                    zeroRecords: "Không tìm thấy kết quả phù hợp"
-                },
-                responsive: true,
-                columnDefs: [
-                    { orderable: false, targets: [8] } // Disable sorting on verification column
-                ]
-            });
-        });
-    </script>
-}
