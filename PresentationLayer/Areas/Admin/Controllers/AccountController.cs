@@ -1,8 +1,10 @@
 ﻿using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol;
 
 namespace PresentationLayer.Areas.Admin.Controllers;
 
@@ -11,7 +13,11 @@ namespace PresentationLayer.Areas.Admin.Controllers;
 public class AccountController : Controller
 {
     private readonly DeliverySytemContext _db;
-    public AccountController(DeliverySytemContext db) => _db = db;
+
+    public AccountController(DeliverySytemContext db)
+    {
+        _db = db;
+    }
 
     public async Task<IActionResult> Index(TargetType? scope = TargetType.Customer, string? q = null,
         StatusValue? status = null)
@@ -85,5 +91,30 @@ public class AccountController : Controller
         await _db.SaveChangesAsync();
         TempData["ok"] = $"User {(u.UserName ?? u.Email)} unbanned.";
         return RedirectToAction(nameof(Index), new { scope = "User", status = "Active" });
+    }
+
+    public async Task<IActionResult> Details(Guid accountId, string scope)
+    {
+        object? user;
+
+        if (scope == nameof(TargetType.Customer))
+        {
+            user = await _db.Users
+                .Include(x => x.Stores)
+                .Include(x => x.Feedbacks)
+                .FirstOrDefaultAsync(x => x.Id == accountId);
+        }
+        else
+        {
+            user = await _db.Stores.FirstOrDefaultAsync(x => x.Id == accountId);
+        }
+
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.Scope = scope;
+        return View(user);
     }
 }

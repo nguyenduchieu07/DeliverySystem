@@ -19,8 +19,8 @@ public class StoresAvailableViewComponent : ViewComponent
         var availableStores = await _db.Stores
             .Include(s => s.Warehouses)
             .ThenInclude(w => w.Slots)
-            .Where(s => s.Warehouses.Any(w =>
-                // w.Status == StatusValue.Active &&
+            .Where(s => s.Status ==StatusValue.Active && s.Warehouses.Any(w =>
+                w.Status == StatusValue.Active &&
                 w.Slots.Any(slot =>
                     slot.IsBlocked == false &&
                     slot.Status == StatusValue.Available)
