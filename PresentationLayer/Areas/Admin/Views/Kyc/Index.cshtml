@@ -452,12 +452,12 @@
 
 <!-- Page Heading -->
 <div class="page-heading">
-    <h1>📋 KYC</h1>
+    <h1>Hồ sơ xác minh (KYC)</h1>
 </div>
 
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-label">Tổng Cửa Hàng</div>
+        <div class="stat-label">Tổng Hồ Sơ</div>
         <div class="stat-value">@Model.KycSubmissions.Count()</div>
     </div>
     <div class="stat-card" style="border-left-color: var(--success);">
@@ -585,7 +585,7 @@
                                         </button>
                                     </div>
                                 </form>
-                                
+
                                 <form asp-area="Admin" asp-controller="Kyc" asp-action="Reject" method="post">
                                     <input type="hidden" name="submissionId" value="@s.Id"/>
                                     <div class="form-row">
@@ -615,7 +615,7 @@
             setTimeout(() => a.remove(), 300);
         });
     }, 4000);
-</script>
+    </script>
 
     <script>
     $(document).ready(function () {

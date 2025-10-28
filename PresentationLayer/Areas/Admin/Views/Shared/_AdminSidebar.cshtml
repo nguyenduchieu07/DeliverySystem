@@ -121,9 +121,9 @@
     <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-area="Admin" asp-controller="Home"
        asp-action="Index">
         <div class="sidebar-brand-icon">
-            <img width="48" class="rounded" alt="VNC Logo" src="~/favicon.ico" asp-append-version="true" />
+            <img width="48" class="rounded" alt="VNC Logo" src="~/favicon.ico" asp-append-version="true"/>
         </div>
-        <div class="sidebar-brand-text mx-3">VNC</div>
+        <div class="sidebar-brand-text mx-3">VCN</div>
     </a>
 
     <!-- Divider -->
@@ -161,20 +161,20 @@
                 <a class="collapse-item" asp-area="Admin" asp-controller="Kyc" asp-action="Index">
                     <i class="fas fa-id-card"></i> Hồ sơ xác minh (KYC)
                 </a>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Feedback" asp-action="Index">
-                    <i class="fas fa-comments"></i> Đánh giá
-                </a>
-                <h6 class="collapse-header">Danh mục kho</h6>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Warehouse" asp-action="Index">
-                    <i class="fas fa-warehouse"></i> Kho bãi
-                </a>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Storage" asp-action="Index">
-                    <i class="fas fa-boxes"></i> Chỗ chứa
-                </a>
-                <h6 class="collapse-header">Danh mục địa chỉ</h6>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Address" asp-action="Index">
-                    <i class="fas fa-map-marker-alt"></i> Địa chỉ
-                </a>
+                @* <a class="collapse-item" asp-area="Admin" asp-controller="Feedback" asp-action="Index"> *@
+                @*     <i class="fas fa-comments"></i> Đánh giá *@
+                @* </a> *@
+                @* <h6 class="collapse-header">Danh mục kho</h6> *@
+                @* <a class="collapse-item" asp-area="Admin" asp-controller="Warehouse" asp-action="Index"> *@
+                @*     <i class="fas fa-warehouse"></i> Kho bãi *@
+                @* </a> *@
+                @* <a class="collapse-item" asp-area="Admin" asp-controller="Storage" asp-action="Index"> *@
+                @*     <i class="fas fa-boxes"></i> Chỗ chứa *@
+                @* </a> *@
+                @* <h6 class="collapse-header">Danh mục địa chỉ</h6> *@
+                @* <a class="collapse-item" asp-area="Admin" asp-controller="Address" asp-action="Index"> *@
+                @*     <i class="fas fa-map-marker-alt"></i> Địa chỉ *@
+                @* </a> *@
             </div>
         </div>
     </li>
@@ -184,22 +184,25 @@
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
            aria-expanded="true" aria-controls="collapseUtilities">
             <i class="fas fa-fw fa-users"></i>
-            <span>Quản lí người dùng</span>
+            <span>Quản lí tài khoản</span>
         </a>
         <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities"
              data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Danh mục khách hàng</h6>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Customer" asp-action="Index">
+                <h6 class="collapse-header">Danh mục tài khoản</h6>
+                <a class="collapse-item" asp-area="Admin" asp-controller="Account" asp-action="Index" asp-route-scope="Customer">
                     <i class="fas fa-user"></i> Khách hàng
                 </a>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Employee" asp-action="Index">
-                    <i class="fas fa-user-tie"></i> Nhân viên
+                <a class="collapse-item" asp-area="Admin" asp-controller="Account" asp-action="Index" asp-route-scope="Store">
+                    <i class="fas fa-user"></i> Cửa hàng
                 </a>
-                <h6 class="collapse-header">Danh mục phân quyền</h6>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Banned" asp-action="Index">
-                    <i class="fas fa-ban"></i> Trung tâm cấm
-                </a>
+                @* <a class="collapse-item" asp-area="Admin" asp-controller="Employee" asp-action="Index"> *@
+                @*     <i class="fas fa-user-tie"></i> Nhân viên *@
+                @* </a> *@
+                @* <h6 class="collapse-header">Danh mục phân quyền</h6> *@
+                @* <a class="collapse-item" asp-area="Admin" asp-controller="Banned" asp-action="Index"> *@
+                @*     <i class="fas fa-ban"></i> Trung tâm cấm *@
+                @* </a> *@
             </div>
         </div>
     </li>

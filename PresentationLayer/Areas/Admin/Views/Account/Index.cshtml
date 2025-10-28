@@ -1,0 +1,406 @@
+﻿@using DataAccessLayer.Entities
+@using DataAccessLayer.Enums
+@{
+    var scope = (TargetType)(ViewBag.Scope ?? TargetType.Store);
+    ViewBag.Title = "Quản lí tài khoản";
+}
+
+<div class="page-header mb-4">
+    @if (scope == TargetType.Customer)
+    {
+        <h1 class="page-title">Quản lý tài khoản khách hàng</h1>
+    }
+    else
+    {
+        <h1 class="page-title">Quản lý tài khoản cửa hàng</h1>
+    }
+</div>
+
+@if (scope == TargetType.Store)
+{
+    var stores = (IEnumerable<Store>)Model;
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Tổng tài khoản</div>
+            <div class="stat-value">@stores.Count()</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--success);">
+            <div class="stat-label" style="color: var(--success);">Đang hoạt động</div>
+            <div class="stat-value">@stores.Count(s => s.Status == StatusValue.Unban)</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--danger);">
+            <div class="stat-label" style="color: var(--danger);">Đang khóa</div>
+            <div class="stat-value">@stores.Count(s => s.Status == StatusValue.Ban)</div>
+        </div>
+    </div>
+}
+else
+{
+    var users = (IEnumerable<User>)Model;
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Tổng tài khoản</div>
+            <div class="stat-value">@users.Count()</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--success);">
+            <div class="stat-label" style="color: var(--success);">Đang hoạt động</div>
+            <div class="stat-value">@users.Count(s => s.Status == StatusValue.Unban)</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--danger);">
+            <div class="stat-label" style="color: var(--danger);">Đang khóa</div>
+            <div class="stat-value">@users.Count(s => s.Status == StatusValue.Ban)</div>
+        </div>
+    </div>
+}
+
+<section class="page-section">
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-gradient-orange">
+            <i class="fas fa-table"></i> Danh sách tài khoản
+        </div>
+        <div class="card-body">
+            @if (scope == TargetType.Store)
+            {
+                var stores = (IEnumerable<Store>)Model!;
+                <table id="accountDataTable" class="table table-hover table-bordered display nowrap" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>Cửa hàng</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Ngày cập nhật</th>
+                        <th style="width:200px;">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var s in stores)
+                    {
+                        var isBanned = s.Status == StatusValue.Ban;
+                        <tr>
+                            <td>
+                                <b>@s.StoreName</b>
+                                <div class="text-muted small">@s.Id.ToString().Substring(0, 6)</div>
+                            </td>
+                            <td>
+                                @if (isBanned)
+                                {
+                                    <span class="badge badge-danger">Cấm</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-success">Hoạt động</span>
+                                }
+                            </td>
+                            <td>@s.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@(s.UpdatedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                            <td class="text-center">
+                                @if (isBanned)
+                                {
+                                    <form asp-area="Admin" asp-controller="Account" asp-action="UnbanStore" method="post"
+                                          class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@s.Id"/>
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-unlock"></i> Bỏ cấm
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-area="Admin" asp-controller="Account" asp-action="BanStore" method="post"
+                                          class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@s.Id"/>
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-ban"></i> Cấm
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                var users = (IEnumerable<User>)Model!;
+                <table id="accountDataTable" class="table table-hover table-bordered display nowrap" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>Người dùng</th>
+                        <th>Email</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th>Ngày cập nhật</th>
+                        <th style="width:200px;">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var u in users)
+                    {
+                        var isBanned = u.Status == StatusValue.Ban;
+                        <tr>
+                            <td>
+                                <b>@(u.UserName ?? "(No Username)")</b>
+                                <div class="text-muted small">@u.Id.ToString().Substring(0, 6)</div>
+                            </td>
+                            <td>@u.Email</td>
+                            <td>
+                                @if (isBanned)
+                                {
+                                    <span class="badge badge-danger">Cấm</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-success">Hoạt động</span>
+                                }
+                            </td>
+                            <td>@u.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@u.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-center">
+                                @if (isBanned)
+                                {
+                                    <form asp-area="Admin" asp-controller="Account" asp-action="UnbanUser" method="post"
+                                          class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@u.Id"/>
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-unlock"></i> Bỏ cấm
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-area="Admin" asp-controller="Account" asp-action="BanUser" method="post"
+                                          class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@u.Id"/>
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-ban"></i> Cấm
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+    $(document).ready(function () {
+        $('#accountDataTable').DataTable({
+            pageLength: 10,
+            order: [[0, 'asc']],
+            responsive: true,
+            language: {
+                lengthMenu: "Hiển thị _MENU_ mục",
+                info: "Hiển thị _START_ đến _END_ trong tổng _TOTAL_ mục",
+                infoEmpty: "Hiển thị 0 đến 0 trong tổng 0 mục",
+                infoFiltered: "(lọc từ _MAX_ mục)",
+                emptyTable: "Không có dữ liệu",
+                search: "🔍",
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    previous: '<i class="fas fa-angle-left"></i>',
+                    next: '<i class="fas fa-angle-right"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>'
+                },
+                zeroRecords: "Không tìm thấy kết quả phù hợp"
+            },
+            columnDefs: [
+                {orderable: false, targets: [4]}
+            ]
+        });
+    });
+</script>
+}
+
+<style>
+    /* === SB Admin 2 Orange Theme === */
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: #5a5c69;
+        margin-bottom: 1rem;
+    }
+
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        background: #fff;
+    }
+
+    .bg-gradient-orange {
+        background: linear-gradient(180deg, #e5501b 0%, #d26c45 100%);
+        color: #fff;
+        font-weight: 700;
+        font-size: 1rem;
+        border-radius: 0.35rem 0.35rem 0 0;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .table thead th {
+        background-color: #f8f9fc;
+        color: #5a5c69;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e3e6f0;
+    }
+
+    .table tbody td {
+        font-size: 0.875rem;
+        color: #5a5c69;
+        vertical-align: middle;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .table tbody tr:hover {
+        background: #f8f9fc;
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Buttons */
+    .btn {
+        border-radius: 0.35rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .btn-danger {
+        background: #e5501b;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background: #d26c45;
+        box-shadow: 0 0 5px rgba(229, 80, 27, 0.4);
+    }
+
+    .btn-success {
+        background: #1cc88a;
+        border: none;
+    }
+
+    .btn-success:hover {
+        background: #17a673;
+        box-shadow: 0 0 5px rgba(28, 200, 138, 0.4);
+    }
+
+    /* Badges */
+    .badge {
+        border-radius: 10rem;
+        padding: 0.375rem 0.875rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .badge-success {
+        background: #1cc88a;
+    }
+
+    .badge-danger {
+        background: #e74a3b;
+    }
+
+    /* DataTables Overrides */
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 0.35rem;
+        border: 1px solid #e3e6f0;
+        padding: 0.4rem 0.75rem;
+        outline: none;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #e5501b;
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: 0.35rem;
+        border: 1px solid #e3e6f0;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        color: #5a5c69 !important;
+        padding: 0.35rem 0.75rem;
+        margin: 0 2px;
+        transition: all 0.2s ease;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #e5501b !important;
+        color: #fff !important;
+        border-color: #e5501b !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #f8f9fc;
+        color: #e5501b !important;
+    }
+
+    /* === STATS CARDS === */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: #ffffff;
+        border-left: 4px solid #e5501b;
+        padding: 1rem;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        transition: all 0.15s ease-in-out;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #e5501b;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #5a5c69;
+    }
+
+    @@media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        #storeDataTable thead th,
+        #storeDataTable tbody td {
+            padding: 0.75rem;
+            font-size: 0.75rem;
+        }
+    }
+
+</style>
