@@ -12,7 +12,8 @@
     <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="~/css/sb-admin-2.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" asp-append-version="true" />
-
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.css" />
+    
     @RenderSection("Styles", required: false)
 
 </head>
@@ -76,6 +77,8 @@
 
 <!-- Custom scripts for all pages-->
 <script src="~/js/sb-admin-2.min.js"></script>
+
+<script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
 
 @await RenderSectionAsync("Scripts", required: false)
 </body>
