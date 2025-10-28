@@ -1,0 +1,97 @@
+﻿@using DataAccessLayer.Entities
+@model List<Feedback>
+
+@{
+    ViewBag.Title = "Danh sách đánh giá";
+}
+
+<h2 class="page-title">Danh sách Feedback</h2>
+
+@if (!Model.Any())
+{
+    <p class="empty">Chưa có feedback nào.</p>
+}
+else
+{
+    <table id="feedbackTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Người gửi</th>
+                <th>Cửa hàng</th>
+                <th>Đánh giá</th>
+                <th>Bình luận</th>
+                <th>Ngày tạo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var f in Model)
+            {
+                <tr>
+                    <td>@f.FromUser.Customer.FullName</td>
+                    <td>@f.ToStore?.StoreName</td>
+                    <td>
+                        <div class="stars">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= f.Rating)
+                                {
+                                    <span class="star filled">&#9733;</span>
+                                }
+                                else
+                                {
+                                    <span class="star">&#9734;</span>
+                                }
+                            }
+                        </div>
+                    </td>
+                    <td>@f.Comment</td>
+                    <td>@f.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#feedbackTable').DataTable({
+                pageLength: 10,
+                order: [[4, 'desc']],
+                language: {
+                    search: "🔍",
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',   // Đầu
+                        previous: '<i class="fas fa-angle-left"></i>',       // Trước
+                        next: '<i class="fas fa-angle-right"></i>',          // Sau
+                        last: '<i class="fas fa-angle-double-right"></i>'    // Cuối
+                    },
+                    lengthMenu: "Hiển thị _MENU_ dòng",
+                    info: "Hiển thị _START_–_END_ trên tổng _TOTAL_ phản hồi",
+                    emptyTable: "Chưa có phản hồi nào."
+                }
+            });
+        });
+    </script>
+    <style>
+        .stars .star {
+            color: #ccc;
+            font-size: 1.1rem;
+        }
+
+        .stars .filled {
+            color: #FFD700;
+        }
+
+        .page-title {
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        #feedbackTable {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #fff;
+        }
+    </style>
+}

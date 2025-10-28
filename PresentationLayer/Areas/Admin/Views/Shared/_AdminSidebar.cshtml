@@ -205,62 +205,62 @@
     </li>
 
     <!-- Nav Item - Order Management -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseOrders"
-           aria-expanded="true" aria-controls="collapseOrders">
-            <i class="fas fa-fw fa-shopping-cart"></i>
-            <span>Quản lí đơn hàng</span>
-        </a>
-        <div id="collapseOrders" class="collapse" aria-labelledby="headingOrders"
-             data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Danh mục đơn hàng</h6>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Order" asp-action="Index">
-                    <i class="fas fa-box"></i> Đơn hàng
-                </a>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Transaction" asp-action="Index">
-                    <i class="fas fa-exchange-alt"></i> Giao dịch
-                </a>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Payment" asp-action="Index">
-                    <i class="fas fa-credit-card"></i> Thanh toán
-                </a>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Quote" asp-action="Index">
-                    <i class="fas fa-file-invoice"></i> Báo giá
-                </a>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Wallet" asp-action="Index">
-                    <i class="fas fa-wallet"></i> Ví tiền
-                </a>
-            </div>
-        </div>
-    </li>
+    @* <li class="nav-item"> *@
+    @*     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseOrders" *@
+    @*        aria-expanded="true" aria-controls="collapseOrders"> *@
+    @*         <i class="fas fa-fw fa-shopping-cart"></i> *@
+    @*         <span>Quản lí đơn hàng</span> *@
+    @*     </a> *@
+    @*     <div id="collapseOrders" class="collapse" aria-labelledby="headingOrders" *@
+    @*          data-parent="#accordionSidebar"> *@
+    @*         <div class="bg-white py-2 collapse-inner rounded"> *@
+    @*             <h6 class="collapse-header">Danh mục đơn hàng</h6> *@
+    @*             <a class="collapse-item" asp-area="Admin" asp-controller="Order" asp-action="Index"> *@
+    @*                 <i class="fas fa-box"></i> Đơn hàng *@
+    @*             </a> *@
+    @*             <a class="collapse-item" asp-area="Admin" asp-controller="Transaction" asp-action="Index"> *@
+    @*                 <i class="fas fa-exchange-alt"></i> Giao dịch *@
+    @*             </a> *@
+    @*             <a class="collapse-item" asp-area="Admin" asp-controller="Payment" asp-action="Index"> *@
+    @*                 <i class="fas fa-credit-card"></i> Thanh toán *@
+    @*             </a> *@
+    @*             <a class="collapse-item" asp-area="Admin" asp-controller="Quote" asp-action="Index"> *@
+    @*                 <i class="fas fa-file-invoice"></i> Báo giá *@
+    @*             </a> *@
+    @*             <a class="collapse-item" asp-area="Admin" asp-controller="Wallet" asp-action="Index"> *@
+    @*                 <i class="fas fa-wallet"></i> Ví tiền *@
+    @*             </a> *@
+    @*         </div> *@
+    @*     </div> *@
+    @* </li> *@
 
-    <!-- Divider -->
-    <hr class="sidebar-divider">
-
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Cấu hình
-    </div>
-
-    <!-- Nav Item - Configuration -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages"
-           aria-expanded="true" aria-controls="collapsePages">
-            <i class="fas fa-fw fa-cog"></i>
-            <span>Cấu hình kinh doanh</span>
-        </a>
-        <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Danh mục dịch vụ:</h6>
-                <a class="collapse-item" asp-area="Admin" asp-controller="Service" asp-action="Index">
-                    <i class="fas fa-concierge-bell"></i> Dịch vụ
-                </a>
-                <a class="collapse-item" asp-area="Admin" asp-controller="ServiceType" asp-action="Index">
-                    <i class="fas fa-list"></i> Loại dịch vụ
-                </a>
-            </div>
-        </div>
-    </li>
+    @* <!-- Divider --> *@
+    @* <hr class="sidebar-divider"> *@
+    @* *@
+    @* <!-- Heading --> *@
+    @* <div class="sidebar-heading"> *@
+    @*     Cấu hình *@
+    @* </div> *@
+    @* *@
+    @* <!-- Nav Item - Configuration --> *@
+    @* <li class="nav-item"> *@
+    @*     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages" *@
+    @*        aria-expanded="true" aria-controls="collapsePages"> *@
+    @*         <i class="fas fa-fw fa-cog"></i> *@
+    @*         <span>Cấu hình kinh doanh</span> *@
+    @*     </a> *@
+    @*     <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar"> *@
+    @*         <div class="bg-white py-2 collapse-inner rounded"> *@
+    @*             <h6 class="collapse-header">Danh mục dịch vụ:</h6> *@
+    @*             <a class="collapse-item" asp-area="Admin" asp-controller="Service" asp-action="Index"> *@
+    @*                 <i class="fas fa-concierge-bell"></i> Dịch vụ *@
+    @*             </a> *@
+    @*             <a class="collapse-item" asp-area="Admin" asp-controller="ServiceType" asp-action="Index"> *@
+    @*                 <i class="fas fa-list"></i> Loại dịch vụ *@
+    @*             </a> *@
+    @*         </div> *@
+    @*     </div> *@
+    @* </li> *@
 
     <!-- Divider -->
     <hr class="sidebar-divider d-none d-md-block">

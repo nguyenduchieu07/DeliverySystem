@@ -38,4 +38,8 @@
     <Folder Include="wwwroot\image\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Areas\Admin\Views\Feedback\Index.cshtml" />
+  </ItemGroup>
+
 </Project>
