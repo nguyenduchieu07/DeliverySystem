@@ -272,10 +272,10 @@
         <div class="stat-label" style="color: var(--success);">Đã Xác Minh</div>
         <div class="stat-value">@Model.Count(s => s.IsVerified)</div>
     </div>
-    <div class="stat-card" style="border-left-color: var(--warning);">
-        <div class="stat-label" style="color: var(--warning);">Đánh Giá TB</div>
-        <div class="stat-value">@(Model.Any() ? Model.Average(s => s.RatingAvg).ToString("F1") : "0.0")</div>
-    </div>
+    @* <div class="stat-card" style="border-left-color: var(--warning);"> *@
+    @*     <div class="stat-label" style="color: var(--warning);">Đánh Giá TB</div> *@
+    @*     <div class="stat-value">@(Model.Any() ? Model.Average(s => s.RatingAvg).ToString("F1") : "0.0")</div> *@
+    @* </div> *@
     <div class="stat-card" style="border-left-color: var(--danger);">
         <div class="stat-label" style="color: var(--danger);">Chưa Xác Minh</div>
         <div class="stat-value">@Model.Count(s => !s.IsVerified)</div>
@@ -297,7 +297,7 @@
                     <th>Trạng Thái</th>
                     <th>KYC</th>
                     <th>Đánh Giá</th>
-                    <th>Số ĐT</th>
+                    <th>Số DT</th>
                     <th>Email</th>
                     <th>Giấy Phép</th>
                     <th>Xác Minh</th>
@@ -326,7 +326,7 @@
                             }
                         </td>
                         <td>
-                            <span class="badge badge-kyc">Level @store.KycLevel</span>
+                            <span class="badge badge-kyc">@store.KycLevel</span>
                         </td>
                         <td>
                             <div class="rating-display">
@@ -350,8 +350,8 @@
                                 <span class="rating-count">(@store.RatingCount)</span>
                             </div>
                         </td>
-                        <td>@store.ContactPhone</td>
-                        <td>@store.ContactEmail</td>
+                        <td>@(!string.IsNullOrEmpty(store.ContactPhone) ? store.ContactPhone: "N/A")</td>
+                        <td>@(!string.IsNullOrEmpty(store.ContactEmail) ? store.ContactEmail: "N/A")</td>
                         <td>
                             @if (store.LicenseExpiryDate.HasValue)
                             {

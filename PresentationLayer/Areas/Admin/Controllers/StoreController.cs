@@ -13,11 +13,15 @@ namespace PresentationLayer.Areas.Admin.Controllers;
 public class StoreController : Controller
 {
     private readonly IBaseRepository<Store, Guid> _storeRepository;
+
     private readonly IFeedbackRepository _feedbackRepository;
-    public StoreController(IBaseRepository<Store, Guid> storeRepository, IFeedbackRepository feedbackRepository)
+    private readonly IKycRepository _kycRepository;
+
+    public StoreController(IBaseRepository<Store, Guid> storeRepository, IFeedbackRepository feedbackRepository, IKycRepository kycRepository)
     {
         _storeRepository = storeRepository;
         _feedbackRepository = feedbackRepository;
+        _kycRepository = kycRepository;
     }
 
     public async Task<IActionResult> Index()
@@ -37,6 +41,9 @@ public class StoreController : Controller
         
         var store = await _storeRepository.GetByIdAsync(storeId);
         vm.Store = store;
+        
+        var kycSubmission = await _kycRepository.GetKycSubmissionByStoreId(storeId);
+        vm.KycSubmission = kycSubmission;
         
         return View(vm);
     }
