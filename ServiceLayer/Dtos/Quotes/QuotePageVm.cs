@@ -102,6 +102,7 @@ namespace ServiceLayer.Dtos.Quotes
     {
         public Guid QuotationId { get; set; }
         public List<Guid> SlotIds { get; set; } = new();
+        
         public DateTime From { get; set; }
         public DateTime To { get; set; }
     }

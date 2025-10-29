@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 using System;
+using PresentationLayer.Models;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
@@ -12,11 +13,14 @@ namespace PresentationLayer.Areas.Stores.Controllers
     {
         private readonly DeliverySytemContext _db;
         private readonly IUserContextService _context;
+        
+        private readonly IContractService _contractService;
         public QuotationsController(DeliverySytemContext db,
-            IUserContextService userContextService)
+            IUserContextService userContextService, IContractService contractService)
         {
             _db = db;
             _context = userContextService;
+            _contractService = contractService;
         }
 
         public async Task<IActionResult> Index(string? tab)
@@ -52,6 +56,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
         [HttpGet]
         public async Task<IActionResult> Detail(Guid id)
         {
+            var vm = new StoreQuotationDetailViewModel();
+            
             var idUser = Guid.Parse(_context.GetUserId()!);
             var storeId = await _db.Stores.Where(e => e.OwnerUserId == idUser)
                 .Select(e => e.Id).FirstOrDefaultAsync(); 
@@ -60,7 +66,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 .Include(x => x.Orders).ThenInclude(o => o.OrderItems)
                 .FirstOrDefaultAsync(x => x.Id == id && (x.Status == StatusValue.Draft ? true : x.StoreId == storeId));
             if (qt == null) return NotFound();
-            return View(qt);
+            
+            vm.Quotation = qt;
+            
+            var contracts = await _contractService.GetActiveQuotationContracts(quotationId: qt.Id);
+            vm.Contracts = contracts;
+            return View(vm);
         }
 
         [HttpPost]
@@ -137,6 +148,26 @@ namespace PresentationLayer.Areas.Stores.Controllers
             qt.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             return Ok();
+        }
+        [HttpPost]
+        public async Task<IActionResult> Contracts(Guid quotationId)
+        {
+            var contracts = await _contractService.GenerateContractsAsync(quotationId);
+            return Ok(contracts);
+        }
+        
+        [HttpGet("/Stores/Quotations/Contracts/{id}")]
+        public async Task<IActionResult> ViewContract(Guid id)
+        {
+            try
+            {
+                var html = await _contractService.GenerateContractHtmlAsync(id);
+                return Content(html, "text/html");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

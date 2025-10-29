@@ -462,10 +462,10 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
             b.HasIndex(x => x.OrderId);
 
-            b.HasOne<WarehouseSlot>()
-             .WithMany()
-             .HasForeignKey(x => x.WarehouseSlotId)
-             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(x => x.WarehouseSlot)
+                .WithMany() 
+                .HasForeignKey(x => x.WarehouseSlotId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             
         });

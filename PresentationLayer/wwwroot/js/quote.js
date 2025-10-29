@@ -569,7 +569,8 @@ async function handleTempReservation() {
                 quotationId: currentQuotationId,
                 slotIds: selectedSlots.map(s => s.id),
                 from: startDate,
-                to: endDate
+                to: endDate,
+                selectedWarehouseId: selectedWarehouse.id
             })
         });
         if (ok.ok) alert('✅ Đã giữ chỗ tạm thời trong 2 giờ!');
@@ -594,7 +595,8 @@ async function handleAcceptQuote() {
                 quotationId: currentQuotationId,
                 slotIds: selectedSlots.map(s => s.id),
                 from: startDate,
-                to: endDate
+                to: endDate,
+                selectedWarehouseId: selectedWarehouse.id
             })
         });
         if (ok.ok) alert('✅ Chấp nhận báo giá thành công!\n\nChúng tôi sẽ liên hệ với bạn sớm nhất.');
@@ -672,7 +674,8 @@ async function submitNegotiate() {
                 note,
                 slotIds: selectedSlots.map(s => s.id),
                 from: startDate,
-                to: endDate
+                to: endDate,
+                selectedWarehouseId: selectedWarehouse.id
             })
         });
         if (ok.ok) { alert('✅ Đã gửi yêu cầu chỉnh giá!'); closeNegotiateModal(); }

@@ -1,8 +1,7 @@
-﻿@model DataAccessLayer.Entities.Quotation
+﻿@model PresentationLayer.Models.StoreQuotationDetailViewModel
 
 @{
 	ViewData["Title"] = "Chi tiết Báo giá";
-
 }
 
 <style>
@@ -27,11 +26,11 @@
 		transition: all 0.3s;
 	}
 
-		.back-button:hover {
-			border-color: #667eea;
-			color: #667eea;
-			transform: translateX(-5px);
-		}
+	.back-button:hover {
+		border-color: #667eea;
+		color: #667eea;
+		transform: translateX(-5px);
+	}
 
 	.detail-header {
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -39,13 +38,13 @@
 		padding: 40px;
 		border-radius: 15px;
 		margin-bottom: 30px;
-		box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 	}
 
-		.detail-header h1 {
-			margin: 0 0 15px 0;
-			font-size: 2.2rem;
-		}
+	.detail-header h1 {
+		margin: 0 0 15px 0;
+		font-size: 2.2rem;
+	}
 
 	.header-meta {
 		display: grid;
@@ -55,7 +54,7 @@
 	}
 
 	.meta-item {
-		background: rgba(255,255,255,0.2);
+		background: rgba(255, 255, 255, 0.2);
 		padding: 15px;
 		border-radius: 10px;
 	}
@@ -82,16 +81,16 @@
 		background: white;
 		padding: 30px;
 		border-radius: 15px;
-		box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+		box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 	}
 
-		.info-card h3 {
-			color: #667eea;
-			margin-bottom: 20px;
-			font-size: 1.3rem;
-			border-bottom: 2px solid #f0f0f0;
-			padding-bottom: 10px;
-		}
+	.info-card h3 {
+		color: #667eea;
+		margin-bottom: 20px;
+		font-size: 1.3rem;
+		border-bottom: 2px solid #f0f0f0;
+		padding-bottom: 10px;
+	}
 
 	.info-row {
 		display: flex;
@@ -159,29 +158,29 @@
 		font-size: 1.1rem;
 	}
 
-		.total-row.final {
-			border-top: 2px solid #667eea;
-			margin-top: 10px;
-			padding-top: 15px;
-			font-size: 1.5rem;
-			font-weight: 700;
-			color: #667eea;
-		}
+	.total-row.final {
+		border-top: 2px solid #667eea;
+		margin-top: 10px;
+		padding-top: 15px;
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: #667eea;
+	}
 
 	.action-panel {
 		background: white;
 		padding: 30px;
 		border-radius: 15px;
-		box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+		box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 		position: sticky;
 		top: 20px;
 	}
 
-		.action-panel h3 {
-			color: #667eea;
-			margin-bottom: 20px;
-			font-size: 1.3rem;
-		}
+	.action-panel h3 {
+		color: #667eea;
+		margin-bottom: 20px;
+		font-size: 1.3rem;
+	}
 
 	.action-btn {
 		width: 100%;
@@ -199,44 +198,44 @@
 		gap: 8px;
 	}
 
-		.action-btn.approve {
-			background: #27ae60;
-			color: white;
-		}
+	.action-btn.approve {
+		background: #27ae60;
+		color: white;
+	}
 
-			.action-btn.approve:hover {
-				background: #229954;
-				transform: translateY(-2px);
-				box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
-			}
+	.action-btn.approve:hover {
+		background: #229954;
+		transform: translateY(-2px);
+		box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+	}
 
-		.action-btn.revise {
-			background: #3498db;
-			color: white;
-		}
+	.action-btn.revise {
+		background: #3498db;
+		color: white;
+	}
 
-			.action-btn.revise:hover {
-				background: #2980b9;
-				transform: translateY(-2px);
-				box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
-			}
+	.action-btn.revise:hover {
+		background: #2980b9;
+		transform: translateY(-2px);
+		box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+	}
 
-		.action-btn.reject {
-			background: #e74c3c;
-			color: white;
-		}
+	.action-btn.reject {
+		background: #e74c3c;
+		color: white;
+	}
 
-			.action-btn.reject:hover {
-				background: #c0392b;
-				transform: translateY(-2px);
-				box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
-			}
+	.action-btn.reject:hover {
+		background: #c0392b;
+		transform: translateY(-2px);
+		box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+	}
 
-		.action-btn:disabled {
-			background: #ccc;
-			cursor: not-allowed;
-			transform: none !important;
-		}
+	.action-btn:disabled {
+		background: #ccc;
+		cursor: not-allowed;
+		transform: none !important;
+	}
 
 	.status-info {
 		background: #e8f0fe;
@@ -246,20 +245,20 @@
 		border-left: 4px solid #667eea;
 	}
 
-		.status-info.warning {
-			background: #fff3cd;
-			border-left-color: #f39c12;
-		}
+	.status-info.warning {
+		background: #fff3cd;
+		border-left-color: #f39c12;
+	}
 
-		.status-info.success {
-			background: #d4edda;
-			border-left-color: #27ae60;
-		}
+	.status-info.success {
+		background: #d4edda;
+		border-left-color: #27ae60;
+	}
 
-		.status-info.danger {
-			background: #f8d7da;
-			border-left-color: #e74c3c;
-		}
+	.status-info.danger {
+		background: #f8d7da;
+		border-left-color: #e74c3c;
+	}
 
 	/* Modal */
 	.modal {
@@ -269,15 +268,15 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background: rgba(0,0,0,0.7);
+		background: rgba(0, 0, 0, 0.7);
 		z-index: 1000;
 		justify-content: center;
 		align-items: center;
 	}
 
-		.modal.active {
-			display: flex;
-		}
+	.modal.active {
+		display: flex;
+	}
 
 	.modal-content {
 		background: white;
@@ -285,7 +284,7 @@
 		border-radius: 20px;
 		max-width: 500px;
 		width: 90%;
-		box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 	}
 
 	.modal-header {
@@ -295,10 +294,10 @@
 		margin-bottom: 20px;
 	}
 
-		.modal-header h3 {
-			color: #667eea;
-			margin: 0;
-		}
+	.modal-header h3 {
+		color: #667eea;
+		margin: 0;
+	}
 
 	.modal-close {
 		background: none;
@@ -312,12 +311,12 @@
 		margin-bottom: 20px;
 	}
 
-		.form-group label {
-			display: block;
-			margin-bottom: 8px;
-			color: #333;
-			font-weight: 600;
-		}
+	.form-group label {
+		display: block;
+		margin-bottom: 8px;
+		color: #333;
+		font-weight: 600;
+	}
 
 	.form-control {
 		width: 100%;
@@ -328,11 +327,11 @@
 		transition: all 0.3s;
 	}
 
-		.form-control:focus {
-			outline: none;
-			border-color: #667eea;
-			box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-		}
+	.form-control:focus {
+		outline: none;
+		border-color: #667eea;
+		box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+	}
 
 	.discount-options {
 		display: grid;
@@ -347,33 +346,33 @@
 		margin-top: 25px;
 	}
 
-		.modal-buttons button {
-			flex: 1;
-			padding: 12px;
-			border: none;
-			border-radius: 10px;
-			font-weight: 600;
-			cursor: pointer;
-			transition: all 0.3s;
-		}
+	.modal-buttons button {
+		flex: 1;
+		padding: 12px;
+		border: none;
+		border-radius: 10px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.3s;
+	}
 
 	.btn-cancel {
 		background: #e0e0e0;
 		color: #666;
 	}
 
-		.btn-cancel:hover {
-			background: #d0d0d0;
-		}
+	.btn-cancel:hover {
+		background: #d0d0d0;
+	}
 
 	.btn-submit {
 		background: #667eea;
 		color: white;
 	}
 
-		.btn-submit:hover {
-			background: #5568d3;
-		}
+	.btn-submit:hover {
+		background: #5568d3;
+	}
 
 	@@media (max-width: 1024px) {
 		.content-grid {
@@ -388,7 +387,34 @@
 			grid-template-columns: 1fr;
 		}
 	}
+	.view-link {
+		background-color: #7b6ef6; /* pastel tím */
+		color: white;
+		border: none;
+		padding: 6px 14px;
+		border-radius: 8px;
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.25s ease;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.view-link:hover {
+		background-color: #6a5de0;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+	}
+
+	.view-link:active {
+		transform: translateY(0);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
 </style>
+
+@{
+	var quotation = Model.Quotation;
+}
 
 <div class="detail-container">
 	<a href="@Url.Action("Index")" class="back-button">
@@ -396,25 +422,25 @@
 	</a>
 
 	<div class="detail-header">
-		<h1>📋 Chi tiết Báo giá #@Model.Id.ToString().Substring(0, 8).ToUpper()</h1>
+		<h1>📋 Chi tiết Báo giá #@quotation.Id.ToString().Substring(0, 8).ToUpper()</h1>
 
 		<div class="header-meta">
 			<div class="meta-item">
 				<div class="meta-label">Khách hàng</div>
-				<div class="meta-value">@Model.Customer.FullName</div>
+				<div class="meta-value">@quotation.Customer.FullName</div>
 			</div>
 			<div class="meta-item">
 				<div class="meta-label">Tổng tiền</div>
-				<div class="meta-value">@Model.TotalAmount.ToString("N0") đ</div>
+				<div class="meta-value">@quotation.TotalAmount.ToString("N0") đ</div>
 			</div>
 			<div class="meta-item">
 				<div class="meta-label">Hiệu lực đến</div>
-				<div class="meta-value">@Model.ValidUntil.ToString("dd/MM/yyyy HH:mm")</div>
+				<div class="meta-value">@quotation.ValidUntil.ToString("dd/MM/yyyy HH:mm")</div>
 			</div>
 			<div class="meta-item">
 				<div class="meta-label">Trạng thái</div>
 				<div class="meta-value">
-					@switch (Model.Status)
+					@switch (quotation.Status)
 					{
 						case DataAccessLayer.Enums.StatusValue.Draft:
 							<span>📝 Có thể báo giá</span>
@@ -445,15 +471,15 @@
 				<h3>👤 Thông tin khách hàng</h3>
 				<div class="info-row">
 					<span class="info-label">Họ tên:</span>
-					<span class="info-value">@Model.Customer.FullName</span>
+					<span class="info-value">@quotation.Customer.FullName</span>
 				</div>
 				<div class="info-row">
 					<span class="info-label">Email:</span>
-					<span class="info-value">@Model.Customer.Email</span>
+					<span class="info-value">@quotation.Customer.Email</span>
 				</div>
 				<div class="info-row">
 					<span class="info-label">Số điện thoại:</span>
-					<span class="info-value">@Model.Customer.PhoneNumber</span>
+					<span class="info-value">@quotation.Customer.PhoneNumber</span>
 				</div>
 			</div>
 
@@ -461,9 +487,9 @@
 			<div class="info-card" style="margin-top: 30px;">
 				<h3>📦 Chi tiết đơn hàng</h3>
 
-				@if (Model.Orders != null && Model.Orders.Any())
+				@if (quotation.Orders != null && quotation.Orders.Any())
 				{
-					foreach (var order in Model.Orders)
+					foreach (var order in quotation.Orders)
 					{
 						<div class="order-items">
 							@foreach (var item in order.OrderItems)
@@ -493,16 +519,34 @@
 				<div class="total-section">
 					<div class="total-row">
 						<span>Tạm tính:</span>
-						<span>@((Model.TotalAmount / 1.1m).ToString("N0")) đ</span>
+						<span>@((quotation.TotalAmount / 1.1m).ToString("N0")) đ</span>
 					</div>
 					<div class="total-row">
 						<span>VAT (10%):</span>
-						<span>@((Model.TotalAmount - Model.TotalAmount / 1.1m).ToString("N0")) đ</span>
+						<span>@((quotation.TotalAmount - quotation.TotalAmount / 1.1m).ToString("N0")) đ</span>
 					</div>
 					<div class="total-row final">
 						<span>TỔNG CỘNG:</span>
-						<span>@Model.TotalAmount.ToString("N0") đ</span>
+						<span>@quotation.TotalAmount.ToString("N0") đ</span>
 					</div>
+				</div>
+			</div>
+
+			<div class="info-card">
+				<h3>📑 Danh sách hợp đồng</h3>
+				<button class="action-btn approve" onclick="generateContracts('@Model.Quotation.Id')">
+					Tạo hợp đồng
+				</button>
+
+				<!-- Vùng hiển thị danh sách hợp đồng -->
+				<div id="contractsContainer">
+					@foreach (var contract in Model.Contracts)
+					{
+						<div class="info-row">
+							<span class="info-value">@contract.WarehouseSlot.Code</span>
+						</div>
+					}
+
 				</div>
 			</div>
 		</div>
@@ -513,19 +557,19 @@
 				<h3>⚡ Thao tác nhanh</h3>
 
 				@{
-					var timeLeft = (Model.ValidUntil - DateTime.UtcNow).TotalHours;
+					var timeLeft = (quotation.ValidUntil - DateTime.UtcNow).TotalHours;
 					var isExpired = timeLeft <= 0;
 					var isUrgent = timeLeft > 0 && timeLeft <= 24;
 				}
 
-				@if (Model.Status != StatusValue.Draft)
+				@if (quotation.Status != StatusValue.Draft)
 				{
 					if (isExpired)
 					{
 						<div class="status-info danger">
 							<strong>⚠️ Báo giá đã hết hạn</strong>
 							<p style="margin: 5px 0 0 0; font-size: 0.9rem;">
-								Hết hạn lúc: @Model.ValidUntil.ToString("dd/MM/yyyy HH:mm")
+								Hết hạn lúc: @quotation.ValidUntil.ToString("dd/MM/yyyy HH:mm")
 							</p>
 						</div>
 					}
@@ -547,7 +591,7 @@
 				}
 
 
-				@if (Model.Status == DataAccessLayer.Enums.StatusValue.Sent || Model.Status == DataAccessLayer.Enums.StatusValue.Revised)
+				@if (quotation.Status == DataAccessLayer.Enums.StatusValue.Sent || quotation.Status == DataAccessLayer.Enums.StatusValue.Revised)
 				{
 					<button class="action-btn approve" onclick="approveQuotation()">
 						✅ Phê duyệt báo giá
@@ -561,21 +605,21 @@
 						❌ Từ chối
 					</button>
 				}
-				else if (Model.Status == DataAccessLayer.Enums.StatusValue.Active)
+				else if (quotation.Status == DataAccessLayer.Enums.StatusValue.Active)
 				{
 					<div class="status-info success">
 						<strong>✅ Báo giá đã được chấp nhận</strong>
 						<p style="margin: 5px 0 0 0; font-size: 0.9rem;">
-							Cập nhật lúc: @Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")
+							Cập nhật lúc: @quotation.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")
 						</p>
 					</div>
 				}
-				else if (Model.Status == DataAccessLayer.Enums.StatusValue.InActive)
+				else if (quotation.Status == DataAccessLayer.Enums.StatusValue.InActive)
 				{
 					<div class="status-info danger">
 						<strong>❌ Báo giá đã bị từ chối</strong>
 						<p style="margin: 5px 0 0 0; font-size: 0.9rem;">
-							Cập nhật lúc: @Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")
+							Cập nhật lúc: @quotation.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")
 						</p>
 					</div>
 				}
@@ -584,11 +628,13 @@
 					<h4 style="margin: 0 0 15px 0; color: #666;">📊 Thông tin báo giá</h4>
 					<div class="info-row">
 						<span class="info-label">Ngày tạo:</span>
-						<span class="info-value" style="font-size: 0.9rem;">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+						<span class="info-value"
+						      style="font-size: 0.9rem;">@quotation.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
 					</div>
 					<div class="info-row">
 						<span class="info-label">Cập nhật:</span>
-						<span class="info-value" style="font-size: 0.9rem;">@(Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</span>
+						<span class="info-value"
+						      style="font-size: 0.9rem;">@(quotation.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</span>
 					</div>
 				</div>
 			</div>
@@ -608,11 +654,13 @@
 			<label>Đề xuất giá theo...</label>
 
 			<div class="discount-options">
-				<label style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; cursor: pointer;">
+				<label
+					style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; cursor: pointer;">
 					<input type="radio" name="suggestDiscountType" value="percent" checked>
 					<span>Giảm theo %</span>
 				</label>
-				<label style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; cursor: pointer;">
+				<label
+					style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; cursor: pointer;">
 					<input type="radio" name="suggestDiscountType" value="absolute">
 					<span>Giảm cố định</span>
 				</label>
@@ -621,12 +669,14 @@
 
 		<div class="form-group" id="percentGroup">
 			<label>Giảm giá (%):</label>
-			<input type="number" id="suggestPercentDiscount" class="form-control" min="0" max="100" step="1" placeholder="VD: 10">
+			<input type="number" id="suggestPercentDiscount" class="form-control" min="0" max="100" step="1"
+			       placeholder="VD: 10">
 		</div>
 
 		<div class="form-group" id="absoluteGroup" style="display: none;">
 			<label>Giảm giá (VNĐ):</label>
-			<input type="number" id="suggestAbsoluteDiscount" class="form-control" min="0" step="1000" placeholder="VD: 100000">
+			<input type="number" id="suggestAbsoluteDiscount" class="form-control" min="0" step="1000"
+			       placeholder="VD: 100000">
 		</div>
 
 		<div class="form-group">
@@ -637,15 +687,16 @@
 		<div style="background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
 			<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
 				<span>Giá gốc:</span>
-				<strong>@Model.TotalAmount.ToString("N0") đ</strong>
+				<strong>@quotation.TotalAmount.ToString("N0") đ</strong>
 			</div>
 			<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
 				<span>Giảm giá:</span>
 				<strong id="discountSuggestAmount">0 đ</strong>
 			</div>
-			<div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #667eea; font-size: 1.1rem;">
+			<div
+				style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #667eea; font-size: 1.1rem;">
 				<span>Giá đề xuất:</span>
-				<strong style="color: #667eea;" id="newSuggestAmount">@Model.TotalAmount.ToString("N0") đ</strong>
+				<strong style="color: #667eea;" id="newSuggestAmount">@quotation.TotalAmount.ToString("N0") đ</strong>
 			</div>
 		</div>
 
@@ -667,11 +718,13 @@
 		<div class="form-group">
 			<label>Chọn loại giảm giá:</label>
 			<div class="discount-options">
-				<label style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; cursor: pointer;">
+				<label
+					style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; cursor: pointer;">
 					<input type="radio" name="discountType" value="percent" checked>
 					<span>Giảm theo % </span>
 				</label>
-				<label style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; cursor: pointer;">
+				<label
+					style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; cursor: pointer;">
 					<input type="radio" name="discountType" value="absolute">
 					<span>Giảm cố định</span>
 				</label>
@@ -680,12 +733,14 @@
 
 		<div class="form-group" id="percentGroup">
 			<label>Giảm giá (%):</label>
-			<input type="number" id="percentDiscount" class="form-control" min="0" max="100" step="1" placeholder="VD: 10">
+			<input type="number" id="percentDiscount" class="form-control" min="0" max="100" step="1"
+			       placeholder="VD: 10">
 		</div>
 
 		<div class="form-group" id="absoluteGroup" style="display: none;">
 			<label>Giảm giá (VNĐ):</label>
-			<input type="number" id="absoluteDiscount" class="form-control" min="0" step="1000" placeholder="VD: 100000">
+			<input type="number" id="absoluteDiscount" class="form-control" min="0" step="1000"
+			       placeholder="VD: 100000">
 		</div>
 
 		<div class="form-group">
@@ -696,15 +751,16 @@
 		<div style="background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
 			<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
 				<span>Giá gốc:</span>
-				<strong>@Model.TotalAmount.ToString("N0") đ</strong>
+				<strong>@quotation.TotalAmount.ToString("N0") đ</strong>
 			</div>
 			<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
 				<span>Giảm giá:</span>
 				<strong id="discountAmount">0 đ</strong>
 			</div>
-			<div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #667eea; font-size: 1.1rem;">
+			<div
+				style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #667eea; font-size: 1.1rem;">
 				<span>Giá mới:</span>
-				<strong style="color: #667eea;" id="newAmount">@Model.TotalAmount.ToString("N0") đ</strong>
+				<strong style="color: #667eea;" id="newAmount">@quotation.TotalAmount.ToString("N0") đ</strong>
 			</div>
 		</div>
 
@@ -724,7 +780,8 @@
 		</div>
 		<div class="form-group">
 			<label>Lý do từ chối:</label>
-			<textarea id="rejectReason" class="form-control" rows="4" placeholder="Nhập lý do từ chối báo giá..." required></textarea>
+			<textarea id="rejectReason" class="form-control" rows="4" placeholder="Nhập lý do từ chối báo giá..."
+			          required></textarea>
 		</div>
 
 		<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -740,8 +797,8 @@
 
 @section Scripts {
 	<script>
-		const quotationId = '@Model.Id';
-		const originalAmount = @Model.TotalAmount;
+		const quotationId = '@quotation.Id';
+		const originalAmount = @quotation.TotalAmount;
 
 		// Approve quotation
 		async function approveQuotation() {
@@ -766,6 +823,7 @@
 				alert('Có lỗi xảy ra!');
 			}
 		}
+
 		// Show revise modal
 		function showSuggestModal() {
 			document.getElementById('suggestModal').classList.add('active');
@@ -797,7 +855,7 @@
 
 		// Discount type change
 		document.querySelectorAll('input[name="discountType"]').forEach(radio => {
-			radio.addEventListener('change', function() {
+			radio.addEventListener('change', function () {
 				if (this.value === 'percent') {
 					document.getElementById('percentGroup').style.display = 'block';
 					document.getElementById('absoluteGroup').style.display = 'none';
@@ -852,7 +910,7 @@
 
 		// Discount type change on suggest
 		document.querySelectorAll('input[name="suggestDiscountType"]').forEach(radio => {
-			radio.addEventListener('change', function() {
+			radio.addEventListener('change', function () {
 				if (this.value === 'percent') {
 					document.getElementById('percentGroup').style.display = 'block';
 					document.getElementById('absoluteGroup').style.display = 'none';
@@ -864,12 +922,12 @@
 					document.getElementById('suggestPercentDiscount').value = '';
 					document.getElementById('suggestPercentDiscount').value = 0;
 				}
-				
+
 				updateReviseCalculation();
 			});
 		});
 
-		 // Update calculation on input of suggest
+		// Update calculation on input of suggest
 		document.getElementById('suggestPercentDiscount').addEventListener('input', updateSuggestCalculation);
 		document.getElementById('suggestAbsoluteDiscount').addEventListener('input', updateSuggestCalculation);
 
@@ -1010,5 +1068,84 @@
 				alert('Có lỗi xảy ra!');
 			}
 		}
+
+		async function generateContracts(quotationId) {
+			if (!quotationId) {
+				alert('Thiếu ID báo giá!');
+				return;
+			}
+
+			if (!confirm('Bạn có chắc chắn muốn tạo hợp đồng cho báo giá này?')) return;
+
+			try {
+				const response = await fetch(`/Stores/Quotations/Contracts?quotationId=${quotationId}`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' }
+				});
+
+				if (!response.ok) {
+					alert('❌ Không thể tạo hợp đồng!');
+					return;
+				}
+
+				const contracts = await response.json();
+				const container = document.getElementById('contractsContainer');
+				container.innerHTML = '';
+
+				if (!contracts || contracts.length === 0) {
+					container.innerHTML = '<p>Không có hợp đồng nào được tạo.</p>';
+					return;
+				}
+
+				contracts.forEach(c => {
+					const div = document.createElement('div');
+					div.classList.add('info-row');
+					div.innerHTML = `
+				<span class="info-value">${c.warehouseSlot?.code || 'Chưa có mã kho'}</span>
+				<button class="view-link" onclick="viewContract('${c.id}')">Xem hợp đồng</button>
+			`;
+					container.appendChild(div);
+				});
+
+				alert('✅ Đã tạo hợp đồng thành công!');
+			} catch (error) {
+				console.error('Error:', error);
+				alert('Có lỗi xảy ra khi tạo hợp đồng!');
+			}
+}
+
+// 		async function viewContract(contractId) {
+// 			if (!contractId) {
+// 				alert('Thiếu ID hợp đồng!');
+// 				return;
+// 			}
+//
+// 			try {
+// 				const response = await fetch(`/Stores/Quotations/Contracts/${contractId}`, {
+// 					method: 'GET'
+// 				});
+//
+// 				if (!response.ok) {
+// 					alert('❌ Không thể tạo hoặc lấy hợp đồng!');
+// 					return;
+// 				}
+//
+// 				// API sẽ trả về { url: "/files/contracts/abc.pdf" }
+// 				const data = await response.json();
+//
+// 				if (data?.url) {
+// 					window.open(data.url, '_blank');
+// 				} else {
+// 					alert('Không tìm thấy file hợp đồng.');
+// 				}
+// 			} catch (error) {
+// 				console.error('Error:', error);
+// 				alert('Có lỗi xảy ra khi tạo hoặc xem hợp đồng!');
+// 			}
+// }
+		async function viewContract(contractId) {
+			window.open(`/Stores/Quotations/Contracts/${contractId}`, '_blank');
+		}
+
 	</script>
 }
