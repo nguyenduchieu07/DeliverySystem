@@ -12,7 +12,7 @@ namespace ServiceLayer.Services
         private readonly DeliverySytemContext _db;
         private const int FREE_DAYS = 2;
         private const decimal VAT_RATE = 0.10m;
-        private const int VALIDITY_HOURS = 48;
+        private const int VALIDITY_MINUTE = 5;
         private readonly IUserContextService _context;
         public QuotationService(DeliverySytemContext db, IUserContextService context)
         {
@@ -90,7 +90,7 @@ namespace ServiceLayer.Services
                 StoreId = req.StoreId,
                 CustomerId = userId, // Get from authenticated user
                 TotalAmount = total,
-                ValidUntil = DateTime.UtcNow.AddHours(VALIDITY_HOURS),
+                ValidUntil = DateTime.UtcNow.AddMinutes(VALIDITY_MINUTE),
                 Status = StatusValue.Draft,
                 CreatedAt = DateTime.UtcNow
             };
