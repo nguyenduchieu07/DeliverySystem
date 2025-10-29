@@ -135,10 +135,7 @@ namespace PresentationLayer.Controllers
                 {
                     return RedirectToAction("Index", "Home", new { area = "Admin" });
                 }
-                if (await _userManager.IsInRoleAsync(user, "Store"))
-                {
-                    return RedirectToAction("Index", "Home", new { area = "Store" });
-                }
+             
                 else
                 {
                     // Nếu là Customer (hoặc vai trò khác), giữ nguyên logic cũ
