@@ -354,7 +354,7 @@ namespace DataAccessLayer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
                     ValidUntil = table.Column<DateTime>(type: "datetime2", nullable: false),

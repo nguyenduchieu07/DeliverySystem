@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(DeliverySytemContext))]
-    [Migration("20251028110425_Initial")]
-    partial class Initial
+    [Migration("20251029074941_AddData")]
+    partial class AddData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -93,6 +93,53 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Addresses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa20"),
+                            Active = true,
+                            AddressLine = "12 Nguyễn Huệ",
+                            City = "Hồ Chí Minh",
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 491, DateTimeKind.Local).AddTicks(6289),
+                            District = "Q.1",
+                            IsDefault = true,
+                            Label = "Store HQ",
+                            Latitude = 10.772,
+                            Longitude = 106.70399999999999,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            Ward = "Bến Nghé"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"),
+                            Active = true,
+                            AddressLine = "89 Trần Hưng Đạo",
+                            City = "Hà Nội",
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 491, DateTimeKind.Local).AddTicks(6303),
+                            District = "Hoàn Kiếm",
+                            IsDefault = true,
+                            Label = "Home Pickup",
+                            Latitude = 21.026,
+                            Longitude = 105.84099999999999,
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            Ward = "Cửa Nam"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"),
+                            Active = true,
+                            AddressLine = "25 Lê Duẩn",
+                            City = "Hồ Chí Minh",
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 491, DateTimeKind.Local).AddTicks(6306),
+                            District = "Q.1",
+                            IsDefault = false,
+                            Label = "New Apartment",
+                            Latitude = 10.782,
+                            Longitude = 106.7,
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            Ward = "Bến Nghé"
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Category", b =>
@@ -174,6 +221,155 @@ namespace DataAccessLayer.Migrations
                         {
                             t.HasCheckConstraint("CK_Category_Parent_Not_Self", "[ParentId] IS NULL OR [ParentId] <> [Id]");
                         });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6708),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Dịch vụ vận chuyển",
+                            Slug = "van-chuyen",
+                            SortOrder = 1,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa2-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6725),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Lưu kho",
+                            Slug = "luu-kho",
+                            SortOrder = 2,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa3-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6726),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Dọn dẹp",
+                            Slug = "don-dep",
+                            SortOrder = 3,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6798),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Chuyển nhà",
+                            ParentId = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
+                            Slug = "chuyen-nha",
+                            SortOrder = 1,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000003"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6800),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Chuyển văn phòng",
+                            ParentId = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
+                            Slug = "chuyen-van-phong",
+                            SortOrder = 2,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000004"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6802),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Xe tải theo km",
+                            ParentId = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
+                            Slug = "xe-tai-theo-km",
+                            SortOrder = 3,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa2-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6803),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Theo giờ",
+                            ParentId = new Guid("aaaaaaa2-0000-0000-0000-000000000001"),
+                            Slug = "theo-gio",
+                            SortOrder = 1,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa2-0000-0000-0000-000000000003"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6805),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Theo ngày",
+                            ParentId = new Guid("aaaaaaa2-0000-0000-0000-000000000001"),
+                            Slug = "theo-ngay",
+                            SortOrder = 2,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa3-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6806),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Vệ sinh nhà",
+                            ParentId = new Guid("aaaaaaa3-0000-0000-0000-000000000001"),
+                            Slug = "ve-sinh-nha",
+                            SortOrder = 1,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa3-0000-0000-0000-000000000003"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 396, DateTimeKind.Local).AddTicks(6807),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Vệ sinh văn phòng",
+                            ParentId = new Guid("aaaaaaa3-0000-0000-0000-000000000001"),
+                            Slug = "ve-sinh-van-phong",
+                            SortOrder = 2,
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 491, DateTimeKind.Local).AddTicks(6373),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Moving",
+                            Status = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa11"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 491, DateTimeKind.Local).AddTicks(6377),
+                            IsActive = true,
+                            IsLeaf = false,
+                            Level = 0,
+                            Name = "Storage",
+                            Status = 8
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Customer", b =>
@@ -226,6 +422,19 @@ namespace DataAccessLayer.Migrations
                         .HasName("PK__Customer__A4AE64D8B858128B");
 
                     b.ToTable("Customers");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            CreatedAt = new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "a@gmail.com",
+                            FullName = "Nguyễn Văn A",
+                            KycLevel = "None",
+                            PhoneNumber = "0123456789",
+                            PreferredLang = "vi",
+                            Tier = "Basic"
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Feedback", b =>
@@ -274,6 +483,18 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("ToStoreId");
 
                     b.ToTable("Feedbacks");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa50"),
+                            Comment = "Very smooth job!",
+                            CreatedAt = new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc),
+                            FromUserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa32"),
+                            Rating = 5,
+                            ToStoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3")
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.KycDocument", b =>
@@ -315,6 +536,72 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("KycSubmissionId");
 
                     b.ToTable("KycDocuments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc1"),
+                            CreatedAt = new DateTime(2025, 10, 23, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5879),
+                            DocType = "License",
+                            FilePath = "/uploads/kyc/blue/license.pdf",
+                            KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1")
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc2"),
+                            CreatedAt = new DateTime(2025, 10, 23, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5883),
+                            DocType = "ID",
+                            FilePath = "/uploads/kyc/blue/id.jpg",
+                            KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1")
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc3"),
+                            CreatedAt = new DateTime(2025, 10, 23, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5886),
+                            DocType = "Tax",
+                            FilePath = "/uploads/kyc/blue/tax.pdf",
+                            KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1")
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc4"),
+                            CreatedAt = new DateTime(2025, 10, 24, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5889),
+                            DocType = "License",
+                            FilePath = "/uploads/kyc/fresh/license.pdf",
+                            KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2")
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc5"),
+                            CreatedAt = new DateTime(2025, 10, 24, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5891),
+                            DocType = "ID",
+                            FilePath = "/uploads/kyc/fresh/id.jpg",
+                            KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2")
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc6"),
+                            CreatedAt = new DateTime(2025, 10, 14, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5893),
+                            DocType = "License",
+                            FilePath = "/uploads/kyc/prime/license.pdf",
+                            KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3")
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc7"),
+                            CreatedAt = new DateTime(2025, 10, 14, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5895),
+                            DocType = "ID",
+                            FilePath = "/uploads/kyc/prime/id.jpg",
+                            KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3")
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-ccccccccccc8"),
+                            CreatedAt = new DateTime(2025, 10, 14, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5897),
+                            DocType = "Tax",
+                            FilePath = "/uploads/kyc/prime/tax.pdf",
+                            KycSubmissionId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3")
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.KycSubmission", b =>
@@ -361,6 +648,38 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("Status", "SubmittedAt");
 
                     b.ToTable("KycSubmissions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1"),
+                            CreatedAt = new DateTime(2025, 10, 23, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5777),
+                            Status = 0,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"),
+                            SubmittedAt = new DateTime(2025, 10, 23, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5774)
+                        },
+                        new
+                        {
+                            Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2"),
+                            AdminNote = "Thiếu giấy tờ thuế / ảnh mờ, vui lòng bổ sung.",
+                            CreatedAt = new DateTime(2025, 10, 24, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5787),
+                            ReviewedAt = new DateTime(2025, 10, 25, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5784),
+                            ReviewedBy = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                            Status = 1,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"),
+                            SubmittedAt = new DateTime(2025, 10, 24, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5783)
+                        },
+                        new
+                        {
+                            Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3"),
+                            AdminNote = "Ok",
+                            CreatedAt = new DateTime(2025, 10, 14, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5796),
+                            ReviewedAt = new DateTime(2025, 10, 15, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5795),
+                            ReviewedBy = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                            Status = 2,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            SubmittedAt = new DateTime(2025, 10, 14, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5794)
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Order", b =>
@@ -442,6 +761,68 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("StoreId");
 
                     b.ToTable("Orders");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa30"),
+                            CreatedAt = new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc),
+                            CustomerId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            DistanceKm = 7.2m,
+                            DropoffAddressId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"),
+                            EtaMinutes = 55,
+                            Note = "August order",
+                            PickupAddressId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"),
+                            Status = 14,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            TotalAmount = 2200000m,
+                            UpdatedAt = new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"),
+                            CreatedAt = new DateTime(2025, 9, 29, 14, 30, 0, 0, DateTimeKind.Utc),
+                            CustomerId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            DistanceKm = 5.1m,
+                            DropoffAddressId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"),
+                            EtaMinutes = 45,
+                            Note = "Yesterday pending",
+                            PickupAddressId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"),
+                            Status = 0,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            TotalAmount = 1500000m,
+                            UpdatedAt = new DateTime(2025, 9, 29, 14, 30, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa32"),
+                            CreatedAt = new DateTime(2025, 9, 30, 8, 0, 0, 0, DateTimeKind.Utc),
+                            CustomerId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            DistanceKm = 3.4m,
+                            DropoffAddressId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"),
+                            EtaMinutes = 35,
+                            Note = "Today completed",
+                            PickupAddressId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"),
+                            Status = 14,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            TotalAmount = 2000000m,
+                            UpdatedAt = new DateTime(2025, 9, 30, 9, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa33"),
+                            CreatedAt = new DateTime(2025, 9, 30, 9, 0, 0, 0, DateTimeKind.Utc),
+                            CustomerId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            DistanceKm = 9.0m,
+                            DropoffAddressId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa22"),
+                            EtaMinutes = 70,
+                            Note = "Today pending",
+                            PickupAddressId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa21"),
+                            Status = 0,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            TotalAmount = 3100000m,
+                            UpdatedAt = new DateTime(2025, 9, 30, 9, 40, 0, 0, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.OrderItem", b =>
@@ -514,6 +895,52 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("ServiceId");
 
                     b.ToTable("OrderItems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa40"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 492, DateTimeKind.Local).AddTicks(1666),
+                            ItemName = "Moving Service",
+                            OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa30"),
+                            Quantity = 1,
+                            ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"),
+                            Subtotal = 2200000m,
+                            UnitPrice = 2200000m
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa41"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 492, DateTimeKind.Local).AddTicks(1678),
+                            ItemName = "Moving Service",
+                            OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"),
+                            Quantity = 1,
+                            ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"),
+                            Subtotal = 1200000m,
+                            UnitPrice = 1200000m
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa42"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 492, DateTimeKind.Local).AddTicks(1682),
+                            ItemName = "Moving Service",
+                            OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"),
+                            Quantity = 1,
+                            ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"),
+                            Subtotal = 300000m,
+                            UnitPrice = 300000m
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa43"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 492, DateTimeKind.Local).AddTicks(1694),
+                            ItemName = "Moving Service",
+                            OrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa32"),
+                            Quantity = 1,
+                            ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"),
+                            Subtotal = 2000000m,
+                            UnitPrice = 2000000m
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Payment", b =>
@@ -594,7 +1021,7 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(20);
 
-                    b.Property<Guid>("StoreId")
+                    b.Property<Guid?>("StoreId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("TotalAmount")
@@ -683,6 +1110,36 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("StoreId");
 
                     b.ToTable("Services");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12"),
+                            BasePrice = 1500000m,
+                            CategoryId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"),
+                            CreatedAt = new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Local moving inside city",
+                            IsActive = true,
+                            Name = "House Moving (City)",
+                            PricingModel = 3,
+                            Status = 0,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            Unit = "Job"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"),
+                            BasePrice = 300000m,
+                            CategoryId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10"),
+                            CreatedAt = new DateTime(2025, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Boxes & packing",
+                            IsActive = true,
+                            Name = "Packing Service",
+                            PricingModel = 3,
+                            Status = 0,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            Unit = "Package"
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.ServiceAddon", b =>
@@ -797,6 +1254,21 @@ namespace DataAccessLayer.Migrations
                     b.ToTable("PriceRules", t =>
                         {
                             t.HasCheckConstraint("CK_ServicePriceRule_Ranges", "\r\n            (MinVolumeM3 IS NULL OR MaxVolumeM3 IS NULL OR MinVolumeM3 <= MaxVolumeM3) AND\r\n            (MinAreaM2  IS NULL OR MaxAreaM2  IS NULL OR MinAreaM2  <= MaxAreaM2)  AND\r\n            (MinQty     IS NULL OR MaxQty     IS NULL OR MinQty     <= MaxQty)     AND\r\n            (MinDays    IS NULL OR MaxDays    IS NULL OR MinDays    <= MaxDays)\r\n        ");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa14"),
+                            ApplyModel = 3,
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 491, DateTimeKind.Local).AddTicks(6607),
+                            MaxQty = 10m,
+                            MinQty = 3m,
+                            Price = 280000m,
+                            ServiceId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa13"),
+                            TimeUnit = 0,
+                            ValidFrom = new DateTime(2025, 8, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ValidTo = new DateTime(2025, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
 
@@ -995,6 +1467,47 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("OwnerUserId");
 
                     b.ToTable("Stores");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"),
+                            CreatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5552),
+                            IsVerified = false,
+                            OwnerUserId = new Guid("22222222-2222-2222-2222-222222222221"),
+                            RatingAvg = 0m,
+                            RatingCount = 0,
+                            Status = 9,
+                            StoreName = "Blue Wash",
+                            UpdatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5554)
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"),
+                            CreatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5652),
+                            IsVerified = false,
+                            OwnerUserId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            RatingAvg = 0m,
+                            RatingCount = 0,
+                            Status = 9,
+                            StoreName = "Fresh Laundry",
+                            UpdatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5652)
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            ActiveRegions = "HN,HCM",
+                            CreatedAt = new DateTime(2025, 9, 29, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5662),
+                            IsVerified = false,
+                            KycLevel = "Verified",
+                            MaxOrdersPerDay = 80,
+                            OwnerUserId = new Guid("22222222-2222-2222-2222-222222222223"),
+                            RatingAvg = 0m,
+                            RatingCount = 0,
+                            Status = 8,
+                            StoreName = "Prime Cleaners",
+                            UpdatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 491, DateTimeKind.Utc).AddTicks(5672)
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.StoreStaff", b =>
@@ -1117,6 +1630,137 @@ namespace DataAccessLayer.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000002"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "8f069b01-5633-485a-8c09-dcca8ab170e1",
+                            CreatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 396, DateTimeKind.Utc).AddTicks(6414),
+                            Email = "store1@gmail.com",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "store1@gmail.com",
+                            NormalizedUserName = "store1",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFzFQ7gyQA/TFsTtczsr3Z53D/lOyYqb681RvT/6EBKeKEmYAmAxGFOxisguc/Vn3Q==",
+                            PhoneNumberConfirmed = false,
+                            Status = 8,
+                            TwoFactorEnabled = false,
+                            UpdatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 396, DateTimeKind.Utc).AddTicks(6418),
+                            UserName = "store1"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "ec149ba1-77dc-4b5c-ad61-b21620d2c995",
+                            CreatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 444, DateTimeKind.Utc).AddTicks(8982),
+                            Email = "SystemAdmin@gmail.com",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "SystemAdmin@gmail.com",
+                            NormalizedUserName = "SystemAdmin",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO1lOpQcLJfNMPnIU/D2joJXsIHy69ExhNceiJdzXRlOQVfR/3ig/oaXpgI2EcLqww==",
+                            PhoneNumberConfirmed = false,
+                            Status = 8,
+                            TwoFactorEnabled = false,
+                            UpdatedAt = new DateTime(2025, 10, 29, 7, 49, 40, 444, DateTimeKind.Utc).AddTicks(8987),
+                            UserName = "SystemAdmin"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222221"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "con-blue",
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "owner.blue@demo.local",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "OWNER.BLUE@DEMO.LOCAL",
+                            NormalizedUserName = "BLUEOWNER",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDU2Er80FuatevHHUHQMJlfXdbPJe1JBnUJYK/CY1Ki9qjsd8qx1F+9KDNU2E8fJpg==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "sec-blue",
+                            Status = 8,
+                            TwoFactorEnabled = false,
+                            UpdatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UserName = "blueowner"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "con-fresh",
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "owner.fresh@demo.local",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "OWNER.FRESH@DEMO.LOCAL",
+                            NormalizedUserName = "FRESHOWNER",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDU2Er80FuatevHHUHQMJlfXdbPJe1JBnUJYK/CY1Ki9qjsd8qx1F+9KDNU2E8fJpg==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "sec-fresh",
+                            Status = 8,
+                            TwoFactorEnabled = false,
+                            UpdatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UserName = "freshowner"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222223"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "con-prime",
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "owner.prime@demo.local",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "OWNER.PRIME@DEMO.LOCAL",
+                            NormalizedUserName = "PRIMEOWNER",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDU2Er80FuatevHHUHQMJlfXdbPJe1JBnUJYK/CY1Ki9qjsd8qx1F+9KDNU2E8fJpg==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "sec-prime",
+                            Status = 8,
+                            TwoFactorEnabled = false,
+                            UpdatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UserName = "primeowner"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "ff7feb2d-1ba3-439a-8d6f-4f4ffb763e41",
+                            CreatedAt = new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "owner@test.local",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "OWNER@TEST.LOCAL",
+                            NormalizedUserName = "STOREOWNER",
+                            PasswordHash = "AQAAAA...",
+                            PhoneNumberConfirmed = false,
+                            Status = 8,
+                            TwoFactorEnabled = false,
+                            UpdatedAt = new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc),
+                            UserName = "storeowner"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "498cca23-6092-4b64-84ce-5c4d2e8a7e4a",
+                            CreatedAt = new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "cust1@test.local",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "CUST1@TEST.LOCAL",
+                            NormalizedUserName = "CUSTOMER1",
+                            PasswordHash = "AQAAAA...",
+                            PhoneNumberConfirmed = false,
+                            Status = 8,
+                            TwoFactorEnabled = false,
+                            UpdatedAt = new DateTime(2025, 9, 30, 10, 0, 0, 0, DateTimeKind.Utc),
+                            UserName = "customer1"
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Wallet", b =>
@@ -1276,6 +1920,20 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("StoreId", "Name");
 
                     b.ToTable("Warehouses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"),
+                            AddressRefId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa20"),
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 492, DateTimeKind.Local).AddTicks(1813),
+                            HeightM = 0m,
+                            LengthM = 0m,
+                            Name = "Main Warehouse",
+                            Status = 0,
+                            StoreId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"),
+                            WidthM = 0m
+                        });
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.WarehouseSlot", b =>
@@ -1350,6 +2008,54 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("WarehouseId", "Status");
 
                     b.ToTable("WarehouseSlots");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa61"),
+                            BasePricePerHour = 0m,
+                            Code = "A1",
+                            Col = 0,
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 492, DateTimeKind.Local).AddTicks(1867),
+                            HeightM = 0m,
+                            IsBlocked = false,
+                            LengthM = 0m,
+                            Row = 0,
+                            Status = 4,
+                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"),
+                            WidthM = 0m
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa62"),
+                            BasePricePerHour = 0m,
+                            Code = "A2",
+                            Col = 0,
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 492, DateTimeKind.Local).AddTicks(1872),
+                            CurrentOrderId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa31"),
+                            HeightM = 0m,
+                            IsBlocked = false,
+                            LengthM = 0m,
+                            Row = 0,
+                            Status = 5,
+                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"),
+                            WidthM = 0m
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa63"),
+                            BasePricePerHour = 0m,
+                            Code = "B1",
+                            Col = 0,
+                            CreatedAt = new DateTime(2025, 10, 29, 14, 49, 40, 492, DateTimeKind.Local).AddTicks(1874),
+                            HeightM = 0m,
+                            IsBlocked = false,
+                            LengthM = 0m,
+                            Row = 0,
+                            Status = 4,
+                            WarehouseId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa60"),
+                            WidthM = 0m
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -1378,6 +2084,36 @@ namespace DataAccessLayer.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
+                            ConcurrencyStamp = "710408e1-b37c-44b4-9e27-e6f0aa6fb34f",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000002"),
+                            ConcurrencyStamp = "eee8537f-b49f-4875-bb40-f4dab7dac010",
+                            Name = "Store",
+                            NormalizedName = "STORE"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000004"),
+                            ConcurrencyStamp = "f41527ea-5e0b-42b3-b9bd-f80467a9a692",
+                            Name = "Customer",
+                            NormalizedName = "CUSTOMER"
+                        },
+                        new
+                        {
+                            Id = new Guid("aaaaaaa1-0000-0000-0000-000000000003"),
+                            ConcurrencyStamp = "a284334f-edfb-48eb-8a0d-340bf6d7646a",
+                            Name = "StoreStaff",
+                            NormalizedName = "StoreStaff"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1462,6 +2198,33 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = new Guid("aaaaaaa1-0000-0000-0000-000000000002"),
+                            RoleId = new Guid("aaaaaaa1-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            UserId = new Guid("aaaaaaa1-0000-0000-0000-000000000001"),
+                            RoleId = new Guid("aaaaaaa1-0000-0000-0000-000000000001")
+                        },
+                        new
+                        {
+                            UserId = new Guid("22222222-2222-2222-2222-222222222221"),
+                            RoleId = new Guid("aaaaaaa1-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            UserId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            RoleId = new Guid("aaaaaaa1-0000-0000-0000-000000000002")
+                        },
+                        new
+                        {
+                            UserId = new Guid("22222222-2222-2222-2222-222222222223"),
+                            RoleId = new Guid("aaaaaaa1-0000-0000-0000-000000000002")
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
@@ -1656,7 +2419,6 @@ namespace DataAccessLayer.Migrations
                     b.HasOne("DataAccessLayer.Entities.Store", "Store")
                         .WithMany("Quotations")
                         .HasForeignKey("StoreId")
-                        .IsRequired()
                         .HasConstraintName("FK_Quotations_Stores");
 
                     b.Navigation("Customer");

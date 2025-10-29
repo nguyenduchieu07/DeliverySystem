@@ -258,6 +258,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
             entity.HasOne(d => d.Store).WithMany(p => p.Quotations)
                 .HasForeignKey(d => d.StoreId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Quotations_Stores");
         });

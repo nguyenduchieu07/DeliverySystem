@@ -137,6 +137,8 @@ namespace ServiceLayer.Services
 
         public async Task<bool> CreateTempReservationAsync(HoldTempVm vm, CancellationToken ct)
         {
+            int SENT_VALID_HOUR = 48;
+
             var slots = await _db.WarehouseSlots.Where(e => vm.SlotIds.Contains(e.Id)).ToListAsync();
             var quotation = await _db.Quotations.Where(e => e.Id == vm.QuotationId).FirstOrDefaultAsync();
 
@@ -147,6 +149,7 @@ namespace ServiceLayer.Services
                 slot.LeaseEnd = DateTime.UtcNow.AddMinutes(vm.HoldMinutes);
             }
             quotation!.Status = StatusValue.Sent;
+            quotation!.ValidUntil = DateTime.UtcNow.AddHours(SENT_VALID_HOUR);
             await _db.SaveChangesAsync(ct);
             return true;
         }
