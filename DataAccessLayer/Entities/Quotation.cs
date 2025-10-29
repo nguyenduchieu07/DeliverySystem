@@ -7,7 +7,7 @@ namespace DataAccessLayer.Entities;
 
 public partial class Quotation : BaseEntity<Guid>
 {
-    public Guid StoreId { get; set; }
+    public Guid? StoreId { get; set; }
 
     public Guid CustomerId { get; set; }
 
@@ -15,10 +15,10 @@ public partial class Quotation : BaseEntity<Guid>
 
     public DateTime ValidUntil { get; set; }
 
-    public StatusValue Status { get; set; }
+    public StatusValue Status { get; set; } //Draft (when create) -> Sent (When temporary hold in 2h) -> ___ -> ____
     public virtual Customer Customer { get; set; } = null!;
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
-    public virtual Store Store { get; set; } = null!;
+    public virtual Store? Store { get; set; }
 }

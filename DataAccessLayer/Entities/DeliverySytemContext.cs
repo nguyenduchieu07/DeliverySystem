@@ -54,6 +54,8 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
     public virtual DbSet<KycSubmission> KycSubmissions {  get; set; }
     public virtual DbSet<ServiceAddon> ServiceAddons { get; set; }
+    public virtual DbSet<Contract> Contracts { get; set; }
+    
 
     public virtual DbSet<ServiceSizeOption> ServiceSizeOptions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -258,6 +260,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
             entity.HasOne(d => d.Store).WithMany(p => p.Quotations)
                 .HasForeignKey(d => d.StoreId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Quotations_Stores");
         });
@@ -459,10 +462,10 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
             b.HasIndex(x => x.OrderId);
 
-            b.HasOne<WarehouseSlot>()
-             .WithMany()
-             .HasForeignKey(x => x.WarehouseSlotId)
-             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(x => x.WarehouseSlot)
+                .WithMany() 
+                .HasForeignKey(x => x.WarehouseSlotId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             
         });

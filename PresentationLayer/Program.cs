@@ -1,5 +1,7 @@
 using DataAccessLayer.DependencyInjections.Extensions;
 using DataAccessLayer.Entities;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Extensions;
@@ -25,6 +27,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
+builder.Services.AddSingleton<IConverter>(new SynchronizedConverter(new PdfTools()));
 // Register EmailSender with SMTP
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();

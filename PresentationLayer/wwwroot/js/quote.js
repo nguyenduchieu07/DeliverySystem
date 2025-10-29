@@ -560,13 +560,17 @@ async function handleTempReservation() {
     if (!currentQuotationId) return;
 
     try {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
         const ok = await fetch(CONFIG.API_BASE + '/Quote/HoldTemp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 quotationId: currentQuotationId,
                 slotIds: selectedSlots.map(s => s.id),
-                holdMinutes: 120
+                from: startDate,
+                to: endDate,
+                selectedWarehouseId: selectedWarehouse.id
             })
         });
         if (ok.ok) alert('✅ Đã giữ chỗ tạm thời trong 2 giờ!');
@@ -580,12 +584,20 @@ async function handleTempReservation() {
 async function handleAcceptQuote() {
     if (!currentQuotationId) return;
     if (!confirm('Bạn xác nhận chấp nhận báo giá này?')) return;
-
+    
     try {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
         const ok = await fetch(CONFIG.API_BASE + '/Quote/Accept', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ quotationId: currentQuotationId })
+            body: JSON.stringify({ 
+                quotationId: currentQuotationId,
+                slotIds: selectedSlots.map(s => s.id),
+                from: startDate,
+                to: endDate,
+                selectedWarehouseId: selectedWarehouse.id
+            })
         });
         if (ok.ok) alert('✅ Chấp nhận báo giá thành công!\n\nChúng tôi sẽ liên hệ với bạn sớm nhất.');
         else alert('❌ Không thể chấp nhận báo giá!');
@@ -652,10 +664,19 @@ async function submitNegotiate() {
     if (!note) return alert('Vui lòng nhập ghi chú!');
 
     try {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
         const ok = await fetch(CONFIG.API_BASE + '/Quote/RequestRevision', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ quotationId: currentQuotationId, note })
+            body: JSON.stringify({ 
+                quotationId: currentQuotationId, 
+                note,
+                slotIds: selectedSlots.map(s => s.id),
+                from: startDate,
+                to: endDate,
+                selectedWarehouseId: selectedWarehouse.id
+            })
         });
         if (ok.ok) { alert('✅ Đã gửi yêu cầu chỉnh giá!'); closeNegotiateModal(); }
         else alert('❌ Không thể gửi yêu cầu!');

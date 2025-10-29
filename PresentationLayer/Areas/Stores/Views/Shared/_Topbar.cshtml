@@ -11,7 +11,8 @@
         </div>
         <div class="actions">
             <button type="button" class="btn" title="Thông báo">🔔</button>
-            <button type="button" class="btn primary" title="Tạo báo giá">+ Báo giá</button>
+            @* <button type="button" class="btn primary" title="Tạo báo giá">+ Báo giá</button> *@
+            <a class="btn primary" href="@Url.Action("Index", "Quotations",new {tab = "draft"})"><span class="text">+ Báo giá</span></a>
         </div>
     </div>
 </header>
