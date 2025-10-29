@@ -387,6 +387,7 @@
 			grid-template-columns: 1fr;
 		}
 	}
+
 	.view-link {
 		background-color: #7b6ef6; /* pastel tím */
 		color: white;
@@ -534,9 +535,6 @@
 
 			<div class="info-card">
 				<h3>📑 Danh sách hợp đồng</h3>
-				<button class="action-btn approve" onclick="generateContracts('@Model.Quotation.Id')">
-					Tạo hợp đồng
-				</button>
 
 				<!-- Vùng hiển thị danh sách hợp đồng -->
 				<div id="contractsContainer">
@@ -1068,19 +1066,19 @@
 				alert('Có lỗi xảy ra!');
 			}
 		}
-
+		document.addEventListener('DOMContentLoaded', async () => {
+			await generateContracts('@Model.Quotation.Id');
+		});
 		async function generateContracts(quotationId) {
 			if (!quotationId) {
-				alert('Thiếu ID báo giá!');
+				alert('Thiếu ID báo giá!. Không thể tải danh sách hợp đồng');
 				return;
 			}
-
-			if (!confirm('Bạn có chắc chắn muốn tạo hợp đồng cho báo giá này?')) return;
 
 			try {
 				const response = await fetch(`/Stores/Quotations/Contracts?quotationId=${quotationId}`, {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json' }
+					headers: {'Content-Type': 'application/json'}
 				});
 
 				if (!response.ok) {
@@ -1112,37 +1110,8 @@
 				console.error('Error:', error);
 				alert('Có lỗi xảy ra khi tạo hợp đồng!');
 			}
-}
-
-// 		async function viewContract(contractId) {
-// 			if (!contractId) {
-// 				alert('Thiếu ID hợp đồng!');
-// 				return;
-// 			}
-//
-// 			try {
-// 				const response = await fetch(`/Stores/Quotations/Contracts/${contractId}`, {
-// 					method: 'GET'
-// 				});
-//
-// 				if (!response.ok) {
-// 					alert('❌ Không thể tạo hoặc lấy hợp đồng!');
-// 					return;
-// 				}
-//
-// 				// API sẽ trả về { url: "/files/contracts/abc.pdf" }
-// 				const data = await response.json();
-//
-// 				if (data?.url) {
-// 					window.open(data.url, '_blank');
-// 				} else {
-// 					alert('Không tìm thấy file hợp đồng.');
-// 				}
-// 			} catch (error) {
-// 				console.error('Error:', error);
-// 				alert('Có lỗi xảy ra khi tạo hoặc xem hợp đồng!');
-// 			}
-// }
+		}
+		
 		async function viewContract(contractId) {
 			window.open(`/Stores/Quotations/Contracts/${contractId}`, '_blank');
 		}

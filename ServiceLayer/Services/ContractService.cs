@@ -104,7 +104,7 @@ public class ContractService : IContractService
             //get contracts by OrderId 
             var returnContracts = _contractRepository.FindAll(c => c.QuotationId == quotationId, includeProperties: o => o.WarehouseSlot).ToList();
             
-            return returnContracts;
+            return returnContracts.OrderByDescending(x => x.CreatedAt).ToList();
         }
         catch (Exception e)
         {

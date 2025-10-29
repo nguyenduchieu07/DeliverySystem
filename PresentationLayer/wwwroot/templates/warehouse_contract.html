@@ -41,7 +41,7 @@
     <header>
         <div class="logo">
             <!-- bạn có thể đặt base64 hình hoặc url -->
-            <img src="{{CompanyLogoUrl}}" alt="logo" style="max-width:160px;"/>
+            <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
         </div>
         <div class="meta">
             <div><strong>Số hợp đồng:</strong> {{ContractNumber}}</div>
@@ -141,25 +141,27 @@
         Mọi thay đổi phải được lập thành phụ lục và ký xác nhận bởi hai bên. Hợp đồng có hiệu lực kể từ ngày ký.
         
     </footer>
-    <button id="downloadPdf">Tải PDF</button>
+   
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
-    document.getElementById("downloadPdf").addEventListener("click", function () {
-        // Chọn container HTML bạn muốn xuất PDF
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        // Chọn container HTML muốn xuất PDF
         var element = document.querySelector(".container");
 
         var opt = {
-            margin:       0.5,
-            filename:     'HopDong.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
+        margin:       0.5,
+        filename:     'HopDong.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
 
-        // Xuất PDF
+        // Xuất PDF tự động khi load
         html2pdf().set(opt).from(element).save();
     });
+
 </script>
 </body>
 </html>
