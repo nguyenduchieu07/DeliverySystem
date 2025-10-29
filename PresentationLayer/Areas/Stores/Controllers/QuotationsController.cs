@@ -40,12 +40,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 .ToListAsync();
 
             ViewBag.Revised = await q.Where(x => x.Status == StatusValue.Revised)
-                .OrderByDescending(x => x.UpdatedAt)
+                .OrderByDescending(x => x.CreatedAt)
                 .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
                 .ToListAsync();
 
             ViewBag.Accepted = await q.Where(x => x.Status == StatusValue.Active)
-                .OrderByDescending(x => x.UpdatedAt)
+                .OrderByDescending(x => x.CreatedAt)
                 .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
                 .ToListAsync();
 
