@@ -94,17 +94,24 @@ namespace ServiceLayer.Dtos.Quotes
     {
         public Guid QuotationId { get; set; }
         public List<Guid> SlotIds { get; set; } = new();
-        public int HoldMinutes { get; set; } = 120;
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
     }
 
     public class AcceptQuoteVm
     {
         public Guid QuotationId { get; set; }
+        public List<Guid> SlotIds { get; set; } = new();
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
     }
 
     public class RequestRevisionVm
     {
         public Guid QuotationId { get; set; }
         public string Note { get; set; } = string.Empty;
+        public List<Guid> SlotIds { get; set; } = new();
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
     }
 }

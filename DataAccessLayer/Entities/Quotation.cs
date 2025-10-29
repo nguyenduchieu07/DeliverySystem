@@ -15,7 +15,7 @@ public partial class Quotation : BaseEntity<Guid>
 
     public DateTime ValidUntil { get; set; }
 
-    public StatusValue Status { get; set; } //Draft (wwhen create) -> Sent (When tempurary hold in 2h) -> ___ -> ____
+    public StatusValue Status { get; set; } //Draft (when create) -> Sent (When temporary hold in 2h) -> ___ -> ____
     public virtual Customer Customer { get; set; } = null!;
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

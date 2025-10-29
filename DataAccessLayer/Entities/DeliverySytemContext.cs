@@ -54,6 +54,8 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
     public virtual DbSet<KycSubmission> KycSubmissions {  get; set; }
     public virtual DbSet<ServiceAddon> ServiceAddons { get; set; }
+    public virtual DbSet<Contract> Contracts { get; set; }
+    
 
     public virtual DbSet<ServiceSizeOption> ServiceSizeOptions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)

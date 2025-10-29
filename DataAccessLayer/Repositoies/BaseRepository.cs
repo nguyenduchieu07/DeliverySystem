@@ -84,6 +84,12 @@ namespace DataAccessLayer.Repositoies
             _context.SaveChanges();
         }
 
+        public async Task AddRangeAsync(List<TEntity> entity)
+        {
+            await _context.Set<TEntity>().AddRangeAsync(entity);
+            await _context.SaveChangesAsync();
+        }
+
         public void Update(TEntity entity)
         {
             if (entity == null)

@@ -1,6 +1,10 @@
 ﻿// ServiceLayer/Services/QuotationService.cs
+
+using DataAccessLayer.Abstractions.IRepositories;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
+using DocumentFormat.OpenXml.Office2010.ExcelAc;
+using DocumentFormat.OpenXml.VariantTypes;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Dtos.Quotes;
@@ -13,11 +17,25 @@ namespace ServiceLayer.Services
         private const int FREE_DAYS = 2;
         private const decimal VAT_RATE = 0.10m;
         private const int VALIDITY_MINUTE = 5;
+        private const int VALIDITY_FOR_RESERVATION_HOUR = 24;
         private readonly IUserContextService _context;
-        public QuotationService(DeliverySytemContext db, IUserContextService context)
+        private readonly IBaseRepository<Order, Guid> _orderRepository;
+        private readonly IBaseRepository<WarehouseSlot, Guid> _warehouseSlotRepository;
+        private readonly IBaseRepository<SlotReservation, Guid> _slotReservationRepository;
+        private readonly IBaseRepository<Contract, Guid> _contractRepository;
+
+        public QuotationService(DeliverySytemContext db, IUserContextService context,
+            IBaseRepository<Order, Guid> orderRepository,
+            IBaseRepository<WarehouseSlot, Guid> warehouseSlotRepository,
+            IBaseRepository<SlotReservation, Guid> slotReservationRepository,
+            IBaseRepository<Contract, Guid> contractRepository)
         {
             _db = db;
             _context = context;
+            _orderRepository = orderRepository;
+            _warehouseSlotRepository = warehouseSlotRepository;
+            _slotReservationRepository = slotReservationRepository;
+            _contractRepository = contractRepository;
         }
 
         public async Task<QuoteResultVm> CalculateAndCreateQuotationAsync(
@@ -137,40 +155,71 @@ namespace ServiceLayer.Services
 
         public async Task<bool> CreateTempReservationAsync(HoldTempVm vm, CancellationToken ct)
         {
-            int SENT_VALID_HOUR = 48;
-
-            var slots = await _db.WarehouseSlots.Where(e => vm.SlotIds.Contains(e.Id)).ToListAsync();
-            var quotation = await _db.Quotations.Where(e => e.Id == vm.QuotationId).FirstOrDefaultAsync();
-
-            foreach(var slot in slots)
+            using var transaction = await _db.Database.BeginTransactionAsync(ct);
+            try
             {
-                slot.Status = StatusValue.Blocked;
-                slot.LeaseStart = DateTime.UtcNow;
-                slot.LeaseEnd = DateTime.UtcNow.AddMinutes(vm.HoldMinutes);
+                int SENT_VALID_HOUR = 48;
+                var quotation = await _db.Quotations.Where(e => e.Id == vm.QuotationId).FirstOrDefaultAsync();
+            
+                quotation!.Status = StatusValue.Sent;
+                quotation!.ValidUntil = DateTime.UtcNow.AddHours(SENT_VALID_HOUR);
+                await CreateOrderAndSlotReservationsAsync(quotation, vm.SlotIds, ct, vm.From, vm.To);
+                await _db.SaveChangesAsync(ct);
+                await transaction.CommitAsync(ct);
             }
-            quotation!.Status = StatusValue.Sent;
-            quotation!.ValidUntil = DateTime.UtcNow.AddHours(SENT_VALID_HOUR);
-            await _db.SaveChangesAsync(ct);
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync(ct);
+                return false;
+            }
+
+           
+            
+            
             return true;
         }
 
         public async Task<bool> AcceptQuotationAsync(AcceptQuoteVm vm, CancellationToken ct)
         {
-            var quotation = await _db.Quotations.FindAsync(vm.QuotationId);
-            if (quotation == null) return false;
+            using var transaction = await _db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var quotation = await _db.Quotations.FindAsync(vm.QuotationId);
+                if (quotation == null) return false;
 
-            quotation.Status = StatusValue.Active; // Or whatever status means "accepted"
-            await _db.SaveChangesAsync(ct);
-            return true;
+                quotation.Status = StatusValue.Active; // Or whatever status means "accepted"
+
+                await CreateOrderAndSlotReservationsAsync(quotation, vm.SlotIds, ct, vm.From, vm.To);
+
+                await transaction.CommitAsync(ct);
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(ct);
+                return false;
+            }
         }
 
         public async Task<bool> RequestRevisionAsync(RequestRevisionVm vm, CancellationToken ct)
         {
-            var quotation = await _db.Quotations.FindAsync(vm.QuotationId);
-            if (quotation == null) return false;
-            quotation.Status = StatusValue.Revised;
-            await _db.SaveChangesAsync(ct);
-            return true;
+            using var transaction = await _db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var quotation = await _db.Quotations.FindAsync(vm.QuotationId);
+                if (quotation == null) return false;
+                quotation.Status = StatusValue.Revised;
+
+                await CreateOrderAndSlotReservationsAsync(quotation, vm.SlotIds, ct, vm.From, vm.To);
+                await _db.SaveChangesAsync(ct);
+                await transaction.CommitAsync(ct);
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(ct);
+                return false;
+            }
         }
 
         public async Task<Quotation> GetByIdAsync(Guid id, CancellationToken ct)
@@ -178,6 +227,46 @@ namespace ServiceLayer.Services
             var quotation = await _db.Quotations.FindAsync(id, ct);
             if (quotation == null) return null;
             return quotation;
+        }
+
+        private async Task<(Order, List<SlotReservation>)> CreateOrderAndSlotReservationsAsync(
+            Quotation quotation,
+            List<Guid> slotIds,
+            CancellationToken ct,
+            DateTime from, DateTime to)
+        {
+            // Tạo order
+            var order = new Order
+            {
+                Id = Guid.NewGuid(),
+                QuotationId = quotation.Id,
+                CustomerId = quotation.CustomerId,
+                StoreId = quotation.StoreId ?? Guid.Empty,
+                Status = StatusValue.Pending,
+                TotalAmount = quotation.TotalAmount,
+                Note = "Order auto-created from quotation action"
+            };
+            var newOrder = await _orderRepository.AddAsync(order);
+
+            // Tạo slot reservations
+            var slots = await _warehouseSlotRepository.FindAll(e => slotIds.Contains(e.Id)).ToListAsync(ct);
+            var reservations = new List<SlotReservation>();
+            foreach (var slot in slots)
+            {
+                reservations.Add(new SlotReservation
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = newOrder.Id,
+                    WarehouseSlotId = slot.Id,
+                    ExpiresAt = DateTime.UtcNow.AddHours(VALIDITY_FOR_RESERVATION_HOUR),
+                    Status = StatusValue.Reserved,
+                    From = from,
+                    To = to
+                });
+            }
+
+            await _slotReservationRepository.AddRangeAsync(reservations);
+            return (newOrder, reservations);
         }
     }
 }
