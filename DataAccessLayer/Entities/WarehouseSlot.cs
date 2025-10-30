@@ -34,7 +34,6 @@ namespace DataAccessLayer.Entities
         // Giá cơ bản (VND/giờ). Có thể kết hợp bảng PriceRule để setting theo thời gian
         public decimal BasePricePerHour { get; set; }
         public virtual Warehouse Warehouse { get; set; } = null!;
-
-        public virtual List<SlotReservation> SlotReservations { get; set; } = [];
+        
     }
 }

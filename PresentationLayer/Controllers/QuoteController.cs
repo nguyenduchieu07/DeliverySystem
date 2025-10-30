@@ -78,11 +78,13 @@ namespace PresentationLayer.Controllers
             var quotationInfo = await _svc.GetByIdAsync(data.QuotationId, CancellationToken.None);
             if(quotationInfo == null) return BadRequest("Thông tin báo giá bị thiếu. Tạo thất bại");
 
+            if(quotationInfo.StoreId == null) return BadRequest("Thông tin báo giá tạm thời đã hết hạn. Không thể đánh giá cho cửa hàng này");
+
             var feedback = new Feedback
             {
                 Id = Guid.NewGuid(),
                 FromUserId = quotationInfo.CustomerId,
-                ToStoreId = quotationInfo.StoreId,
+                ToStoreId = (Guid)quotationInfo.StoreId,
                 Rating = data.Rating,
                 Comment = data.Comment,
                 CreatedAt = DateTime.UtcNow
@@ -91,6 +93,7 @@ namespace PresentationLayer.Controllers
             var rs = await _feedbackService.CreateFeedbackAsync(feedback);
             return rs != null ? Ok() : BadRequest("Không gửi được đánh giá");
         }
-
+        
+        
     }
 }
