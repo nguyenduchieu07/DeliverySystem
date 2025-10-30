@@ -14,6 +14,7 @@ namespace ServiceLayer.Dtos.RegisterStore
         public string LegalName { get; set; }
         public string LicenseNumber { get; set; }
         public string TaxNumber { get; set; }
+        public string ID { get; set; }
 
         // Address Information
         public string AddressLine { get; set; }

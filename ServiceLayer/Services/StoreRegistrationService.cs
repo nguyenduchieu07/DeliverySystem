@@ -134,6 +134,19 @@ namespace ServiceLayer.Services
                     documents.Add(taxDocument);
                 }
 
+                if (!string.IsNullOrEmpty(request.ID))
+                {
+                    var idDocument = new KycDocument
+                    {
+                        Id = Guid.NewGuid(),
+                        KycSubmissionId = kycSubmission.Id,
+                        DocType = KycDocumentConstant.IDKey,
+                        FilePath = string.Empty,
+                        Hash = Hashor.ToBase64(request.ID)
+                    };
+                    documents.Add(idDocument);
+                }
+
                 await _context.KycDocuments.AddRangeAsync(documents);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
