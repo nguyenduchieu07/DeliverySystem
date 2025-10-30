@@ -24,7 +24,7 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
         "BasePricePerHour","LeaseStart","LeaseEnd","IsBlocked","ImageUrl"
     };
 
-    public async Task<byte[]> ExportTemplateAsync(CancellationToken ct = default)
+    public async Task<byte[]> ExportTemplateAsync(string warehouseName, CancellationToken ct = default)
     {
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("Slots");
@@ -36,7 +36,7 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
         StyleHeader(ws.Range(1, 1, 1, Header.Length));
 
         // Ghi dòng mô tả (optional)
-        ws.Cell(2, 1).Value = "(Nhập tên kho phải trùng DB)";
+        ws.Cell(2, 1).Value = $"{warehouseName}";
         ws.Cell(2, 3).Value = "(m)";
         ws.Cell(2, 4).Value = "(m)";
         ws.Cell(2, 5).Value = "(m)";

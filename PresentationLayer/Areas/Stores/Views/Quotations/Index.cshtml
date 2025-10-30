@@ -330,6 +330,10 @@
 
     <div class="stats-row">
         <div class="stat-card warning">
+            <div class="stat-value">@ViewBag.Draft.Count</div>
+            <div class="stat-label">📝 Đề xuất</div>
+        </div>
+        <div class="stat-card warning">
             <div class="stat-value">@ViewBag.Waiting.Count</div>
             <div class="stat-label">⏳ Chờ xử lý</div>
         </div>
@@ -345,6 +349,13 @@
 
     <div class="tabs-container">
         <div class="tab-header">
+            <button class="tab-button @(ViewBag.Tab == "draft" ? "active" : "")" data-tab="draft">
+                📝 Đề xuất
+                @if (ViewBag.Waiting.Count > 0)
+                {
+                    <span class="tab-badge">@ViewBag.Waiting.Count</span>
+                }
+            </button>
             <button class="tab-button @(ViewBag.Tab == "waiting" ? "active" : "")" data-tab="waiting">
                 ⏳ Chờ xử lý
                 @if (ViewBag.Waiting.Count > 0)
@@ -366,6 +377,75 @@
                     <span class="tab-badge">@ViewBag.Accepted.Count</span>
                 }
             </button>
+        </div>
+
+        <!--Tab đề xuất báo giá-->
+        <div class="tab-content @(ViewBag.Tab == "draft" ? "active" : "")" id="draft">
+            @if (ViewBag.Draft.Count > 0)
+            {
+                <table class="quotation-table">
+                    <thead>
+                        <tr>
+                            <th>Mã báo giá</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng tiền</th>
+                            <th>Hết hạn</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ViewBag.Draft)
+                        {
+                            var timeLeft = (item.ValidUntil - DateTime.UtcNow).TotalHours;
+                            var isUrgent = timeLeft <= 24;
+
+                            <tr class="quotation-row" onclick="window.location.href='@Url.Action("Detail", new { id = item.Id })'">
+                                <td>
+                                    <div class="quote-id">#@item.Id.ToString().Substring(0, 8).ToUpper()</div>
+                                </td>
+                                <td>
+                                    <div class="customer-name">@item.Customer</div>
+                                </td>
+                                <td>
+                                    <div class="amount">@item.TotalAmount.ToString("N0") đ</div>
+                                </td>
+                                <td>
+                                    <div class="valid-until @(isUrgent ? "urgent" : "")">
+                                        @if (isUrgent)
+                                        {
+                                            <span>⚠️</span>
+                                        }
+                                        else
+                                        {
+                                            <span>⏰</span>
+                                        }
+                                        <span>@item.ValidUntil.ToString("dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-sent">Đề xuất giá</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="@Url.Action("Detail", new { id = item.Id })" class="btn-action btn-view">
+                                            👁️ Xem chi tiết
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <h3>Không có báo giá cần đề xuất</h3>
+                    <p>Hiện tại không có báo giá nào đang chờ bạn đề xuất</p>
+                </div>
+            }
         </div>
 
         <!-- Tab Chờ xử lý -->

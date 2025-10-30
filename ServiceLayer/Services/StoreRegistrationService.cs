@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 using ServiceLayer.Dtos.RegisterStore;
+using ServiceLayer.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -106,7 +107,47 @@ namespace ServiceLayer.Services
                 };
                 await _context.KycSubmissions.AddAsync(kycSubmission);
 
+                List<KycDocument> documents = [];
+                //add document
+                if (!string.IsNullOrEmpty(request.LicenseNumber))
+                {
+                    var licenseDocument = new KycDocument
+                    {
+                        Id = Guid.NewGuid(),
+                        KycSubmissionId = kycSubmission.Id,
+                        DocType = KycDocumentConstant.LicenseNumberKey,
+                        FilePath = string.Empty,
+                        Hash = Hashor.ToBase64(request.LicenseNumber)
+                    };
+                    documents.Add(licenseDocument);
+                }
+                if (!string.IsNullOrEmpty(request.TaxNumber))
+                {
+                    var taxDocument = new KycDocument
+                    {
+                        Id = Guid.NewGuid(),
+                        KycSubmissionId = kycSubmission.Id,
+                        DocType = KycDocumentConstant.TaxNumberKey,
+                        FilePath = string.Empty,
+                        Hash = Hashor.ToBase64(request.TaxNumber)
+                    };
+                    documents.Add(taxDocument);
+                }
 
+                if (!string.IsNullOrEmpty(request.ID))
+                {
+                    var idDocument = new KycDocument
+                    {
+                        Id = Guid.NewGuid(),
+                        KycSubmissionId = kycSubmission.Id,
+                        DocType = KycDocumentConstant.IDKey,
+                        FilePath = string.Empty,
+                        Hash = Hashor.ToBase64(request.ID)
+                    };
+                    documents.Add(idDocument);
+                }
+
+                await _context.KycDocuments.AddRangeAsync(documents);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -127,6 +168,8 @@ namespace ServiceLayer.Services
                 throw;
             }
         }
+
+  
 
         public async Task<KycSubmission> SubmitKycDocumentsAsync(SubmitKycRequest request)
         {
