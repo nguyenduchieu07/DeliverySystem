@@ -5,6 +5,7 @@ using DataAccessLayer.Enums;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Models;
 
 namespace PresentationLayer.Areas.Admin.Controllers;
@@ -14,16 +15,25 @@ namespace PresentationLayer.Areas.Admin.Controllers;
 [Authorize(Roles = "Admin")]
 public class StoreController : Controller
 {
+    private readonly DeliverySytemContext _db;
     private readonly IBaseRepository<Store, Guid> _storeRepository;
 
     private readonly IFeedbackRepository _feedbackRepository;
     private readonly IKycRepository _kycRepository;
 
-    public StoreController(IBaseRepository<Store, Guid> storeRepository, IFeedbackRepository feedbackRepository, IKycRepository kycRepository)
+    private readonly IStoreRepository _storeRepository1;
+
+    private readonly IBaseRepository<WarehouseSlot, Guid> _warehouseSlotRepository;
+
+    public StoreController(DeliverySytemContext db, IBaseRepository<Store, Guid> storeRepository, IFeedbackRepository feedbackRepository, IKycRepository kycRepository,
+        IStoreRepository storeRepository1, IBaseRepository<WarehouseSlot, Guid> warehouseSlotRepository)
     {
         _storeRepository = storeRepository;
         _feedbackRepository = feedbackRepository;
         _kycRepository = kycRepository;
+        _storeRepository1 = storeRepository1;
+        _warehouseSlotRepository = warehouseSlotRepository;
+        _db = db;
     }
 
     public async Task<IActionResult> Index()
@@ -40,13 +50,19 @@ public class StoreController : Controller
 
         var feedbacks = await _feedbackRepository.GetAllFeedbackByStoreIdAsync(storeId);
         vm.ReviewCount = feedbacks.Count();
-        
-        var store = await _storeRepository.GetByIdAsync(storeId);
-        vm.Store = store;
+
+        var store = await _storeRepository1.GetStoreWithDetailsAsync(storeId);
+        vm.Store = store!;
         
         var kycSubmission = await _kycRepository.GetKycSubmissionByStoreId(storeId);
         vm.KycSubmission = kycSubmission;
-        
+
+        foreach (var warehouse in store!.Warehouses)
+        {
+            var slots = await _warehouseSlotRepository.FindAll(w => w.WarehouseId.Equals(warehouse.Id)).ToListAsync();
+            vm.WarehouseSlotCount.Add(warehouse.Id, slots.Count);
+        }
+
         return View(vm);
     }
     
@@ -157,5 +173,35 @@ public class StoreController : Controller
         _storeRepository.Update(store);
 
         return Json(new { success = true });
+    }
+
+    public async Task<IActionResult> GetWarehouseDetail(Guid id)
+    {
+        var warehouse = await _db.Warehouses
+            .Include(w => w.Address)
+            .Include(w => w.Store)
+            .FirstOrDefaultAsync(w => w.Id == id);
+
+        if (warehouse == null)
+        {
+            TempData["Error"] = "Warehouse not found!";
+            return RedirectToAction("Index");
+        }
+
+        // Query slots với phân trang
+        var slotsQuery = _db.WarehouseSlots
+            .Where(s => s.WarehouseId == id);
+        
+
+        var totalSlots = await slotsQuery.CountAsync();
+
+        warehouse.Slots = await slotsQuery
+            .OrderBy(s => s.Row)
+            .ThenBy(s => s.Col)
+            .ToListAsync();
+        
+        ViewBag.TotalSlots = totalSlots;
+
+        return View(warehouse);
     }
 }

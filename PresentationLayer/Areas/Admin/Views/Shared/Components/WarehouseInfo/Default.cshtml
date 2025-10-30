@@ -1,0 +1,114 @@
+﻿@using DataAccessLayer.Entities
+@model Warehouse
+
+@{
+    var demo = Model;
+}
+<!-- Info Grid -->
+<div class="details-grid">
+    <!-- General Info Card -->
+    <div class="detail-card">
+        <div class="card-header">
+            <div class="card-title">
+                📋 Thông tin chung
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="info-list">
+                <div class="info-item">
+                    <span class="info-label">Tên kho</span>
+                    <span class="info-value">@Model.Name</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Cửa hàng</span>
+                    <span class="info-value">@(Model.Store?.StoreName ?? "—")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Địa chỉ</span>
+                    <span class="info-value">@(Model.Address?.AddressLine ?? "—")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Thành phố</span>
+                    <span class="info-value">@(Model.Address?.City ?? "—")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Tọa độ</span>
+                    <span class="info-value">
+                        @if (Model.Address?.Latitude != null && Model.Address?.Longitude != null)
+                        {
+                            <text>@Model.Address.Latitude, @Model.Address.Longitude</text>
+                        }
+                        else
+                        {
+                            <text>—</text>
+                        }
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dimensions Card -->
+    <div class="detail-card">
+        <div class="card-header">
+            <div class="card-title">
+                📐 Kích thước & Hình ảnh
+            </div>
+        </div>
+        <div class="card-body">
+            @{
+                var h = (double?)Model?.HeightM ?? 0;
+                var l = (double?)Model?.LengthM ?? 0;
+                var w = (double?)Model?.WidthM ?? 0;
+                var hasDims = h > 0 && l > 0 && w > 0;
+            }
+            @if (hasDims)
+            {
+                <div class="dimensions-box">
+                    <div class="dimensions-value">
+                        @Math.Round(h * l * w, 2) m³
+                    </div>
+                    <div class="dimensions-label">
+                        @h × @l × @w mét
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="dimensions-box">
+                    <div class="dimensions-value">—</div>
+                    <div class="dimensions-label">Chưa có kích thước</div>
+                </div>
+            }
+
+            <div class="image-gallery" style="margin-top: 20px;">
+                <div class="gallery-item">
+                    @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+                    {
+                        <img src="@Model.CoverImageUrl" alt="Cover" />
+                    }
+                    else
+                    {
+                        <div class="gallery-placeholder">
+                            <span class="icon">📷</span>
+                            <span>Ảnh bìa</span>
+                        </div>
+                    }
+                </div>
+                <div class="gallery-item">
+                    @if (!string.IsNullOrWhiteSpace(Model.MapImageUrl))
+                    {
+                        <img src="@Model.MapImageUrl" alt="Map" />
+                    }
+                    else
+                    {
+                        <div class="gallery-placeholder">
+                            <span class="icon">🗺️</span>
+                            <span>Sơ đồ kho</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
