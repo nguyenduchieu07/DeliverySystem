@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Areas.Stores.Models.WarehouseModels;
 using ServiceLayer.Abstractions.IServices;
 using System.Security.Claims;
+using DataAccessLayer.Enums;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
@@ -360,33 +361,51 @@ namespace PresentationLayer.Areas.Stores.Controllers
         [HttpGet]
         public async Task<IActionResult> Grid(Guid warehouseId)
         {
-            var slots = await _db.WarehouseSlots.Where(x => x.WarehouseId == warehouseId).ToListAsync();
-            if (!slots.Any()) return Json(new { rows = 0, cols = 0, cells = Array.Empty<object>() });
+            var slots = await _db.WarehouseSlots
+                .Where(x => x.WarehouseId == warehouseId)
+                .ToListAsync();
+
+            if (!slots.Any())
+                return Json(new { rows = 0, cols = 0, cells = Array.Empty<object>() });
 
             int rows = slots.Max(x => x.Row);
             int cols = slots.Max(x => x.Col);
             var today = DateTime.Today;
 
-            int WarningOf(WarehouseSlot s)
+            string GetStatus(WarehouseSlot s)
             {
-                if (s.IsBlocked) return 3; // blocked
-                if (s.LeaseEnd is DateTime e && e < today) return 2; // expired
-                if (s.LeaseEnd is DateTime e2 && (e2 - today).TotalDays <= 7) return 1; // expiring
-                if (s.LeaseStart == null && s.LeaseEnd == null) return 4; // empty
-                return 0; // none
+                if (s.IsBlocked)
+                    return "blocked";
+
+                if (s.Status == StatusValue.Maintenance)
+                    return "maintenance"; 
+
+                if (s.Status == StatusValue.Available &&  s.LeaseStart < today && s.LeaseEnd < today)
+                    return "available"; // chưa có ai thuê
+
+                if (s.Status == StatusValue.InUse && (s.LeaseStart != null && s.LeaseStart.GetValueOrDefault().Date <= today) 
+                                                  && (s.LeaseEnd != null && s.LeaseEnd.GetValueOrDefault().Date >= today))
+                    return "inuse"; // đang sử dụng
+
+                if (s.Status == StatusValue.Reserved)
+                    return "reserved"; // đã có người đặt nhưng chưa dùng
+
+                return "available";
             }
 
-            var cells = slots.Select(s => new {
+            var cells = slots.Select(s => new
+            {
                 s.Code,
                 s.Row,
                 s.Col,
-                Warning = WarningOf(s),
+                Status = GetStatus(s),
                 PricePreview = s.IsBlocked ? (decimal?)null : s.BasePricePerHour,
                 s.IsBlocked
             });
 
             return Json(new { rows, cols, cells });
         }
+
 
         // Import Excel theo template
         [HttpPost, ValidateAntiForgeryToken]

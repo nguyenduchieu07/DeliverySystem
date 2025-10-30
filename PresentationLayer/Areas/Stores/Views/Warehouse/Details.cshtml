@@ -85,31 +85,50 @@
             gap: 12px;
             flex-wrap: wrap;
         }
-
-        /* Status Badge */
-        .status-badge {
+        span.status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 6px 12px;
-            border-radius: 20px;
+            justify-content: center;
+            padding: 6px 14px;
+            border-radius: 9999px; /* full rounded chip */
             font-size: 13px;
             font-weight: 500;
-            gap: 6px;
+            line-height: 1;
+            border: 1px solid transparent; /* giúp chip có chiều sâu hơn */
+            transition: all 0.2s ease;
         }
-
-        .status-badge.approved {
-            background: rgba(92, 211, 166, 0.15);
+        .available {
+            background: rgba(34, 197, 94, 0.15); /* xanh lá nhạt */
             color: #22c55e;
         }
 
-        .status-badge.pending {
-            background: rgba(255, 204, 102, 0.15);
+        .pending {
+            background: rgba(34, 197, 94, 0.15); /* xanh lá nhạt */
+            color: #22c55e;
+        }
+
+        .reserved {
+            background: rgba(59, 130, 246, 0.15); /* xanh dương nhạt */
+            color: #3b82f6;
+        }
+
+        .inuse {
+            background: rgba(245, 158, 11, 0.15); /* vàng nhạt */
             color: #f59e0b;
         }
 
-        .status-badge.rejected {
-            background: rgba(255, 107, 107, 0.15);
+        .maintenance {
+            background: rgba(239, 68, 68, 0.15); /* đỏ nhạt */
             color: #ef4444;
+        }
+        .blocked {
+            background: rgba(107, 114, 128, 0.15); /* xám nhạt */
+            color: #6b7280;
+        }
+
+        .pending {
+            background: rgba(107, 114, 128, 0.15); /* xám nhạt */
+            color: #6b7280;
         }
 
         /* Grid Layout */
@@ -299,22 +318,35 @@
         }
 
         .slot.available {
-            background: #e8fff1;
-            border-color: #22c55e;
-            color: #16a34a;
+            background: #e8fff1;        /* xanh nhạt dịu */
+            border-color: #22c55e;      /* xanh lá */
+            color: #15803d;             /* xanh lá đậm */
         }
 
-        .slot.occupied {
-            background: #fff6e0;
-            border-color: #f59e0b;
-            color: #d97706;
+        .slot.reserved {
+            background: #e0f2fe;        /* xanh dương nhạt */
+            border-color: #3b82f6;      /* xanh dương */
+            color: #1d4ed8;             /* xanh dương đậm */
+        }
+
+        .slot.inuse {
+            background: #fff7ed;        /* cam nhạt */
+            border-color: #fb923c;      /* cam tươi */
+            color: #c2410c;             /* cam đậm */
         }
 
         .slot.maintenance {
-            background: #ffe5e5;
-            border-color: #ef4444;
-            color: #dc2626;
+            background: #fee2e2;        /* đỏ nhạt */
+            border-color: #ef4444;      /* đỏ */
+            color: #b91c1c;             /* đỏ đậm */
         }
+
+        .slot.blocked {
+            background: #f3f4f6;        /* xám nhạt */
+            border-color: #9ca3af;      /* xám trung */
+            color: #4b5563;             /* xám đậm */
+        }
+
 
         .slot.blocked {
             background: #f3f4f6;
@@ -529,8 +561,7 @@
 
         /* Dimensions Display */
         .dimensions-box {
-            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
-            color: white;
+           
             padding: 20px;
             border-radius: 12px;
             text-align: center;
@@ -673,6 +704,8 @@
             border-color: var(--primary);
             background: rgba(var(--primary-rgb), 0.02);
         }
+        
+        
     </style>
 }
 
@@ -692,15 +725,26 @@
             <h1 class="page-title">
                 📦 @Model.Name
                 @{
-                    var statusClass = Model.Status switch
+                    string GetStatusClass(StatusValue status)
                     {
-                        StatusValue.Approved => "approved",
-                        StatusValue.Pending => "pending",
-                        _ => "rejected"
-                    };
+                        return status switch
+                        {
+                            // For warehouse
+                            StatusValue.Approved => "approved",
+                            StatusValue.Pending => "pending",
+
+                            // For slot
+                            StatusValue.Available => "available",
+                            StatusValue.Reserved => "reserved",
+                            StatusValue.InUse => "inuse",
+                            StatusValue.Maintenance => "maintenance",
+
+                            _ => "rejected"
+                        };
+                    }
                 }
-                <span class="status-badge @statusClass">
-                    @Model.Status
+                <span class="status-badge @GetStatusClass(Model.Status)">
+                    @Model.Status.ToDisplayStringForWarehouse()
                 </span>
             </h1>
             <div class="page-meta">
@@ -855,6 +899,10 @@
                 <span>Trống</span>
             </div>
             <div class="legend-item">
+                <span class="slot-indicator occupied" style="background: #e0f2fe; border-color: #3b82f6;"></span>
+                <span>Giữ  chỗ</span>
+            </div>
+            <div class="legend-item">
                 <span class="slot-indicator occupied" style="background: #fff6e0; border-color: #f59e0b;"></span>
                 <span>Đang sử dụng</span>
             </div>
@@ -913,21 +961,14 @@
                         @foreach (var s in Model.Slots)
                         {
                             var statusText = s.Status.ToString();
-                            var statusClasss = statusText switch
-                            {
-                                "Available" => "available",
-                                "Occupied" => "occupied",
-                                "Maintenance" => "maintenance",
-                                _ => ""
-                            };
                             <tr>
                                 <td class="slot-code">@s.Code</td>
                                 <td>Hàng @s.Row, Cột @s.Col</td>
                                 <td class="slot-dimensions">@s.HeightM × @s.LengthM × @s.WidthM m</td>
                                 <td class="slot-price">@s.BasePricePerHour.ToString("N0") ₫</td>
                                 <td>
-                                    <span class="status-badge @statusClass">
-                                        @statusText
+                                    <span class="status-badge @GetStatusClass(s.Status)">
+                                        @s.Status.ToDisplayStringForWarehouseSlot()
                                     </span>
                                 </td>
                             </tr>
@@ -958,71 +999,73 @@
 </div>
 
 @section Scripts {
-    <script>     
-        // Warehouse Grid
-        (async function () {
-            const root = document.getElementById('slotGrid');
-            if (!root) return;
+    <script>
+    (async function () {
+        const root = document.getElementById('slotGrid');
+        if (!root) return;
 
-            const res = await fetch('@Url.Action("Grid", "Warehouse", new { area = "Stores", warehouseId = Model.Id })');
-            if (!res.ok) {
-                root.innerHTML = '<div style="text-align:center;color:var(--muted);">Không tải được sơ đồ.</div>';
-                return;
+        // Gọi API lấy sơ đồ kho
+        const res = await fetch('@Url.Action("Grid", "Warehouse", new { area = "Stores", warehouseId = Model.Id })');
+        if (!res.ok) {
+            root.innerHTML = '<div style="text-align:center;color:var(--muted);">Không tải được sơ đồ.</div>';
+            return;
+        }
+
+        const data = await res.json();
+
+        // Hàm lấy thuộc tính từ cả camelCase & PascalCase
+        const pick = (o, camel, pascal) => (o && (camel in o)) ? o[camel] : (o ? o[pascal] : undefined);
+
+        const cellsRaw = pick(data, 'cells', 'Cells') || [];
+        const rowsInput = pick(data, 'rows', 'Rows');
+        const colsInput = pick(data, 'cols', 'Cols');
+
+        // Map dữ liệu cell
+        const cells = cellsRaw.map(c => ({
+            row: pick(c, 'row', 'Row') ?? 0,
+            col: pick(c, 'col', 'Col') ?? 0,
+            code: pick(c, 'code', 'Code') ?? '',
+            status: pick(c, 'status', 'Status') ?? 'available',
+            pricePreview: pick(c, 'pricePreview', 'PricePreview')
+        }));
+
+        const rows = Number(rowsInput ?? (cells.length ? Math.max(...cells.map(x => Number(x.row) || 0)) : 0));
+        const cols = Number(colsInput ?? (cells.length ? Math.max(...cells.map(x => Number(x.col) || 0)) : 0));
+
+        if (!rows || !cols) {
+            root.innerHTML = '<div style="text-align:center;color:var(--muted);">Chưa có cấu hình sơ đồ.</div>';
+            return;
+        }
+
+        // Cấu hình lưới hiển thị
+        root.style.display = 'grid';
+        root.style.gridTemplateColumns = `repeat(${cols}, 44px)`;
+        root.style.gap = '8px';
+
+        // Map vị trí cell
+        const map = new Map(cells.map(c => [`${c.row}_${c.col}`, c]));
+
+        // Vẽ từng ô
+        for (let r = 1; r <= rows; r++) {
+            for (let c = 1; c <= cols; c++) {
+                const key = `${r}_${c}`;
+                const cell = map.get(key);
+
+                const el = document.createElement('div');
+                const state = cell?.status ?? 'available'; // Lấy status từ backend
+
+                el.className = 'slot ' + state;
+                el.textContent = cell?.code || '';
+
+                const priceText = (cell?.pricePreview != null && cell.pricePreview !== '')
+                    ? `\n${Number(cell.pricePreview).toLocaleString('vi-VN')} đ/giờ`
+                    : '';
+                el.title = cell?.code ? (cell.code + priceText) : `R${r}C${c}`;
+
+                root.appendChild(el);
             }
-            const data = await res.json();
+        }
+    })();
+</script>
 
-            const pick = (o, camel, pascal) => (o && (camel in o)) ? o[camel] : (o ? o[pascal] : undefined);
-
-            const cellsRaw = pick(data, 'cells', 'Cells') || [];
-            const rowsInput = pick(data, 'rows', 'Rows');
-            const colsInput = pick(data, 'cols', 'Cols');
-
-            const cells = cellsRaw.map(c => ({
-                row: pick(c,'row','Row') ?? 0,
-                col: pick(c,'col','Col') ?? 0,
-                code: pick(c,'code','Code') ?? '',
-                isBlocked: !!pick(c,'isBlocked','IsBlocked'),
-                warning: Number(pick(c,'warning','Warning') ?? 0),
-                pricePreview: pick(c,'pricePreview','PricePreview')
-            }));
-
-            const rows = Number(rowsInput ?? (cells.length ? Math.max(...cells.map(x => Number(x.row)||0)) : 0));
-            const cols = Number(colsInput ?? (cells.length ? Math.max(...cells.map(x => Number(x.col)||0)) : 0));
-
-            if (!rows || !cols) {
-                root.innerHTML = '<div style="text-align:center;color:var(--muted);">Chưa có cấu hình sơ đồ.</div>';
-                return;
-            }
-
-            root.style.display = 'grid';
-            root.style.gridTemplateColumns = `repeat(${cols}, 44px)`;
-            root.style.gap = '8px';
-
-            const map = new Map(cells.map(c => [`${c.row}_${c.col}`, c]));
-
-            for (let r = 1; r <= rows; r++) {
-                for (let c = 1; c <= cols; c++) {
-                    const key = `${r}_${c}`;
-                    const cell = map.get(key);
-
-                    const el = document.createElement('div');
-                    const state = cell
-                        ? (cell.isBlocked ? 'blocked'
-                            : (cell.warning === 2 ? 'maintenance'
-                                : (cell.warning === 1 ? 'occupied' : 'available')))
-                        : 'available';
-
-                    el.className = 'slot ' + state;
-                    el.textContent = cell?.code || '';
-
-                    const priceText = (cell?.pricePreview != null && cell.pricePreview !== '')
-                        ? `\n${Number(cell.pricePreview).toLocaleString('vi-VN')} đ/giờ`
-                        : '';
-                    el.title = cell?.code ? (cell.code + priceText) : `R${r}C${c}`;
-
-                    root.appendChild(el);
-                }
-            }
-        })();
-    </script>
 }

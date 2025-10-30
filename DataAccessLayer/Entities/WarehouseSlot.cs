@@ -15,7 +15,7 @@ namespace DataAccessLayer.Entities
         public string? Size { get; set; }
         public string? ImageUrl { get; set; }
         public Guid? CurrentOrderId { get; set; }
-        public StatusValue Status { get; set; }
+        public StatusValue Status { get; set; } //Available -> Reserved -> InUse
 
         public int Row { get; set; } // bắt đầu từ 1
         public int Col { get; set; } // bắt đầu từ 1
