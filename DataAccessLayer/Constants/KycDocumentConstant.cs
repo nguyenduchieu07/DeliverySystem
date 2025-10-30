@@ -20,4 +20,17 @@ public class KycDocumentConstant
             // { "Latitude", (true, "Latitude coordinate selected from the map.") },
             // { "Longitude", (true, "Longitude coordinate selected from the map.") }
         };
+
+        public class DocumentType
+        {
+            public string Key { get; set; } = "";
+            public string Label { get; set; } = "";
+        }
+
+        public static readonly List<DocumentType> TypesWithLabel = new()
+        {
+            new() { Key = "LicenseNumber", Label = "Giấy phép kinh doanh" },
+            new() { Key = "TaxNumber", Label = "Giấy chứng nhận thuế" },
+            new() { Key = "ID", Label = "CMND/CCCD chủ sở hữu" }
+        };
 }
