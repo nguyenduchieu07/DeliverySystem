@@ -26,7 +26,7 @@
         </div>
         <div class="stat-card" style="border-left-color: var(--success);">
             <div class="stat-label" style="color: var(--success);">Đang hoạt động</div>
-            <div class="stat-value">@stores.Count(s => s.Status == StatusValue.Unban)</div>
+            <div class="stat-value">@stores.Count(s => s.Status == StatusValue.Active)</div>
         </div>
         <div class="stat-card" style="border-left-color: var(--danger);">
             <div class="stat-label" style="color: var(--danger);">Đang khóa</div>
@@ -44,7 +44,7 @@ else
         </div>
         <div class="stat-card" style="border-left-color: var(--success);">
             <div class="stat-label" style="color: var(--success);">Đang hoạt động</div>
-            <div class="stat-value">@users.Count(s => s.Status == StatusValue.Unban)</div>
+            <div class="stat-value">@users.Count(s => s.Status == StatusValue.Active)</div>
         </div>
         <div class="stat-card" style="border-left-color: var(--danger);">
             <div class="stat-label" style="color: var(--danger);">Đang khóa</div>

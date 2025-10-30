@@ -78,7 +78,7 @@ public class AccountController : Controller
         u.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         TempData["ok"] = $"User {(u.UserName ?? u.Email)} banned.";
-        return RedirectToAction(nameof(Index), new { scope = "User", status = "Banned" });
+        return RedirectToAction(nameof(Index), new { scope = "User" });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -90,7 +90,7 @@ public class AccountController : Controller
         u.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         TempData["ok"] = $"User {(u.UserName ?? u.Email)} unbanned.";
-        return RedirectToAction(nameof(Index), new { scope = "User", status = "Active" });
+        return RedirectToAction(nameof(Index), new { scope = "User" });
     }
 
     public async Task<IActionResult> Details(Guid accountId, string scope)
