@@ -173,11 +173,51 @@
         .slot-dimensions { color: var(--muted); font-size: 13px; }
         .slot-price { font-weight: 500; color: var(--success); }
 
-        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
-        .status-badge.available { background: rgba(92, 211, 166, .15); color: var(--success); }
-        .status-badge.occupied { background: rgba(255, 204, 102, .15); color: var(--warning); }
-        .status-badge.maintenance { background: rgba(255, 107, 107, .15); color: var(--danger); }
+        span.status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 14px;
+            border-radius: 9999px; /* full rounded chip */
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1;
+            border: 1px solid transparent; /* giúp chip có chiều sâu hơn */
+            transition: all 0.2s ease;
+        }
+        .available {
+            background: rgba(34, 197, 94, 0.15); /* xanh lá nhạt */
+            color: #22c55e;
+        }
 
+        .pending {
+            background: rgba(34, 197, 94, 0.15); /* xanh lá nhạt */
+            color: #22c55e;
+        }
+
+        .reserved {
+            background: rgba(59, 130, 246, 0.15); /* xanh dương nhạt */
+            color: #3b82f6;
+        }
+
+        .inuse {
+            background: rgba(245, 158, 11, 0.15); /* vàng nhạt */
+            color: #f59e0b;
+        }
+
+        .maintenance {
+            background: rgba(239, 68, 68, 0.15); /* đỏ nhạt */
+            color: #ef4444;
+        }
+        .blocked {
+            background: rgba(107, 114, 128, 0.15); /* xám nhạt */
+            color: #6b7280;
+        }
+
+        .pending {
+            background: rgba(107, 114, 128, 0.15); /* xám nhạt */
+            color: #6b7280;
+        }
         /* Add Slot Form */
         .add-slot-form { background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 20px; }
 
@@ -931,8 +971,9 @@
 
             const start = (currentPage - 1) * pageSize;
             const pageItems = filtered.slice(start, start + pageSize);
-
-            tbody.innerHTML = pageItems.map(slot => `
+            tbody.innerHTML = pageItems.map(slot => {
+                // console.log(slot);
+                return `
                 <tr>
                     <td class="slot-code">${escapeHtml(slot.code || '')}</td>
                     <td>Row ${slot.row ?? ''}, Col ${slot.col ?? ''}</td>
@@ -941,7 +982,7 @@
                     <td><span class="status-badge ${getStatusClass(slot.status)}">${getStatusText(slot.status)}</span></td>
                     <td><button type="button" class="btn btn-danger" onclick="removeSlotByCode('${(slot.code||'').replace(/'/g, "\\'")}')">🗑️</button></td>
                 </tr>
-            `).join('');
+            `}).join('');
 
             // Update pagination based on filtered count
             renderPagination(Math.max(1, Math.ceil(filtered.length / pageSize)));
@@ -961,21 +1002,24 @@
         }
 
         function getStatusClass(status) {
-            switch (parseInt(status)) {
+            switch (status) {
                 case 4: return 'available';
-                case 17: return 'occupied';
+                case 5: return 'reserved';
+                case 6: return 'inuse';
                 case 7: return 'maintenance';
                 default: return '';
             }
-        }
+}
+
         function getStatusText(status) {
-            switch (parseInt(status)) {
-                case 4: return 'Available';
-                case 17: return 'Occupied';
-                case 7: return 'Maintenance';
-                default: return 'Unknown';
+            switch (status) {
+                case 4: return 'Trống';
+                case 5: return 'Giữ chỗ';
+                case 6: return 'Được sử dụng';
+                case 7: return 'Bảo trì';
+                default: return 'Không rõ';
             }
-        }
+}
 
         function toggleAddSlotForm() {
             const form = document.getElementById('addSlotForm');
