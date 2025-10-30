@@ -11,9 +11,9 @@ namespace DataAccessLayer.Enums
         Pending, NeedChanges, Approved, Rejected
     }
 
-    public static class EnumExtensions
+    public static partial class EnumExtensions
     {
-        public static string ToDisplayString(this KycStatus status)
+        public static string ToDisplayStringForKycStatus(this KycStatus status)
         {
             return status switch
             {

@@ -514,7 +514,7 @@
                             </td>
                             <td>
                                 <span class="chip @(s.Status == KycStatus.Approved ? "ok" : s.Status == KycStatus.Rejected ? "danger" : "pending")">
-                                    @s.Status.ToDisplayString()
+                                    @s.Status.ToDisplayStringForKycStatus()
                                 </span>
                             </td>
                             <td>
