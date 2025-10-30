@@ -1,0 +1,209 @@
+﻿
+@using DataAccessLayer.Enums
+@model PresentationLayer.Areas.Admin.Controllers.StoreController.UpdateStoreDto
+
+<style>
+    #serviceTypeCheckboxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    #serviceTypeCheckboxes label {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        font-weight: 500;
+    }
+
+    #serviceTypeCheckboxes input[type="checkbox"] {
+        margin-right: 6px;
+        accent-color: #6c63ff; /* màu checkbox khi checked */
+        width: 18px;
+        height: 18px;
+    }
+
+    #serviceTypeCheckboxes label:hover {
+        background-color: #e6e0ff;
+        border-color: #6c63ff;
+    }
+
+    #serviceTypeCheckboxes input[type="checkbox"]:checked + span {
+        font-weight: 600;
+    }
+
+    #serviceTypeCheckboxes input[type="checkbox"]:checked + label {
+        background-color: #d6ccff;
+        border-color: #6c63ff;
+    }
+    .form-select {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        transition: all 0.2s ease-in-out;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: #6c63ff;
+        box-shadow: 0 0 5px rgba(108, 99, 255, 0.3);
+        background-color: #fff;
+    }
+
+    .form-select option {
+        padding: 5px 10px;
+    }
+</style>
+
+
+<div class="modal-header">
+    <h5 class="modal-title"><i class="fas fa-edit"></i> Chỉnh sửa cửa hàng</h5>
+</div>
+
+<form id="editStoreForm" asp-area="Admin" asp-action="Edit" asp-controller="Store" method="post">
+    <div class="modal-body">
+        <input type="hidden" asp-for="Id"/>
+
+        <div class="mb-3">
+            <label asp-for="StoreName" class="form-label">Tên cửa hàng</label>
+            <input asp-for="StoreName" class="form-control"/>
+            <span asp-validation-for="StoreName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LegalName" class="form-label">Tên pháp lý</label>
+            <input asp-for="LegalName" class="form-control"/>
+            <span asp-validation-for="LegalName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LicenseNumber" class="form-label">Số giấy phép</label>
+            <input asp-for="LicenseNumber" class="form-control"/>
+            <span asp-validation-for="LicenseNumber" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="TaxNumber" class="form-label">Mã số thuế</label>
+            <input asp-for="TaxNumber" class="form-control"/>
+            <span asp-validation-for="TaxNumber" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ContactPhone" class="form-label">Số điện thoại</label>
+            <input asp-for="ContactPhone" class="form-control"/>
+            <span asp-validation-for="ContactPhone" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ContactEmail" class="form-label">Email</label>
+            <input asp-for="ContactEmail" class="form-control" type="email"/>
+            <span asp-validation-for="ContactEmail" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LicenseExpiryDate" class="form-label">Ngày hết hạn giấy phép</label>
+            <input asp-for="LicenseExpiryDate" class="form-control" type="date"/>
+            <span asp-validation-for="LicenseExpiryDate" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="MaxOrdersPerDay" class="form-label">Số đơn tối đa/ngày</label>
+            <input asp-for="MaxOrdersPerDay" class="form-control" type="number"/>
+            <span asp-validation-for="MaxOrdersPerDay" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ActiveRegions" class="form-label">Khu vực hoạt động</label>
+            <input asp-for="ActiveRegions" class="form-control"/>
+            <span asp-validation-for="ActiveRegions" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Loại dịch vụ</label>
+
+            <div id="serviceTypeCheckboxes" class="d-flex flex-wrap gap-2">
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="1"> 🍔 Thức ăn
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="2"> 🏠 Đồ gia dụng
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="3"> ⚠️ Đồ dễ vỡ
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="4"> 📱 Đồ điện tử
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="5"> 👕 Quần áo
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="6"> 📚 Sách vở
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="7"> 🛋️ Nội thất
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="8"> 💄 Mỹ phẩm
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="9"> 💊 Dược phẩm
+                </label>
+                <label class="form-check-label me-3">
+                    <input type="checkbox" class="form-check-input" value="10"> 📦 Khác
+                </label>
+            </div>
+
+            <input type="hidden" id="hiddenServiceTypes" name="ServiceTypes"/>
+            <span asp-validation-for="ServiceTypes" class="text-danger"></span>
+        </div>
+
+        @* <div class="row"> *@
+        @*     <div class="col-md-6"> *@
+        @*         <label asp-for="Latitude" class="form-label">Vĩ độ (Latitude)</label> *@
+        @*         <input asp-for="Latitude" class="form-control" type="number" step="any"/> *@
+        @*     </div> *@
+        @*     <div class="col-md-6"> *@
+        @*         <label asp-for="Longitude" class="form-label">Kinh độ (Longitude)</label> *@
+        @*         <input asp-for="Longitude" class="form-control" type="number" step="any"/> *@
+        @*     </div> *@
+        @* </div> *@
+
+        <div class="mt-3">
+            <label asp-for="BankName" class="form-label">Ngân hàng</label>
+            <input asp-for="BankName" class="form-control"/>
+            <span asp-validation-for="BankName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="BankAccountNumber" class="form-label">Số tài khoản</label>
+            <input asp-for="BankAccountNumber" class="form-control"/>
+            <span asp-validation-for="BankAccountNumber" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Status" class="form-label">Trạng thái hoạt động</label>
+            <select asp-for="Status" class="form-select">
+                <option value="@StatusValue.Active">Hoạt động</option>
+                <option value="@StatusValue.InActive">Không hoạt động</option>
+            </select>
+            <span asp-validation-for="Status" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Lưu thay đổi
+        </button>
+    </div>
+</form>
+
+
+

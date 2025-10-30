@@ -283,9 +283,9 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             });
 
             modelBuilder.Entity<WarehouseSlot>().HasData(
-                new WarehouseSlot { Id = slotA1, WarehouseId = whId, Code = "A1", Status = status.Avalavaible, CurrentOrderId = null },
+                new WarehouseSlot { Id = slotA1, WarehouseId = whId, Code = "A1", Status = status.Available, CurrentOrderId = null },
                 new WarehouseSlot { Id = slotA2, WarehouseId = whId, Code = "A2", Status = status.Reserved, CurrentOrderId = orderYest },
-                new WarehouseSlot { Id = slotB1, WarehouseId = whId, Code = "B1", Status = status.Avalavaible, CurrentOrderId = null }
+                new WarehouseSlot { Id = slotB1, WarehouseId = whId, Code = "B1", Status = status.Available, CurrentOrderId = null }
             );
         }
     }

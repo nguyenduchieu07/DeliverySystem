@@ -12,51 +12,60 @@ namespace DataAccessLayer.DependencyInjections.Extensions
 {
     public static class SeedingDataExtension
     {
-        public static void Seeding(this ModelBuilder builder)
+        public static Guid ADMIN_ID = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000001");
+        public static Guid STORE_ID = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002");
+        public static Guid STORE_STAFF_ID = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000003");
+        public static Guid CUSTOMER_ID = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000004");
+
+        public static Guid ADMIN_ROLE_ID = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000001");
+        public static Guid STORE_ROLE_ID = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002");
+        public static Guid STORE_STAFF_ROLE_ID = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000003");
+        public static Guid CUTSOMTER_ROLE_ID = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000004");
+        public static void SeedingRoles(this ModelBuilder builder)
         {
-            var adminId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000001");
-            var storeId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002");
-            var storeStaffId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000003");
-            var customerId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000004");
             builder.Entity<IdentityRole<Guid>>(entity =>
             {
 
                 entity.HasData(new IdentityRole<Guid>
                 {
-                    Id = adminId,
+                    Id = ADMIN_ROLE_ID,
                     Name = "Admin",
-                    NormalizedName = "ADMIN"
+                    NormalizedName = "ADMIN",
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
                 });
 
                 entity.HasData(new IdentityRole<Guid>
                 {
-                    Id = storeId,
+                    Id = STORE_ROLE_ID,
                     Name = "Store",
-                    NormalizedName = "STORE"
+                    NormalizedName = "STORE",
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
                 });
 
                 entity.HasData(new IdentityRole<Guid>
                 {
-                    Id = customerId,
+                    Id = CUTSOMTER_ROLE_ID,
                     Name = "Customer",
-                    NormalizedName = "CUSTOMER"
+                    NormalizedName = "CUSTOMER",
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
                 });
 
                 entity.HasData(new IdentityRole<Guid>
                 {
-                    Id = storeStaffId,
+                    Id = STORE_STAFF_ROLE_ID,
                     Name = "StoreStaff",
-                    NormalizedName = "StoreStaff"
+                    NormalizedName = "StoreStaff",
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
                 });
             });
         }
 
         public static void SeedingStoreData(this ModelBuilder modelBuilder)
         {
-            var userId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000001");
+            var userId = STORE_ID;
             var hasher = new PasswordHasher<User>();
             var temp = new User();
-            var hash = hasher.HashPassword(temp, "password123");
+            var hash = hasher.HashPassword(temp, "password123@");
             var user = new User
             {
                 Id = userId,
@@ -66,10 +75,12 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                 NormalizedEmail = "store1@gmail.com",
                 NormalizedUserName = "store1",
                 PasswordHash = hash,
-                Status =Enums.StatusValue.Active
+                Status = Enums.StatusValue.Active,
+                ConcurrencyStamp = Guid.NewGuid().ToString()
+
             };
             modelBuilder.Entity<User>().HasData(user);
-            modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid> { RoleId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002"), UserId = user.Id });
+            modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid> { RoleId = STORE_ROLE_ID, UserId = user.Id });
 
 
         }
@@ -111,7 +122,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
 
         public static void SeedingAdminData(this ModelBuilder modelBuilder)
         {
-            var userId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002");
+            var userId = ADMIN_ID;
             var hasher = new PasswordHasher<User>();
             var temp = new User();
             var hash = hasher.HashPassword(temp, "password123@");
@@ -125,15 +136,15 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                 NormalizedUserName = "SystemAdmin",
                 PasswordHash = hash,
                 Status = Enums.StatusValue.Active,
-
+                ConcurrencyStamp = Guid.NewGuid().ToString()
             };
             modelBuilder.Entity<User>().HasData(user);
-            modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid> { RoleId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000001"), UserId = user.Id });
+            modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid> { RoleId = ADMIN_ROLE_ID, UserId = user.Id });
 
         }
 
 
-        public static void SeedingDataToTestAdmin(this ModelBuilder b)
+        public static void SeedingDataForStore(this ModelBuilder b)
         {
 
             var blueOwnerId = Guid.Parse("22222222-2222-2222-2222-222222222221");
@@ -189,9 +200,9 @@ namespace DataAccessLayer.DependencyInjections.Extensions
                 });
 
             b.Entity<IdentityUserRole<Guid>>().HasData(
-                new IdentityUserRole<Guid> { UserId = blueOwnerId, RoleId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002") },
-                new IdentityUserRole<Guid> { UserId = freshOwnerId, RoleId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002") },
-                new IdentityUserRole<Guid> { UserId = primeOwnerId, RoleId = Guid.Parse("AAAAAAA1-0000-0000-0000-000000000002") }
+                new IdentityUserRole<Guid> { UserId = blueOwnerId, RoleId = STORE_ROLE_ID },
+                new IdentityUserRole<Guid> { UserId = freshOwnerId, RoleId = STORE_ROLE_ID },
+                new IdentityUserRole<Guid> { UserId = primeOwnerId, RoleId = STORE_ROLE_ID }
                );
             var storeBlueId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1");
             var storeFreshId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2");

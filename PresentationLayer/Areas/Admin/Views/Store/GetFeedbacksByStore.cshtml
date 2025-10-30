@@ -1,0 +1,485 @@
+﻿@model List<DataAccessLayer.Entities.Feedback>
+@{
+    ViewBag.Title = "Danh sách đánh giá";
+}
+
+<style>
+    :root {
+        --success: #1cc88a;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --text: #5a5c69;
+        --border: #e3e6f0;
+        --white: #ffffff;
+        --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    /* Page Header */
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: var(--text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .page-header h1 i {
+        color: var(#e5501b);
+    }
+
+    /* Card Styles */
+    .card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.25rem;
+    }
+
+    .card-header {
+        background: linear-gradient(180deg, var(#e5501b) 0%, var(#d26c45) 100%);
+        color: var(--white);
+        padding: 0.75rem 1.25rem;
+        border-bottom: none;
+        border-radius: 0.35rem 0.35rem 0 0;
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body {
+        padding: 1.25rem;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-left: 4px solid var(#e5501b);
+        padding: 1rem;
+        border-radius: 0.35rem;
+        box-shadow: var(--shadow);
+        transition: all 0.15s ease-in-out;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(#e5501b);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    /* DataTable Custom Styling */
+    .dataTables_wrapper {
+        font-family: 'Nunito', -apple-system, sans-serif;
+    }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        margin: 0 0.5rem;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .dataTables_wrapper .dataTables_length select:focus {
+        outline: none;
+        border-color: var(#e5501b);
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        margin-left: 0.5rem;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+        outline: none;
+        border-color: var(#e5501b);
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
+    }
+
+    /* Table Styles */
+    #feedbackTable {
+        width: 100% !important;
+        border-collapse: collapse;
+    }
+
+    #feedbackTable thead {
+        background: var(#f8f9fc);
+    }
+
+    #feedbackTable thead th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text);
+        border-bottom: 2px solid var(--border);
+    }
+
+    #feedbackTable tbody td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+        font-size: 0.875rem;
+        vertical-align: middle;
+    }
+
+    #feedbackTable tbody tr {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    #feedbackTable tbody tr:hover {
+        background: var(#f8f9fc);
+    }
+
+    /* User Info */
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .user-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(#e5501b) 0%, var(#d26c45) 100%);
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    /* Store Link */
+    .store-link {
+        color: var(#e5501b);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.15s ease-in-out;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .store-link:hover {
+        color: var(#d26c45);
+        text-decoration: underline;
+    }
+
+    /* Star Rating */
+    .stars {
+        display: flex;
+        gap: 0.125rem;
+        font-size: 1.125rem;
+    }
+
+    .star {
+        color: var(--border);
+    }
+
+    .star.filled {
+        color: var(--warning);
+    }
+
+    /* Comment Text */
+    .comment-text {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text);
+        line-height: 1.5;
+    }
+
+    .comment-text:hover {
+        white-space: normal;
+        overflow: visible;
+    }
+
+    /* Date Badge */
+    .date-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(#858796);
+        font-size: 0.875rem;
+    }
+
+    .date-badge i {
+        color: var(#e5501b);
+    }
+
+    /* Rating Badge */
+    .rating-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: var(#f8f9fc);
+        border-radius: 0.35rem;
+    }
+
+    .rating-value {
+        font-weight: 700;
+        color: var(--text);
+        font-size: 0.875rem;
+    }
+
+    /* DataTable Pagination */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.375rem 0.75rem;
+        margin: 0 0.125rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        color: var(--text);
+        transition: all 0.15s ease-in-out;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: var(#f8f9fc);
+        border-color: var(#e5501b);
+        color: var(#e5501b);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: var(#e5501b);
+        border-color: var(#e5501b);
+        color: var(--white);
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 1rem;
+        color: var(#858796);
+        font-size: 0.875rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: var(#858796);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+        color: var(#e5501b);
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+    }
+
+    .empty-state p {
+        font-size: 0.875rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        #feedbackTable thead th,
+        #feedbackTable tbody td {
+            padding: 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .comment-text {
+            max-width: 150px;
+        }
+
+        .user-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1>Quản Lý Đánh Giá</h1>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-comment-slash"></i>
+                <h3>Chưa có đánh giá nào</h3>
+                <p>Hệ thống chưa nhận được bất kỳ phản hồi nào từ người dùng.</p>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Tổng Đánh Giá</div>
+            <div class="stat-value">@Model.Count</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--warning);">
+            <div class="stat-label" style="color: var(--warning);">Điểm Trung Bình</div>
+            <div class="stat-value">
+                @(Model.Any() ? Model.Average(f => f.Rating).ToString("F1") : "0.0") 
+                <span style="font-size: 1rem; color: var(--warning);">★</span>
+            </div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--success);">
+            <div class="stat-label" style="color: var(--success);">Đánh Giá 5 Sao</div>
+            <div class="stat-value">@Model.Count(f => f.Rating == 5)</div>
+        </div>
+        <div class="stat-card" style="border-left-color: var(--danger);">
+            <div class="stat-label" style="color: var(--danger);">Đánh Giá 1-2 Sao</div>
+            <div class="stat-value">@Model.Count(f => f.Rating <= 2)</div>
+        </div>
+    </div>
+
+    <!-- Main Table Card -->
+    <div class="card">
+        <div class="card-body">
+            <table id="feedbackTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Người Gửi</th>
+                        <th>Đánh Giá</th>
+                        <th>Bình Luận</th>
+                        <th>Ngày Tạo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        @(f.FromUser?.Customer?.FullName?.Substring(0, 1).ToUpper() ?? "?")
+                                    </div>
+                                    <span class="user-name">@(f.FromUser?.Customer?.FullName ?? "N/A")</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="rating-badge">
+                                    <div class="stars">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= f.Rating)
+                                            {
+                                                <span class="star filled">★</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="star">☆</span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="comment-text" title="@f.Comment">
+                                    @if (!string.IsNullOrEmpty(f.Comment))
+                                    {
+                                        @f.Comment
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(#858796); font-style: italic;">Không có bình luận</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="date-badge">
+                                    @f.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#feedbackTable').DataTable({
+                pageLength: 10,
+                order: [[4, 'desc']],
+                language: {
+                    lengthMenu: "Hiển thị _MENU_ mục",
+                    info: "Hiển thị _START_ đến _END_ trong tổng _TOTAL_ phản hồi",
+                    infoEmpty: "Hiển thị 0 đến 0 trong tổng 0 phản hồi",
+                    infoFiltered: "(lọc từ _MAX_ phản hồi)",
+                    search: "🔍",
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',   // Đầu
+                        previous: '<i class="fas fa-angle-left"></i>',       // Trước
+                        next: '<i class="fas fa-angle-right"></i>',          // Sau
+                        last: '<i class="fas fa-angle-double-right"></i>'    // Cuối
+                    },
+                    emptyTable: "Chưa có phản hồi nào",
+                    zeroRecords: "Không tìm thấy kết quả phù hợp"
+                },
+                responsive: true,
+                columnDefs: [
+                    { orderable: true, targets: '_all' }
+                ]
+            });
+        });
+    </script>
+}

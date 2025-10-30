@@ -2,8 +2,21 @@
 @using DataAccessLayer.Enums
 @{
     var isEdit = Model.Id.HasValue;
+    var viPricing = new Dictionary<PricingModel, string> {
+        { PricingModel.Flat, "Cố định" },
+        { PricingModel.PerUnit, "Theo đơn vị" },
+        { PricingModel.Tiered, "Theo bậc giá" },
+        { PricingModel.DimensionBased, "Theo kích thước" },
+        { PricingModel.TimeBased, "Theo thời gian" }
+    };
+
     var pricingItems = Enum.GetValues(typeof(PricingModel)).Cast<PricingModel>()
-        .Select(v => new SelectListItem { Value = ((int)v).ToString(), Text = v.ToString(), Selected = (v == Model.PricingModel) }).ToList();
+        .Select(v => new SelectListItem
+        {
+            Value = ((int)v).ToString(),
+            Text = viPricing[v],
+            Selected = (v == Model.PricingModel)
+        }).ToList();
 }
 
 <form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
@@ -21,15 +34,15 @@
                 <span class="icon">📝</span> Thông tin cơ bản
             </button>
             <button type="button" class="tab-btn" data-tab="sizes">
-                <span class="icon">📏</span> Size Options
+                <span class="icon">📏</span> Tuỳ chọn kích thước
                 <span class="badge">@(Model.SizeOptions?.Count ?? 0)</span>
             </button>
             <button type="button" class="tab-btn" data-tab="rules">
-                <span class="icon">💰</span> Price Rules
+                <span class="icon">💰</span> Quy tắc giá
                 <span class="badge">@(Model.PriceRules?.Count ?? 0)</span>
             </button>
             <button type="button" class="tab-btn" data-tab="addons">
-                <span class="icon">➕</span> Addons
+                <span class="icon">➕</span> Dịch vụ thêm
                 <span class="badge">@(Model.Addons?.Count ?? 0)</span>
             </button>
         </div>
@@ -43,19 +56,46 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div><label>Tên dịch vụ</label><input asp-for="Name" /><span class="text-danger" asp-validation-for="Name"></span></div>
-                    <div><label>Đơn vị</label><input asp-for="Unit" /><span class="text-danger" asp-validation-for="Unit"></span></div>
-                    <div><label>Giá cơ bản (đ)</label><input asp-for="BasePrice" type="number" step="0.01" /><span class="text-danger" asp-validation-for="BasePrice"></span></div>
+                    <div>
+                        <label for="Name">Tên dịch vụ</label>
+                        <input asp-for="Name" placeholder="VD: Lưu kho thường" />
+                        <span class="text-danger" asp-validation-for="Name"></span>
+                    </div>
+                    <div>
+                        <label for="Unit">Đơn vị</label>
+                        <input asp-for="Unit" placeholder="VD: m³/ngày, đơn vị, chiếc..." />
+                        <span class="text-danger" asp-validation-for="Unit"></span>
+                    </div>
+                    <div>
+                        <label for="BasePrice">Giá cơ bản (đ)</label>
+                        <input asp-for="BasePrice" type="number" step="0.01" placeholder="VD: 100000" />
+                        <span class="text-danger" asp-validation-for="BasePrice"></span>
+                    </div>
                 </div>
                 <div class="row">
-                    <div><label>Pricing Model</label><select asp-for="PricingModel" asp-items="pricingItems"></select></div>
-                    <div><label>Kích hoạt</label><select asp-for="IsActive"><option value="true">Active</option><option value="false">Inactive</option></select></div>
-                    <div><label>StoreId</label><input asp-for="StoreId" readonly /></div>
+                    <div>
+                        <label for="PricingModel">Mô hình giá</label>
+                        <select asp-for="PricingModel" asp-items="pricingItems"></select>
+                    </div>
+                    <div>
+                        <label for="IsActive">Kích hoạt</label>
+                        <select asp-for="IsActive">
+                            <option value="true">Bật</option>
+                            <option value="false">Tắt</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="StoreId">Mã cửa hàng</label>
+                        <input asp-for="StoreId" readonly />
+                    </div>
                 </div>
-                <label>Mô tả</label><textarea asp-for="Description"></textarea>
+                <label for="Description">Mô tả</label>
+                <textarea asp-for="Description" placeholder="Mô tả ngắn gọn về dịch vụ, điều kiện áp dụng..."></textarea>
+
                 @Html.Partial("_CategoryPicker", Model)
             </div>
         </div>
+
 
         <div class="card" style="margin-top:20px">
             <div class="card-body">

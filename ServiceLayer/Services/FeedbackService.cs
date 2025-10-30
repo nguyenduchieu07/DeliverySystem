@@ -20,5 +20,10 @@ namespace ServiceLayer.Services
         {
             return await _feedbackRepository.GetAllFeedbackByStoreIdAsync(storeId);
         }
+
+        public async Task<Feedback> CreateFeedbackAsync(Feedback feedback)
+        {
+            return await _feedbackRepository.AddAsync(feedback);
+        }
     }
 }
