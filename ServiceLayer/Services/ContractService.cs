@@ -93,10 +93,10 @@ public class ContractService : IContractService
 
             await _contractRepository.AddRangeAsync(contracts);
             
-            //set slot reservation to Used
+            //set slot reservation to InActive for not check again
             slotReservations.ForEach(s =>
             {
-                s.Status = StatusValue.Used;
+                s.Status = StatusValue.InActive;
                 _slotReservationRepository.Update(s);
             });
             await ts.CommitAsync();

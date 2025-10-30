@@ -17,6 +17,6 @@ namespace DataAccessLayer.Entities
         public DateTimeOffset ExpiresAt { get; set; } // now + 24h
         public DateTime From { get; set; }
         public DateTime To { get; set; }
-        public StatusValue Status { get; set; } // Reserved/Expired/Used
+        public StatusValue Status { get; set; } //Active -> InActive
     }
 }

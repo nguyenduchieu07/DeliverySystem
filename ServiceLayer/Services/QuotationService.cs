@@ -259,7 +259,7 @@ namespace ServiceLayer.Services
                     OrderId = newOrder.Id,
                     WarehouseSlotId = slot.Id,
                     ExpiresAt = DateTime.UtcNow.AddHours(VALIDITY_FOR_RESERVATION_HOUR),
-                    Status = StatusValue.Reserved,
+                    Status = StatusValue.Active,
                     From = from,
                     To = to
                 });
