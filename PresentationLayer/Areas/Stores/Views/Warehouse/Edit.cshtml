@@ -790,7 +790,7 @@
                                 <strong>1. Tải Template Excel</strong>
                                 <p class="muted">Tải file mẫu với header và hướng dẫn</p>
                             </div>
-                            <a href="@Url.Action("DownloadSlotTemplate", "Warehouse", new { area = "Stores" })"
+                            <a href="@Url.Action("DownloadSlotTemplate", "Warehouse", new { area = "Stores" , warehouseName = Model.Name})"
                                class="btn btn-outline" target="_blank">
                                 📄 Tải Template
                             </a>
@@ -1184,16 +1184,26 @@
                     body: formData,
                     headers: {
                         'RequestVerificationToken': document.querySelector('[name="__RequestVerificationToken"]').value
-                    }
+                    },
                 });
 
-                if (response.ok) {
-                    alert('Import thành công!');
+                const result = await response.json(); // parse JSON body
+
+                if (response.ok && result.result == true) {
+                    alert(`✅ Import thành công!\nTổng dòng: ${result.data.totalRows}\nThành công: ${result.data.success}\nBỏ qua: ${result.data.skipped}`);
                     closeImportExportModal();
                     location.reload();
                 } else {
-                    const error = await response.text();
-                    alert('Import thất bại: ' + error);
+                    let message = `❌ Import thất bại!\n${result.message || 'Có lỗi xảy ra.'}`;
+
+                    if (result.data?.errors?.length) {
+                        message += '\n\nChi tiết lỗi:\n';
+                        message += result.data.errors
+                            .map(e => `• Dòng ${e.rowIndex} (${e.field}): ${e.message}`)
+                            .join('\n');
+                    }
+
+                    alert(message);
                 }
             } catch (error) {
                 alert('Lỗi khi import: ' + error.message);

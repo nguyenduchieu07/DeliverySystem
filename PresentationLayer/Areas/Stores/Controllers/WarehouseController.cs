@@ -422,14 +422,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             if (result.Errors.Any())
             {
-                TempData["Error"] = $"Import lỗi {result.Errors.Count} dòng / {result.TotalRows}.";
-            }
-            else
-            {
-                TempData["Success"] = $"Import thành công {result.Success} dòng.";
+                //TempData["Error"] = $"Import lỗi {result.Errors.Count} dòng / {result.TotalRows}.";
+                return new JsonResult(new { success = false, message = "Import data thất bại", data = result });
             }
 
-            return RedirectToAction("Details", new { id = warehouseId });
+            //return RedirectToAction("Details", new { id = warehouseId });
+            return new JsonResult(new { success = true, message = "Import data thành công", data = result });
         }
         public static class WarehouseLayoutOptions
         {
@@ -453,9 +451,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> DownloadSlotTemplate(CancellationToken ct)
+        public async Task<IActionResult> DownloadSlotTemplate([FromQuery] string warehouseName, CancellationToken ct)
         {
-            var bytes = await _export.ExportTemplateAsync(ct);
+            var bytes = await _export.ExportTemplateAsync(warehouseName, ct);
             var fileName = $"SlotTemplate_{DateTime.UtcNow:yyyyMMdd}.xlsx";
             return File(bytes,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

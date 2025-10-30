@@ -9,7 +9,7 @@ namespace ServiceLayer.Abstractions.IServices
     public interface IWarehouseSlotExportService
     {
         /// <summary>Tạo file template (sheet Slots, chỉ header & mô tả).</summary>
-        Task<byte[]> ExportTemplateAsync(CancellationToken ct = default);
+        Task<byte[]> ExportTemplateAsync(string warehouseName, CancellationToken ct = default);
 
         /// <summary>Xuất toàn bộ slots của 1 kho ra Excel theo format nhập (không Row/Col).</summary>
         Task<byte[]> ExportWarehouseSlotsAsync(Guid warehouseId, CancellationToken ct = default);
