@@ -139,7 +139,7 @@ namespace PresentationLayer.Controllers
                     // Nếu là Customer (hoặc vai trò khác), giữ nguyên logic cũ
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                         return Redirect(returnUrl);
-                    return RedirectToAction("Index", "Delivery");
+                    return RedirectToAction("Index", "Quote");
                 }
                 // === KẾT THÚC THAY ĐỔI ===
             }
