@@ -608,6 +608,9 @@
                             📦 Danh sách Slots
                         </div>
                         <div style="display: flex; gap: 12px;">
+                            <button type="button" class="btn btn-outline" onclick="showImportExportInstructionModal()">
+                                Hướng dẫn Import
+                            </button>
                             <button type="button" class="btn btn-outline" onclick="showImportExportModal()">
                                 📊 Import/Export Excel
                             </button>
@@ -675,12 +678,21 @@
                             <label>Giá/giờ (VNĐ)</label>
                             <input type="number" id="slotPrice" min="0" step="1000" placeholder="50000" />
                         </div>
+                         <div class="form-group">
+                            <label>Hàng</label>
+                            <input type="number" id="row" min="0" step="1000" placeholder="50000" />
+                        </div>
+                        <div class="form-group">
+                            <label>Cột</label>
+                            <input type="number" id="col" min="0" step="1000" placeholder="50000" />
+                        </div>
                         <div class="form-group">
                             <label>Trạng thái</label>
                             <select id="slotStatus">
-                                <option value="4">Available</option>
-                                <option value="17">Occupied</option>
-                                <option value="7">Maintenance</option>
+                                <option value="4">Trống</option>
+                                <option value="5">Giữ chỗ</option>
+                                <option value="6">Đang hoạt động</option>
+                                <option value="7">Bảo trì</option>
                             </select>
                         </div>
                     </div>
@@ -847,6 +859,154 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <!-- Import Instruction Modal -->
+    <div id="importExportInstructionModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Hướng dẫn nạp data slot</h3>
+                <button type="button" class="modal-close" onclick="closeImportExportInstructionModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Warehouse Slots Import Guide - paste into your view -->
+                <section class="import-guide" aria-labelledby="import-guide-title" style="font-family:Segoe UI, Roboto, Arial, sans-serif; margin:16px 0;">
+                    <h2 id="import-guide-title" style="margin:0 0 8px 0; font-size:1.125rem;">Hướng dẫn định dạng file Excel — sheet <kbd>Slots</kbd></h2>
+                    <p style="margin:0 0 12px 0; color:#444">
+                        File phải có sheet tên <strong>Slots</strong>. Hàng 1 là header. Hãy đảm bảo dữ liệu khớp theo cột bên dưới.
+                    </p>
+
+                    <div style="overflow:auto; border:1px solid #e6e9ef; border-radius:6px; padding:12px; background:#fcfdff;">
+                        <table role="table" style="width:100%; border-collapse:collapse; min-width:720px;">
+                            <thead>
+                                <tr style="text-align:left; background:#F3F6FC;">
+                                    <th style="padding:8px 10px; border-bottom:1px solid #e2e6f0; width:48px;">Cột</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid #e2e6f0; width:160px;">Tên cột</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid #e2e6f0;">Kiểu</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid #e2e6f0; width:96px;">Bắt buộc</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid #e2e6f0;">Quy tắc / Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">A</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>WarehouseName</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Text</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">✅</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                        Tên kho <strong> phải tồn tại trong dữ liệu hệ thống </strong>. Không chứa ký tự đặc biệt (chỉ cho phép chữ, số, khoảng trắng, <code>-</code>, <code>_</code>).
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">B</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>Code</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Text</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">✅</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                        Mã vị trí. Không trùng trong cùng <em>Warehouse</em> (file) và không trùng DB. Chỉ cho phép chữ/số/<code>-</code>/<code>_</code>.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">C</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>HeightM</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Number</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">⚠️</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                        > 0 khi <strong>IsBlocked = FALSE</strong>. Có thể để 0 khi bị chặn. Hỗ trợ dấu chấm hoặc dấu phẩy.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">D</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>LengthM</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Number</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">⚠️</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">> 0 khi IsBlocked = FALSE.</td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">E</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>WidthM</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Number</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">⚠️</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">> 0 khi IsBlocked = FALSE.</td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">F</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>BasePricePerHour</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Number</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">✅</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                        Số nguyên (hoặc thập phân). Giá >= 0 (không âm).
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">G</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>Row</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Integer</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">✅</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                        Phải là <strong>số nguyên dương</strong> (>0). Bắt buộc. Không nhận text hoặc số âm.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">H</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>Col</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Integer</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">✅</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                        Phải là <strong>số nguyên dương</strong> (>0). Bắt buộc. Max col mặc định: <code>30</code>.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">I</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>IsBlocked</strong></td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Boolean</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">✅</td>
+                                    <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                        Chấp nhận: <code>TRUE/FALSE</code>, <code>1/0</code>, <code>YES/NO</code>, <code>Y/N</code>.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px 10px;">J</td>
+                                    <td style="padding:8px 10px;"><strong>ImageUrl</strong></td>
+                                    <td style="padding:8px 10px;">Text / URL</td>
+                                    <td style="padding:8px 10px;">⛔</td>
+                                    <td style="padding:8px 10px;">
+                                        Tùy chọn. Nếu nhập, không chứa ký tự đặc biệt lạ; nên là URL hợp lệ nếu bạn dùng để hiển thị ảnh.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top:12px; display:flex; gap:12px; flex-wrap:wrap;">
+                        <div style="padding:10px; border-radius:6px; background:#fff; border:1px solid #e6e9ef; min-width:280px;">
+                            <strong>Ví dụ hợp lệ</strong>
+                            <div style="font-size:0.95rem; color:#333; margin-top:6px;">
+                                Kho A / SLT-001 / 3 / 4 / 2 / 50000 / 1 / 1 / FALSE / (blank)
+                            </div>
+                        </div>
+
+                        <div style="padding:10px; border-radius:6px; background:#fff8f0; border:1px solid #ffecd1; min-width:280px;">
+                            <strong>Lưu ý lỗi phổ biến</strong>
+                            <ul style="margin:6px 0 0 18px; padding:0; color:#333;">
+                                <li>Để trống <code>Row</code> hoặc <code>Col</code> → lỗi bắt buộc.</li>
+                                <li><code>Code</code> chứa ký tự đặc biệt → lỗi.</li>
+                                <li><code>BasePricePerHour</code> âm → lỗi.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
@@ -1033,7 +1193,9 @@
                 lengthM: parseFloat(document.getElementById('slotL').value),
                 widthM: parseFloat(document.getElementById('slotW').value),
                 basePricePerHour: parseFloat(document.getElementById('slotPrice').value),
-                status: parseInt(document.getElementById('slotStatus').value)
+                status: parseInt(document.getElementById('slotStatus').value),
+                        col:  parseInt(document.getElementById('col').value),
+                                row:  parseInt(document.getElementById('row').value),
             };
 
             // Validate
@@ -1138,6 +1300,13 @@
     </script>
 
     <script>
+        function showImportExportInstructionModal() {
+            document.getElementById('importExportInstructionModal').style.display = 'flex';
+        }
+
+        function closeImportExportInstructionModal() {
+            document.getElementById('importExportInstructionModal').style.display = 'none';
+        }
                 // Thêm vào phần Scripts
         // Import/Export Modal Functions
         function showImportExportModal() {
@@ -1188,8 +1357,7 @@
                 });
 
                 const result = await response.json(); // parse JSON body
-
-                if (response.ok && result.result == true) {
+                if (result.success == true) {
                     alert(`✅ Import thành công!\nTổng dòng: ${result.data.totalRows}\nThành công: ${result.data.success}\nBỏ qua: ${result.data.skipped}`);
                     closeImportExportModal();
                     location.reload();

@@ -157,7 +157,7 @@ namespace PresentationLayer.Controllers
             {
                 Id = Guid.NewGuid(),
                 CustomerId = customerId,
-                StoreId = (Guid)quotation.StoreId!,
+                StoreId = quotation.StoreId ?? Guid.Empty,
                 QuotationId = quotation.Id,
                 TotalAmount = quotation.TotalAmount,
                 Status = StatusValue.AwaitingPayment, // 👈 quan trọng để qua Payment

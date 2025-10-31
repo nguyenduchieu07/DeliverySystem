@@ -10,7 +10,7 @@ namespace ServiceLayer.Dtos.Quotes
     public class QuotationDetailDto
     {
         public Guid Id { get; set; }
-        public Guid StoreId { get; set; }
+        public Guid? StoreId { get; set; }
         public Guid CustomerId { get; set; }
         public decimal TotalAmount { get; set; }
         public DateTime ValidUntil { get; set; }
