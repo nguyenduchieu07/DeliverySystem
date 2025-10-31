@@ -135,6 +135,7 @@ namespace PresentationLayer.Controllers
                 {
                     return RedirectToAction("Index", "Home", new { area = "Admin" });
                 }
+             
                 else
                 {
                     // Nếu là Customer (hoặc vai trò khác), giữ nguyên logic cũ
@@ -679,7 +680,10 @@ namespace PresentationLayer.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                return View("KycSubmissions", request);
+                return View("KycSubmissions", new KycViewModel
+                {
+                    KycRequest = request,
+                });
             }
         }
         

@@ -54,6 +54,8 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
     public virtual DbSet<KycSubmission> KycSubmissions {  get; set; }
     public virtual DbSet<ServiceAddon> ServiceAddons { get; set; }
+    public virtual DbSet<Contract> Contracts { get; set; }
+    
 
     public virtual DbSet<ServiceSizeOption> ServiceSizeOptions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -138,9 +140,11 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                 .HasForeignKey(d => d.FromUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Feedbacks_Users");
-
-            entity.HasOne(d => d.Order).WithMany(p => p.Feedbacks)
+            
+            entity.HasOne(d => d.Order)
+                .WithMany(p => p.Feedbacks)
                 .HasForeignKey(d => d.OrderId)
+                .IsRequired(false)                       // ← bắt buộc thêm
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Feedbacks_Orders");
 
@@ -256,6 +260,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
             entity.HasOne(d => d.Store).WithMany(p => p.Quotations)
                 .HasForeignKey(d => d.StoreId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Quotations_Stores");
         });
@@ -457,10 +462,10 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
             b.HasIndex(x => x.OrderId);
 
-            b.HasOne<WarehouseSlot>()
-             .WithMany()
-             .HasForeignKey(x => x.WarehouseSlotId)
-             .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(x => x.WarehouseSlot)
+                .WithMany() 
+                .HasForeignKey(x => x.WarehouseSlotId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             
         });
@@ -480,15 +485,14 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             e.Property(x => x.DocType).HasMaxLength(40);
             e.Property(x => x.FilePath).HasMaxLength(512);
         });
-        modelBuilder.Seeding();
+        modelBuilder.SeedingRoles();
         modelBuilder.SeedingStoreData();
         modelBuilder.SeedingCategoryData();
         modelBuilder.SeedingAdminData();
-        modelBuilder.SeedingDataToTestAdmin();
+        modelBuilder.SeedingDataForStore();
         modelBuilder.SeedingDashboards();
         base.OnModelCreating(modelBuilder);
-        OnModelCreatingPartial(modelBuilder);
+       
     }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+    
 }

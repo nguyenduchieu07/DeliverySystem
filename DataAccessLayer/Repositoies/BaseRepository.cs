@@ -12,7 +12,7 @@ namespace DataAccessLayer.Repositoies
 {
     public class BaseRepository<TEntity, TKey> : IBaseRepository<TEntity, TKey>, IDisposable where TEntity : class
     {
-        private readonly DeliverySytemContext _context;
+        protected readonly DeliverySytemContext _context;
         private bool _disposed = false;
 
         public BaseRepository(DeliverySytemContext context)
@@ -82,6 +82,12 @@ namespace DataAccessLayer.Repositoies
             }
             _context.Set<TEntity>().Add(entity);
             _context.SaveChanges();
+        }
+
+        public async Task AddRangeAsync(List<TEntity> entity)
+        {
+            await _context.Set<TEntity>().AddRangeAsync(entity);
+            await _context.SaveChangesAsync();
         }
 
         public void Update(TEntity entity)

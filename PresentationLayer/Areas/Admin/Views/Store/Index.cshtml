@@ -1,0 +1,427 @@
+﻿@using DataAccessLayer.Enums
+@model List<DataAccessLayer.Entities.Store>
+@{
+    ViewBag.Title = "Quản lý cửa hàng";
+}
+
+<style>
+    /* === CORE COLOR SETUP (Áp thẳng màu) === */
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: #5a5c69;
+        margin: 0;
+    }
+
+    .card {
+        background: #ffffff;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 1.25rem;
+    }
+
+    .card-header {
+        background: linear-gradient(180deg, #e5501b 0%, #d26c45 100%);
+        color: #ffffff;
+        padding: 0.75rem 1.25rem;
+        border-bottom: none;
+        border-radius: 0.35rem 0.35rem 0 0;
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body {
+        padding: 1.25rem;
+    }
+
+    /* === DATATABLE BASE === */
+    .dataTables_wrapper {
+        font-family: 'Nunito', -apple-system, sans-serif;
+    }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        margin: 0 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        margin-left: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+        outline: none;
+        border-color: #e5501b;
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
+    }
+
+    #storeDataTable {
+        width: 100% !important;
+        border-collapse: collapse;
+    }
+
+    #storeDataTable thead {
+        background: #f8f9fc;
+    }
+
+    #storeDataTable thead th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #5a5c69;
+        border-bottom: 2px solid #e3e6f0;
+    }
+
+    #storeDataTable tbody td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e3e6f0;
+        color: #5a5c69;
+        font-size: 0.875rem;
+        vertical-align: middle;
+    }
+
+    #storeDataTable tbody tr {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    #storeDataTable tbody tr:hover {
+        background: #f8f9fc;
+    }
+
+    /* === BADGES === */
+    .badge {
+        display: inline-block;
+        padding: 0.375rem 0.875rem;
+        border-radius: 10rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        color: #fff;
+    }
+
+    .badge-active {
+        background: #1cc88a;
+    }
+
+    .badge-inactive {
+        background: #858796;
+    }
+
+    .badge-pending {
+        background: #f6c23e;
+    }
+
+    .badge-kyc {
+        background: #e5501b;
+    }
+
+    /* === RATING === */
+    .rating-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .rating-stars {
+        color: #f6c23e;
+    }
+
+    .rating-count {
+        color: #858796;
+        font-size: 0.75rem;
+    }
+
+    /* === VERIFIED ICON === */
+    .verified-icon {
+        font-size: 1.2rem;
+    }
+
+    .verified-yes {
+        color: #1cc88a;
+    }
+
+    .verified-no {
+        color: #e74a3b;
+    }
+
+    /* === PAGINATION === */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.375rem 0.75rem;
+        margin: 0 0.125rem;
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+        color: #5a5c69;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #f8f9fc;
+        border-color: #e5501b;
+        color: #e5501b;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #e5501b;
+        border-color: #e5501b;
+        color: #ffffff;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 1rem;
+        color: #858796;
+        font-size: 0.875rem;
+    }
+
+    /* === STORE LINK === */
+    .store-name-link {
+        color: #e5501b;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .store-name-link:hover {
+        color: #d26c45;
+        text-decoration: underline;
+    }
+
+    /* === STATS CARDS === */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: #ffffff;
+        border-left: 4px solid #e5501b;
+        padding: 1rem;
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        transition: all 0.15s ease-in-out;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #e5501b;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #5a5c69;
+    }
+
+    @@media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        #storeDataTable thead th,
+        #storeDataTable tbody td {
+            padding: 0.75rem;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+
+
+<div class="page-header">
+    <h1>Quản Lý Cửa Hàng</h1>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Tổng Cửa Hàng</div>
+        <div class="stat-value">@Model.Count</div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--success);">
+        <div class="stat-label" style="color: var(--success);">Đã Xác Minh</div>
+        <div class="stat-value">@Model.Count(s => s.IsVerified)</div>
+    </div>
+    @* <div class="stat-card" style="border-left-color: var(--warning);"> *@
+    @*     <div class="stat-label" style="color: var(--warning);">Đánh Giá TB</div> *@
+    @*     <div class="stat-value">@(Model.Any() ? Model.Average(s => s.RatingAvg).ToString("F1") : "0.0")</div> *@
+    @* </div> *@
+    <div class="stat-card" style="border-left-color: var(--danger);">
+        <div class="stat-label" style="color: var(--danger);">Chưa Xác Minh</div>
+        <div class="stat-value">@Model.Count(s => !s.IsVerified)</div>
+    </div>
+</div>
+
+<!-- Main Table Card -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-store"></i>
+        Danh Sách Cửa Hàng
+    </div>
+    <div class="card-body">
+        <table id="storeDataTable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Tên Cửa Hàng</th>
+                    <th>Tên Pháp Lý</th>
+                    <th>Trạng Thái</th>
+                    <th>KYC</th>
+                    <th>Đánh Giá</th>
+                    <th>Số DT</th>
+                    <th>Email</th>
+                    <th>Giấy Phép</th>
+                    <th>Xác Minh</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var store in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-area="Admin" asp-controller="Store" asp-action="Detail" asp-route-storeId="@store.Id" class="store-name-link">@store.StoreName</a>
+                        </td>
+                        <td>@store.LegalName</td>
+                        <td>
+                            @if (store.Status == StatusValue.Active)
+                            {
+                                <span class="badge badge-active">Hoạt động</span>
+                            }
+                            else if (store.Status == StatusValue.Pending)
+                            {
+                                <span class="badge badge-pending">Chờ duyệt</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive">Không hoạt động</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge badge-kyc">@store.KycLevel</span>
+                        </td>
+                        <td>
+                            <div class="rating-display">
+                                <span class="rating-stars">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= Math.Floor(store.RatingAvg))
+                                        {
+                                            <i class="fas fa-star"></i>
+                                        }
+                                        else if (i - 0.5 <= (double)store.RatingAvg)
+                                        {
+                                            <i class="fas fa-star-half-alt"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="far fa-star"></i>
+                                        }
+                                    }
+                                </span>
+                                <span class="rating-count">(@store.RatingCount)</span>
+                            </div>
+                        </td>
+                        <td>@(!string.IsNullOrEmpty(store.ContactPhone) ? store.ContactPhone: "N/A")</td>
+                        <td>@(!string.IsNullOrEmpty(store.ContactEmail) ? store.ContactEmail: "N/A")</td>
+                        <td>
+                            @if (store.LicenseExpiryDate.HasValue)
+                            {
+                                var daysUntilExpiry = (store.LicenseExpiryDate.Value - DateTime.Now).Days;
+                                if (daysUntilExpiry < 30)
+                                {
+                                    <span style="color: var(--danger); font-weight: 600;">
+                                        @store.LicenseExpiryDate?.ToString("dd/MM/yyyy")
+                                    </span>
+                                }
+                                else if (daysUntilExpiry < 90)
+                                {
+                                    <span style="color: var(--warning); font-weight: 600;">
+                                        @store.LicenseExpiryDate?.ToString("dd/MM/yyyy")
+                                    </span>
+                                }
+                                else
+                                {
+                                    @store.LicenseExpiryDate?.ToString("dd/MM/yyyy")
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                        <td style="text-align: center;">
+                            @if (store.IsVerified)
+                            {
+                                <i class="fas fa-check-circle verified-icon verified-yes" title="Đã xác minh"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-times-circle verified-icon verified-no" title="Chưa xác minh"></i>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#storeDataTable').DataTable({
+                pageLength: 10,
+                order: [[0, 'asc']],
+                language: {
+                    lengthMenu: "Hiển thị _MENU_ mục",
+                   
+                    info: "Hiển thị _START_ đến _END_ trong tổng _TOTAL_ mục",
+                    infoEmpty: "Hiển thị 0 đến 0 trong tổng 0 mục",
+                    infoFiltered: "(lọc từ _MAX_ mục)",
+                    emptyTable: "Không có dữ liệu",
+                    search: "🔍",
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',   // Đầu
+                        previous: '<i class="fas fa-angle-left"></i>',       // Trước
+                        next: '<i class="fas fa-angle-right"></i>',          // Sau
+                        last: '<i class="fas fa-angle-double-right"></i>'    // Cuối
+                    },
+                    zeroRecords: "Không tìm thấy kết quả phù hợp"
+                },
+                responsive: true,
+                columnDefs: [
+                    { orderable: false, targets: [8] } // Disable sorting on verification column
+                ]
+            });
+        });
+    </script>
+}

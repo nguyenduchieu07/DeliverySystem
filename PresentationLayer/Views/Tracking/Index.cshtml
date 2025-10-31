@@ -1,0 +1,116 @@
+﻿@model List<OrderListViewModel>
+@using DataAccessLayer.Enums
+@using ServiceLayer.Dtos.OrderTracking
+@{
+    ViewData["Title"] = "Danh sách đơn hàng";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-list"></i> Danh sách đơn hàng đã gửi</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Filters -->
+                    <form method="get" class="mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <input type="text" name="search" class="form-control"
+                                       placeholder="Tìm theo mã đơn..." value="@ViewBag.CurrentSearch">
+                            </div>
+                            <div class="col-md-2">
+                                <select name="status" class="form-select">
+                                    <option value="">Tất cả trạng thái</option>
+                                    @foreach (StatusValue status in Enum.GetValues(typeof(StatusValue)))
+                                    {
+                                        <option value="@status" selected="@(ViewBag.CurrentStatus == status)">
+                                            @status
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="date" name="fromDate" class="form-control"
+                                       value="@ViewBag.FromDate?.ToString("yyyy-MM-dd")">
+                            </div>
+                            <div class="col-md-2">
+                                <input type="date" name="toDate" class="form-control"
+                                       value="@ViewBag.ToDate?.ToString("yyyy-MM-dd")">
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Tìm kiếm
+                                </button>
+                                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                    <i class="fas fa-redo"></i> Làm mới
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Orders table -->
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Cửa hàng</th>
+                                        <th>Trạng thái</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Ngày giao</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var order in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <code>@order.OrderCode</code>
+                                            </td>
+                                            <td>@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>@order.StoreName</td>
+                                            <td>
+                                                <span class="badge bg-@order.StatusColor">
+                                                    @order.StatusDisplay
+                                                </span>
+                                            </td>
+                                            <td>@order.TotalAmount.ToString("N0") VNĐ</td>
+                                            <td>
+                                                @if (order.DeliveryDate.HasValue)
+                                                {
+                                                    @order.DeliveryDate.Value.ToString("dd/MM/yyyy")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Chưa xác định</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("Detail", new { id = order.Id })"
+                                                   class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i> Chi tiết
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Không có đơn hàng nào.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

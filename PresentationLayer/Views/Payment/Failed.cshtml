@@ -1,0 +1,374 @@
+﻿@model DataAccessLayer.Entities.Payment
+@{
+    ViewBag.Title = "Thanh toán thất bại";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <!-- Error Icon -->
+                <div class="error-icon mb-4">
+                    <i class="fas fa-times-circle text-danger" style="font-size: 4rem;"></i>
+                </div>
+
+                <h1 class="text-danger mb-3">Thanh toán thất bại!</h1>
+                <p class="lead text-muted">
+                    Rất tiếc, giao dịch của bạn không thể hoàn tất. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.
+                </p>
+            </div>
+
+            <!-- Payment Details Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>
+                        Thông tin giao dịch
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Mã thanh toán</h6>
+                            <p class="mb-3">
+                                <strong>@Model.Id.ToString("N")[..8].ToUpper()</strong>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('@Model.Id')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Mã đơn hàng</h6>
+                            <p class="mb-3">
+                                <strong>@Model.OrderId.ToString("N")[..8].ToUpper()</strong>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('@Model.OrderId')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Số tiền</h6>
+                            <p class="mb-3">
+                                <span class="h5 text-danger">
+                                    @Model.Amount.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Phương thức</h6>
+                            <p class="mb-3">
+                                @switch (Model.Method?.ToLower())
+                                {
+                                    case "cash":
+                                        <span class="badge bg-success"><i class="fas fa-money-bill-wave me-1"></i>Tiền mặt</span>
+                                        break;
+                                    case "bank_transfer":
+                                        <span class="badge bg-primary"><i class="fas fa-university me-1"></i>Chuyển khoản</span>
+                                        break;
+                                    case "momo":
+                                        <span class="badge bg-danger"><i class="fas fa-mobile-alt me-1"></i>MoMo</span>
+                                        break;
+                                    case "zalopay":
+                                        <span class="badge bg-info"><i class="fas fa-wallet me-1"></i>ZaloPay</span>
+                                        break;
+                                    case "vnpay":
+                                        <span class="badge bg-warning"><i class="fas fa-credit-card me-1"></i>VNPay</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@Model.Method</span>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Provider))
+                    {
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Nhà cung cấp</h6>
+                                <p class="mb-3">@Model.Provider</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Mã giao dịch</h6>
+                                <p class="mb-3">
+                                    <code>@Model.ProviderTxnId</code>
+                                    @if (!string.IsNullOrEmpty(Model.ProviderTxnId))
+                                    {
+                                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('@Model.ProviderTxnId')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Trạng thái</h6>
+                            <p class="mb-3">
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times me-1"></i>Thất bại
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Thời gian</h6>
+                            <p class="mb-3">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Possible Reasons -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Nguyên nhân có thể
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-3">
+                        <li>Số dư tài khoản không đủ</li>
+                        <li>Thông tin thẻ/tài khoản không chính xác</li>
+                        <li>Giao dịch bị từ chối bởi ngân hàng</li>
+                        <li>Hết thời gian giao dịch</li>
+                        <li>Lỗi kết nối mạng</li>
+                        <li>Vượt quá hạn mức giao dịch trong ngày</li>
+                    </ul>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Gợi ý:</strong> Vui lòng kiểm tra lại thông tin tài khoản, số dư và thử lại.
+                        Nếu vẫn không thành công, bạn có thể chọn phương thức thanh toán khác.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mb-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <form asp-controller="Payment" asp-action="Retry" asp-route-paymentId="@Model.Id" method="post" class="retry-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger btn-lg w-100">
+                                <i class="fas fa-redo me-2"></i>
+                                Thử lại
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="@Url.Action("Index", "Payment", new { orderId = Model.OrderId })" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Chọn PT khác
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="@Url.Action("Details", "Order", new { id = Model.OrderId })" class="btn btn-outline-secondary btn-lg w-100">
+                            <i class="fas fa-eye me-2"></i>
+                            Xem đơn hàng
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Support -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-headset me-2"></i>
+                        Cần hỗ trợ?
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <p class="mb-3">
+                        Nếu bạn gặp khó khăn trong việc thanh toán, đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp đỡ bạn.
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-phone text-success mb-2" style="font-size: 1.5rem;"></i>
+                                <h6>Hotline</h6>
+                                <p class="mb-0">
+                                    <strong>1900 1234</strong><br>
+                                    <small class="text-muted">24/7</small>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-envelope text-primary mb-2" style="font-size: 1.5rem;"></i>
+                                <h6>Email</h6>
+                                <p class="mb-0">
+                                    <strong>support@vcn.vn</strong><br>
+                                    <small class="text-muted">Phản hồi trong 2h</small>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="fab fa-facebook-messenger text-info mb-2" style="font-size: 1.5rem;"></i>
+                                <h6>Live Chat</h6>
+                                <p class="mb-0">
+                                    <button class="btn btn-sm btn-outline-info" onclick="openLiveChat()">
+                                        Bắt đầu chat
+                                    </button>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Vui lòng cung cấp mã thanh toán <strong>@Model.Id.ToString("N")[..8].ToUpper()</strong>
+                            khi liên hệ để được hỗ trợ nhanh chóng.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Home -->
+            <div class="text-center mt-4">
+                <a href="@Url.Action("Index", "Home")" class="btn btn-outline-primary">
+                    <i class="fas fa-home me-2"></i>
+                    Về trang chủ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section styles {
+    <style>
+        .error-icon {
+            animation: errorShake 0.5s ease-in-out;
+        }
+
+        @@keyframes errorShake {
+            0%, 100%
+
+        {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-5px);
+        }
+
+        75% {
+            transform: translateX(5px);
+        }
+
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .badge {
+            font-size: 0.875em;
+        }
+
+        code {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        .border {
+            transition: all 0.3s ease;
+        }
+
+            .border:hover {
+                box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+                transform: translateY(-2px);
+            }
+    </style>
+}
+
+@section scripts {
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                showToast('Đã sao chép vào clipboard!', 'success');
+            }, function(err) {
+                console.error('Không thể sao chép: ', err);
+                showToast('Không thể sao chép!', 'error');
+            });
+        }
+
+        function showToast(message, type) {
+            var toast = $('<div class="toast-custom"></div>')
+                .addClass(type === 'success' ? 'bg-success' : 'bg-danger')
+                .addClass('text-white p-3 rounded position-fixed')
+                .css({
+                    'top': '20px',
+                    'right': '20px',
+                    'z-index': '9999',
+                    'min-width': '250px'
+                })
+                .html('<i class="fas fa-' + (type === 'success' ? 'check' : 'times') + ' me-2"></i>' + message);
+
+            $('body').append(toast);
+
+            setTimeout(function() {
+                toast.fadeOut(function() {
+                    toast.remove();
+                });
+            }, 3000);
+        }
+
+        function openLiveChat() {
+            // Tích hợp với hệ thống chat (có thể là Zalo, Facebook Messenger, etc.)
+            showToast('Tính năng chat sẽ được kích hoạt sớm!', 'info');
+        }
+
+        $(document).ready(function() {
+            // Xử lý retry form
+            $('.retry-form').submit(function(e) {
+                e.preventDefault();
+
+                var form = $(this);
+                var btn = form.find('button[type="submit"]');
+                var originalText = btn.html();
+
+                // Disable button và hiện loading
+                btn.prop('disabled', true)
+                   .html('<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        if (response.isSuccess && response.redirectUrl) {
+                            window.location.href = response.redirectUrl;
+                        } else {
+                            showToast(response.message || 'Có lỗi xảy ra', 'error');
+                            btn.prop('disabled', false).html(originalText);
+                        }
+                    },
+                    error: function() {
+                        showToast('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+                        btn.prop('disabled', false).html(originalText);
+                    }
+                });
+            });
+
+            // Animation hiệu ứng
+            $('.card').each(function(index) {
+                $(this).css('opacity', '0').delay(index * 200).animate({
+                    opacity: 1
+                }, 500);
+            });
+        });
+    </script>
+}

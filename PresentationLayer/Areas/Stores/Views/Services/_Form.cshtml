@@ -2,40 +2,349 @@
 @using DataAccessLayer.Enums
 @{
     var isEdit = Model.Id.HasValue;
+    var viPricing = new Dictionary<PricingModel, string> {
+        { PricingModel.Flat, "Cố định" },
+        { PricingModel.PerUnit, "Theo đơn vị" },
+        { PricingModel.Tiered, "Theo bậc giá" },
+        { PricingModel.DimensionBased, "Theo kích thước" },
+        { PricingModel.TimeBased, "Theo thời gian" }
+    };
+
     var pricingItems = Enum.GetValues(typeof(PricingModel)).Cast<PricingModel>()
-        .Select(v => new SelectListItem { Value=((int)v).ToString(), Text=v.ToString(), Selected=(v==Model.PricingModel)}).ToList();
+        .Select(v => new SelectListItem
+        {
+            Value = ((int)v).ToString(),
+            Text = viPricing[v],
+            Selected = (v == Model.PricingModel)
+        }).ToList();
 }
-<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" class="grid" style="grid-template-columns:2fr 1fr">
-  @Html.AntiForgeryToken()
-  @if (isEdit) { <input type="hidden" asp-for="Id" /> }
 
-  <div class="card">
-    <div class="row">
-      <div><label>Tên dịch vụ</label><input asp-for="Name" /><span class="text-danger" asp-validation-for="Name"></span></div>
-      <div><label>Đơn vị</label><input asp-for="Unit" /><span class="text-danger" asp-validation-for="Unit"></span></div>
-      <div><label>Giá cơ bản (đ)</label><input asp-for="BasePrice" type="number" step="0.01" /><span class="text-danger" asp-validation-for="BasePrice"></span></div>
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post">
+    @Html.AntiForgeryToken()
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+    }
+
+    @if (isEdit)
+    {
+        <!-- TAB NAVIGATION -->
+        <div class="tab-nav">
+            <button type="button" class="tab-btn active" data-tab="basic">
+                <span class="icon">📝</span> Thông tin cơ bản
+            </button>
+            <button type="button" class="tab-btn" data-tab="sizes">
+                <span class="icon">📏</span> Tuỳ chọn kích thước
+                <span class="badge">@(Model.SizeOptions?.Count ?? 0)</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="rules">
+                <span class="icon">💰</span> Quy tắc giá
+                <span class="badge">@(Model.PriceRules?.Count ?? 0)</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="addons">
+                <span class="icon">➕</span> Dịch vụ thêm
+                <span class="badge">@(Model.Addons?.Count ?? 0)</span>
+            </button>
+        </div>
+    }
+
+    <!-- BASIC INFO (luôn hiển thị) -->
+    <div class="tab-content @(isEdit ? "" : "no-tabs")" data-content="basic" style="display:block">
+        <div class="card">
+            <div class="card-header">
+                <h3>Thông tin dịch vụ</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div>
+                        <label for="Name">Tên dịch vụ</label>
+                        <input asp-for="Name" placeholder="VD: Lưu kho thường" />
+                        <span class="text-danger" asp-validation-for="Name"></span>
+                    </div>
+                    <div>
+                        <label for="Unit">Đơn vị</label>
+                        <input asp-for="Unit" placeholder="VD: m³/ngày, đơn vị, chiếc..." />
+                        <span class="text-danger" asp-validation-for="Unit"></span>
+                    </div>
+                    <div>
+                        <label for="BasePrice">Giá cơ bản (đ)</label>
+                        <input asp-for="BasePrice" type="number" step="0.01" placeholder="VD: 100000" />
+                        <span class="text-danger" asp-validation-for="BasePrice"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <label for="PricingModel">Mô hình giá</label>
+                        <select asp-for="PricingModel" asp-items="pricingItems"></select>
+                    </div>
+                    <div>
+                        <label for="IsActive">Kích hoạt</label>
+                        <select asp-for="IsActive">
+                            <option value="true">Bật</option>
+                            <option value="false">Tắt</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="StoreId">Mã cửa hàng</label>
+                        <input asp-for="StoreId" readonly />
+                    </div>
+                </div>
+                <label for="Description">Mô tả</label>
+                <textarea asp-for="Description" placeholder="Mô tả ngắn gọn về dịch vụ, điều kiện áp dụng..."></textarea>
+
+                @Html.Partial("_CategoryPicker", Model)
+            </div>
+        </div>
+
+
+        <div class="card" style="margin-top:20px">
+            <div class="card-body">
+                <button class="btn primary" type="submit">@(isEdit ? "Lưu thay đổi" : "Tạo dịch vụ")</button>
+                <a class="btn" href="@Url.Action("Index", "Services", new { area = "Stores", storeId = Model.StoreId })">Quay lại</a>
+
+                @if (!isEdit)
+                {
+                    <div class="info-box">
+                        💡 Sau khi tạo, bạn có thể thêm Size Options, Price Rules và Addons
+                    </div>
+                }
+            </div>
+        </div>
     </div>
-    <div class="row">
-      <div><label>Pricing Model</label><select asp-for="PricingModel" asp-items="pricingItems"></select></div>
-      <div><label>Kích hoạt</label><select asp-for="IsActive"><option value="true">Active</option><option value="false">Inactive</option></select></div>
-      <div><label>StoreId</label><input asp-for="StoreId" readonly /></div>
-    </div>
-    <label>Mô tả</label><textarea asp-for="Description"></textarea>
-    @Html.Partial("_CategoryPicker", Model)
-  </div>
 
-  <div class="card"><div class="section"><div class="header"><div class="title">Hành động</div></div>
-    <div style="padding:12px 14px; display:grid; gap:10px">
-      <button class="btn primary" type="submit">@(isEdit ? "Lưu thay đổi" : "Tạo dịch vụ")</button>
-      <a class="btn" href="@Url.Action("Index","Services", new { area="Stores", storeId = Model.StoreId })">Quay lại</a>
-    </div></div></div>
+    @if (isEdit)
+    {
+        <!-- SIZE OPTIONS TAB -->
+        <div class="tab-content" data-content="sizes" style="display:none">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Size Options</h3>
+                    <span class="subtitle">Quản lý các kích thước khác nhau cho dịch vụ</span>
+                </div>
+                <div class="card-body">
+                    @Html.Partial("_ServiceSizes", Model)
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn primary" type="submit">Lưu thay đổi</button>
+                <button type="button" class="btn" onclick="switchTab('basic')">Quay lại thông tin cơ bản</button>
+            </div>
+        </div>
 
-  <div class="card"><div class="section"><div class="header"><div class="title">Size Options</div></div>
-    <div style="padding:12px 14px">@Html.Partial("_ServiceSizes", Model)</div></div></div>
+        <!-- PRICE RULES TAB -->
+        <div class="tab-content" data-content="rules" style="display:none">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Price Rules</h3>
+                    <span class="subtitle">Thiết lập quy tắc giá theo thời gian, số lượng, kích thước</span>
+                </div>
+                <div class="card-body">
+                    @Html.Partial("_ServicePriceRules", Model)
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn primary" type="submit">Lưu thay đổi</button>
+                <button type="button" class="btn" onclick="switchTab('basic')">Quay lại thông tin cơ bản</button>
+            </div>
+        </div>
 
-  <div class="card"><div class="section"><div class="header"><div class="title">Price Rules</div></div>
-    <div style="padding:12px 14px">@Html.Partial("_ServicePriceRules", Model)</div></div></div>
-
-  <div class="card"><div class="section"><div class="header"><div class="title">Addons</div></div>
-    <div style="padding:12px 14px">@Html.Partial("_ServiceAddons", Model)</div></div></div>
+        <!-- ADDONS TAB -->
+        <div class="tab-content" data-content="addons" style="display:none">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Addons</h3>
+                    <span class="subtitle">Các tùy chọn bổ sung cho dịch vụ</span>
+                </div>
+                <div class="card-body">
+                    @Html.Partial("_ServiceAddons", Model)
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn primary" type="submit">Lưu thay đổi</button>
+                <button type="button" class="btn" onclick="switchTab('basic')">Quay lại thông tin cơ bản</button>
+            </div>
+        </div>
+    }
 </form>
+
+<style>
+    /* Tab Navigation */
+    .tab-nav {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        padding: 8px;
+        background: var(--panel);
+        border-radius: 16px;
+        overflow-x: auto;
+    }
+
+    .tab-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: transparent;
+        border: none;
+        border-radius: 12px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+        .tab-btn:hover {
+            background: var(--panel-2);
+            color: var(--text);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-btn .icon {
+            font-size: 16px;
+        }
+
+        .tab-btn .badge {
+            padding: 2px 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tab-btn.active .badge {
+            background: rgba(255,255,255,0.2);
+        }
+
+    /* Tab Content */
+    .tab-content {
+        animation: fadeIn 0.3s;
+    }
+
+        .tab-content.no-tabs {
+            margin-top: 0;
+        }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* Cards */
+    .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel-2);
+    }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .card-header .subtitle {
+            display: block;
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    /* Action Bar */
+    .action-bar {
+        margin-top: 20px;
+        padding: 16px;
+        background: var(--panel);
+        border-radius: 16px;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    /* Info Box */
+    .info-box {
+        margin-top: 16px;
+        padding: 12px 16px;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 12px;
+        color: #3b82f6;
+        font-size: 14px;
+    }
+
+    /* Mobile */
+    @@media (max-width: 768px) {
+        .tab-nav
+
+    {
+        padding: 6px;
+    }
+
+    .tab-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+        .tab-btn .icon {
+            display: none;
+        }
+
+    .action-bar {
+        flex-direction: column;
+    }
+
+        .action-bar .btn {
+            width: 100%;
+        }
+
+    }
+</style>
+
+<script>
+    // Tab switching
+    function switchTab(tabName) {
+      // Update buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+
+      // Update content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = content.dataset.content === tabName ? 'block' : 'none';
+      });
+    }
+
+    // Initialize tab clicks
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+    });
+</script>

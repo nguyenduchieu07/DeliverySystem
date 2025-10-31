@@ -1,0 +1,324 @@
+﻿@model DataAccessLayer.Entities.Payment
+@{
+    ViewBag.Title = "Thanh toán thành công";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <!-- Success Icon -->
+                <div class="success-icon mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+
+                <h1 class="text-success mb-3">Thanh toán thành công!</h1>
+                <p class="lead text-muted">
+                    Cảm ơn bạn đã sử dụng dịch vụ vận chuyển của chúng tôi.
+                </p>
+            </div>
+
+            <!-- Payment Details Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>
+                        Thông tin thanh toán
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Mã thanh toán</h6>
+                            <p class="mb-3">
+                                <strong>@Model.Id.ToString("N")[..8].ToUpper()</strong>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('@Model.Id')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Mã đơn hàng</h6>
+                            <p class="mb-3">
+                                <strong>@Model.OrderId.ToString("N")[..8].ToUpper()</strong>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('@Model.OrderId')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Số tiền</h6>
+                            <p class="mb-3">
+                                <span class="h5 text-success">
+                                    @Model.Amount.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Phương thức</h6>
+                            <p class="mb-3">
+                                @switch (Model.Method?.ToLower())
+                                {
+                                    case "cash":
+                                        <span class="badge bg-success"><i class="fas fa-money-bill-wave me-1"></i>Tiền mặt</span>
+                                        break;
+                                    case "bank_transfer":
+                                        <span class="badge bg-primary"><i class="fas fa-university me-1"></i>Chuyển khoản</span>
+                                        break;
+                                    case "momo":
+                                        <span class="badge bg-danger"><i class="fas fa-mobile-alt me-1"></i>MoMo</span>
+                                        break;
+                                    case "zalopay":
+                                        <span class="badge bg-info"><i class="fas fa-wallet me-1"></i>ZaloPay</span>
+                                        break;
+                                    case "vnpay":
+                                        <span class="badge bg-warning"><i class="fas fa-credit-card me-1"></i>VNPay</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@Model.Method</span>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Provider))
+                    {
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Nhà cung cấp</h6>
+                                <p class="mb-3">@Model.Provider</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Mã giao dịch</h6>
+                                <p class="mb-3">
+                                    <code>@Model.ProviderTxnId</code>
+                                    @if (!string.IsNullOrEmpty(Model.ProviderTxnId))
+                                    {
+                                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('@Model.ProviderTxnId')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Trạng thái</h6>
+                            <p class="mb-3">
+                                @switch (Model.Status)
+                                {
+                                    case DataAccessLayer.Enums.StatusValue.Completed:
+                                        <span class="badge bg-success">Thành công</span>
+                                        break;
+                                    case DataAccessLayer.Enums.StatusValue.Pending:
+                                        <span class="badge bg-warning">Chờ xử lý</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@Model.Status</span>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Thời gian</h6>
+                            <p class="mb-3">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Information -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Thông tin khách hàng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Họ tên</h6>
+                            <p class="mb-3">@Model.Order.Customer.FullName</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Số điện thoại</h6>
+                            <p class="mb-3">@Model.Order.Customer.PhoneNumber</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        Bước tiếp theo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Method?.ToLower() == "cash")
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Thanh toán tiền mặt:</strong> Bạn sẽ thanh toán khi nhận hàng.
+                            Vui lòng chuẩn bị đầy đủ số tiền theo đúng hóa đơn.
+                        </div>
+                    }
+                    else if (Model.Method?.ToLower() == "bank_transfer")
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Chuyển khoản ngân hàng:</strong> Vui lòng chuyển khoản theo thông tin được cung cấp
+                            và gửi ảnh xác nhận cho chúng tôi.
+                        </div>
+
+                        <div class="bg-light p-3 rounded">
+                            <h6>Thông tin chuyển khoản:</h6>
+                            <ul class="mb-0">
+                                <li>Số tài khoản: <strong>1234567890</strong></li>
+                                <li>Tên tài khoản: <strong>CONG TY TNHH VAN CHUYEN VCN</strong></li>
+                                <li>Ngân hàng: <strong>@(Model.Provider ?? "Vietcombank")</strong></li>
+                                <li>Nội dung: <strong>TT @Model.OrderId.ToString("N")[..8].ToUpper()</strong></li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Thanh toán thành công:</strong> Giao dịch của bạn đã được xử lý thành công.
+                        </div>
+                    }
+
+                    <div class="mt-3">
+                        <h6>Tiếp theo:</h6>
+                        <ol>
+                            <li>Chúng tôi sẽ xác nhận đơn hàng trong vòng 30 phút</li>
+                            <li>Đội ngũ vận chuyển sẽ liên hệ với bạn để xác nhận thời gian lấy hàng</li>
+                            <li>Theo dõi trạng thái đơn hàng qua website hoặc hotline</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center">
+                <a href="@Url.Action("Details", "Order", new { id = Model.OrderId })" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-eye me-2"></i>
+                    Xem chi tiết đơn hàng
+                </a>
+                <a href="@Url.Action("Index", "Tracking")" class="btn btn-outline-primary btn-lg me-3">
+                    <i class="fas fa-truck me-2"></i>
+                    Theo dõi đơn hàng
+                </a>
+                <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-home me-2"></i>
+                    Về trang chủ
+                </a>
+            </div>
+
+            <!-- Support Information -->
+            <div class="text-center mt-5">
+                <p class="text-muted">
+                    Cần hỗ trợ? Liên hệ hotline: <strong>1900 1234</strong> hoặc email: <strong>support@vcn.vn</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section styles {
+    <style>
+        .success-icon {
+            animation: successPulse 2s ease-in-out infinite;
+        }
+
+        @@keyframes successPulse {
+            0%
+
+        {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .badge {
+            font-size: 0.875em;
+        }
+
+        code {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+}
+
+@section scripts {
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Tạo toast notification
+                showToast('Đã sao chép vào clipboard!', 'success');
+            }, function(err) {
+                console.error('Không thể sao chép: ', err);
+                showToast('Không thể sao chép!', 'error');
+            });
+        }
+
+        function showToast(message, type) {
+            // Tạo element toast
+            var toast = $('<div class="toast-custom"></div>')
+                .addClass(type === 'success' ? 'bg-success' : 'bg-danger')
+                .addClass('text-white p-3 rounded position-fixed')
+                .css({
+                    'top': '20px',
+                    'right': '20px',
+                    'z-index': '9999',
+                    'min-width': '250px'
+                })
+                .html('<i class="fas fa-' + (type === 'success' ? 'check' : 'times') + ' me-2"></i>' + message);
+
+            // Thêm vào body
+            $('body').append(toast);
+
+            // Tự động ẩn sau 3 giây
+            setTimeout(function() {
+                toast.fadeOut(function() {
+                    toast.remove();
+                });
+            }, 3000);
+        }
+
+        $(document).ready(function() {
+            // Animation hiệu ứng
+            $('.card').each(function(index) {
+                $(this).css('opacity', '0').delay(index * 200).animate({
+                    opacity: 1
+                }, 500);
+            });
+        });
+    </script>
+}

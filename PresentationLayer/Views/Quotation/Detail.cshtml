@@ -1,0 +1,318 @@
+﻿@using ServiceLayer.Dtos.Quotes
+@* Views/Quotation/Detail.cshtml *@
+@model QuotationDetailDto
+
+@{
+    ViewBag.Title = "Chi Tiết Báo Giá";
+}
+
+@section styles {
+    <style>
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .service-item {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 0;
+        }
+
+            .service-item:last-child {
+                border-bottom: none;
+            }
+
+        .action-buttons {
+            position: sticky;
+            bottom: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+}
+
+<div class="container my-5">
+    <div class="row">
+        <!-- Back Button -->
+        <div class="col-12 mb-3">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Quay lại
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div class="col-12 mb-4">
+            <h2>
+                <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>
+                Chi Tiết Báo Giá
+            </h2>
+            <p class="text-muted">Mã báo giá: #@Model.Id.ToString().Substring(0, 8).ToUpper()</p>
+        </div>
+
+        <!-- Status Alert -->
+        @if (Model.IsExpired)
+        {
+            <div class="col-12 mb-3">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Báo giá này đã hết hạn
+                </div>
+            </div>
+        }
+
+        <!-- Store Information -->
+        <div class="col-md-6 mb-4">
+            <div class="info-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-store me-2"></i>
+                    Thông Tin Kho
+                </h5>
+                <p class="mb-2">
+                    <strong>Tên kho:</strong> @Model.StoreName
+                </p>
+                <p class="mb-2">
+                    <strong>Điện thoại:</strong> @Model.StoreContactPhone
+                </p>
+                <p class="mb-2">
+                    <strong>Email:</strong> @Model.StoreContactEmail
+                </p>
+                <div class="mt-3">
+                    <span class="text-warning">
+                        @for (int i = 0; i < 5; i++)
+                        {
+                            if (i < Math.Floor(Model.StoreRatingAvg))
+                            {
+                                <i class="fas fa-star"></i>
+                            }
+                            else if (i < Model.StoreRatingAvg)
+                            {
+                                <i class="fas fa-star-half-alt"></i>
+                            }
+                            else
+                            {
+                                <i class="far fa-star"></i>
+                            }
+                        }
+                    </span>
+                    <small class="text-muted ms-2">
+                        (@Model.StoreRatingAvg.ToString("F1") - @Model.StoreRatingCount đánh giá)
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="col-md-6 mb-4">
+            <div class="info-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-user me-2"></i>
+                    Thông Tin Khách Hàng
+                </h5>
+                <p class="mb-2">
+                    <strong>Họ tên:</strong> @Model.CustomerName
+                </p>
+                <p class="mb-2">
+                    <strong>Điện thoại:</strong> @Model.CustomerPhone
+                </p>
+                <p class="mb-2">
+                    <strong>Email:</strong> @Model.CustomerEmail
+                </p>
+            </div>
+        </div>
+
+        <!-- Quotation Details -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Chi Tiết Dịch Vụ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Services.Any())
+                    {
+                        foreach (var service in Model.Services)
+                        {
+                            <div class="service-item">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-1">@service.ServiceName</h6>
+                                        <p class="text-muted mb-1 small">@service.Description</p>
+                                        @if (!string.IsNullOrEmpty(service.CategoryName))
+                                        {
+                                            <span class="badge bg-secondary">@service.CategoryName</span>
+                                        }
+                                        @if (service.Addons.Any())
+                                        {
+                                            <div class="mt-2">
+                                                <small class="text-muted">Phụ phí:</small>
+                                                @foreach (var addon in service.Addons)
+                                                {
+                                                    <span class="badge bg-info me-1">@addon</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        <small class="text-muted d-block">Đơn giá</small>
+                                        <strong>@service.BasePrice.ToString("N0") VNĐ</strong>
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        <small class="text-muted d-block">Số lượng</small>
+                                        <strong>@service.Quantity @service.Unit</strong>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <small class="text-muted d-block">Thành tiền</small>
+                                        <strong class="text-primary">@service.Subtotal.ToString("N0") VNĐ</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-center text-muted mb-0">Chưa có dịch vụ nào</p>
+                    }
+
+                    <!-- Total -->
+                    <div class="row mt-4 pt-3 border-top">
+                        <div class="col-md-8 offset-md-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0">Tổng cộng:</h4>
+                                <h3 class="text-primary mb-0">@Model.TotalAmount.ToString("N0") VNĐ</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline & Status -->
+        <div class="col-md-6 mb-4">
+            <div class="info-card">
+                <h5 class="mb-3">
+                    <i class="far fa-clock me-2"></i>
+                    Thông Tin Thời Gian
+                </h5>
+                <p class="mb-2">
+                    <strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                </p>
+                <p class="mb-2">
+                    <strong>Hiệu lực đến:</strong> @Model.ValidUntil.ToString("dd/MM/yyyy HH:mm")
+                </p>
+                <p class="mb-0">
+                    <strong>Trạng thái:</strong>
+                    <span class="badge bg-@(Model.Status.ToString().ToLower())">
+                        @Model.StatusDisplay
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Note -->
+        @if (!string.IsNullOrEmpty(Model.OrderNote))
+        {
+            <div class="col-md-6 mb-4">
+                <div class="info-card">
+                    <h5 class="mb-3">
+                        <i class="far fa-sticky-note me-2"></i>
+                        Ghi Chú
+                    </h5>
+                    <p class="mb-0">@Model.OrderNote</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Action Buttons -->
+    @if (Model.CanAccept || Model.CanReject)
+    {
+        <div class="action-buttons">
+            <div class="row">
+                <div class="col-12">
+                    <form id="actionForm">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <textarea class="form-control"
+                                      id="actionNote"
+                                      placeholder="Ghi chú (tuỳ chọn)"
+                                      rows="2"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                @if (Model.CanReject)
+                                {
+                                    <button type="button"
+                                            class="btn btn-danger w-100 mb-2"
+                                            onclick="rejectQuotation()">
+                                        <i class="fas fa-times me-2"></i>
+                                        Từ Chối
+                                    </button>
+                                }
+                                @if (Model.CanAccept)
+                                {
+                                    <button type="button"
+                                            class="btn btn-success w-100"
+                                            onclick="acceptQuotation()">
+                                        <i class="fas fa-check me-2"></i>
+                                        Chấp Nhận
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section scripts {
+    <script>
+        function acceptQuotation() {
+          if (confirm('Bạn có chắc chắn muốn chấp nhận báo giá này?\nSau khi chấp nhận, hệ thống sẽ chuyển sang thanh toán.')) {
+            performAction('@Url.Action("Accept", "Quotation")', 'Chấp nhận');
+          }
+        }
+
+        function rejectQuotation() {
+          if (confirm('Bạn có chắc chắn muốn từ chối báo giá này?')) {
+            performAction('@Url.Action("Reject", "Quotation")', 'Từ chối');
+          }
+        }
+
+        function performAction(url, actionName) {
+          var note = $('#actionNote').val();
+
+          $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+              id: '@Model.Id',
+              note: note,
+              __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function (response) {
+              if (response.success) {
+                if (response.redirectUrl && actionName === 'Chấp nhận') {
+                  window.location.href = response.redirectUrl; // 👉 sang Payment
+                } else {
+                  alert(actionName + ' báo giá thành công!');
+                  window.location.href = '@Url.Action("Index", "Quotation")';
+                }
+              } else {
+                alert('Lỗi: ' + response.message);
+              }
+            },
+            error: function () {
+              alert('Có lỗi xảy ra. Vui lòng thử lại.');
+            }
+          });
+        }
+    </script>
+    @Html.AntiForgeryToken()
+}

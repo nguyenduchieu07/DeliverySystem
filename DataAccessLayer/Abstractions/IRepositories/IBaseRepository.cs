@@ -14,7 +14,7 @@ namespace DataAccessLayer.Abstractions.IRepositories
         IQueryable<TEntity> FindAll(Expression<Func<TEntity, bool>>? predicate = null, params Expression<Func<TEntity, object>>[] includeProperties);
 
         void Add(TEntity entity);
-
+        Task AddRangeAsync(List<TEntity> entity);
         void Update(TEntity entity);
 
         void Remove(TEntity entity);

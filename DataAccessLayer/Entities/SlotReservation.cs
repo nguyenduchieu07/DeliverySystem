@@ -11,8 +11,12 @@ namespace DataAccessLayer.Entities
     public class SlotReservation : BaseEntity<Guid>
     {
         public Guid WarehouseSlotId { get; set; }
+
+        public virtual WarehouseSlot WarehouseSlot { get; set; }
         public Guid? OrderId { get; set; }
         public DateTimeOffset ExpiresAt { get; set; } // now + 24h
-        public StatusValue Status { get; set; } // Reserved/Expired/Used
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
+        public StatusValue Status { get; set; } //Active -> InActive
     }
 }

@@ -197,6 +197,13 @@
                     <input asp-for="TaxNumber" class="form-control" placeholder="MST" />
                     <span asp-validation-for="TaxNumber" class="text-danger field-validation-error"></span>
                 </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="ID" class="form-label">
+                        Căn cước công dân
+                    </label>
+                    <input asp-for="ID" class="form-control" placeholder="CCCD" />
+                    <span asp-validation-for="ID" class="text-danger field-validation-error"></span>
+                </div>
             </div>
         </fieldset>
 
@@ -382,11 +389,10 @@
             } else {
                 setVal('AddressLine', displayName || '');
             }
-
             // Administrative levels
             const city = address?.city || address?.town || address?.village ||
                 address?.municipality || address?.province || address?.state || '';
-            const district = address?.city_district || address?.district || address?.county || '';
+            const district = address.district || address.county || address.suburb || '';
             const ward = address?.ward || address?.suburb || address?.quarter ||
                 address?.neighbourhood || address?.hamlet || '';
 

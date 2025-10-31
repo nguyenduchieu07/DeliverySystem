@@ -13,10 +13,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ============ MAP FUNCTIONS ============
 function initMap() {
-    map = L.map('map').setView([21.028511, 105.804817], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    if (L) {
+        map = L.map('map').setView([21.028511, 105.804817], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
     L.Control.geocoder({
         defaultMarkGeocode: false,

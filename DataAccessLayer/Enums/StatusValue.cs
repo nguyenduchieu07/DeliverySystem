@@ -12,7 +12,7 @@ namespace DataAccessLayer.Enums
         Canceled,
         Rejected,       
         Approved,
-        Avalavaible,
+        Available,
         Reserved,
         InUse,
         Maintenance,
@@ -29,6 +29,12 @@ namespace DataAccessLayer.Enums
         NotSubmitted,
         Draft,
         Sent,
-        Success
+        Success,
+        ExpiringSoon,
+        Blocked,
+        Revised,
+        Used,
+        AwaitingPickup,
+        AwaitingPayment
     }
 }

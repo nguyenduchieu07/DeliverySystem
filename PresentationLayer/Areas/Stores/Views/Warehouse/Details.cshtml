@@ -1,123 +1,1071 @@
-﻿@model DataAccessLayer.Entities.Warehouse
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model DataAccessLayer.Entities.Warehouse
 @using DataAccessLayer.Enums
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-    ViewBag.Title = "Warehouse Details";
+    ViewBag.Title = "Chi tiết kho - " + Model.Name;
 }
-<style>
-    .badge.ok {
-        background: rgba(92,211,166,.15);
-        border-color: rgba(92,211,166,.3);
-        color: var(--brand);
-    }
 
-    .badge.warn {
-        background: rgba(255,204,102,.15);
-        border-color: rgba(255,204,102,.3);
-        color: var(--warn);
-    }
-
-    .badge.danger {
-        background: rgba(255,107,107,.15);
-        border-color: rgba(255,107,107,.3);
-        color: var(--danger);
-    }
-
-</style>
-<div class="breadcrumb">
-    <span>Store</span> <span>/</span>
-    <a asp-area="Stores" asp-controller="Warehouses" asp-action="Index" class="muted">Warehouses</a>
-    <span>/</span>
-    <span>@Model.Name</span>
-</div>
-
-<div class="page-head">
-    <div class="page-title">@Model.Name</div>
-    <div class="page-actions">
-        @if(Model.Status == StatusValue.Approved)
-        {
-            <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+@section Styles {
+    <style>
+        /* Layout & Typography */
+        .details-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        <a class="btn" asp-area="Stores" asp-controller="Warehouse" asp-action="Index">Back</a>
+
+        .breadcrumb {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        .breadcrumb span {
+            color: var(--muted);
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .page-info {
+            flex: 1;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .meta-item .icon {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        span.status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 14px;
+            border-radius: 9999px; /* full rounded chip */
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1;
+            border: 1px solid transparent; /* giúp chip có chiều sâu hơn */
+            transition: all 0.2s ease;
+        }
+        .available {
+            background: rgba(34, 197, 94, 0.15); /* xanh lá nhạt */
+            color: #22c55e;
+        }
+
+        .pending {
+            background: rgba(34, 197, 94, 0.15); /* xanh lá nhạt */
+            color: #22c55e;
+        }
+
+        .reserved {
+            background: rgba(59, 130, 246, 0.15); /* xanh dương nhạt */
+            color: #3b82f6;
+        }
+
+        .inuse {
+            background: rgba(245, 158, 11, 0.15); /* vàng nhạt */
+            color: #f59e0b;
+        }
+
+        .maintenance {
+            background: rgba(239, 68, 68, 0.15); /* đỏ nhạt */
+            color: #ef4444;
+        }
+        .blocked {
+            background: rgba(107, 114, 128, 0.15); /* xám nhạt */
+            color: #6b7280;
+        }
+
+        .pending {
+            background: rgba(107, 114, 128, 0.15); /* xám nhạt */
+            color: #6b7280;
+        }
+
+        /* Grid Layout */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        @@media (max-width: 992px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .detail-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+
+        .detail-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            background: var(--background);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Info List */
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 500;
+            text-align: right;
+        }
+
+        /* Image Gallery */
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            background: var(--background);
+            border: 1px solid var(--border);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted);
+        }
+
+        .gallery-placeholder .icon {
+            font-size: 48px;
+            opacity: 0.3;
+            margin-bottom: 8px;
+        }
+
+        /* Warehouse Map Grid */
+        .warehouse-map {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .map-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .map-legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: var(--background);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* Slot Grid */
+        .slot {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .slot:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .slot.available {
+            background: #e8fff1;        /* xanh nhạt dịu */
+            border-color: #22c55e;      /* xanh lá */
+            color: #15803d;             /* xanh lá đậm */
+        }
+
+        .slot.reserved {
+            background: #e0f2fe;        /* xanh dương nhạt */
+            border-color: #3b82f6;      /* xanh dương */
+            color: #1d4ed8;             /* xanh dương đậm */
+        }
+
+        .slot.inuse {
+            background: #fff7ed;        /* cam nhạt */
+            border-color: #fb923c;      /* cam tươi */
+            color: #c2410c;             /* cam đậm */
+        }
+
+        .slot.maintenance {
+            background: #fee2e2;        /* đỏ nhạt */
+            border-color: #ef4444;      /* đỏ */
+            color: #b91c1c;             /* đỏ đậm */
+        }
+
+        .slot.blocked {
+            background: #f3f4f6;        /* xám nhạt */
+            border-color: #9ca3af;      /* xám trung */
+            color: #4b5563;             /* xám đậm */
+        }
+
+
+        .slot.blocked {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            color: #9ca3af;
+            text-decoration: line-through;
+            cursor: not-allowed;
+        }
+
+        .slot.blocked:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .slot-indicator {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            border-radius: 4px;
+            border: 1px solid;
+        }
+
+        /* Slots Table */
+        .slots-section {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .slots-header {
+            padding: 20px 24px;
+            background: var(--background);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slots-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slots-count {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .slots-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px 10px 40px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--background);
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            padding: 24px;
+        }
+
+        .slots-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .slots-table th {
+            text-align: left;
+            padding: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .slots-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .slots-table tbody tr:hover {
+            background: var(--background);
+        }
+
+        .slot-code {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .slot-dimensions {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .slot-price {
+            font-weight: 500;
+            color: #22c55e;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            background: var(--background);
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .pagination a {
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            background: var(--panel);
+            color: var(--text);
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .pagination a:hover {
+            background: var(--background);
+        }
+
+        .pagination a.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Dimensions Display */
+        .dimensions-box {
+           
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .dimensions-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .dimensions-label {
+            font-size: 12px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--panel);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: var(--muted);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--background);
+            color: var(--text);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        /* Import/Export Styles */
+        .ie-section {
+            margin-bottom: 24px;
+        }
+
+        .ie-section h4 {
+            margin-bottom: 16px;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .ie-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ie-option {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .ie-option:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .file-upload-area {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .file-upload-area input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .file-label {
+            display: block;
+            padding: 10px 16px;
+            background: var(--background);
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-label:hover {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.02);
+        }
+        
+        
+    </style>
+}
+
+<div class="details-container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="/">🏠 Trang chủ</a>
+        <span>/</span>
+        <a asp-area="Stores" asp-controller="Warehouse" asp-action="Index">Kho hàng</a>
+        <span>/</span>
+        <span>@Model.Name</span>
     </div>
-</div>
 
-<div class="grid" style="gap:16px;">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-info">
+            <h1 class="page-title">
+                📦 @Model.Name
+                @{
+                    string GetStatusClass(StatusValue status)
+                    {
+                        return status switch
+                        {
+                            // For warehouse
+                            StatusValue.Approved => "approved",
+                            StatusValue.Pending => "pending",
 
-    <!-- ===== Thông tin chung ===== -->
-    <div class="card" style="display:grid; grid-template-columns: 1fr 2fr; gap:16px;">
-        <div>
-            @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+                            // For slot
+                            StatusValue.Available => "available",
+                            StatusValue.Reserved => "reserved",
+                            StatusValue.InUse => "inuse",
+                            StatusValue.Maintenance => "maintenance",
+
+                            _ => "rejected"
+                        };
+                    }
+                }
+                <span class="status-badge @GetStatusClass(Model.Status)">
+                    @Model.Status.ToDisplayStringForWarehouse()
+                </span>
+            </h1>
+            <div class="page-meta">
+                <div class="meta-item">
+                    <span class="icon">🏪</span>
+                    <span>@(Model.Store?.StoreName ?? "N/A")</span>
+                </div>
+                <div class="meta-item">
+                    <span class="icon">📍</span>
+                    <span>@(Model.Address?.City ?? "Chưa có địa chỉ")</span>
+                </div>
+                <div class="meta-item">
+                    <span class="icon">📅</span>
+                    <span>@Model.CreatedAt.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="meta-item">
+                    <span class="icon">📦</span>
+                    <span>@Model.Slots.Count slots</span>
+                </div>
+            </div>
+        </div>
+        <div class="page-actions">
+            @if (Model.Status == StatusValue.Approved)
             {
-                <img src="@Model.CoverImageUrl"
-                     alt="cover"
-                     style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border);" />
+                <a class="btn btn-outline" asp-area="Stores" asp-controller="Warehouse" asp-action="Edit" asp-route-id="@Model.Id">
+                    ✏️ Chỉnh sửa
+                </a>
+            }           
+            <a class="btn btn-outline" asp-area="Stores" asp-controller="Warehouse" asp-action="Index">
+                ← Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="details-grid">
+        <!-- General Info Card -->
+        <div class="detail-card">
+            <div class="card-header">
+                <div class="card-title">
+                    📋 Thông tin chung
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="info-list">
+                    <div class="info-item">
+                        <span class="info-label">Tên kho</span>
+                        <span class="info-value">@Model.Name</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Cửa hàng</span>
+                        <span class="info-value">@(Model.Store?.StoreName ?? "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Địa chỉ</span>
+                        <span class="info-value">@(Model.Address?.AddressLine ?? "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Thành phố</span>
+                        <span class="info-value">@(Model.Address?.City ?? "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Tọa độ</span>
+                        <span class="info-value">
+                            @if (Model.Address?.Latitude != null && Model.Address?.Longitude != null)
+                            {
+                                <text>@Model.Address.Latitude, @Model.Address.Longitude</text>
+                            }
+                            else
+                            {
+                                <text>—</text>
+                            }
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dimensions Card -->
+        <div class="detail-card">
+            <div class="card-header">
+                <div class="card-title">
+                    📐 Kích thước & Hình ảnh
+                </div>
+            </div>
+            <div class="card-body">
+                @{
+                    var h = (double?)Model?.HeightM ?? 0;
+                    var l = (double?)Model?.LengthM ?? 0;
+                    var w = (double?)Model?.WidthM ?? 0;
+                    var hasDims = h > 0 && l > 0 && w > 0;
+                }
+                @if (hasDims)
+                {
+                    <div class="dimensions-box">
+                        <div class="dimensions-value">
+                            @Math.Round(h * l * w, 2) m³
+                        </div>
+                        <div class="dimensions-label">
+                            @h × @l × @w mét
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="dimensions-box">
+                        <div class="dimensions-value">—</div>
+                        <div class="dimensions-label">Chưa có kích thước</div>
+                    </div>
+                }
+
+                <div class="image-gallery" style="margin-top: 20px;">
+                    <div class="gallery-item">
+                        @if (!string.IsNullOrWhiteSpace(Model.CoverImageUrl))
+                        {
+                            <img src="@Model.CoverImageUrl" alt="Cover" />
+                        }
+                        else
+                        {
+                            <div class="gallery-placeholder">
+                                <span class="icon">📷</span>
+                                <span>Ảnh bìa</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="gallery-item">
+                        @if (!string.IsNullOrWhiteSpace(Model.MapImageUrl))
+                        {
+                            <img src="@Model.MapImageUrl" alt="Map" />
+                        }
+                        else
+                        {
+                            <div class="gallery-placeholder">
+                                <span class="icon">🗺️</span>
+                                <span>Sơ đồ kho</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warehouse Map -->
+    <div class="warehouse-map">
+        <div class="map-header">
+            <h3 class="map-title">🗺️ Sơ đồ kho</h3>
+        </div>
+        <div class="map-legend">
+            <div class="legend-item">
+                <span class="slot-indicator available" style="background: #e8fff1; border-color: #22c55e;"></span>
+                <span>Trống</span>
+            </div>
+            <div class="legend-item">
+                <span class="slot-indicator occupied" style="background: #e0f2fe; border-color: #3b82f6;"></span>
+                <span>Giữ  chỗ</span>
+            </div>
+            <div class="legend-item">
+                <span class="slot-indicator occupied" style="background: #fff6e0; border-color: #f59e0b;"></span>
+                <span>Đang sử dụng</span>
+            </div>
+            <div class="legend-item">
+                <span class="slot-indicator maintenance" style="background: #ffe5e5; border-color: #ef4444;"></span>
+                <span>Bảo trì</span>
+            </div>
+            <div class="legend-item">
+                <span class="slot-indicator blocked" style="background: #f3f4f6; border-color: #d1d5db;"></span>
+                <span>Khóa</span>
+            </div>
+        </div>
+        <div id="slotGrid" style="display:grid; gap:8px;"></div>
+    </div>
+
+    <!-- Slots Table -->
+    <div class="slots-section">
+        <div class="slots-header">
+            <div class="slots-title">
+                📦 Danh sách Slots
+                <span class="slots-count">@ViewBag.TotalSlots</span>
+            </div>          
+        </div>
+
+        <div style="padding: 20px;">
+            <form method="get" asp-action="Details">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="search-box">
+                    <input type="text" name="slotSearch" value="@ViewBag.SlotSearch" 
+                           placeholder="Tìm theo mã slot..." />
+                </div>
+            </form>
+        </div>
+
+        <div class="table-container">
+            @if (Model.Slots == null || Model.Slots.Count == 0)
+            {
+                <div style="text-align: center; padding: 40px; color: var(--muted);">
+                    <div style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;">📦</div>
+                    <div>Chưa có slot nào</div>
+                </div>
             }
             else
             {
-                <img src="@($"https://api.dicebear.com/7.x/initials/svg?seed={Model.Name}&radius=50")"
-                     style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border);" />
-            }
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            <div><strong>Tên kho:</strong> @Model.Name</div>
-            <div><strong>Thuộc cửa hàng:</strong> @Model.Store?.StoreName</div>
-            <div><strong>Địa chỉ:</strong> @(Model.Address?.AddressLine ?? "—")</div>
-            <div><strong>Thành phố:</strong> @(Model.Address?.City ?? "—")</div>
-            <div><strong>Toạ độ:</strong> @($"{Model.Address?.Latitude}, {Model.Address?.Longitude}")</div>
-            <div><strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
-        </div>
-    </div>
-
-    <!-- ===== Sơ đồ kho (nếu có) ===== -->
-    @if (!string.IsNullOrEmpty(Model.MapImageUrl))
-    {
-        <div class="card">
-            <div class="title" style="font-weight:700;margin-bottom:10px;">Sơ đồ kho</div>
-            <img src="@Model.MapImageUrl" alt="map" style="width:100%;border-radius:12px;border:1px solid var(--border);" />
-        </div>
-    }
-
-    <!-- ===== Danh sách Slot ===== -->
-    <div class="section">
-        <div class="header">
-            <div class="title">Warehouse Slots</div>
-            <div class="muted">Total: @Model.Slots.Count</div>
-        </div>
-        <div class="content" style="padding:12px 14px;">
-            @if (Model.Slots.Count == 0)
-            {
-                <div class="muted">No slots available.</div>
-            }
-            else
-            {
-                <table class="table">
+                <table class="slots-table">
                     <thead>
                         <tr>
-                            <th>Code</th>
-                            <th>Size</th>
-                            <th>Status</th>
+                            <th>Mã slot</th>
+                            <th>Vị trí</th>
+                            <th>Kích thước</th>
+                            <th>Giá/giờ</th>
+                            <th>Trạng thái</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var s in Model.Slots)
                         {
-                            var badgeClass = s.Status switch
-                            {
-                                StatusValue.Avalavaible => "ok",
-                                StatusValue.Occupied => "warn",
-                                StatusValue.Maintenance => "danger",
-                                _ => ""
-                            };
+                            var statusText = s.Status.ToString();
                             <tr>
-                                <td>@s.Code</td>
-                                <td>@(string.IsNullOrEmpty(s.Size) ? "—" : s.Size)</td>
-                                <td><span class="badge @badgeClass">@s.Status</span></td>
+                                <td class="slot-code">@s.Code</td>
+                                <td>Hàng @s.Row, Cột @s.Col</td>
+                                <td class="slot-dimensions">@s.HeightM × @s.LengthM × @s.WidthM m</td>
+                                <td class="slot-price">@s.BasePricePerHour.ToString("N0") ₫</td>
+                                <td>
+                                    <span class="status-badge @GetStatusClass(s.Status)">
+                                        @s.Status.ToDisplayStringForWarehouseSlot()
+                                    </span>
+                                </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             }
         </div>
+
+        @if (ViewBag.TotalPages > 1)
+        {
+            <div class="pagination">
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <a href="@Url.Action("Details", new { 
+                        id = Model.Id, 
+                        slotSearch = ViewBag.SlotSearch, 
+                        slotPage = i, 
+                        slotPageSize = ViewBag.SlotPageSize 
+                    })" 
+                       class="@(i == ViewBag.SlotPage ? "active" : "")">
+                        @i
+                    </a>
+                }
+            </div>
+        }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+    (async function () {
+        const root = document.getElementById('slotGrid');
+        if (!root) return;
+
+        // Gọi API lấy sơ đồ kho
+        const res = await fetch('@Url.Action("Grid", "Warehouse", new { area = "Stores", warehouseId = Model.Id })');
+        if (!res.ok) {
+            root.innerHTML = '<div style="text-align:center;color:var(--muted);">Không tải được sơ đồ.</div>';
+            return;
+        }
+
+        const data = await res.json();
+
+        // Hàm lấy thuộc tính từ cả camelCase & PascalCase
+        const pick = (o, camel, pascal) => (o && (camel in o)) ? o[camel] : (o ? o[pascal] : undefined);
+
+        const cellsRaw = pick(data, 'cells', 'Cells') || [];
+        const rowsInput = pick(data, 'rows', 'Rows');
+        const colsInput = pick(data, 'cols', 'Cols');
+
+        // Map dữ liệu cell
+        const cells = cellsRaw.map(c => ({
+            row: pick(c, 'row', 'Row') ?? 0,
+            col: pick(c, 'col', 'Col') ?? 0,
+            code: pick(c, 'code', 'Code') ?? '',
+            status: pick(c, 'status', 'Status') ?? 'available',
+            pricePreview: pick(c, 'pricePreview', 'PricePreview')
+        }));
+
+        const rows = Number(rowsInput ?? (cells.length ? Math.max(...cells.map(x => Number(x.row) || 0)) : 0));
+        const cols = Number(colsInput ?? (cells.length ? Math.max(...cells.map(x => Number(x.col) || 0)) : 0));
+
+        if (!rows || !cols) {
+            root.innerHTML = '<div style="text-align:center;color:var(--muted);">Chưa có cấu hình sơ đồ.</div>';
+            return;
+        }
+
+        // Cấu hình lưới hiển thị
+        root.style.display = 'grid';
+        root.style.gridTemplateColumns = `repeat(${cols}, 44px)`;
+        root.style.gap = '8px';
+
+        // Map vị trí cell
+        const map = new Map(cells.map(c => [`${c.row}_${c.col}`, c]));
+
+        // Vẽ từng ô
+        for (let r = 1; r <= rows; r++) {
+            for (let c = 1; c <= cols; c++) {
+                const key = `${r}_${c}`;
+                const cell = map.get(key);
+
+                const el = document.createElement('div');
+                const state = cell?.status ?? 'available'; // Lấy status từ backend
+
+                el.className = 'slot ' + state;
+                el.textContent = cell?.code || '';
+
+                const priceText = (cell?.pricePreview != null && cell.pricePreview !== '')
+                    ? `\n${Number(cell.pricePreview).toLocaleString('vi-VN')} đ/giờ`
+                    : '';
+                el.title = cell?.code ? (cell.code + priceText) : `R${r}C${c}`;
+
+                root.appendChild(el);
+            }
+        }
+    })();
+</script>
+
+}
