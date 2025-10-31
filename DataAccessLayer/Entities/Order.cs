@@ -22,6 +22,9 @@ namespace DataAccessLayer.Entities
 
         // ✅ THÊM: Lưu ProductCategories dạng JSON
         public string? ProductCategoryIds { get; set; } // JSON: [1,2,3]
+        
+        // Ảnh tổng của toàn bộ sản phẩm (để AI phân tích)
+        public string? ProductImageUrl { get; set; }
 
         // Navigation properties
         public virtual Customer Customer { get; set; } = null!;

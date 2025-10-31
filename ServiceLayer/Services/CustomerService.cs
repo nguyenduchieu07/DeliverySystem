@@ -137,9 +137,10 @@ namespace ServiceLayer.Services
             }
             else
             {
+                // Keep leading 0 and compare exactly after trimming spaces/dashes
                 var cleanPhone = phoneOrEmail.Replace(" ", "").Replace("-", "");
                 user = await _userManager.Users
-                    .FirstOrDefaultAsync(u => u.PhoneNumber == cleanPhone);
+                    .FirstOrDefaultAsync(u => u.PhoneNumber == cleanPhone || u.UserName == cleanPhone);
             }
 
             if (user == null)

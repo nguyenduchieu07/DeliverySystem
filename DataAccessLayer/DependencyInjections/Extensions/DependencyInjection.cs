@@ -41,6 +41,8 @@ namespace DataAccessLayer.DependencyInjections.Extensions
         {
             var cloudinaryConfig = configuration.GetSection("Cloudinary");
             services.Configure<CloudinaryConfig>(cloudinaryConfig);
+            var geminiConfig = configuration.GetSection("Gemini");
+            services.Configure<GeminiConfig>(geminiConfig);
             // Đăng ký generic repository cho tất cả các entity cần thiết
             services.AddScoped(typeof(IBaseRepository<,>), typeof(BaseRepository<,>));
             // Đăng ký repository cụ thể

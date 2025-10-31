@@ -1,709 +1,11 @@
-﻿@model ServiceLayer.Dtos.Quotes.QuotePageVm
+﻿@model BookingRequestVM
 @{
     ViewData["Title"] = "Báo giá Lưu kho";
 }
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    .quote-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .header {
-        text-align: center;
-        color: white;
-        margin-bottom: 30px;
-    }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-    .main-content {
-        max-width: 1600px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 30px;
-        align-items: start;
-    }
-
-    .form-card {
-        background: white;
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-
-        .form-card h2 {
-            color: #667eea;
-            margin-bottom: 30px;
-            font-size: 1.8rem;
-        }
-
-    .form-group {
-        margin-bottom: 25px;
-    }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-    .required {
-        color: #e74c3c;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 12px 15px;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        font-size: 1rem;
-        transition: all 0.3s;
-    }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-    .map-section {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 25px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-
-        .map-section h3 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.3rem;
-        }
-
-    .location-search {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-
-    .location-input {
-        flex: 1;
-        padding: 12px 15px;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        font-size: 1rem;
-    }
-
-    .location-btn {
-        padding: 12px 20px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.3s;
-    }
-
-        .location-btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-
-        .location-btn.secondary {
-            background: #27ae60;
-        }
-
-    #map {
-        height: 500px;
-        border-radius: 15px;
-        border: 3px solid #e0e0e0;
-        margin-bottom: 20px;
-    }
-
-    .warehouse-list {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    .warehouse-item {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        cursor: pointer;
-        transition: all 0.3s;
-        border: 2px solid transparent;
-    }
-
-        .warehouse-item:hover {
-            background: #e8f0fe;
-            border-color: #667eea;
-            transform: translateX(5px);
-        }
-
-        .warehouse-item.selected {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-    .warehouse-name {
-        font-weight: 700;
-        font-size: 1.1rem;
-        margin-bottom: 5px;
-    }
-
-    .warehouse-address {
-        font-size: 0.9rem;
-        opacity: 0.8;
-        margin-bottom: 8px;
-    }
-
-    .warehouse-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 10px;
-    }
-
-    .warehouse-distance {
-        background: #ffc107;
-        color: #333;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .warehouse-item.selected .warehouse-distance {
-        background: white;
-        color: #667eea;
-    }
-
-    .warehouse-section {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 25px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        display: none;
-    }
-
-        .warehouse-section.show {
-            display: block;
-        }
-
-    .warehouse-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-
-    .warehouse-grid {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 15px;
-        overflow-x: auto;
-        border: 3px solid #e0e0e0;
-    }
-
-    .grid-container {
-        display: inline-grid;
-        gap: 8px;
-    }
-
-    .warehouse-slot {
-        aspect-ratio: 1;
-        min-width: 60px;
-        min-height: 60px;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s;
-        border: 2px solid transparent;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-        .warehouse-slot:hover:not(.blocked):not(.occupied) {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            z-index: 10;
-        }
-
-        .warehouse-slot.available {
-            background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%);
-            color: white;
-        }
-
-        .warehouse-slot.reserved {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        .warehouse-slot.occupied {
-            background: #95a5a6;
-            color: white;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .warehouse-slot.blocked {
-            background: repeating-linear-gradient(45deg, #bdc3c7, #bdc3c7 10px, #95a5a6 10px, #95a5a6 20px);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .warehouse-slot.selected {
-            border: 3px solid #ffd700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-            transform: scale(1.1);
-            animation: pulse 1s infinite;
-        }
-
-    @@keyframes pulse {
-        0%, 100%
-
-    {
-        transform: scale(1.1);
-    }
-
-    50% {
-        transform: scale(1.15);
-    }
-
-    }
-
-    .date-range {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-
-    .checkbox-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .checkbox-item {
-        display: flex;
-        align-items: center;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-        .checkbox-item:hover {
-            background: #e8f0fe;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-
-    .addon-price {
-        color: #667eea;
-        font-weight: 600;
-        margin-left: auto;
-    }
-
-    .contact-group {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-
-    .submit-btn {
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        margin-top: 10px;
-    }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        .submit-btn.secondary {
-            background: #27ae60;
-        }
-
-    .estimation-card {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        position: sticky;
-        top: 20px;
-    }
-
-        .estimation-card h3 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-    .estimation-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 0;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-        .estimation-row.total {
-            border-bottom: none;
-            border-top: 2px solid #667eea;
-            margin-top: 10px;
-            padding-top: 15px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #667eea;
-        }
-
-    .info-box {
-        background: #e8f0fe;
-        padding: 15px;
-        border-radius: 10px;
-        margin-top: 20px;
-        border-left: 4px solid #667eea;
-    }
-
-    .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.7);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-    }
-
-        .modal.active {
-            display: flex;
-        }
-
-    .modal-content {
-        background: white;
-        padding: 40px;
-        border-radius: 20px;
-        max-width: 600px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-        position: relative;
-    }
-
-    .modal-close {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: none;
-        border: none;
-        font-size: 2rem;
-        cursor: pointer;
-        color: #999;
-    }
-
-    .breakdown-page {
-        display: none;
-    }
-
-        .breakdown-page.active {
-            display: block;
-        }
-
-    .breakdown-card {
-        background: white;
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        max-width: 1000px;
-        margin: 0 auto;
-    }
-
-    .breakdown-header {
-        text-align: center;
-        margin-bottom: 40px;
-    }
-
-    .breakdown-section {
-        margin-bottom: 30px;
-    }
-
-    .breakdown-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 0;
-        color: #666;
-    }
-
-    .breakdown-total {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 25px;
-        border-radius: 15px;
-        margin: 30px 0;
-    }
-
-    .action-buttons {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 15px;
-        margin-top: 30px;
-    }
-
-    .action-btn {
-        padding: 15px 20px;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-        .action-btn.primary {
-            background: #27ae60;
-            color: white;
-        }
-
-        .action-btn.secondary {
-            background: #f39c12;
-            color: white;
-        }
-
-        .action-btn.outline {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-        
-        
-        
-    .modal-content {
-        background: #ffffff;
-        max-width: 500px;
-        width: 100%;
-        padding: 40px 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    h3 {
-        font-size: 1.75rem;
-        color: #1e3a5f;
-        text-align: center;
-        margin-bottom: 30px;
-        font-weight: 600;
-    }
-
-    /* Star Rating Section */
-    #feedbackRating {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        margin-bottom: 30px;
-    }
-
-    .star {
-        font-size: 2.5rem;
-        cursor: pointer;
-        color: #fbbf24;
-        transition: all 0.2s ease;
-        user-select: none;
-    }
-
-        .star:hover,
-        .star.active {
-            color: #fbbf24;
-            transform: scale(1.1);
-        }
-
-    /* Feedback Label */
-    .feedback-label {
-        color: #1f2937;
-        font-size: 0.95rem;
-        font-weight: 500;
-        margin-bottom: 12px;
-        display: block;
-    }
-
-    /* Textarea */
-    .form-control {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        font-family: inherit;
-        resize: vertical;
-        transition: border-color 0.2s ease;
-        margin-bottom: 25px;
-    }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #1e3a5f;
-        }
-
-        .form-control::placeholder {
-            color: #9ca3af;
-        }
-
-    /* Order Information Section */
-    .order-section {
-        background: #f9fafb;
-        padding: 20px;
-        border-radius: 6px;
-        margin-bottom: 25px;
-    }
-
-    .order-title {
-        font-size: 1.1rem;
-        color: #1f2937;
-        font-weight: 600;
-        margin-bottom: 15px;
-        text-align: center;
-    }
-
-    .order-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        font-size: 0.95rem;
-    }
-
-    .order-label {
-        color: #1f2937;
-        font-weight: 500;
-    }
-
-    .order-value {
-        color: #1f2937;
-    }
-
-    /* Buttons */
-    .button-group {
-        display: flex;
-        gap: 15px;
-    }
-
-    .submit-btn {
-        flex: 1;
-        padding: 14px;
-        border: none;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-        .submit-btn.cancel {
-            background: #e5e7eb;
-            color: #1f2937;
-        }
-
-            .submit-btn.cancel:hover {
-                background: #d1d5db;
-            }
-
-        .submit-btn.submit {
-            background: #2d5077;
-            color: #ffffff;
-        }
-
-            .submit-btn.submit:hover {
-                background: #1e3a5f;
-                transform: translateY(-1px);
-            }
-
-    /* Thank you message */
-    .thank-you {
-        text-align: center;
-        color: #1f2937;
-        font-size: 0.95rem;
-        margin-top: 20px;
-        font-weight: 500;
-    }
-
-    /* Responsive */
-            @@media (max-width: 600px) {
-        .modal-content
-
-    {
-        padding: 30px 20px;
-    }
-
-    h3 {
-        font-size: 1.5rem;
-    }
-
-    .star {
-        font-size: 2rem;
-    }
-
-    }
-
-    @@media (max-width: 1024px) {
-        .main-content
-
-    {
-        grid-template-columns: 1fr;
-    }
-
-    .estimation-card {
-        position: static;
-    }
-
-    }
-</style>
+<link rel="stylesheet" href="~/css/Booking.css" asp-append-version="true" />
 
 <div class="quote-container">
     <div class="header">
@@ -715,9 +17,13 @@
         <div class="main-content">
             <div>
                 <div class="map-section">
-                    <h3>📍 Tìm kho gần bạn</h3>
+                    <h3>📍 Địa chỉ nhận hàng & Tìm kho gần bạn</h3>
+                    <div style="background: #e8f0fe; padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 0.9rem; color: #333;">
+                        <strong>💡 Lưu ý:</strong> Đây là địa chỉ nhận hàng của bạn. Nhập địa chỉ hoặc chọn vị trí hiện tại để tìm các kho gần nhất.
+                    </div>
                     <div class="location-search">
-                        <input type="text" id="locationInput" class="location-input" placeholder="Nhập địa chỉ của bạn...">
+                        <input type="text" id="warehouseAreaInput" class="location-input" placeholder="Nhập địa chỉ nhận hàng (ví dụ: Dương Quảng Hàm, Hà Nội)...">
+                        <div id="warehouseAreaResults" class="autocomplete-list"></div>
                         <button class="location-btn" onclick="searchLocation()">🔍 Tìm kiếm</button>
                         <button class="location-btn secondary" onclick="getCurrentLocation()">📍 Vị trí hiện tại</button>
                     </div>
@@ -728,7 +34,8 @@
 
                 <div class="form-card">
                     <h2>📋 Thông tin lưu kho</h2>
-                    <form id="quoteForm">
+                    <form id="quoteForm" method="post" action="/Quote/CreateWarehouseOrder" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
                         <div class="form-group">
                             <label>Kho đã chọn <span class="required">*</span></label>
                             <input type="text" class="form-control" id="warehouseNameDisplay" placeholder="Chọn kho trên bản đồ" readonly>
@@ -740,38 +47,12 @@
                             <label>Thời gian lưu kho <span class="required">*</span></label>
                             <div class="date-range">
                                 <div>
-                                    <input type="date" class="form-control" id="startDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" required>
+                                    <input type="date" class="form-control" id="storageStartDate" value="@Model.StorageStartDate.ToString("yyyy-MM-dd")" required>
                                     <small>Ngày gửi vào</small>
                                 </div>
                                 <div>
-                                    <input type="date" class="form-control" id="endDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" required>
+                                    <input type="date" class="form-control" id="storageEndDate" value="@Model.StorageEndDate.ToString("yyyy-MM-dd")" required>
                                     <small>Ngày lấy ra</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Dịch vụ bổ sung</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="inbound" value="50000" checked>
-                                    <label for="inbound">Phí nhập kho (Inbound handling)</label>
-                                    <span class="addon-price">+50,000đ</span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="outbound" value="50000" checked>
-                                    <label for="outbound">Phí xuất kho (Outbound handling)</label>
-                                    <span class="addon-price">+50,000đ</span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="insurance" value="30000">
-                                    <label for="insurance">Bảo hiểm hàng hóa</label>
-                                    <span class="addon-price">+30,000đ</span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="coldStorage" value="15000">
-                                    <label for="coldStorage">Bảo quản lạnh</label>
-                                    <span class="addon-price">+15,000đ/m³/ngày</span>
                                 </div>
                             </div>
                         </div>
@@ -779,13 +60,114 @@
                         <div class="form-group">
                             <label>Thông tin liên hệ <span class="required">*</span></label>
                             <div class="contact-group">
-                                <input type="text" class="form-control" id="customerName" placeholder="Họ và tên" required>
-                                <input type="tel" class="form-control" id="customerPhone" placeholder="Số điện thoại" required>
+                                <input type="text" class="form-control" id="customerName" placeholder="Họ và tên" value="@Model.CustomerFullName" required>
+                                <input type="tel" class="form-control" id="customerPhone" placeholder="Số điện thoại" value="@Model.CustomerPhone" required>
+                            </div>
+                            <input type="email" class="form-control" id="customerEmail" placeholder="Email" value="@Model.CustomerEmail" style="margin-top: 10px;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ảnh tổng của toàn bộ sản phẩm (tùy chọn - để AI phân tích)</label>
+                            <input type="file" id="productImageInput" accept="image/*" onchange="previewTotalImage(this)" class="form-control">
+                            <div class="image-preview-container">
+                                <img id="productImagePreview" class="image-preview" style="display: none;" />
                             </div>
                         </div>
 
+                        <div class="form-group">
+                            <label>Danh sách đồ dùng cần lưu kho</label>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; font-size: 0.9rem; color: #666;">
+                                <strong>💡 Gợi ý:</strong> Nhập thông tin chi tiết để được báo giá chính xác. Ví dụ: "Bàn học sinh (gỗ mặt chữ nhật, chân kim loại)"
+                            </div>
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0;">Tên đồ</th>
+                                            <th style="padding: 10px; text-align: left;">Danh mục</th>
+                                            <th style="padding: 10px; text-align: center; min-width: 100px;">Số lượng</th>
+                                            <th style="padding: 10px; text-align: center; min-width: 100px;">Trọng lượng (Kg)</th>
+                                            <th style="padding: 10px; text-align: center; min-width: 50px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="itemsTableBody">
+                                        @if (Model.Items != null && Model.Items.Count > 0)
+                                        {
+                                            @for (int i = 0; i < Model.Items.Count; i++)
+                                            {
+                                                <tr style="border-bottom: 1px solid #e0e0e0;">
+                                                    <td style="padding: 10px;">
+                                                        <input type="text" class="form-control" name="Items[@i].Name" value="@Model.Items[i].Name" placeholder="Ví dụ: Bàn học sinh">
+                                                    </td>
+                                                    <td style="padding: 10px;">
+                                                        <input type="text" class="form-control" name="Items[@i].Category" value="@Model.Items[i].Category" placeholder="Ví dụ: Nội thất">
+                                                    </td>
+                                                    <td style="padding: 10px;">
+                                                        <input type="number" class="form-control" name="Items[@i].Quantity" value="@Model.Items[i].Quantity" min="1" placeholder="1" style="text-align: center;">
+                                                    </td>
+                                                    <td style="padding: 10px;">
+                                                        <input type="number" class="form-control" name="Items[@i].EstimatedWeightKg" value="@Model.Items[i].EstimatedWeightKg" min="0" step="0.1" placeholder="0" style="text-align: center;">
+                                                    </td>
+                                                    <td style="padding: 10px; text-align: center;">
+                                                        <button type="button" class="location-btn" onclick="removeItemRow(this)" style="padding: 6px 10px; background: #e74c3c;">✖</button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="5" style="padding: 15px; text-align: center; color: #999; font-style: italic;">
+                                                    Chưa có món nào. Nhấn "+ Thêm món" để thêm đồ dùng.
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button type="button" class="location-btn secondary" onclick="addItemRow()">+ Thêm món</button>
+                                <button type="button" class="location-btn" onclick="loadSampleData()" style="background: #95a5a6;">📋 Load dữ liệu mẫu</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Yêu cầu đặc biệt</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="SpecialRequirements" value="🧊 Kho mát">
+                                    <label>🧊 Kho mát</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="SpecialRequirements" value="💧 Chống ẩm">
+                                    <label>💧 Chống ẩm</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="SpecialRequirements" value="🔒 An ninh cao">
+                                    <label>🔒 An ninh cao</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="SpecialRequirements" value="🛡️ Bảo hiểm hàng hóa">
+                                    <label>🛡️ Bảo hiểm hàng hóa</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="SpecialRequirements" value="🏢 Kho có thang máy">
+                                    <label>🏢 Kho có thang máy</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="SpecialRequirements" value="📹 Giám sát 24/7">
+                                    <label>📹 Giám sát 24/7</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ghi chú</label>
+                            <textarea class="form-control" id="orderNote" rows="3" placeholder="Ví dụ: đồ dễ vỡ, cần ưu tiên...">@Model.Note</textarea>
+                        </div>
+
                         <button type="button" class="submit-btn secondary" onclick="showWarehouseSlots()">🗺️ Xem sơ đồ kho & chọn vị trí</button>
-                        <button type="submit" class="submit-btn">📊 Nhận báo giá chi tiết</button>
+                        <button type="button" id="bookBtn" class="submit-btn" onclick="submitWarehouseOrder()">📊 Gửi yêu cầu</button>
                     </form>
                 </div>
 
@@ -794,27 +176,34 @@
                         <h3>🗺️ Sơ đồ kho và chọn vị trí</h3>
                         <button class="location-btn" onclick="toggleSlotSection()">✕ Đóng</button>
                     </div>
+                    <div id="selectedWarehouseInfo" style="padding: 15px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px; display: none;">
+                        <strong>Kho đã chọn: </strong><span id="selectedWarehouseName">-</span>
+                    </div>
                     <div class="warehouse-grid">
                         <div class="grid-container" id="warehouseGrid"></div>
                     </div>
-                    <div id="selectedSlotsSummary" style="margin-top: 20px;"></div>
+                    <div id="selectedSlotsSummary" style="margin-top: 20px; padding: 15px; background: #e8f0fe; border-radius: 10px; display: none;">
+                        <strong>Đã chọn slot:</strong> <span id="selectedSlotsList">Chưa chọn slot nào</span>
+                    </div>
                 </div>
             </div>
 
             <div class="estimation-card">
                 <h3>💰 Tạm tính</h3>
-                <div class="estimation-row"><span>Kho:</span><span id="estWarehouse">Chưa chọn</span></div>
-                <div class="estimation-row"><span>Khoảng cách:</span><span id="estDistance">--</span></div>
-                <div class="estimation-row"><span>Số slot:</span><span id="estSlotCount">0</span></div>
-                <div class="estimation-row"><span>Tổng dung tích:</span><span id="estVolume">0 m³</span></div>
-                <div class="estimation-row"><span>Thời gian:</span><span id="estDays">7 ngày</span></div>
-                <div class="estimation-row"><span>Phí slot:</span><span id="estSlotFee">0 đ</span></div>
-                <div class="estimation-row"><span>Dịch vụ thêm:</span><span id="estAddons">100,000 đ</span></div>
-                <div class="estimation-row"><span>Tạm tính (chưa VAT):</span><span id="estSubtotal">100,000 đ</span></div>
-                <div class="estimation-row"><span>VAT (10%):</span><span id="estVAT">10,000 đ</span></div>
-                <div class="estimation-row total"><span>TỔNG CỘNG:</span><span id="estTotal">110,000 đ</span></div>
+                <div class="estimation-row"><span>Thời gian lưu trữ:</span><span id="estDays">0 ngày</span></div>
+                <div class="estimation-row" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;">
+                    <strong style="color: #667eea;">📋 Dịch vụ đã chọn:</strong>
+                </div>
+                <div id="estAddonDetails" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;">
+                    <div style="color: #999; font-style: italic; text-align: center; padding: 10px;">Chưa chọn dịch vụ nào</div>
+                </div>
+                <div class="estimation-row" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;">
+                    <span>Tổng dịch vụ (chưa VAT):</span><span id="estSubtotal">0 đ</span>
+                </div>
+                <div class="estimation-row"><span>VAT (10%):</span><span id="estVAT">0 đ</span></div>
+                <div class="estimation-row total"><span>TỔNG DỊCH VỤ:</span><span id="estTotal">0 đ</span></div>
                 <div class="info-box">
-                    <p>⏰ <strong>Miễn phí @Model.FreeDays ngày đầu</strong></p>
+                    <p>⏰ <strong>Miễn phí 2 ngày đầu</strong></p>
                     <p>📦 Báo giá có hiệu lực trong 48 giờ</p>
                     <p>✅ Giá đã bao gồm VAT</p>
                 </div>
@@ -846,59 +235,80 @@
     </div>
 </div>
 
-@* <div id="writeFeedbackModal" class="modal">
-    <div class="modal-content" style="max-width: 500px; padding: 20px;">
-        <h3>💬 Viết đánh giá</h3>
-        <p style="color: #666; margin-bottom: 10px;">Chọn đánh giá:</p>
-        <div id="feedbackRating" style="display: flex; gap: 5px; margin-bottom: 15px;">
-            <!-- Stars will be clickable -->
-            <span class="star" data-value="1" style="font-size: 1.5rem; cursor: pointer;">☆</span>
-            <span class="star" data-value="2" style="font-size: 1.5rem; cursor: pointer;">☆</span>
-            <span class="star" data-value="3" style="font-size: 1.5rem; cursor: pointer;">☆</span>
-            <span class="star" data-value="4" style="font-size: 1.5rem; cursor: pointer;">☆</span>
-            <span class="star" data-value="5" style="font-size: 1.5rem; cursor: pointer;">☆</span>
-        </div>
-
-        <p style="color: #666; margin-bottom: 10px;">Nhập nhận xét:</p>
-        <textarea id="writeFeedbackComment" class="form-control" rows="5" placeholder="Ví dụ: Dịch vụ tốt, nhân viên nhiệt tình"></textarea>
-
-        <div style="display: flex; gap: 15px; margin-top: 20px;">
-            <button class="submit-btn" style="flex: 1; background: #ccc;" onclick="closeFeedbackModal()">Hủy</button>
-            <button class="submit-btn" style="flex: 1; background: #667eea; color: #fff;" onclick="submitFeedback()">Gửi đánh giá</button>
-        </div>
-    </div>
-</div> *@
 <div id="writeFeedbackModal" class="modal">
     <div class="modal-content">
         <h3>Đánh giá dịch vụ</h3>
-
-        <!-- Star Rating -->
-        <div id="feedbackRating">
-            <span class="star" data-value="1">☆</span>
-            <span class="star" data-value="2">☆</span>
-            <span class="star" data-value="3">☆</span>
-            <span class="star" data-value="4">☆</span>
-            <span class="star" data-value="5">☆</span>
+        <div id="feedbackRating" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 30px;">
+            <span class="star" data-value="1" style="font-size: 2.5rem; cursor: pointer; color: #fbbf24;">☆</span>
+            <span class="star" data-value="2" style="font-size: 2.5rem; cursor: pointer; color: #fbbf24;">☆</span>
+            <span class="star" data-value="3" style="font-size: 2.5rem; cursor: pointer; color: #fbbf24;">☆</span>
+            <span class="star" data-value="4" style="font-size: 2.5rem; cursor: pointer; color: #fbbf24;">☆</span>
+            <span class="star" data-value="5" style="font-size: 2.5rem; cursor: pointer; color: #fbbf24;">☆</span>
         </div>
-
-        <!-- Feedback Input -->
         <label class="feedback-label">Điền ý kiến của bạn:</label>
         <textarea id="writeFeedbackComment" class="form-control" rows="5" placeholder="Ví dụ: Dịch vụ tốt, nhân viên nhiệt tình."></textarea>
-        <!-- Action Buttons -->
-        <div class="button-group">
-            <button class="submit-btn cancel" onclick="closeFeedbackModal()">Hủy</button>
-            <button class="submit-btn submit" onclick="submitFeedback()">Gửi đánh giá</button>
+        <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <button class="submit-btn" style="flex: 1; background: #ccc;" onclick="closeFeedbackModal()">Hủy</button>
+            <button class="submit-btn" style="flex: 1;" onclick="submitFeedback()">Gửi đánh giá</button>
         </div>
-
-        <!-- Thank you message -->
-        <div class="thank-you">Cám ơn đã sử dụng dịch vụ!</div>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-@section Scripts {
-    <script src="~/js/quote.js" defer></script>
-}
+<script>
+    // Đảm bảo Leaflet đã load xong trước khi chạy booking.js
+    if (typeof L !== 'undefined') {
+        console.log('✅ Leaflet loaded');
+    } else {
+        console.warn('⚠️ Leaflet not loaded yet');
+    }
+</script>
+<script src="/js/booking.js" asp-append-version="true"></script>
+<script>
+    // Test functions để debug - có thể gọi từ console
+    window.testLoadWarehouses = function(lat, lng) {
+        if (window.bookingDebug && window.bookingDebug.loadNearbyWarehouses) {
+            window.bookingDebug.loadNearbyWarehouses(lat || 21.028511, lng || 105.804817);
+        } else {
+            console.error('loadNearbyWarehouses function not found. Check bookingDebug object.');
+        }
+    };
+    
+    // Test function để kiểm tra map
+    window.testMap = function() {
+        console.log('=== MAP DEBUG INFO ===');
+        console.log('Map element exists:', !!document.getElementById('map'));
+        console.log('Leaflet loaded:', typeof L !== 'undefined');
+        if (window.bookingDebug) {
+            console.log('Map object:', window.bookingDebug.map());
+            const map = window.bookingDebug.map();
+            if (map) {
+                console.log('Map center:', map.getCenter());
+                console.log('Map zoom:', map.getZoom());
+                console.log('Map bounds:', map.getBounds());
+            } else {
+                console.warn('Map is not initialized yet');
+            }
+            console.log('Nearby warehouses:', window.bookingDebug.nearbyWarehouses());
+        } else {
+            console.error('bookingDebug object not found');
+        }
+    };
+    
+    // Test API endpoint
+    window.testWarehouseAPI = async function(lat, lng) {
+        const url = `/Quote/NearbyWarehouses?lat=${lat || 21.028511}&lng=${lng || 105.804817}&take=10`;
+        console.log('Testing API:', url);
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log('API Response:', data);
+            console.log('Warehouses count:', data.length);
+            return data;
+        } catch (error) {
+            console.error('API Error:', error);
+        }
+    };
+</script>

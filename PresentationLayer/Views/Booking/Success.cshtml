@@ -1,0 +1,220 @@
+@model DataAccessLayer.Entities.Order
+@{
+    ViewData["Title"] = "Đơn hàng đã được tạo thành công";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Success Header -->
+            <div class="text-center mb-5">
+                <div class="mb-4" style="font-size: 5rem; color: #4caf50;">
+                    ✅
+                </div>
+                <h1 class="mb-3" style="color: #4caf50;">Đơn hàng đã được tạo thành công!</h1>
+                <p class="lead text-muted">
+                    Cảm ơn bạn đã sử dụng dịch vụ lưu kho của chúng tôi.
+                </p>
+            </div>
+
+            <!-- Order Information Card -->
+            <div class="card shadow-sm mb-4" style="border: none; border-radius: 16px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px 16px 0 0; padding: 20px;">
+                    <h4 class="mb-0">
+                        📦 Thông tin đơn hàng
+                    </h4>
+                </div>
+                <div class="card-body" style="padding: 30px;">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Mã đơn hàng</h6>
+                                <p class="mb-0">
+                                    <strong style="font-size: 1.2rem; color: #667eea;">ORD@(Model.CreatedAt.ToString("yyyyMMdd"))@(Model.Id.ToString().Substring(0, 8).ToUpper())</strong>
+                                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('@Model.Id')" title="Sao chép">
+                                        📋
+                                    </button>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Trạng thái</h6>
+                                <span class="badge bg-warning" style="font-size: 1rem; padding: 8px 16px;">
+                                    @(Model.Status == DataAccessLayer.Enums.StatusValue.Pending ? "⏳ Đang chờ xác nhận" :
+                                      Model.Status == DataAccessLayer.Enums.StatusValue.Approved ? "✅ Đã xác nhận" :
+                                      Model.Status == DataAccessLayer.Enums.StatusValue.Completed ? "✅ Hoàn thành" :
+                                      Model.Status == DataAccessLayer.Enums.StatusValue.Canceled ? "❌ Đã hủy" :
+                                      Model.Status.ToString())
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Customer Info -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3">👤 Thông tin khách hàng</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <strong>Họ tên:</strong> @(Model.Customer?.FullName ?? "N/A")
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <strong>Email:</strong> @(Model.Customer?.Email ?? "N/A")
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <strong>Số điện thoại:</strong> @(Model.Customer?.PhoneNumber ?? "N/A")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Address Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <h5 class="mb-3">📍 Địa chỉ nhận hàng</h5>
+                            <p style="line-height: 1.8;">
+                                @(Model.PickupAddress?.AddressLine ?? "N/A")<br>
+                                @if (Model.PickupAddress != null)
+                                {
+                                    <small class="text-muted">
+                                        @(Model.PickupAddress.Ward), @(Model.PickupAddress.District), @(Model.PickupAddress.City)
+                                    </small>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h5 class="mb-3">🏪 Địa chỉ kho lưu trữ</h5>
+                            <p style="line-height: 1.8;">
+                                @(Model.DropoffAddress?.AddressLine ?? "N/A")<br>
+                                @if (Model.DropoffAddress != null)
+                                {
+                                    <small class="text-muted">
+                                        @(Model.DropoffAddress.Ward), @(Model.DropoffAddress.District), @(Model.DropoffAddress.City)
+                                    </small>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Date Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <h5 class="mb-3">📅 Thời gian lưu trữ</h5>
+                            <div class="mb-2">
+                                <strong>Ngày nhập kho:</strong> @(Model.DeliveryDate?.ToString("dd/MM/yyyy") ?? "N/A")
+                            </div>
+                            <div>
+                                <strong>Ngày xuất kho:</strong> @(Model.PickupDate?.ToString("dd/MM/yyyy") ?? "N/A")
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h5 class="mb-3">💰 Tổng giá</h5>
+                            <p style="font-size: 1.5rem; color: #667eea; font-weight: 700;">
+                                @(Model.TotalAmount.ToString("N0")) đ
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Order Items -->
+                    @if (Model.OrderItems != null && Model.OrderItems.Any())
+                    {
+                        <div class="mb-4">
+                            <h5 class="mb-3">📦 Danh sách hàng hóa</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead style="background: #f8f9fa;">
+                                        <tr>
+                                            <th>Tên hàng</th>
+                                            <th>Danh mục</th>
+                                            <th style="text-align: center;">Số lượng</th>
+                                            <th style="text-align: center;">Trọng lượng (kg)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.OrderItems)
+                                        {
+                                            <tr>
+                                                <td>@item.ItemName</td>
+                                                <td>@(item.Description ?? "N/A")</td>
+                                                <td style="text-align: center;">@item.Quantity</td>
+                                                <td style="text-align: center;">@(item.WeightKg?.ToString("N1") ?? "N/A")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Note -->
+                    @if (!string.IsNullOrWhiteSpace(Model.Note))
+                    {
+                        <div class="alert alert-info">
+                            <strong>📝 Ghi chú:</strong>
+                            <div style="white-space: pre-line; margin-top: 8px;">@Model.Note</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mb-4">
+                <a href="@Url.Action("Detail", "Tracking", new { id = Model.Id })" class="btn btn-primary btn-lg me-3" style="padding: 12px 30px;">
+                    🔍 Theo dõi đơn hàng
+                </a>
+                <a href="@Url.Action("Index", "Quote")" class="btn btn-outline-primary btn-lg me-3" style="padding: 12px 30px;">
+                    📝 Đặt thêm đơn
+                </a>
+                <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary btn-lg" style="padding: 12px 30px;">
+                    🏠 Về trang chủ
+                </a>
+            </div>
+
+            <!-- Support Information -->
+            <div class="text-center mt-5">
+                <div class="alert alert-light" style="border: 1px solid #ddd;">
+                    <p class="mb-2"><strong>📞 Cần hỗ trợ?</strong></p>
+                    <p class="mb-0 text-muted">
+                        Hotline: <strong>1900 1234</strong> | Email: <strong>support@vcn.vn</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Đã sao chép mã đơn hàng: ' + text);
+        }, function(err) {
+            console.error('Failed to copy: ', err);
+        });
+    }
+</script>
+
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    .btn {
+        transition: all 0.3s;
+    }
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+</style>
+

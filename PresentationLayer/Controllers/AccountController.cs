@@ -115,8 +115,6 @@ namespace PresentationLayer.Controllers
             if (!ModelState.IsValid)
                 return View(model);
             var phoneOrEmail = model.PhoneOrEmail.Trim();
-            if (!phoneOrEmail.Contains("@") && !phoneOrEmail.StartsWith("+"))
-                phoneOrEmail = model.CountryCode + phoneOrEmail;
             var (success, message) = await _customerService.LoginAsync(
                 phoneOrEmail: phoneOrEmail,
                 password: model.Password,

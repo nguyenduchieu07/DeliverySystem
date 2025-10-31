@@ -28,6 +28,7 @@ function initMap() {
         setWarehouseLocation(latlng.lat, latlng.lng);
     }).addTo(map);
 }
+}
 
 // ============ DATE FUNCTIONS ============
 function initDateInputs() {
@@ -334,7 +335,7 @@ async function submitWarehouseOrder() {
     bookBtn.disabled = true;
 
     try {
-        const response = await fetch('/Delivery/CreateWarehouseOrder', {
+        const response = await fetch('/Quote/CreateWarehouseOrder', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -356,7 +357,7 @@ async function submitWarehouseOrder() {
 
         if (response.ok && result.success) {
             alert(`✅ ${result.message}\n\n📦 Mã đơn hàng: #${result.orderId}\n🏪 Số kho được thông báo: ${result.nearbyStoresCount}\n📅 Nhập kho: ${startDate}\n📅 Xuất kho: ${endDate}`);
-            window.location.href = '/Delivery/Orders';
+            window.location.href = '/Booking/Success?Id=' + encodeURIComponent(result.orderId);
         } else {
             console.error('Order submission failed:', result);
             alert('❌ ' + (result.message || 'Có lỗi xảy ra. Vui lòng thử lại!'));

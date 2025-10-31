@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 public class BookingRequestVM
 {
+    public Guid? PickupAddressId { get; set; }
     [Required(ErrorMessage = "Chọn địa chỉ giao hàng")]
     public Guid? DropoffAddressId { get; set; }
 
@@ -13,6 +14,9 @@ public class BookingRequestVM
     [Required]
     [DataType(DataType.Date)]
     public DateTime StorageEndDate { get; set; }
+
+    public DateTime? PickupDate { get; set; }
+    public TimeSpan? PickupTime { get; set; }
 
     [MaxLength(200)]
     public string? DesiredWarehouseLocation { get; set; }
@@ -27,4 +31,9 @@ public class BookingRequestVM
     public List<AddressOptionVM> AddressOptions { get; set; } = new();
     public List<BookingItemVM> Items { get; set; } = new();
     public List<string> SpecialRequirements { get; set; } = new();
+
+    // Editable customer info (prefilled from profile)
+    public string? CustomerFullName { get; set; }
+    public string? CustomerEmail { get; set; }
+    public string? CustomerPhone { get; set; }
 }

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Models;
+using ServiceLayer.Abstractions.IServices;
+using DataAccessLayer.Enums;
 
 namespace PresentationLayer.Controllers
 {
@@ -10,9 +12,15 @@ namespace PresentationLayer.Controllers
     public class BookingController : Controller
     {
         private readonly DeliverySytemContext _db;
-        public BookingController(DeliverySytemContext deliverySytemContext)
+        private readonly ICustomerService _customerService;
+        private readonly IDeliveryService _deliveryService;
+        private readonly IOrderService _orderService;
+        public BookingController(DeliverySytemContext deliverySytemContext, ICustomerService customerService, IDeliveryService deliveryService, IOrderService orderService)
         {
             _db = deliverySytemContext;
+            _customerService = customerService;
+            _deliveryService = deliveryService;
+            _orderService = orderService;
         }
         public async Task<IActionResult> Index()
         {
@@ -59,7 +67,150 @@ namespace PresentationLayer.Controllers
                 new BookingItemVM { Name = "Thùng sách", Category = "Giấy tờ", EstimatedWeightKg = 10, Quantity = 10 }
             };
 
+            // Prefill customer info from profile if available
+            var userIdClaim = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out Guid userId))
+            {
+                var customer = await _customerService.GetProfileAsync(userId);
+                if (customer != null)
+                {
+                    vm.CustomerFullName = customer.FullName;
+                    vm.CustomerEmail = customer.Email;
+                    vm.CustomerPhone = customer.PhoneNumber;
+                }
+            }
+
             return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateWarehouseOrder([FromBody] CreateWarehouseOrderViewModel viewModel)
+        {
+            if (viewModel == null)
+            {
+                return BadRequest("Dữ liệu không hợp lệ.");
+            }
+
+            if (viewModel.PickupAddress == null || viewModel.WarehouseArea == null)
+            {
+                return BadRequest("Địa chỉ nhận hàng và khu vực tìm kho là bắt buộc.");
+            }
+
+            if (string.IsNullOrWhiteSpace(viewModel.PickupAddress.AddressLine))
+            {
+                return BadRequest("Địa chỉ nhận hàng không được để trống.");
+            }
+
+            if (string.IsNullOrWhiteSpace(viewModel.WarehouseArea.AddressLine))
+            {
+                return BadRequest("Khu vực tìm kho không được để trống.");
+            }
+
+            if (viewModel.StorageEndDate <= viewModel.StorageStartDate)
+            {
+                return BadRequest("Ngày xuất kho phải sau ngày nhập kho.");
+            }
+
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
+            {
+                return Unauthorized("ID người dùng không hợp lệ hoặc bị thiếu.");
+            }
+
+            try
+            {
+                var storeId = await _deliveryService.FindNearestStoreAsync(
+                    viewModel.WarehouseArea.Latitude ?? 0,
+                    viewModel.WarehouseArea.Longitude ?? 0
+                );
+
+                var order = new Order
+                {
+                    Id = Guid.NewGuid(),
+                    CustomerId = userId,
+                    StoreId = storeId,
+                    PickupAddress = new Address
+                    {
+                        Id = Guid.NewGuid(),
+                        AddressLine = viewModel.PickupAddress.AddressLine,
+                        Latitude = viewModel.PickupAddress.Latitude,
+                        Longitude = viewModel.PickupAddress.Longitude,
+                        City = "Hà Nội"
+                    },
+                    DropoffAddress = new Address
+                    {
+                        Id = Guid.NewGuid(),
+                        AddressLine = viewModel.WarehouseArea.AddressLine,
+                        Latitude = viewModel.WarehouseArea.Latitude,
+                        Longitude = viewModel.WarehouseArea.Longitude,
+                        City = "Hà Nội"
+                    },
+                    DeliveryDate = viewModel.StorageStartDate,
+                    PickupDate = viewModel.StorageEndDate,
+                    Note = viewModel.Note ?? string.Empty,
+                    Status = StatusValue.Pending,
+                    TotalAmount = 0m,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    OrderItems = new List<OrderItem>()
+                };
+
+                if (viewModel.SpecialRequirements != null && viewModel.SpecialRequirements.Any())
+                {
+                    order.Note += "\n\n📋 Yêu cầu đặc biệt:\n" + string.Join("\n", viewModel.SpecialRequirements.Select(r => "• " + r));
+                }
+
+                if (viewModel.Items != null && viewModel.Items.Any())
+                {
+                    foreach (var itemVm in viewModel.Items)
+                    {
+                        if (string.IsNullOrWhiteSpace(itemVm.Name) || itemVm.Quantity <= 0)
+                        {
+                            continue;
+                        }
+
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            ItemName = itemVm.Name.Trim(),
+                            Description = itemVm.Category,
+                            Quantity = itemVm.Quantity,
+                            WeightKg = itemVm.EstimatedWeightKg,
+                            UnitPrice = 0m,
+                            Subtotal = 0m
+                        });
+                    }
+                }
+
+                var createdOrder = await _deliveryService.CreateOrderAsync(order);
+                var nearbyStoresCount = await _deliveryService.NotifyNearbyWarehousesAsync(createdOrder.Id);
+
+                return Json(new
+                {
+                    success = true,
+                    orderId = createdOrder.Id,
+                    nearbyStoresCount = nearbyStoresCount,
+                    message = "Đơn hàng đã được tạo thành công!"
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine("No stores available: " + ex.Message);
+                return Json(new { success = false, message = "Không tìm thấy kho hàng khả dụng." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in CreateWarehouseOrder: " + ex.Message);
+                Console.WriteLine("Inner exception: " + ex.InnerException?.Message);
+                return Json(new
+                {
+                    success = false,
+                    message = $"Lỗi khi tạo đơn hàng: {ex.Message}",
+                    detail = ex.InnerException?.Message
+                });
+            }
         }
 
         [HttpPost]
@@ -129,14 +280,31 @@ namespace PresentationLayer.Controllers
         }
       
 
-        public async Task<IActionResult> Success(Guid id)
+        [HttpGet]
+        public async Task<IActionResult> Success(Guid? Id)
         {
+            // Support both 'Id' (from query string) and 'id' (from route)
+            var orderId = Id ?? (Guid.TryParse(Request.Query["Id"].FirstOrDefault(), out var parsedId) ? parsedId : Guid.Empty);
+            
+            if (orderId == Guid.Empty)
+            {
+                return BadRequest("Mã đơn hàng không hợp lệ.");
+            }
+
             var order = await _db.Orders
+                .Include(o => o.Customer)
                 .Include(o => o.PickupAddress)
                 .Include(o => o.DropoffAddress)
-                .Include(o => o.OrderItems).ThenInclude(oi => oi.Service)
-                .FirstOrDefaultAsync(o => o.Id == id);
-            if (order == null) return NotFound();
+                .Include(o => o.OrderItems)
+                .Include(o => o.Store)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+            
+            if (order == null)
+            {
+                return NotFound("Không tìm thấy đơn hàng với mã đã cung cấp.");
+            }
+            
+            ViewData["Title"] = "Đơn hàng đã được tạo thành công";
             return View(order);
         }
 

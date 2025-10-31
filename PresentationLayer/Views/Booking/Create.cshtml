@@ -1,57 +1,346 @@
 ﻿@model BookingRequestVM
-<form asp-action="Create" method="post" class="card" id="booking-form">
-    <div class="grid two">
+@{
+    ViewData["Title"] = "Đặt lưu kho";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .booking-form {
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 24px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin: 24px 0 16px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .row-2, .row-3 {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    .row-2 { grid-template-columns: 1fr 1fr; }
+    .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: #555;
+    }
+    input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="number"], textarea, select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    }
+    #warehouseAreaInput {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    #map {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+    }
+    .table th {
+        background: #f8f9fa;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    .table td {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .table input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+    .table input[type="file"] {
+        padding: 4px;
+        font-size: 12px;
+    }
+    .image-preview {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-top: 4px;
+        display: none;
+    }
+    .image-preview.show {
+        display: block;
+    }
+    .icon-btn {
+        background: #ff4444;
+        color: white;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .icon-btn:hover {
+        background: #cc0000;
+    }
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+    .btn.primary {
+        background: #4a90e2;
+        color: white;
+    }
+    .btn.primary:hover {
+        background: #357abd;
+    }
+    .btn.ghost {
+        background: #f0f0f0;
+        color: #333;
+    }
+    .btn.ghost:hover {
+        background: #e0e0e0;
+    }
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #f0f0f0;
+    }
+    .grid.two {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin: 16px 0;
+    }
+    .grid.two label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .grid.two label:hover {
+        background: #f8f9fa;
+        border-color: #4a90e2;
+    }
+    .grid.two input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+    }
+    .autocomplete-list {
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .autocomplete-list.show {
+        display: block;
+    }
+    .autocomplete-item {
+        padding: 10px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .autocomplete-item:hover {
+        background: #f8f9fa;
+    }
+    .autocomplete-item-main {
+        font-weight: 500;
+        color: #333;
+    }
+    .autocomplete-item-sub {
+        font-size: 12px;
+        color: #666;
+        margin-top: 2px;
+    }
+    #selectedWarehouseArea {
+        padding: 8px 12px;
+        background: #e8f5e9;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #2e7d32;
+        display: none;
+    }
+    #selectedWarehouseArea.show {
+        display: block;
+    }
+    @@media (max-width: 768px) {
+        .row-2, .row-3 {
+            grid-template-columns: 1fr;
+        }
+        .grid.two {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="booking-form">
+    <h2 style="margin-bottom: 24px; color: #333;">Đặt lưu kho</h2>
+
+    <div class="section-title">1) Ngày gửi vào / Ngày lấy ra</div>
+    <div class="row-2">
         <div>
-            <h3 class="section-title">1) Chọn địa chỉ</h3>
-            @await Html.PartialAsync("_AddressPicker", Model)
-
-            <div class="row-2">
-                <div>
-                    <label>Ngày lấy hàng</label>
-                    <input type="date" asp-for="PickupDate" />
-                    <span class="field-validation" asp-validation-for="PickupDate"></span>
-                </div>
-                <div>
-                    <label>Giờ lấy hàng</label>
-                    <input type="time" asp-for="PickupTime" />
-                    <span class="field-validation" asp-validation-for="PickupTime"></span>
-                </div>
-            </div>
-
-            <label>Ghi chú</label>
-            <textarea asp-for="Note" rows="3" placeholder="Ví dụ: có đồ dễ vỡ, cần người bốc xếp..."></textarea>
+            <label>Ngày gửi vào *</label>
+            <input id="storageStartDate" name="StorageStartDate" type="date" value="@Model.StorageStartDate.ToString("yyyy-MM-dd")" required />
         </div>
-
         <div>
-            <h3 class="section-title">2) Chọn dịch vụ & số lượng</h3>
-            <table class="table" id="items-table">
-                <thead>
-                    <tr><th>Dịch vụ</th><th style="width:120px">Số lượng</th><th style="width:48px"></th></tr>
-                </thead>
-                <tbody>
-                    @for (int i = 0; i < Model.Items.Count; i++)
-                    {
-                        @await Html.PartialAsync("_ServiceRow", (i, Model.Items[i]))
-                    }
-                </tbody>
-            </table>
-            <button type="button" class="btn" id="add-row">+ Thêm dịch vụ</button>
-
-            <div class="estimate">
-                <div>Tạm tính: <strong id="est-total">0</strong></div>
-                <small>Giá chính xác sẽ được cửa hàng xác nhận trong báo giá.</small>
-            </div>
+            <label>Ngày lấy ra *</label>
+            <input id="storageEndDate" name="StorageEndDate" type="date" value="@Model.StorageEndDate.ToString("yyyy-MM-dd")" required />
         </div>
     </div>
+
+    <div class="section-title">2) Thông tin khách hàng</div>
+    <div class="row-3">
+        <div>
+            <label>Họ và tên *</label>
+            <input name="CustomerFullName" value="@Model.CustomerFullName" required />
+        </div>
+        <div>
+            <label>Email</label>
+            <input name="CustomerEmail" type="email" value="@Model.CustomerEmail" />
+        </div>
+        <div>
+            <label>Số điện thoại *</label>
+            <input name="CustomerPhone" type="tel" value="@Model.CustomerPhone" required />
+        </div>
+    </div>
+
+    <div class="section-title">3) Khu vực muốn tìm kho</div>
+    <div style="position: relative;">
+        <input id="warehouseAreaInput" placeholder="Nhập khu vực (ví dụ: Dương Quảng Hàm)" />
+        <div id="warehouseAreaResults" class="autocomplete-list"></div>
+    </div>
+    <div id="selectedWarehouseArea" class="hint"></div>
+    <div id="map" style="height: 320px; margin-top: 12px;"></div>
+
+    <div class="section-title">4) Danh sách đồ dùng cần lưu kho</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên đồ *</th>
+                <th>Danh mục</th>
+                <th style="width:100px;">Số lượng</th>
+                <th style="width:120px;">Ước tính (kg)</th>
+                <th style="width:150px;">Ảnh (tùy chọn)</th>
+                <th style="width:50px;"></th>
+            </tr>
+        </thead>
+        <tbody id="itemsTableBody">
+            @for (int i = 0; i < Model.Items.Count; i++)
+            {
+                <tr>
+                    <td><input name="Items[@i].Name" value="@Model.Items[i].Name" required /></td>
+                    <td><input name="Items[@i].Category" value="@Model.Items[i].Category" placeholder="Ví dụ: Nội thất" /></td>
+                    <td><input name="Items[@i].Quantity" type="number" min="1" value="@Model.Items[i].Quantity" required /></td>
+                    <td><input name="Items[@i].EstimatedWeightKg" type="number" min="0" step="0.1" value="@Model.Items[i].EstimatedWeightKg" placeholder="0" /></td>
+                    <td>
+                        <input type="file" name="ItemImages[@i]" accept="image/*" class="item-image-input" data-index="@i" onchange="previewImage(this, @i)" />
+                        <img class="image-preview" id="preview-@i" />
+                    </td>
+                    <td><button type="button" class="icon-btn remove" onclick="this.closest('tr').remove()">✖</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button type="button" class="btn" onclick="addItemRow()" style="margin-top: 8px;">+ Thêm món</button>
+
+    <div class="section-title">5) Yêu cầu đặc biệt</div>
+    <div class="grid two">
+        <label><input type="checkbox" name="SpecialRequirements" value="🧊 Kho mát" /> 🧊 Kho mát</label>
+        <label><input type="checkbox" name="SpecialRequirements" value="💧 Chống ẩm" /> 💧 Chống ẩm</label>
+        <label><input type="checkbox" name="SpecialRequirements" value="🔒 An ninh cao" /> 🔒 An ninh cao</label>
+        <label><input type="checkbox" name="SpecialRequirements" value="🛡️ Bảo hiểm hàng hóa" /> 🛡️ Bảo hiểm hàng hóa</label>
+        <label><input type="checkbox" name="SpecialRequirements" value="🏢 Kho có thang máy" /> 🏢 Kho có thang máy</label>
+        <label><input type="checkbox" name="SpecialRequirements" value="📹 Giám sát 24/7" /> 📹 Giám sát 24/7</label>
+    </div>
+
+    <div class="section-title">6) Ghi chú</div>
+    <textarea id="orderNote" name="Note" rows="3" placeholder="Ví dụ: đồ dễ vỡ, cần ưu tiên..."></textarea>
 
     <div class="form-actions">
-        <button type="submit" class="btn primary">Gửi yêu cầu</button>
+        <button type="button" id="bookBtn" class="btn primary" onclick="submitWarehouseOrder()">Gửi yêu cầu</button>
         <a class="btn ghost" href="@Url.Action("Index","Home")">Huỷ</a>
     </div>
+</div>
 
-    @await Html.PartialAsync("~/Views/Shared/_ValidationScriptsPartial.cshtml")
-</form>
-@section scripts {
-    <script>window.__services = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Services));</script>
-    <script src="/js/booking.js"></script>
-}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="/js/vcn-auth.js"></script>
+<script>
+    function addItemRow() {
+        const tbody = document.getElementById('itemsTableBody');
+        const idx = tbody.children.length;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input name="Items[${idx}].Name" required /></td>
+            <td><input name="Items[${idx}].Category" placeholder="Ví dụ: Nội thất" /></td>
+            <td><input name="Items[${idx}].Quantity" type="number" min="1" value="1" required /></td>
+            <td><input name="Items[${idx}].EstimatedWeightKg" type="number" min="0" step="0.1" placeholder="0" /></td>
+            <td>
+                <input type="file" name="ItemImages[${idx}]" accept="image/*" class="item-image-input" data-index="${idx}" onchange="previewImage(this, ${idx})" />
+                <img class="image-preview" id="preview-${idx}" />
+            </td>
+            <td><button type="button" class="icon-btn remove" onclick="this.closest('tr').remove()">✖</button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function previewImage(input, index) {
+        const file = input.files[0];
+        const preview = document.getElementById('preview-' + index);
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.add('show');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.classList.remove('show');
+        }
+    }
+</script>
