@@ -12,4 +12,10 @@ namespace ServiceLayer.Dtos.Quotes
         public string Action { get; set; } // "accept" or "reject"
         public string Note { get; set; }
     }
+    public class AcceptQuoteResult
+    {
+        public bool Success { get; set; }
+        public Guid? OrderId { get; set; }
+        public string? Message { get; set; }
+    }
 }

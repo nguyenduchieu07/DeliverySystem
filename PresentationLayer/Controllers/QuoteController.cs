@@ -53,9 +53,14 @@ namespace PresentationLayer.Controllers
         [HttpPost]
         public async Task<IActionResult> Accept([FromBody] AcceptQuoteVm vm, CancellationToken ct)
         {
-            var ok = await _svc.AcceptQuotationAsync(vm, ct);
-            return ok ? Ok() : BadRequest("Không chấp nhận được báo giá.");
+            var result = await _svc.AcceptQuotationAsync(vm, ct);
+            if (!result.Success || result.OrderId is null)
+                return BadRequest("Không chấp nhận được báo giá.");
+
+            var redirectUrl = Url.Action("Index", "Payment", new { orderId = result.OrderId.Value });
+            return Ok(new { success = true, orderId = result.OrderId, redirectUrl });
         }
+
 
         // Bước 4C: Yêu cầu chỉnh giá (ghi chú)
         [HttpPost]

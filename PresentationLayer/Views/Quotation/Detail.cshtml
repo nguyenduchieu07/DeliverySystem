@@ -274,40 +274,44 @@
 @section scripts {
     <script>
         function acceptQuotation() {
-            if (confirm('Bạn có chắc chắn muốn chấp nhận báo giá này?\nSau khi chấp nhận, hệ thống sẽ tạo đơn hàng tự động.')) {
-                performAction('@Url.Action("Accept", "Quotation")', 'Chấp nhận');
-            }
+          if (confirm('Bạn có chắc chắn muốn chấp nhận báo giá này?\nSau khi chấp nhận, hệ thống sẽ chuyển sang thanh toán.')) {
+            performAction('@Url.Action("Accept", "Quotation")', 'Chấp nhận');
+          }
         }
 
         function rejectQuotation() {
-            if (confirm('Bạn có chắc chắn muốn từ chối báo giá này?')) {
-                performAction('@Url.Action("Reject", "Quotation")', 'Từ chối');
-            }
+          if (confirm('Bạn có chắc chắn muốn từ chối báo giá này?')) {
+            performAction('@Url.Action("Reject", "Quotation")', 'Từ chối');
+          }
         }
 
         function performAction(url, actionName) {
-            var note = $('#actionNote').val();
+          var note = $('#actionNote').val();
 
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    id: '@Model.Id',
-                    note: note,
-                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function (response) {
-                    if (response.success) {
-                        alert(actionName + ' báo giá thành công!');
-                        window.location.href = '@Url.Action("Index", "Quotation")';
-                    } else {
-                        alert('Lỗi: ' + response.message);
-                    }
-                },
-                error: function () {
-                    alert('Có lỗi xảy ra. Vui lòng thử lại.');
+          $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+              id: '@Model.Id',
+              note: note,
+              __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function (response) {
+              if (response.success) {
+                if (response.redirectUrl && actionName === 'Chấp nhận') {
+                  window.location.href = response.redirectUrl; // 👉 sang Payment
+                } else {
+                  alert(actionName + ' báo giá thành công!');
+                  window.location.href = '@Url.Action("Index", "Quotation")';
                 }
-            });
+              } else {
+                alert('Lỗi: ' + response.message);
+              }
+            },
+            error: function () {
+              alert('Có lỗi xảy ra. Vui lòng thử lại.');
+            }
+          });
         }
     </script>
     @Html.AntiForgeryToken()

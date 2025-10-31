@@ -91,7 +91,7 @@ namespace PresentationLayer.Controllers
             var detailDto = new QuotationDetailDto
             {
                 Id = quotation.Id,
-                StoreId = quotation.StoreId,
+                StoreId = (Guid)quotation.StoreId,
                 CustomerId = quotation.CustomerId,
                 TotalAmount = quotation.TotalAmount,
                 ValidUntil = quotation.ValidUntil,
@@ -134,42 +134,33 @@ namespace PresentationLayer.Controllers
         {
             var customerId = GetCurrentCustomerId();
             if (customerId == Guid.Empty)
-            {
                 return Json(new { success = false, message = "Vui lòng đăng nhập" });
-            }
 
             var quotation = await _context.Quotations
                 .FirstOrDefaultAsync(q => q.Id == id && q.CustomerId == customerId);
 
             if (quotation == null)
-            {
                 return Json(new { success = false, message = "Không tìm thấy báo giá" });
-            }
 
-            // Kiểm tra điều kiện
             if (quotation.Status != StatusValue.Pending)
-            {
                 return Json(new { success = false, message = "Báo giá đã được xử lý" });
-            }
 
             if (quotation.ValidUntil < DateTime.Now)
-            {
                 return Json(new { success = false, message = "Báo giá đã hết hạn" });
-            }
 
-            // Cập nhật trạng thái
+            // Cập nhật báo giá
             quotation.Status = StatusValue.Approved;
             quotation.UpdatedAt = DateTime.Now;
 
-            // Tạo đơn hàng từ báo giá (nếu cần)
+            // Tạo đơn hàng ở trạng thái chờ thanh toán
             var order = new Order
             {
                 Id = Guid.NewGuid(),
                 CustomerId = customerId,
-                StoreId = quotation.StoreId,
+                StoreId = (Guid)quotation.StoreId!,
                 QuotationId = quotation.Id,
                 TotalAmount = quotation.TotalAmount,
-                Status = StatusValue.Pending,
+                Status = StatusValue.AwaitingPayment, // 👈 quan trọng để qua Payment
                 Note = note,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now
@@ -178,9 +169,17 @@ namespace PresentationLayer.Controllers
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Đã chấp nhận báo giá thành công!";
-            return Json(new { success = true, message = "Chấp nhận thành công", orderId = order.Id });
+            var redirectUrl = Url.Action("Index", "Payment", new { orderId = order.Id });
+
+            return Json(new
+            {
+                success = true,
+                message = "Chấp nhận thành công, chuyển sang thanh toán.",
+                orderId = order.Id,
+                redirectUrl
+            });
         }
+
 
         // POST: /Quotation/Reject
         // Từ chối báo giá

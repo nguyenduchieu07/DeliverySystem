@@ -33,6 +33,8 @@ namespace DataAccessLayer.Enums
         ExpiringSoon,
         Blocked,
         Revised,
-        Used
+        Used,
+        AwaitingPickup,
+        AwaitingPayment
     }
 }

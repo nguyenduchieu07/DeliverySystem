@@ -214,27 +214,31 @@
 @section scripts {
     <script>
         function acceptQuotation(quotationId) {
-            if (confirm('Bạn có chắc chắn muốn chấp nhận báo giá này?')) {
-                $.ajax({
-                    url: '@Url.Action("Accept", "Quotation")',
-                    type: 'POST',
-                    data: {
-                        id: quotationId,
-                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            alert(response.message);
-                            location.reload();
-                        } else {
-                            alert(response.message);
-                        }
-                    },
-                    error: function () {
-                        alert('Có lỗi xảy ra. Vui lòng thử lại.');
-                    }
-                });
-            }
+          if (confirm('Bạn có chắc chắn muốn chấp nhận báo giá này?')) {
+            $.ajax({
+              url: '@Url.Action("Accept", "Quotation")',
+              type: 'POST',
+              data: {
+                id: quotationId,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+              },
+              success: function (response) {
+                if (response.success) {
+                  // alert(response.message); // có thể bỏ alert cho mượt
+                  if (response.redirectUrl) {
+                    window.location.href = response.redirectUrl; // 👉 sang Payment
+                  } else {
+                    location.reload();
+                  }
+                } else {
+                  alert(response.message);
+                }
+              },
+              error: function () {
+                alert('Có lỗi xảy ra. Vui lòng thử lại.');
+              }
+            });
+          }
         }
     </script>
     @Html.AntiForgeryToken()

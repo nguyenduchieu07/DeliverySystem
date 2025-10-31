@@ -12,7 +12,7 @@ namespace ServiceLayer.Abstractions.IServices
     {
         Task<QuoteResultVm> CalculateAndCreateQuotationAsync(QuoteRequestVm req, CancellationToken ct);
         Task<bool> CreateTempReservationAsync(HoldTempVm vm, CancellationToken ct);
-        Task<bool> AcceptQuotationAsync(AcceptQuoteVm vm, CancellationToken ct);
+        Task<AcceptQuoteResult> AcceptQuotationAsync(AcceptQuoteVm vm, CancellationToken ct);
         Task<bool> RequestRevisionAsync(RequestRevisionVm vm, CancellationToken ct);
         Task<Quotation> GetByIdAsync(Guid id, CancellationToken ct);
     }

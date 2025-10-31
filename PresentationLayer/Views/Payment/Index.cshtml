@@ -1,0 +1,429 @@
+﻿@model PaymentViewModel
+@{
+    ViewBag.Title = "Thanh Toán";
+}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Thông tin đơn hàng -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-box"></i> Thông tin đơn hàng #@Model.OrderSummary.OrderId.ToString("N")[..8].ToUpper()
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Khách hàng</h6>
+                            <p class="mb-1"><strong>@Model.OrderSummary.CustomerName</strong></p>
+                            <p class="mb-3 text-muted">@Model.OrderSummary.CustomerPhone</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Trạng thái</h6>
+                            <span class="badge bg-info">@Model.OrderSummary.Status</span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Địa chỉ lấy hàng</h6>
+                            <p class="mb-0">
+                                <i class="fas fa-map-marker-alt text-success"></i>
+                                @(Model.OrderSummary.PickupAddress ?? "Chưa xác định")
+                            </p>
+                            @if (Model.OrderSummary.PickupDate.HasValue)
+                            {
+                                <small class="text-muted">
+                                    Lấy hàng: @Model.OrderSummary.PickupDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                </small>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Địa chỉ giao hàng</h6>
+                            <p class="mb-0">
+                                <i class="fas fa-map-marker-alt text-danger"></i>
+                                @(Model.OrderSummary.DropoffAddress ?? "Chưa xác định")
+                            </p>
+                            @if (Model.OrderSummary.DeliveryDate.HasValue)
+                            {
+                                <small class="text-muted">
+                                    Giao hàng: @Model.OrderSummary.DeliveryDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                </small>
+                            }
+                        </div>
+                    </div>
+
+                    @if (Model.OrderSummary.DistanceKm.HasValue || Model.OrderSummary.EtaMinutes.HasValue)
+                    {
+                        <div class="row mt-3">
+                            @if (Model.OrderSummary.DistanceKm.HasValue)
+                            {
+                                <div class="col-md-6">
+                                    <h6>Khoảng cách</h6>
+                                    <p class="mb-0">
+                                        <i class="fas fa-route"></i>
+                                        @Model.OrderSummary.DistanceKm.Value.ToString("F1") km
+                                    </p>
+                                </div>
+                            }
+                            @if (Model.OrderSummary.EtaMinutes.HasValue)
+                            {
+                                <div class="col-md-6">
+                                    <h6>Thời gian dự kiến</h6>
+                                    <p class="mb-0">
+                                        <i class="fas fa-clock"></i>
+                                        @Model.OrderSummary.EtaMinutes.Value phút
+                                    </p>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.OrderSummary.Note))
+                    {
+                        <div class="mt-3">
+                            <h6>Ghi chú</h6>
+                            <p class="mb-0 text-muted">@Model.OrderSummary.Note</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Chi tiết hàng hóa -->
+            @if (Model.OrderSummary.OrderItems.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list"></i> Chi tiết hàng hóa
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Tên hàng</th>
+                                        <th>Mô tả</th>
+                                        <th>Số lượng</th>
+                                        <th>Kích thước</th>
+                                        <th>Cân nặng</th>
+                                        <th class="text-end">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.OrderSummary.OrderItems)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@(item.ItemName ?? "Hàng hóa")</strong>
+                                            </td>
+                                            <td>
+                                                @(item.Description ?? "-")
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@item.Quantity</span>
+                                            </td>
+                                            <td>
+                                                @item.DisplaySize
+                                            </td>
+                                            <td>
+                                                @(item.WeightKg?.ToString("F1") + " kg" ?? "-")
+                                            </td>
+                                            <td class="text-end">
+                                                @if (item.Subtotal.HasValue)
+                                                {
+                                                    <strong>@item.Subtotal.Value.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</strong>
+                                                }
+                                                else
+                                                {
+                                                    <em>Chưa tính</em>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Form thanh toán -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-credit-card"></i> Thanh toán
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @using (Html.BeginForm("Process", "Payment", FormMethod.Post, new { id = "paymentForm", @class = "needs-validation", novalidate = "novalidate" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(m => m.OrderId)
+                        @Html.HiddenFor(m => m.TotalAmount)
+
+                        <!-- Tổng tiền -->
+                        <div class="alert alert-info mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><strong>Tổng tiền:</strong></span>
+                                <span class="h4 mb-0 text-primary">
+                                    @Model.TotalAmount.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Phương thức thanh toán -->
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Chọn phương thức thanh toán</strong></label>
+
+                            <!-- Tiền mặt -->
+                            <div class="form-check payment-method mb-3">
+                                <input class="form-check-input" type="radio" name="PaymentMethod" value="cash" id="cash" checked>
+                                <label class="form-check-label w-100" for="cash">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-money-bill-wave text-success me-2"></i>
+                                        <div>
+                                            <strong>Tiền mặt</strong>
+                                            <small class="d-block text-muted">Thanh toán khi nhận hàng</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Chuyển khoản -->
+                            <div class="form-check payment-method mb-3">
+                                <input class="form-check-input" type="radio" name="PaymentMethod" value="bank_transfer" id="bank_transfer">
+                                <label class="form-check-label w-100" for="bank_transfer">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-university text-primary me-2"></i>
+                                        <div>
+                                            <strong>Chuyển khoản ngân hàng</strong>
+                                            <small class="d-block text-muted">Chuyển khoản qua internet banking</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- MoMo -->
+                            <div class="form-check payment-method mb-3">
+                                <input class="form-check-input" type="radio" name="PaymentMethod" value="momo" id="momo">
+                                <label class="form-check-label w-100" for="momo">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-mobile-alt text-danger me-2"></i>
+                                        <div>
+                                            <strong>Ví MoMo</strong>
+                                            <small class="d-block text-muted">Thanh toán qua ví điện tử MoMo</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- ZaloPay -->
+                            <div class="form-check payment-method mb-3">
+                                <input class="form-check-input" type="radio" name="PaymentMethod" value="zalopay" id="zalopay">
+                                <label class="form-check-label w-100" for="zalopay">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-wallet text-info me-2"></i>
+                                        <div>
+                                            <strong>ZaloPay</strong>
+                                            <small class="d-block text-muted">Thanh toán qua ví điện tử ZaloPay</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- VNPay -->
+                            <div class="form-check payment-method mb-3">
+                                <input class="form-check-input" type="radio" name="PaymentMethod" value="vnpay" id="vnpay">
+                                <label class="form-check-label w-100" for="vnpay">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-credit-card text-warning me-2"></i>
+                                        <div>
+                                            <strong>VNPay</strong>
+                                            <small class="d-block text-muted">Thanh toán qua thẻ ATM/Credit</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Provider field (ẩn, chỉ hiện khi cần) -->
+                        <div id="providerField" class="mb-3" style="display: none;">
+                            <label for="Provider" class="form-label">Ngân hàng</label>
+                            <select name="Provider" id="Provider" class="form-select">
+                                <option value="">Chọn ngân hàng</option>
+                                <option value="Vietcombank">Vietcombank</option>
+                                <option value="VietinBank">VietinBank</option>
+                                <option value="BIDV">BIDV</option>
+                                <option value="Agribank">Agribank</option>
+                                <option value="Techcombank">Techcombank</option>
+                                <option value="MB Bank">MB Bank</option>
+                                <option value="ACB">ACB</option>
+                                <option value="Sacombank">Sacombank</option>
+                            </select>
+                        </div>
+
+                        <!-- Nút thanh toán -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" id="btnPayment">
+                                <i class="fas fa-lock me-2"></i>
+                                <span id="btnText">Xác nhận thanh toán</span>
+                                <div class="spinner-border spinner-border-sm ms-2 d-none" id="btnSpinner"></div>
+                            </button>
+                            <a href="@Url.Action("Details", "Order", new { id = Model.OrderId })" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Quay lại đơn hàng
+                            </a>
+                        </div>
+
+                        <!-- Thông tin bảo mật -->
+                        <div class="mt-3 text-center">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt text-success me-1"></i>
+                                Thông tin của bạn được bảo mật an toàn
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Thông tin liên hệ -->
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Cần hỗ trợ?</h6>
+                    <p class="card-text text-muted">
+                        Liên hệ hotline: <strong>1900 1234</strong><br>
+                        Email: support@vcn.vn
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section styles {
+    <style>
+        .payment-method {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .payment-method:hover {
+                border-color: var(--primary-color);
+                background-color: #f8f9fa;
+            }
+
+            .payment-method input[type="radio"]:checked + .form-check-label {
+                color: var(--primary-color);
+            }
+
+            .payment-method:has(input[type="radio"]:checked) {
+                border-color: var(--primary-color);
+                background-color: rgba(241, 102, 34, 0.1);
+            }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+    </style>
+}
+
+@section scripts {
+    <script>
+        $(document).ready(function() {
+            // Xử lý thay đổi phương thức thanh toán
+            $('input[name="PaymentMethod"]').change(function() {
+                var method = $(this).val();
+                var btnText = $('#btnText');
+                var providerField = $('#providerField');
+
+                // Reset provider field
+                providerField.hide();
+
+                switch(method) {
+                    case 'cash':
+                        btnText.text('Xác nhận thanh toán tiền mặt');
+                        break;
+                    case 'bank_transfer':
+                        btnText.text('Xác nhận chuyển khoản');
+                        providerField.show();
+                        break;
+                    case 'momo':
+                        btnText.text('Thanh toán qua MoMo');
+                        break;
+                    case 'zalopay':
+                        btnText.text('Thanh toán qua ZaloPay');
+                        break;
+                    case 'vnpay':
+                        btnText.text('Thanh toán qua VNPay');
+                        break;
+                    default:
+                        btnText.text('Xác nhận thanh toán');
+                }
+            });
+
+            // Xử lý submit form
+            $('#paymentForm').submit(function(e) {
+                e.preventDefault();
+
+                var form = $(this);
+                var btnPayment = $('#btnPayment');
+                var btnText = $('#btnText');
+                var btnSpinner = $('#btnSpinner');
+
+                // Disable button và hiện loading
+                btnPayment.prop('disabled', true);
+                btnSpinner.removeClass('d-none');
+                btnText.text('Đang xử lý...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        if (response.isSuccess) {
+                            if (response.redirectUrl) {
+                                // Chuyển hướng đến cổng thanh toán
+                                window.location.href = response.redirectUrl;
+                            } else {
+                                // Chuyển đến trang thành công
+                                var successUrl = '@Url.Action("Success", "Payment")' + '/' + (response.paymentId || '@Model.OrderId');
+                                window.location.href = successUrl;
+                            }
+                        } else {
+                            // Hiển thị lỗi
+                            alert('Lỗi: ' + response.message);
+
+                            // Reset button
+                            btnPayment.prop('disabled', false);
+                            btnSpinner.addClass('d-none');
+                            btnText.text('Xác nhận thanh toán');
+                        }
+                    },
+                    error: function() {
+                        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+
+                        // Reset button
+                        btnPayment.prop('disabled', false);
+                        btnSpinner.addClass('d-none');
+                        btnText.text('Xác nhận thanh toán');
+                    }
+                });
+            });
+
+            // Click vào label cũng chọn radio
+            $('.payment-method .form-check-label').click(function() {
+                $(this).siblings('input[type="radio"]').prop('checked', true).trigger('change');
+            });
+        });
+    </script>
+}

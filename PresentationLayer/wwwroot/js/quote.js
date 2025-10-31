@@ -788,3 +788,33 @@ document.addEventListener('DOMContentLoaded', initEstimationAutoCalc);
 // function selectWarehouse(wh) { selectedWarehouse = wh; /* ... UI ... */ recalcEstimation(); }
 // function toggleSlotSelection(slot) { /* thêm/bớt vào selectedSlots */ recalcEstimation(); }
 // function removeSlot(id) { /* lọc selectedSlots */ recalcEstimation(); }
+
+
+async function acceptQuote(quotationId, extraNote) {
+    try {
+        const resp = await fetch('/Quote/Accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                quotationId: quotationId,
+                note: extraNote || ''   // map theo AcceptQuoteVm của bạn
+            })
+        });
+
+        if (!resp.ok) {
+            const text = await resp.text();
+            alert(text || 'Không chấp nhận được báo giá.');
+            return;
+        }
+
+        const data = await resp.json();
+        if (data.success && data.redirectUrl) {
+            window.location.href = data.redirectUrl; // 👉 sang Payment/Index
+        } else {
+            alert(data.message || 'Có lỗi khi chuyển sang thanh toán.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+    }
+}

@@ -25,7 +25,7 @@ namespace ServiceLayer.Services
         private readonly IBaseRepository<Contract, Guid> _contractRepository;
 
         public QuotationService(DeliverySytemContext db, IUserContextService context,
-            IBaseRepository<Order, Guid> orderRepository,
+            IBaseRepository<DataAccessLayer.Entities.Order, Guid> orderRepository,
             IBaseRepository<WarehouseSlot, Guid> warehouseSlotRepository,
             IBaseRepository<SlotReservation, Guid> slotReservationRepository,
             IBaseRepository<Contract, Guid> contractRepository)
@@ -108,9 +108,9 @@ namespace ServiceLayer.Services
                 StoreId = req.StoreId,
                 CustomerId = userId, // Get from authenticated user
                 TotalAmount = total,
-                ValidUntil = DateTime.UtcNow.AddMinutes(VALIDITY_MINUTE),
+                ValidUntil = DateTime.Now.AddMinutes(VALIDITY_MINUTE),
                 Status = StatusValue.Draft,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _db.Quotations.Add(quotation);
@@ -162,7 +162,7 @@ namespace ServiceLayer.Services
                 var quotation = await _db.Quotations.Where(e => e.Id == vm.QuotationId).FirstOrDefaultAsync();
             
                 quotation!.Status = StatusValue.Sent;
-                quotation!.ValidUntil = DateTime.UtcNow.AddHours(SENT_VALID_HOUR);
+                quotation!.ValidUntil = DateTime.Now.AddHours(SENT_VALID_HOUR);
                 await CreateOrderAndSlotReservationsAsync(quotation, vm.SlotIds, ct, vm.From, vm.To);
                 await _db.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
@@ -179,27 +179,79 @@ namespace ServiceLayer.Services
             return true;
         }
 
-        public async Task<bool> AcceptQuotationAsync(AcceptQuoteVm vm, CancellationToken ct)
+        public async Task<AcceptQuoteResult> AcceptQuotationAsync(AcceptQuoteVm vm, CancellationToken ct)
         {
-            using var transaction = await _db.Database.BeginTransactionAsync(ct);
+            // validate input date range (tùy chọn)
+            if (vm.From >= vm.To)
+                return new AcceptQuoteResult { Success = false, Message = "Khoảng thời gian không hợp lệ." };
+
+            using var trx = await _db.Database.BeginTransactionAsync(ct);
             try
             {
-                var quotation = await _db.Quotations.FindAsync(vm.QuotationId);
-                if (quotation == null) return false;
+                // Lấy quotation + kiểm tra hạn
+                var quotation = await _db.Quotations
+                    .Include(q => q.Orders) // để lấy order cũ nếu đã tạo
+                    .FirstOrDefaultAsync(q => q.Id == vm.QuotationId, ct);
 
-                quotation.Status = StatusValue.Active; // Or whatever status means "accepted"
+                if (quotation == null)
+                    return new AcceptQuoteResult { Success = false, Message = "Không tìm thấy báo giá." };
 
-                await CreateOrderAndSlotReservationsAsync(quotation, vm.SlotIds, ct, vm.From, vm.To);
+                if (quotation.ValidUntil < DateTime.Now)
+                    return new AcceptQuoteResult { Success = false, Message = "Báo giá đã hết hạn." };
 
-                await transaction.CommitAsync(ct);
-                return true;
+                // Nếu đã accepted trước đó, tái sử dụng order (idempotent)
+                var existingOrderId = quotation.Orders
+                    ?.OrderByDescending(o => o.CreatedAt)
+                    .FirstOrDefault()?.Id;
+                if (quotation.Status == StatusValue.Approved || quotation.Status == StatusValue.Active)
+                {
+                    await trx.CommitAsync(ct);
+                    return new AcceptQuoteResult
+                    {
+                        Success = true,
+                        OrderId = existingOrderId,
+                        Message = "Báo giá đã được chấp nhận trước đó."
+                    };
+                }
+
+                // Chấp nhận báo giá
+                quotation.Status = StatusValue.Approved; // hoặc Active nếu đại ca đang dùng vậy
+                quotation.UpdatedAt = DateTime.Now;
+
+                // Tạo Order + giữ slot cứng (firm reservation)
+                var order = await CreateOrderAndSlotReservationsAsync(
+                    quotation,
+                    vm.SlotIds,
+                    ct,
+                    vm.From,
+                    vm.To);
+
+                // Đảm bảo Order có trạng thái hợp lệ để đi thanh toán
+                order.Item1.Status = StatusValue.AwaitingPayment;
+                order.Item1.TotalAmount = quotation.TotalAmount;
+                order.Item1.UpdatedAt = DateTime.Now;
+
+                await _db.SaveChangesAsync(ct);
+                await trx.CommitAsync(ct);
+
+                return new AcceptQuoteResult
+                {
+                    Success = true,
+                    OrderId = order.Item1.Id,
+                    Message = "Chấp nhận báo giá thành công."
+                };
             }
-            catch
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync(ct);
-                return false;
+                await trx.RollbackAsync(ct);
+                return new AcceptQuoteResult
+                {
+                    Success = false,
+                    Message = "Có lỗi khi chấp nhận báo giá: " + ex.Message
+                };
             }
         }
+
 
         public async Task<bool> RequestRevisionAsync(RequestRevisionVm vm, CancellationToken ct)
         {
@@ -258,7 +310,7 @@ namespace ServiceLayer.Services
                     Id = Guid.NewGuid(),
                     OrderId = newOrder.Id,
                     WarehouseSlotId = slot.Id,
-                    ExpiresAt = DateTime.UtcNow.AddHours(VALIDITY_FOR_RESERVATION_HOUR),
+                    ExpiresAt = DateTime.Now.AddHours(VALIDITY_FOR_RESERVATION_HOUR),
                     Status = StatusValue.Active,
                     From = from,
                     To = to
