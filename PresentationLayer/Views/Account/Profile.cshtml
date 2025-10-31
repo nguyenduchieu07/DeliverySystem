@@ -52,6 +52,22 @@
 
     <div class="address-list">
         <h3>Địa chỉ của tôi</h3>
+        <div class="form-group">
+            <label>Địa chỉ mặc định dùng khi Booking</label>
+            <form asp-action="SetDefaultAddress" asp-controller="Delivery" method="post" class="form-inline">
+                @Html.AntiForgeryToken()
+                <select name="addressId" class="form-control" style="min-width:320px">
+                    @if (Model.Addresses?.Any() ?? false)
+                    {
+                        foreach (var a in Model.Addresses.OrderByDescending(x => x.IsDefault))
+                        {
+                            <option value="@a.Id" selected="@(a.IsDefault ? "selected" : null)">@((a.Label ?? a.AddressLine)), @a.AddressLine, @a.Ward, @a.District, @a.City</option>
+                        }
+                    }
+                </select>
+                <button type="submit" class="btn btn-secondary ml-2">Đặt làm mặc định</button>
+            </form>
+        </div>
         @if (Model.Addresses?.Any() ?? false)
         {
             foreach (var address in Model.Addresses)

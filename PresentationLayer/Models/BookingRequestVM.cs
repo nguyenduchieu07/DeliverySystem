@@ -1,30 +1,30 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PresentationLayer.Models;
+using System.ComponentModel.DataAnnotations;
 
-namespace PresentationLayer.Models
+public class BookingRequestVM
 {
-    public class BookingRequestVM
-    {
-        [Required(ErrorMessage = "Chọn địa chỉ lấy hàng")]
-        public Guid? PickupAddressId { get; set; }
-        [Required(ErrorMessage = "Chọn địa chỉ giao hàng")]
-        public Guid? DropoffAddressId { get; set; }
+    [Required(ErrorMessage = "Chọn địa chỉ giao hàng")]
+    public Guid? DropoffAddressId { get; set; }
 
+    [Required]
+    [DataType(DataType.Date)]
+    public DateTime StorageStartDate { get; set; }
 
-        [Required]
-        [DataType(DataType.Date)]
-        public DateTime PickupDate { get; set; }
+    [Required]
+    [DataType(DataType.Date)]
+    public DateTime StorageEndDate { get; set; }
 
+    [MaxLength(200)]
+    public string? DesiredWarehouseLocation { get; set; }
 
-        [Required]
-        [Display(Name = "Giờ lấy hàng")]
-        public string PickupTime { get; set; } = "09:00"; // HH:mm
+    public double? DropoffLatitude { get; set; }
+    public double? DropoffLongitude { get; set; }
+    public string? DropoffAddressText { get; set; }
 
+    [MaxLength(500)]
+    public string? Note { get; set; }
 
-        [MaxLength(500)]
-        public string? Note { get; set; }
-
-
-        public List<AddressOptionVM> AddressOptions { get; set; } = new();
-        public List<BookingItemVM> Items { get; set; } = new();
-    }
+    public List<AddressOptionVM> AddressOptions { get; set; } = new();
+    public List<BookingItemVM> Items { get; set; } = new();
+    public List<string> SpecialRequirements { get; set; } = new();
 }
