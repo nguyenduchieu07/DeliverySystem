@@ -501,11 +501,16 @@ ViewBag.Title = "Chi tiết đơn hàng";
         <h1>
             <i class="fas fa-box"></i>
             Chi tiết đơn hàng
-            <span class="order-id-display">#@Model.Order.Id</span>
+            <span class="order-id-display">#@Model.Order.Id.ToString().Substring(0, 8)</span>
         </h1>
-        <a asp-action="Index" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Quay lại
-        </a>
+        <div>
+            <a asp-action="Index" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+            <a id="btnEditOrder" data-id="@Model.Order.Id" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Chỉnh sửa
+            </a>
+        </div>
     </div>
 
     <!-- Order Info Card -->
@@ -520,14 +525,14 @@ ViewBag.Title = "Chi tiết đơn hàng";
                         <span class="info-label">Trạng thái</span>
                         <span class="info-value">
                             @{
-                            var statusClass = Model.Order.Status switch
-                            {
-                            StatusValue.Pending => "pending",
-                            StatusValue.Approved => "approved",
-                            StatusValue.Completed => "completed",
-                            StatusValue.Rejected => "rejected",
-                            _ => ""
-                            };
+                                var statusClass = Model.Order.Status switch
+                                {
+                                    StatusValue.Pending => "pending",
+                                    StatusValue.Approved => "approved",
+                                    StatusValue.Completed => "completed",
+                                    StatusValue.Canceled => "rejected",
+                                    _ => ""
+                                };
                             }
                             <span class="status-badge @statusClass">@Model.Order.Status.ToDisplayStringForOrder()</span>
                         </span>
@@ -591,26 +596,26 @@ ViewBag.Title = "Chi tiết đơn hàng";
                     <tbody>
                     @if (Model.OrderItems != null && Model.OrderItems.Any())
                     {
-                    foreach (var item in Model.OrderItems)
-                    {
-                    <tr>
-                        <td class="item-name">@item.ItemName</td>
-                        <td class="item-quantity">@item.Quantity</td>
-                        <td class="item-dimensions">
-                            @item.LengthM × @item.WidthM × @item.HeightM
-                        </td>
-                        <td>@item.WeightKg kg</td>
-                        <td class="item-subtotal">@(item.Subtotal?.ToString("N0") ?? "0") ₫</td>
-                    </tr>
-                    }
+                        foreach (var item in Model.OrderItems)
+                        {
+                            <tr>
+                                <td class="item-name">@item.ItemName</td>
+                                <td class="item-quantity">@item.Quantity</td>
+                                <td class="item-dimensions">
+                                    @item.LengthM × @item.WidthM × @item.HeightM
+                                </td>
+                                <td>@item.WeightKg kg</td>
+                                <td class="item-subtotal">@(item.Subtotal?.ToString("N0") ?? "0") ₫</td>
+                            </tr>
+                        }
                     }
                     else
                     {
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: var(#858796); padding: 2rem;">
-                            Không có sản phẩm nào
-                        </td>
-                    </tr>
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(#858796); padding: 2rem;">
+                                Không có sản phẩm nào
+                            </td>
+                        </tr>
                     }
                     </tbody>
                 </table>
@@ -636,18 +641,18 @@ ViewBag.Title = "Chi tiết đơn hàng";
                     <div class="address-content">
                         @if (Model.PickupAddress != null)
                         {
-                        <p style="margin: 0;">
-                            @Model.PickupAddress.AddressLine
-                            @if (!string.IsNullOrEmpty(Model.PickupAddress.City))
-                            {
-                            <br />
-                            <span style="color: var(#858796);">@Model.PickupAddress.City</span>
-                            }
-                        </p>
+                            <p style="margin: 0;">
+                                @Model.PickupAddress.AddressLine
+                                @if (!string.IsNullOrEmpty(Model.PickupAddress.City))
+                                {
+                                    <br />
+                                    <span style="color: var(#858796);">@Model.PickupAddress.City</span>
+                                }
+                            </p>
                         }
                         else
                         {
-                        <p style="margin: 0; color: var(#858796); font-style: italic;">Chưa có thông tin</p>
+                            <p style="margin: 0; color: var(#858796); font-style: italic;">Chưa có thông tin</p>
                         }
                     </div>
                 </div>
@@ -661,18 +666,18 @@ ViewBag.Title = "Chi tiết đơn hàng";
                     <div class="address-content">
                         @if (Model.DropoffAddress != null)
                         {
-                        <p style="margin: 0;">
-                            @Model.DropoffAddress.AddressLine
-                            @if (!string.IsNullOrEmpty(Model.DropoffAddress.City))
-                            {
-                            <br />
-                            <span style="color: var(#858796);">@Model.DropoffAddress.City</span>
-                            }
-                        </p>
+                            <p style="margin: 0;">
+                                @Model.DropoffAddress.AddressLine
+                                @if (!string.IsNullOrEmpty(Model.DropoffAddress.City))
+                                {
+                                    <br />
+                                    <span style="color: var(#858796);">@Model.DropoffAddress.City</span>
+                                }
+                            </p>
                         }
                         else
                         {
-                        <p style="margin: 0; color: var(#858796); font-style: italic;">Chưa có thông tin</p>
+                            <p style="margin: 0; color: var(#858796); font-style: italic;">Chưa có thông tin</p>
                         }
                     </div>
                 </div>
@@ -683,68 +688,236 @@ ViewBag.Title = "Chi tiết đơn hàng";
     <!-- Warehouse Slots Section -->
     @if (Model.Order.OrderWarehouseSlots != null && Model.Order.OrderWarehouseSlots.Any())
     {
-    <div class="card warehouse-card">
-        <div class="warehouse-header">
-            <i class="fas fa-warehouse"></i> Thông tin lưu kho
-        </div>
-        <div class="card-body">
-            <div style="overflow-x: auto;">
-                <table class="warehouse-table">
-                    <thead>
-                    <tr>
-                        <th>Kho</th>
-                        <th>Mã ô</th>
-                        <th>Kích thước (m)</th>
-                        <th>Thể tích (m³)</th>
-                        <th>Bắt đầu lưu</th>
-                        <th>Kết thúc</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var slotLink in Model.Order.OrderWarehouseSlots)
-                    {
-                    var slot = slotLink.WarehouseSlot;
-                    <tr>
-                        <td class="warehouse-name">@slot.Warehouse.Name</td>
-                        <td>
-                            <span class="slot-code">@slot.Code</span>
-                        </td>
-                        <td class="slot-dimensions">
-                            @($"{slot.LengthM} × {slot.WidthM} × {slot.HeightM}")
-                        </td>
-                        <td class="slot-volume">@slot.VolumeM3 m³</td>
-                        <td>
-                                        <span class="date-cell">
-                                            <i class="far fa-calendar"></i>
-                                            @slotLink.AssignedAt.ToString("dd/MM/yyyy HH:mm")
+        <div class="card warehouse-card">
+            <div class="warehouse-header">
+                <i class="fas fa-warehouse"></i> Thông tin lưu kho
+            </div>
+            <div class="card-body">
+                <div style="overflow-x: auto;">
+                    <table class="warehouse-table">
+                        <thead>
+                        <tr>
+                            <th>Kho</th>
+                            <th>Mã ô</th>
+                            <th>Kích thước (m)</th>
+                            <th>Thể tích (m³)</th>
+                            <th>Bắt đầu lưu</th>
+                            <th>Kết thúc</th>
+                            <th>Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var slotLink in Model.Order.OrderWarehouseSlots)
+                        {
+                            var slot = slotLink.WarehouseSlot;
+                            <tr>
+                                <td class="warehouse-name">@slot.Warehouse.Name</td>
+                                <td>
+                                    <span class="slot-code">@slot.Code</span>
+                                </td>
+                                <td class="slot-dimensions">
+                                    @($"{slot.LengthM} × {slot.WidthM} × {slot.HeightM}")
+                                </td>
+                                <td class="slot-volume">@slot.VolumeM3 m³</td>
+                                <td>
+                                    <span class="date-cell">
+                                        <i class="far fa-calendar"></i>
+                                        @slotLink.AssignedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (slotLink.ReleasedAt.HasValue)
+                                    {
+                                        <span class="date-cell released">
+                                            <i class="far fa-calendar-check"></i>
+                                            @slotLink.ReleasedAt?.ToString("dd/MM/yyyy HH:mm")
                                         </span>
-                        </td>
-                        <td>
-                            @if (slotLink.ReleasedAt.HasValue)
-                            {
-                            <span class="date-cell released">
-                                                <i class="far fa-calendar-check"></i>
-                                @slotLink.ReleasedAt?.ToString("dd/MM/yyyy HH:mm")
-                                            </span>
-                            }
-                            else
-                            {
-                            <span style="color: var(#858796); font-style: italic;">Đang lưu</span>
-                            }
-                        </td>
-                    </tr>
-                    }
-                    </tbody>
-                </table>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(#858796); font-style: italic;">Đang lưu</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary edit-slot-btn"
+                                            data-slotid="@slotLink.Id"
+                                            data-assigned="@slotLink.AssignedAt.ToString("yyyy-MM-ddTHH:mm")"
+                                            data-released="@(slotLink.ReleasedAt?.ToString("yyyy-MM-ddTHH:mm"))">
+                                        <i class="fas fa-edit"></i> Sửa
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
     }
     else
     {
-    <div class="alert-box">
-        <i class="fas fa-info-circle"></i>
-        <p>Đơn hàng này chưa được gán ô kho.</p>
-    </div>
+        <div class="alert-box">
+            <i class="fas fa-info-circle"></i>
+            <p>Đơn hàng này chưa được gán ô kho.</p>
+        </div>
     }
 </div>
+<!-- Modal chỉnh sửa đơn hàng -->
+<div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editOrderLabel">Chỉnh sửa đơn hàng</h5>
+                @* <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button> *@
+            </div>
+
+            <div class="modal-body">
+                <form id="editOrderForm">
+                    <input type="hidden" name="OrderId" value="@Model.Order.Id" />
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày gửi hàng</label>
+                            <input type="date" class="form-control" name="PickupDate"
+                                   value="@Model.Order.PickupDate?.ToString("yyyy-MM-dd")">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày giao hàng</label>
+                            <input type="date" class="form-control" name="DeliveryDate"
+                                   value="@Model.Order.DeliveryDate?.ToString("yyyy-MM-dd")">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Trạng thái</label>
+                        <select class="form-select" name="Status">
+                            <option value="@StatusValue.Draft" selected="@(Model.Order.Status == StatusValue.Draft)">Tạm Lưu</option>
+                            <option value="@StatusValue.Pending" selected="@(Model.Order.Status == StatusValue.Pending)">Chờ xử lý</option>
+                            <option value="@StatusValue.Approved" selected="@(@Model.Order.Status == StatusValue.Approved)">Đã duyệt</option>
+                            <option value="@StatusValue.Completed" selected="@(@Model.Order.Status == StatusValue.Completed)">Hoàn thành</option>
+                            <option value="@StatusValue.Canceled" selected="@(@Model.Order.Status == StatusValue.Canceled)">Hủy</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" name="Note">@Model.Order.Note</textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success" id="btnSaveOrder">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Modal điều chỉnh ngày lưu kho của đơn hàng--> 
+<div class="modal fade" id="editSlotModal" tabindex="-1" role="dialog" aria-labelledby="editSlotModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="editSlotForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editSlotModalLabel">Chỉnh sửa ngày lưu kho</h5>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="slotId" id="slotId" />
+                    <div class="form-group">
+                        <label for="assignedAt">Ngày bắt đầu lưu</label>
+                        <input type="datetime-local" class="form-control" id="assignedAt" name="assignedAt" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="releasedAt">Ngày kết thúc</label>
+                        <input type="datetime-local" class="form-control" id="releasedAt" name="releasedAt" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts
+{ 
+    <script>
+        //Chỉnh sửa đơn hàng
+        $(document).ready(function () {
+            // Mở modal
+            $('#btnEditOrder').on('click', function () {
+                $('#editOrderModal').modal('show');
+            });
+
+            // Lưu dữ liệu
+            $('#btnSaveOrder').on('click', function () {
+                const form = $('#editOrderForm');
+                const formData = form.serialize(); 
+
+                $.ajax({
+                    url: '@Url.Action("UpdateOrder", "Orders", new { orderId = Model.Order.Id })',
+                    type: 'PUT',
+                    data: formData,
+                    success: function (res) {
+                        if (res.success) {
+                            alert('Cập nhật đơn hàng thành công!');
+                            location.reload();
+                        } else {
+                            alert('Lỗi: ' + res.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Không thể gửi yêu cầu!');
+                    }
+                });
+            });
+        });
+
+        //Chỉnh sửa ngày lưu kho
+        $(function () {
+            // Khi nhấn nút sửa
+            $(".edit-slot-btn").on("click", function () {
+                const slotId = $(this).data("slotid");
+                const assigned = $(this).data("assigned");
+                const released = $(this).data("released");
+
+                $("#slotId").val(slotId);
+                $("#assignedAt").val(assigned);
+                $("#releasedAt").val(released);
+
+                const modal = new bootstrap.Modal(document.getElementById("editSlotModal"));
+                modal.show();
+            });
+
+            // Submit form cập nhật
+            $("#editSlotForm").on("submit", function (e) {
+                e.preventDefault();
+
+                const data = {
+                    slotId: $("#slotId").val(),
+                    assignedAt: $("#assignedAt").val(),
+                    releasedAt: $("#releasedAt").val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("UpdateOrderWarehouseSlot", "Orders", new { orderId = Model.Order.Id })',
+                    type: 'PUT',
+                    data: data,
+                    success: function (res) {
+                        if (res.success) {
+                            alert(res.message || "Cập nhật thành công!");
+                            $("#editSlotModal").modal("hide"); 
+                            location.reload();
+                        } else {
+                            alert("⚠️ " + (res.message || "Có lỗi xảy ra."));
+                        }
+                    },
+                    error: function (xhr) {
+                        alert("❌ Lỗi máy chủ: " + xhr.statusText);
+                    }
+                });
+            });
+        });
+    </script>
+}

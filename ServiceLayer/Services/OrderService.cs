@@ -37,6 +37,19 @@ namespace ServiceLayer.Services
             return order;
         }
 
+        public bool UpdateOrder(Order order)
+        {
+            try
+            {
+                _orderRepository.Update(order);
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+
         public async Task<List<Order>> GetAllOrdersByStoreIdAsync(Guid storeId, StatusValue? status)
         {
             return await _orderRepository.GetOrdersInfoByStoreIdAsync(storeId, status);

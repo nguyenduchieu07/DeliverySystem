@@ -13,5 +13,6 @@ namespace ServiceLayer.Abstractions.IServices
         Task<List<Order>> GetAllOrdersByStoreIdAsync(Guid storeId, StatusValue? status);
         Task<Order?> GetByIdAsync(Guid orderId);
         Task<Order?> GetOrderInfoByIdAsync(Guid orderId);
+        bool UpdateOrder(Order order);
     }
 }

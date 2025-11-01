@@ -84,7 +84,6 @@
 
     .card-header {
         background: linear-gradient(180deg, var(#e5501b) 0%, var(#d26c45) 100%);
-        color: var(--white);
         padding: 0.75rem 1.25rem;
         border-bottom: none;
         border-radius: 0.35rem 0.35rem 0 0;
@@ -483,7 +482,25 @@
                 },
                 columnDefs: [
                     {orderable: false, targets: [4]}
-                ]
+                ],
+                initComplete: function () {
+                    this.api().columns([5]).every(function () { // 5 = cột Trạng thái
+                        var column = this;
+                        var select = $('<select class="form-select form-select-sm" style="width:150px;">' +
+                            '<option value="">Tất cả</option>' +
+                            '<option value="@(StatusValue.Draft.ToDisplayStringForOrder())">Tạm lưu</option>' +
+                            '<option value="@(StatusValue.Pending.ToDisplayStringForOrder())">Chờ xử lý</option>' +
+                            '<option value="@(StatusValue.Approved.ToDisplayStringForOrder())">Đã duyệt</option>' +
+                            '<option value="@(StatusValue.Completed.ToDisplayStringForOrder())">Hoàn thành</option>' +
+                            '<option value="@(StatusValue.Canceled.ToDisplayStringForOrder())">Đã hủy</option>' +
+                            '</select>')
+                            .appendTo($(column.header()).empty())
+                            .on('change', function () {
+                                var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                                column.search(val ? '^' + val + '$' : '', true, false).draw();
+                            });
+                    });
+                }
             });
         });
     </script>
