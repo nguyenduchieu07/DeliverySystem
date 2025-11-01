@@ -1,0 +1,750 @@
+﻿@model PresentationLayer.Areas.Stores.Controllers.OrdersController.StoreOrderDetailViewModel
+@{
+ViewBag.Title = "Chi tiết đơn hàng";
+}
+
+<style>
+    :root {
+        --success: #1cc88a;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --info: #36b9cc;
+        --primary: #4e73df;
+        --text: #5a5c69;
+        --border: #e3e6f0;
+        --white: #ffffff;
+        --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: var(--text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .page-header h1 i {
+        color: var(#e5501b);
+    }
+
+    .order-id-display {
+        font-family: 'Courier New', monospace;
+        color: var(#e5501b);
+        font-weight: 700;
+    }
+
+    /* Back Button */
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .btn-back:hover {
+        background: var(#f8f9fc);
+        border-color: var(#e5501b);
+        color: var(#e5501b);
+        transform: translateY(-1px);
+    }
+
+    /* Card Styles */
+    .card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.25rem;
+    }
+
+    .card-header {
+        background: linear-gradient(180deg, var(#e5501b) 0%, var(#d26c45) 100%);
+        color: var(--white);
+        padding: 0.75rem 1.25rem;
+        border-bottom: none;
+        border-radius: 0.35rem 0.35rem 0 0;
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Info Grid */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-section {
+        background: var(#f8f9fc);
+        padding: 1.25rem;
+        border-radius: 0.35rem;
+        border: 1px solid var(--border);
+    }
+
+    .info-section h5 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(#e5501b);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-section h5 i {
+        color: var(#e5501b);
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(#858796);
+    }
+
+    .info-value {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text);
+        text-align: right;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-block;
+        padding: 0.375rem 0.875rem;
+        border-radius: 10rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.pending {
+        background: var(--warning);
+        color: var(--white);
+    }
+
+    .status-badge.approved {
+        background: var(--success);
+        color: var(--white);
+    }
+
+    .status-badge.completed {
+        background: var(--primary);
+        color: var(--white);
+    }
+
+    .status-badge.rejected {
+        background: var(--danger);
+        color: var(--white);
+    }
+
+    /* Price Display */
+    .price-display {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--success);
+    }
+
+    /* Section Divider */
+    hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 2rem 0;
+    }
+
+    /* Section Title */
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(#e5501b);
+    }
+
+    /* Table Styles */
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--white);
+        border-radius: 0.35rem;
+        overflow: hidden;
+    }
+
+    .items-table thead {
+        background: var(#f8f9fc);
+    }
+
+    .items-table th {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text);
+        border-bottom: 2px solid var(--border);
+    }
+
+    .items-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+        font-size: 0.875rem;
+    }
+
+    .items-table tbody tr:hover {
+        background: var(#f8f9fc);
+    }
+
+    .items-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .item-name {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .item-quantity {
+        text-align: center;
+        font-weight: 700;
+        color: var(#e5501b);
+    }
+
+    .item-dimensions {
+        font-family: 'Courier New', monospace;
+        color: var(#858796);
+        font-size: 0.8rem;
+    }
+
+    .item-subtotal {
+        font-weight: 700;
+        color: var(--success);
+        text-align: right;
+    }
+
+    /* Address Cards */
+    .address-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .address-card {
+        background: var(#f8f9fc);
+        padding: 1.25rem;
+        border-radius: 0.35rem;
+        border-left: 4px solid var(#e5501b);
+    }
+
+    .address-card.pickup {
+        border-left-color: var(--info);
+    }
+
+    .address-card.dropoff {
+        border-left-color: var(--success);
+    }
+
+    .address-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .address-title i {
+        font-size: 1rem;
+    }
+
+    .address-content {
+        color: var(--text);
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    /* Total Summary */
+    .total-summary {
+        background: var(#f8f9fc);
+        padding: 1.25rem;
+        border-radius: 0.35rem;
+        margin-top: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 2px solid var(#e5501b);
+    }
+
+    .total-label {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .total-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(#e5501b);
+    }
+
+    /* Warehouse Section */
+    .warehouse-card {
+        margin-top: 1.5rem;
+    }
+
+    .warehouse-header {
+        background: linear-gradient(180deg, var(--info) 0%, #2c9faf 100%);
+        color: var(--white);
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.35rem 0.35rem 0 0;
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .warehouse-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--white);
+    }
+
+    .warehouse-table thead {
+        background: var(#f8f9fc);
+    }
+
+    .warehouse-table th {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text);
+        border-bottom: 2px solid var(--border);
+    }
+
+    .warehouse-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+        font-size: 0.875rem;
+    }
+
+    .warehouse-table tbody tr:hover {
+        background: var(#f8f9fc);
+    }
+
+    .warehouse-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .warehouse-name {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .slot-code {
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        color: var(--info);
+        background: rgba(54, 185, 204, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .slot-dimensions {
+        font-family: 'Courier New', monospace;
+        color: var(#858796);
+        font-size: 0.8rem;
+    }
+
+    .slot-volume {
+        font-weight: 600;
+        color: var(--info);
+    }
+
+    .date-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--text);
+    }
+
+    .date-cell i {
+        color: var(#858796);
+        font-size: 0.75rem;
+    }
+
+    .date-cell.released {
+        color: var(--success);
+    }
+
+    .date-cell.released i {
+        color: var(--success);
+    }
+
+    /* Alert Box */
+    .alert-box {
+        background: rgba(54, 185, 204, 0.1);
+        border: 1px solid var(--info);
+        border-left: 4px solid var(--info);
+        padding: 1rem 1.25rem;
+        border-radius: 0.35rem;
+        margin-top: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .alert-box i {
+        color: var(--info);
+        font-size: 1.25rem;
+    }
+
+    .alert-box p {
+        margin: 0;
+        color: var(--text);
+        font-size: 0.875rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+    .detail-container {
+        padding: 1rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .info-grid,
+    .address-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .items-table,
+    .warehouse-table {
+        font-size: 0.75rem;
+    }
+
+    .items-table th,
+    .items-table td,
+    .warehouse-table th,
+    .warehouse-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    }
+</style>
+
+<div class="detail-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-box"></i>
+            Chi tiết đơn hàng
+            <span class="order-id-display">#@Model.Order.Id</span>
+        </h1>
+        <a asp-action="Index" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Order Info Card -->
+    <div class="card">
+        <div class="card-body">
+            <!-- Info Grid -->
+            <div class="info-grid">
+                <!-- Order Information -->
+                <div class="info-section">
+                    <h5><i class="fas fa-info-circle"></i> Thông tin đơn hàng</h5>
+                    <div class="info-item">
+                        <span class="info-label">Trạng thái</span>
+                        <span class="info-value">
+                            @{
+                            var statusClass = Model.Order.Status switch
+                            {
+                            StatusValue.Pending => "pending",
+                            StatusValue.Approved => "approved",
+                            StatusValue.Completed => "completed",
+                            StatusValue.Rejected => "rejected",
+                            _ => ""
+                            };
+                            }
+                            <span class="status-badge @statusClass">@Model.Order.Status.ToDisplayStringForOrder()</span>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Ngày gửi hàng</span>
+                        <span class="info-value">
+                            <i class="far fa-calendar"></i>
+                            @(Model.Order.PickupDate?.ToString("dd/MM/yyyy") ?? "—")
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Ngày giao hàng</span>
+                        <span class="info-value">
+                            <i class="far fa-calendar-check"></i>
+                            @(Model.Order.DeliveryDate?.ToString("dd/MM/yyyy") ?? "—")
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Ghi chú</span>
+                        <span class="info-value">@(Model.Order.Note ?? "—")</span>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <div class="info-section">
+                    <h5><i class="fas fa-user"></i> Thông tin khách hàng</h5>
+                    <div class="info-item">
+                        <span class="info-label">Họ và tên</span>
+                        <span class="info-value">@(Model.Customer?.FullName ?? "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">@(Model.Customer?.Email ?? "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Số điện thoại</span>
+                        <span class="info-value">
+                            <i class="fas fa-phone"></i>
+                            @(Model.Customer?.PhoneNumber ?? "—")
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- Items Section -->
+            <h5 class="section-title"><i class="fas fa-boxes"></i> Danh sách sản phẩm</h5>
+            <div style="overflow-x: auto;">
+                <table class="items-table">
+                    <thead>
+                    <tr>
+                        <th>Tên hàng</th>
+                        <th style="text-align: center;">Số lượng</th>
+                        <th>Kích thước (m)</th>
+                        <th>Trọng lượng (kg)</th>
+                        <th style="text-align: right;">Thành tiền</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.OrderItems != null && Model.OrderItems.Any())
+                    {
+                    foreach (var item in Model.OrderItems)
+                    {
+                    <tr>
+                        <td class="item-name">@item.ItemName</td>
+                        <td class="item-quantity">@item.Quantity</td>
+                        <td class="item-dimensions">
+                            @item.LengthM × @item.WidthM × @item.HeightM
+                        </td>
+                        <td>@item.WeightKg kg</td>
+                        <td class="item-subtotal">@(item.Subtotal?.ToString("N0") ?? "0") ₫</td>
+                    </tr>
+                    }
+                    }
+                    else
+                    {
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(#858796); padding: 2rem;">
+                            Không có sản phẩm nào
+                        </td>
+                    </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Total Summary -->
+            <div class="total-summary">
+                <span class="total-label">Tổng cộng:</span>
+                <span class="total-value">@Model.Order.TotalAmount.ToString("N0") ₫</span>
+            </div>
+
+            <hr />
+
+            <!-- Addresses Section -->
+            <h5 class="section-title"><i class="fas fa-map-marker-alt"></i> Địa chỉ giao nhận</h5>
+            <div class="address-grid">
+                <!-- Pickup Address -->
+                <div class="address-card pickup">
+                    <div class="address-title">
+                        <i class="fas fa-box-open" style="color: var(--info);"></i>
+                        Điểm lấy hàng
+                    </div>
+                    <div class="address-content">
+                        @if (Model.PickupAddress != null)
+                        {
+                        <p style="margin: 0;">
+                            @Model.PickupAddress.AddressLine
+                            @if (!string.IsNullOrEmpty(Model.PickupAddress.City))
+                            {
+                            <br />
+                            <span style="color: var(#858796);">@Model.PickupAddress.City</span>
+                            }
+                        </p>
+                        }
+                        else
+                        {
+                        <p style="margin: 0; color: var(#858796); font-style: italic;">Chưa có thông tin</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Dropoff Address -->
+                <div class="address-card dropoff">
+                    <div class="address-title">
+                        <i class="fas fa-shipping-fast" style="color: var(--success);"></i>
+                        Điểm giao hàng
+                    </div>
+                    <div class="address-content">
+                        @if (Model.DropoffAddress != null)
+                        {
+                        <p style="margin: 0;">
+                            @Model.DropoffAddress.AddressLine
+                            @if (!string.IsNullOrEmpty(Model.DropoffAddress.City))
+                            {
+                            <br />
+                            <span style="color: var(#858796);">@Model.DropoffAddress.City</span>
+                            }
+                        </p>
+                        }
+                        else
+                        {
+                        <p style="margin: 0; color: var(#858796); font-style: italic;">Chưa có thông tin</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warehouse Slots Section -->
+    @if (Model.Order.OrderWarehouseSlots != null && Model.Order.OrderWarehouseSlots.Any())
+    {
+    <div class="card warehouse-card">
+        <div class="warehouse-header">
+            <i class="fas fa-warehouse"></i> Thông tin lưu kho
+        </div>
+        <div class="card-body">
+            <div style="overflow-x: auto;">
+                <table class="warehouse-table">
+                    <thead>
+                    <tr>
+                        <th>Kho</th>
+                        <th>Mã ô</th>
+                        <th>Kích thước (m)</th>
+                        <th>Thể tích (m³)</th>
+                        <th>Bắt đầu lưu</th>
+                        <th>Kết thúc</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var slotLink in Model.Order.OrderWarehouseSlots)
+                    {
+                    var slot = slotLink.WarehouseSlot;
+                    <tr>
+                        <td class="warehouse-name">@slot.Warehouse.Name</td>
+                        <td>
+                            <span class="slot-code">@slot.Code</span>
+                        </td>
+                        <td class="slot-dimensions">
+                            @($"{slot.LengthM} × {slot.WidthM} × {slot.HeightM}")
+                        </td>
+                        <td class="slot-volume">@slot.VolumeM3 m³</td>
+                        <td>
+                                        <span class="date-cell">
+                                            <i class="far fa-calendar"></i>
+                                            @slotLink.AssignedAt.ToString("dd/MM/yyyy HH:mm")
+                                        </span>
+                        </td>
+                        <td>
+                            @if (slotLink.ReleasedAt.HasValue)
+                            {
+                            <span class="date-cell released">
+                                                <i class="far fa-calendar-check"></i>
+                                @slotLink.ReleasedAt?.ToString("dd/MM/yyyy HH:mm")
+                                            </span>
+                            }
+                            else
+                            {
+                            <span style="color: var(#858796); font-style: italic;">Đang lưu</span>
+                            }
+                        </td>
+                    </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+    else
+    {
+    <div class="alert-box">
+        <i class="fas fa-info-circle"></i>
+        <p>Đơn hàng này chưa được gán ô kho.</p>
+    </div>
+    }
+</div>

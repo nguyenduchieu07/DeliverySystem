@@ -15,6 +15,15 @@ namespace DataAccessLayer.Repositoies
         {
         }
 
+        public async Task<Store?> GetStoreByCustomerIdAsync(Guid customerId)
+        {
+            var store = await _context.Stores
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.OwnerUserId == customerId);
+
+            return store;
+        }
+
         public async Task<Store?> GetStoreWithDetailsAsync(Guid storeId)
         {
             var store = await _context.Stores

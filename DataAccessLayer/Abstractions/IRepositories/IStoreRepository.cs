@@ -10,5 +10,6 @@ namespace DataAccessLayer.Abstractions.IRepositories
     public interface IStoreRepository : IBaseRepository<Entities.Store, Guid>
     {
         Task<Store?> GetStoreWithDetailsAsync(Guid storeId);
+        Task<Store?> GetStoreByCustomerIdAsync(Guid customerId);
     }
 }

@@ -9,7 +9,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@title</title>
+    <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="~/css/storeSite.css" />
+    <link href="~/css/sb-admin-2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.min.css">
     @RenderSection("Styles", required: false)
 </head>
 <body>
@@ -23,17 +26,19 @@
             </main>
         </div>
     </div>
-    
 
-    <!-- jQuery & validation (đặt TRƯỚC @@RenderSection("Scripts")) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" defer></script>
-    <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
 
-    <!-- jQuery Validation (phụ thuộc jQuery) -->
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" asp-append-version="true"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+
+    <!-- jQuery Validation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+
+    <!-- Section scripts -->
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
 
-namespace ServiceLayer.Abstractions.IServices
+namespace DataAccessLayer.Abstractions.IRepositories
 {
-    public interface IOrderService
+    public interface IOrderRepository : IBaseRepository<Order, Guid>
     {
-        Task<List<Order>> GetAllOrdersByStoreIdAsync(Guid storeId, StatusValue? status);
-        Task<Order?> GetByIdAsync(Guid orderId);
         Task<Order?> GetOrderInfoByIdAsync(Guid orderId);
+        Task<List<Order>> GetOrdersInfoByStoreIdAsync(Guid orderId, StatusValue? status = null);
     }
 }

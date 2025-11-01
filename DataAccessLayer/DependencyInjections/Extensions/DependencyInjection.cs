@@ -63,6 +63,7 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             services.AddScoped<IBaseRepository<SlotReservation, Guid>, BaseRepository<SlotReservation, Guid>>();
             services.AddScoped<IBaseRepository<Contract, Guid>, BaseRepository<Contract, Guid>>();
             services.AddScoped<IStoreRepository, StoreRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
         }
     }
 }

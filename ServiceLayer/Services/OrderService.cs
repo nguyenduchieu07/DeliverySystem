@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DataAccessLayer.Abstractions.IRepositories;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
+using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 
 namespace ServiceLayer.Services
@@ -14,9 +15,9 @@ namespace ServiceLayer.Services
     public class OrderService : IOrderService
     {
         private readonly DeliverySytemContext _context;
-        private readonly IBaseRepository<Order, Guid> _orderRepository;
+        private readonly IOrderRepository _orderRepository;
         private readonly IQuotationRepository _quotationRepository;
-        public OrderService(DeliverySytemContext context, IBaseRepository<Order, Guid>  orderRepository, IQuotationRepository quotationRepository)
+        public OrderService(DeliverySytemContext context, IOrderRepository  orderRepository, IQuotationRepository quotationRepository)
         {
             _context = context;
             _orderRepository = orderRepository;
@@ -29,6 +30,17 @@ namespace ServiceLayer.Services
                 o => o.Store ]
             );
         }
-        
+
+        public async Task<Order?> GetOrderInfoByIdAsync(Guid orderId)
+        {
+            var order =  await _orderRepository.GetOrderInfoByIdAsync(orderId);
+            return order;
+        }
+
+        public async Task<List<Order>> GetAllOrdersByStoreIdAsync(Guid storeId, StatusValue? status)
+        {
+            return await _orderRepository.GetOrdersInfoByStoreIdAsync(storeId, status);
+        }
+
     }
 }
