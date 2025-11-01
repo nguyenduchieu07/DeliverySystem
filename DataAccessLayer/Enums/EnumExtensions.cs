@@ -23,4 +23,17 @@ public partial class EnumExtensions
             _ => status.ToString()
         };
     }
+    
+    public static string ToDisplayStringForOrder(this StatusValue status)
+    {
+        return status switch
+        {
+            StatusValue.Draft => "Tạm lưu",
+            StatusValue.Pending => "Chờ xử lý", 
+            StatusValue.Approved => "Đã duyệt",
+            StatusValue.Completed => "Hoàn thành",
+            StatusValue.Canceled => "Hủy",
+            _ => status.ToString()
+        };
+    }
 }

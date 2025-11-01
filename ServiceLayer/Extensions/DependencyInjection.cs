@@ -27,6 +27,7 @@ namespace ServiceLayer.Extensions
             services.AddScoped<IUserContextService, UserContextService>();
             services.AddScoped<IContractService, ContractService>();
             services.AddScoped<IPaymentService,PaymentService>();
+            services.AddScoped<IWarehouseService, WarehouseService>();
             services.AddHttpClient<IGeminiService, GeminiService>();
             services.AddHttpContextAccessor();
         }

@@ -1,12 +1,15 @@
 ﻿using DataAccessLayer.Abstractions.IRepositories;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using System.Security.Principal;
 using System.Threading.Tasks;
 
 namespace ServiceLayer.Services
@@ -15,6 +18,7 @@ namespace ServiceLayer.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IBaseRepository<Customer, Guid> _customerRepo;
+        private readonly IStoreRepository _storeRepo;
         private readonly IBaseRepository<Address, Guid> _addressRepo;
         private readonly IBaseRepository<Order, Guid> _orderRepo;
         private readonly DeliverySytemContext _context;
@@ -23,6 +27,7 @@ namespace ServiceLayer.Services
 
         public CustomerService(
             IUserRepository userRepository,
+           IStoreRepository storeRepo,
             IBaseRepository<Customer, Guid> customerRepo,
             IBaseRepository<Address, Guid> addressRepo,
             IBaseRepository<Order, Guid> orderRepo,
@@ -37,6 +42,7 @@ namespace ServiceLayer.Services
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
+            _storeRepo = storeRepo;
         }
 
         public async Task<(bool Success, string Message, User? User)> RegisterCustomerAsync(
@@ -165,14 +171,29 @@ namespace ServiceLayer.Services
             }
 
             // Đăng nhập
-            var result = await _signInManager.PasswordSignInAsync(
+            var result = await _signInManager.CheckPasswordSignInAsync(
                 user,
                 password,
-                rememberMe,
                 lockoutOnFailure: false);
+
 
             if (result.Succeeded)
             {
+                var storeByUser = await _storeRepo.GetStoreByCustomerIdAsync(user.Id);
+
+                if(storeByUser != null)
+                {
+                    // Kiểm tra xem claim đã có chưa
+                    var existingClaims = await _userManager.GetClaimsAsync(user);
+                    if (!existingClaims.Any(c => c.Type == "StoreId"))
+                    {
+                        await _userManager.AddClaimAsync(user, new Claim("StoreId", storeByUser.Id.ToString()));
+                    }
+
+                    await _signInManager.SignInAsync(user, isPersistent: rememberMe);
+                }
+                else 
+                    await _signInManager.SignInAsync(user, isPersistent: rememberMe);
                 return (true, "Đăng nhập thành công");
             }
             else if (result.IsLockedOut)

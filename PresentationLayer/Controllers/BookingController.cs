@@ -8,20 +8,22 @@ using DataAccessLayer.Enums;
 
 namespace PresentationLayer.Controllers
 {
-
     public class BookingController : Controller
     {
         private readonly DeliverySytemContext _db;
         private readonly ICustomerService _customerService;
         private readonly IDeliveryService _deliveryService;
         private readonly IOrderService _orderService;
-        public BookingController(DeliverySytemContext deliverySytemContext, ICustomerService customerService, IDeliveryService deliveryService, IOrderService orderService)
+
+        public BookingController(DeliverySytemContext deliverySytemContext, ICustomerService customerService,
+            IDeliveryService deliveryService, IOrderService orderService)
         {
             _db = deliverySytemContext;
             _customerService = customerService;
             _deliveryService = deliveryService;
             _orderService = orderService;
         }
+
         public async Task<IActionResult> Index()
         {
             // Điều hướng đến Create để đặt booking
@@ -57,7 +59,11 @@ namespace PresentationLayer.Controllers
                 DropoffAddressId = defaultAddress?.Id,
                 DropoffLatitude = defaultAddress?.Latitude,
                 DropoffLongitude = defaultAddress?.Longitude,
-                DropoffAddressText = defaultAddress == null ? null : ($"{defaultAddress.AddressLine}, {defaultAddress.Ward}, {defaultAddress.District}, {defaultAddress.City}")?.Replace("  ", " ")
+                DropoffAddressText = defaultAddress == null
+                    ? null
+                    : (
+                        $"{defaultAddress.AddressLine}, {defaultAddress.Ward}, {defaultAddress.District}, {defaultAddress.City}")
+                    ?.Replace("  ", " ")
             };
 
             vm.Items = new List<BookingItemVM>
@@ -138,6 +144,7 @@ namespace PresentationLayer.Controllers
                         Longitude = viewModel.PickupAddress.Longitude,
                         City = "Hà Nội"
                     },
+                  
                     DropoffAddress = new Address
                     {
                         Id = Guid.NewGuid(),
@@ -158,7 +165,8 @@ namespace PresentationLayer.Controllers
 
                 if (viewModel.SpecialRequirements != null && viewModel.SpecialRequirements.Any())
                 {
-                    order.Note += "\n\n📋 Yêu cầu đặc biệt:\n" + string.Join("\n", viewModel.SpecialRequirements.Select(r => "• " + r));
+                    order.Note += "\n\n📋 Yêu cầu đặc biệt:\n" +
+                                  string.Join("\n", viewModel.SpecialRequirements.Select(r => "• " + r));
                 }
 
                 if (viewModel.Items != null && viewModel.Items.Any())
@@ -258,7 +266,8 @@ namespace PresentationLayer.Controllers
                     var R = 6371.0; // km
                     var dLat = ToRad(w.Latitude - lat);
                     var dLng = ToRad(w.Longitude - lng);
-                    var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(ToRad(lat)) * Math.Cos(ToRad(w.Latitude)) * Math.Sin(dLng / 2) * Math.Sin(dLng / 2);
+                    var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(ToRad(lat)) *
+                        Math.Cos(ToRad(w.Latitude)) * Math.Sin(dLng / 2) * Math.Sin(dLng / 2);
                     var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
                     var dist = R * c;
                     return new
@@ -269,7 +278,9 @@ namespace PresentationLayer.Controllers
                         w.Latitude,
                         w.Longitude,
                         distanceKm = Math.Round(dist, 2),
-                        full = string.Join(", ", new[] { w.AddressLine, w.Ward, w.District, w.City }.Where(s => !string.IsNullOrWhiteSpace(s)))
+                        full = string.Join(", ",
+                            new[] { w.AddressLine, w.Ward, w.District, w.City }.Where(s =>
+                                !string.IsNullOrWhiteSpace(s)))
                     };
                 })
                 .OrderBy(x => x.distanceKm)
@@ -278,14 +289,16 @@ namespace PresentationLayer.Controllers
 
             return Json(results);
         }
-      
+
 
         [HttpGet]
         public async Task<IActionResult> Success(Guid? Id)
         {
             // Support both 'Id' (from query string) and 'id' (from route)
-            var orderId = Id ?? (Guid.TryParse(Request.Query["Id"].FirstOrDefault(), out var parsedId) ? parsedId : Guid.Empty);
-            
+            var orderId = Id ?? (Guid.TryParse(Request.Query["Id"].FirstOrDefault(), out var parsedId)
+                ? parsedId
+                : Guid.Empty);
+
             if (orderId == Guid.Empty)
             {
                 return BadRequest("Mã đơn hàng không hợp lệ.");
@@ -298,17 +311,20 @@ namespace PresentationLayer.Controllers
                 .Include(o => o.OrderItems)
                 .Include(o => o.Store)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
-            
+
             if (order == null)
             {
                 return NotFound("Không tìm thấy đơn hàng với mã đã cung cấp.");
             }
-            
+
             ViewData["Title"] = "Đơn hàng đã được tạo thành công";
             return View(order);
         }
 
-        private async Task RehydrateServices() { await Task.CompletedTask; }
+        private async Task RehydrateServices()
+        {
+            await Task.CompletedTask;
+        }
 
         private async Task RehydrateAddresses(Guid userId, BookingRequestVM vm)
         {

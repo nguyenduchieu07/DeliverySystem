@@ -35,5 +35,7 @@ namespace DataAccessLayer.Entities
         public decimal BasePricePerHour { get; set; }
         public virtual Warehouse Warehouse { get; set; } = null!;
         
+        public virtual ICollection<OrderWarehouseSlot> OrderWarehouseSlots { get; set; } = new List<OrderWarehouseSlot>();
+        
     }
 }

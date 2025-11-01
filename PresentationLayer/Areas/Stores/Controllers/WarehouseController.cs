@@ -380,17 +380,16 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 if (s.Status == StatusValue.Maintenance)
                     return "maintenance"; 
 
-                if (s.Status == StatusValue.Available &&  s.LeaseStart < today && s.LeaseEnd < today)
+                if (s.Status == StatusValue.Available )
                     return "available"; // chưa có ai thuê
 
-                if (s.Status == StatusValue.InUse && (s.LeaseStart != null && s.LeaseStart.GetValueOrDefault().Date <= today) 
-                                                  && (s.LeaseEnd != null && s.LeaseEnd.GetValueOrDefault().Date >= today))
+                if (s.Status == StatusValue.InUse)
                     return "inuse"; // đang sử dụng
 
                 if (s.Status == StatusValue.Reserved)
                     return "reserved"; // đã có người đặt nhưng chưa dùng
 
-                return "available";
+                return "_";
             }
 
             var cells = slots.Select(s => new

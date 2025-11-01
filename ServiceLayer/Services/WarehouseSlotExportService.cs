@@ -15,13 +15,19 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
     private readonly DeliverySytemContext _db;
     public WarehouseSlotExportService(DeliverySytemContext db) => _db = db;
 
-    // Cấu trúc cột theo thiết kế import MỚI (không có Row/Col)
+    // Cấu trúc cột theo thiết kế import MỚI (Có Row/Col)
     // A:WarehouseName, B:Code, C:HeightM, D:LengthM, E:WidthM,
-    // F:BasePricePerHour, G:LeaseStart, H:LeaseEnd, I:IsBlocked, J:ImageUrl
-    private static readonly string[] Header = new[]
+    // F:BasePricePerHour, G:Row, H:Col, I:IsBlocked, J:ImageUrl
+    private static readonly string[] HeaderTemplate = new[]
     {
         "WarehouseName","Code","HeightM","LengthM","WidthM",
-        "BasePricePerHour","LeaseStart","LeaseEnd","IsBlocked","ImageUrl"
+        "BasePricePerHour","Row","Col","IsBlocked","ImageUrl"
+    };
+
+    private static readonly string[] HeaderExport = new[]
+    {
+        "WarehouseName","Code","HeightM","LengthM","WidthM",
+        "BasePricePerHour","Row","Col", "LeaseStart", "LeaseEnd","IsBlocked","ImageUrl"
     };
 
     public async Task<byte[]> ExportTemplateAsync(string warehouseName, CancellationToken ct = default)
@@ -30,10 +36,10 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
         var ws = wb.Worksheets.Add("Slots");
 
         // Header
-        for (int i = 0; i < Header.Length; i++)
-            ws.Cell(1, i + 1).Value = Header[i];
+        for (int i = 0; i < HeaderTemplate.Length; i++)
+            ws.Cell(1, i + 1).Value = HeaderTemplate[i];
 
-        StyleHeader(ws.Range(1, 1, 1, Header.Length));
+        StyleHeader(ws.Range(1, 1, 1, HeaderTemplate.Length));
 
         // Ghi dòng mô tả (optional)
         ws.Cell(2, 1).Value = $"{warehouseName}";
@@ -41,11 +47,11 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
         ws.Cell(2, 4).Value = "(m)";
         ws.Cell(2, 5).Value = "(m)";
         ws.Cell(2, 6).Value = "(VND/giờ)";
-        ws.Cell(2, 7).Value = "(yyyy-MM-dd)";
-        ws.Cell(2, 8).Value = "(yyyy-MM-dd)";
+        ws.Cell(2, 7).Value = "(số hàng)";
+        ws.Cell(2, 8).Value = "(số cột)";
         ws.Cell(2, 9).Value = "(TRUE/FALSE)";
 
-        AutoFit(ws, Header.Length);
+        AutoFit(ws, HeaderTemplate.Length);
         ws.SheetView.FreezeRows(1);
         ws.RangeUsed().SetAutoFilter();
 
@@ -76,6 +82,8 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
                 s.LengthM,
                 s.WidthM,
                 s.BasePricePerHour,
+                s.Row,
+                s.Col,
                 s.LeaseStart,
                 s.LeaseEnd,
                 s.IsBlocked,
@@ -87,9 +95,9 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
         var ws = wb.Worksheets.Add("Slots");
 
         // Header
-        for (int i = 0; i < Header.Length; i++)
-            ws.Cell(1, i + 1).Value = Header[i];
-        StyleHeader(ws.Range(1, 1, 1, Header.Length));
+        for (int i = 0; i < HeaderExport.Length; i++)
+            ws.Cell(1, i + 1).Value = HeaderExport[i];
+        StyleHeader(ws.Range(1, 1, 1, HeaderExport.Length));
 
         // Data
         var r = 2;
@@ -101,21 +109,25 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
             ws.Cell(r, 4).Value = s.LengthM;         // LengthM
             ws.Cell(r, 5).Value = s.WidthM;         // WidthM
             ws.Cell(r, 6).Value = s.BasePricePerHour; // BasePricePerHour
+            ws.Cell(r, 7).Value = s.Col;         // Col
+            ws.Cell(r, 8).Value = s.Row; // Row
 
-            if (s.LeaseStart.HasValue) ws.Cell(r, 7).Value = s.LeaseStart.Value;
-            if (s.LeaseEnd.HasValue) ws.Cell(r, 8).Value = s.LeaseEnd.Value;
+            if (s.LeaseStart.HasValue) ws.Cell(r, 9).Value = s.LeaseStart.Value;
+            if (s.LeaseEnd.HasValue) ws.Cell(r, 10).Value = s.LeaseEnd.Value;
 
-            ws.Cell(r, 9).Value = s.IsBlocked;             // IsBlocked
+            ws.Cell(r,11).Value = s.IsBlocked;             // IsBlocked
             if (!string.IsNullOrWhiteSpace(s.ImageUrl))
-                ws.Cell(r, 10).Value = s.ImageUrl;          // ImageUrl
+                ws.Cell(r, 12).Value = s.ImageUrl;          // ImageUrl
 
             // Định dạng
             ws.Cell(r, 3).Style.NumberFormat.Format = "0.00";
             ws.Cell(r, 4).Style.NumberFormat.Format = "0.00";
             ws.Cell(r, 5).Style.NumberFormat.Format = "0.00";
             ws.Cell(r, 6).Style.NumberFormat.Format = "#,##0"; // VND
-            ws.Cell(r, 7).Style.DateFormat.Format = "yyyy-MM-dd";
-            ws.Cell(r, 8).Style.DateFormat.Format = "yyyy-MM-dd";
+            ws.Cell(r, 7).Style.NumberFormat.Format = "0"; // Col
+            ws.Cell(r, 8).Style.NumberFormat.Format = "0"; // Row
+            ws.Cell(r, 9).Style.DateFormat.Format = "yyyy-MM-dd";
+            ws.Cell(r, 10).Style.DateFormat.Format = "yyyy-MM-dd";
 
             r++;
         }
@@ -125,7 +137,7 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
         // StyleHeader(ws.Range(1, 11, 1, 11));
         // for (int i = 2; i < r; i++) ws.Cell(i, 11).FormulaA1 = $"C{i}*D{i}*E{i}";
 
-        AutoFit(ws, Header.Length);
+        AutoFit(ws, HeaderExport.Length);
         ws.SheetView.FreezeRows(1);
         if (ws.RangeUsed() != null) ws.RangeUsed().SetAutoFilter();
 
@@ -149,9 +161,9 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
             var ws = wb.Worksheets.Add(SafeSheetName(wh.Name));
 
             // Header
-            for (int i = 0; i < Header.Length; i++)
-                ws.Cell(1, i + 1).Value = Header[i];
-            StyleHeader(ws.Range(1, 1, 1, Header.Length));
+            for (int i = 0; i < HeaderExport.Length; i++)
+                ws.Cell(1, i + 1).Value = HeaderExport[i];
+            StyleHeader(ws.Range(1, 1, 1, HeaderExport.Length));
 
             var slots = await _db.WarehouseSlots
                 .AsNoTracking()
@@ -164,6 +176,8 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
                     s.LengthM,
                     s.WidthM,
                     s.BasePricePerHour,
+                    s.Row,
+                    s.Col,
                     s.LeaseStart,
                     s.LeaseEnd,
                     s.IsBlocked,
@@ -179,22 +193,24 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
                 ws.Cell(r, 4).Value = s.LengthM;
                 ws.Cell(r, 5).Value = s.WidthM;
                 ws.Cell(r, 6).Value = s.BasePricePerHour;
-                if (s.LeaseStart.HasValue) ws.Cell(r, 7).Value = s.LeaseStart.Value;
-                if (s.LeaseEnd.HasValue) ws.Cell(r, 8).Value = s.LeaseEnd.Value;
-                ws.Cell(r, 9).Value = s.IsBlocked;
-                if (!string.IsNullOrWhiteSpace(s.ImageUrl)) ws.Cell(r, 10).Value = s.ImageUrl;
+                ws.Cell(r, 7).Value = s.WidthM;
+                ws.Cell(r, 8).Value = s.BasePricePerHour;
+                if (s.LeaseStart.HasValue) ws.Cell(r, 9).Value = s.LeaseStart.Value;
+                if (s.LeaseEnd.HasValue) ws.Cell(r, 10).Value = s.LeaseEnd.Value;
+                ws.Cell(r, 11).Value = s.IsBlocked;
+                if (!string.IsNullOrWhiteSpace(s.ImageUrl)) ws.Cell(r, 12).Value = s.ImageUrl;
 
                 ws.Cell(r, 3).Style.NumberFormat.Format = "0.00";
                 ws.Cell(r, 4).Style.NumberFormat.Format = "0.00";
                 ws.Cell(r, 5).Style.NumberFormat.Format = "0.00";
                 ws.Cell(r, 6).Style.NumberFormat.Format = "#,##0";
-                ws.Cell(r, 7).Style.DateFormat.Format = "yyyy-MM-dd";
-                ws.Cell(r, 8).Style.DateFormat.Format = "yyyy-MM-dd";
+                ws.Cell(r, 9).Style.DateFormat.Format = "yyyy-MM-dd";
+                ws.Cell(r, 10).Style.DateFormat.Format = "yyyy-MM-dd";
 
                 r++;
             }
 
-            AutoFit(ws, Header.Length);
+            AutoFit(ws, HeaderExport.Length);
             ws.SheetView.FreezeRows(1);
             if (ws.RangeUsed() != null) ws.RangeUsed().SetAutoFilter();
         }

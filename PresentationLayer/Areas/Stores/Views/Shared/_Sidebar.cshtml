@@ -1,4 +1,6 @@
-﻿<aside class="sidebar">
+﻿
+
+<aside class="sidebar">
     <div class="sidebar-inner">
         <div class="me">
             <div class="avatar"></div>
@@ -9,8 +11,8 @@
         </div>
         <nav class="menu">
             <a class="item @Html.IsActive("Home","Index")" href="@Url.Action("Index", "Home")"><span class="icon"></span><span class="text">Dashboard</span></a>
-            <a class="item" href="#"><span class="icon"></span><span class="text">Đơn hàng</span></a>
-            <a class="item @Html.IsActive("Services","Index")" href="@Url.Action("Index", "Services")"><span class="icon"></span><span class="text">Dịch vụ</span></a>
+            <a class="item" @Html.IsActive("Orders", "Index") href="@Url.Action("Index", "Orders")"><span class="icon"></span><span class="text">Đơn hàng</span></a>
+            <a class="item" @Html.IsActive("Services","Index") href="@Url.Action("Index", "Services")"><span class="icon"></span><span class="text">Dịch vụ</span></a>
             <a class="item" href="#"><span class="icon"></span><span class="text">Bảng giá</span></a>
             <a class="item" @Html.IsActive("Quotations", "Index") href="@Url.Action("Index", "Quotations")"><span class="icon"></span><span class="text">Báo giá</span></a>
             <a class="item" href="#"><span class="icon"></span><span class="text">Hợp đồng</span></a>

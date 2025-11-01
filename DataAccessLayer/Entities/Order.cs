@@ -25,7 +25,7 @@ namespace DataAccessLayer.Entities
         
         // Ảnh tổng của toàn bộ sản phẩm (để AI phân tích)
         public string? ProductImageUrl { get; set; }
-
+        
         // Navigation properties
         public virtual Customer Customer { get; set; } = null!;
         public virtual Address? DropoffAddress { get; set; }
@@ -36,5 +36,8 @@ namespace DataAccessLayer.Entities
         public virtual Quotation? Quotation { get; set; }
         public virtual Store Store { get; set; } = null!;
         public virtual ICollection<WalletTransaction> WalletTransactions { get; set; } = new List<WalletTransaction>();
+        
+        public virtual ICollection<OrderWarehouseSlot> OrderWarehouseSlots { get; set; } = new List<OrderWarehouseSlot>();
+
     }
 }

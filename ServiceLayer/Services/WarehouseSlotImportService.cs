@@ -45,7 +45,7 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
             }
 
             // A:WarehouseName(1), B:Code(2), C:HeightM(3), D:LengthM(4), E:WidthM(5),
-            // F:BasePricePerHour(6), G:LeaseStart(7), H:LeaseEnd(8), I:IsBlocked(9), J:ImageUrl(10)
+            // F:BasePricePerHour(6), G:Row(7), H:Col(8), I:IsBlocked(9), J:ImageUrl(10)
             foreach (var r in used.RowsUsed().Skip(1))
             {
                 var excelRowIndex = r.RowNumber();
@@ -59,8 +59,8 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                         LengthM = SafeDecimal(r.Cell(4)),
                         WidthM = SafeDecimal(r.Cell(5)),
                         BasePricePerHour = SafeDecimal(r.Cell(6)),
-                        LeaseStart = TryDate(r.Cell(7)),
-                        LeaseEnd = TryDate(r.Cell(8)),
+                        Row = TryInt(r.Cell(7)),
+                        Col = TryInt(r.Cell(8)),
                         IsBlocked = TryBool(r.Cell(9)),
                         ImageUrl = NullIfEmpty(r.Cell(10).GetString())
                     };
@@ -80,9 +80,16 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
         {
             if (string.IsNullOrWhiteSpace(dto.WarehouseName))
                 errors.Add(new ImportError { RowIndex = excelRow, Field = "WarehouseName", Message = "Bắt buộc." });
+            else if (HasSpecialChars(dto.WarehouseName))
+                errors.Add(new ImportError { RowIndex = excelRow, Field = "WarehouseName", Message = "Không được chứa ký tự đặc biệt." });
+            
             if (string.IsNullOrWhiteSpace(dto.Code))
                 errors.Add(new ImportError { RowIndex = excelRow, Field = "Code", Message = "Bắt buộc." });
+            else if (HasSpecialChars(dto.Code))
+                errors.Add(new ImportError { RowIndex = excelRow, Field = "Code", Message = "Không được chứa ký tự đặc biệt." });
 
+            if (!string.IsNullOrWhiteSpace(dto.ImageUrl) && HasSpecialChars(dto.ImageUrl))
+                errors.Add(new ImportError { RowIndex = excelRow, Field = "ImageUrl", Message = "URL không hợp lệ hoặc chứa ký tự đặc biệt." });
             if (!dto.IsBlocked)
             {
                 if (dto.HeightM <= 0) errors.Add(new ImportError { RowIndex = excelRow, Field = "HeightM", Message = "Phải > 0 khi IsBlocked = FALSE." });
@@ -175,7 +182,7 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                     LengthM = dto.LengthM,
                     WidthM = dto.WidthM,
                     BasePricePerHour = dto.BasePricePerHour,
-                    LeaseStart = dto.LeaseStart, 
+                    LeaseStart = dto.LeaseStart,
                     LeaseEnd = dto.LeaseEnd,
                     IsBlocked = dto.IsBlocked,
                     ImageUrl = dto.ImageUrl,
@@ -222,6 +229,14 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
     }
 
     // -------- helpers ----------
+
+    private static bool HasSpecialChars(string input)
+    {
+        // Cho phép A-Z, a-z, 0-9, dấu cách, gạch ngang và gạch dưới
+        return !System.Text.RegularExpressions.Regex.IsMatch(input, @"^[\w\s\-]+$");
+    }
+
+
     private static decimal SafeDecimal(IXLCell cell)
     {
         if (cell.DataType == XLDataType.Number) return (decimal)cell.GetDouble();
@@ -261,6 +276,34 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
             CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var d2)) return d2;
 
         return null;
+    }
+
+    private static int TryInt(IXLCell cell)
+    {
+        if (cell == null || cell.IsEmpty())
+            throw new Exception("Giá trị bắt buộc, không được để trống");
+
+        // Nếu kiểu dữ liệu là Number
+        if (cell.DataType == XLDataType.Number)
+        {
+            var num = (int)cell.GetDouble();
+            if (num <= 0)
+                throw new Exception("Giá trị phải là số nguyên dương");
+            return num;
+        }
+
+        // Nếu là Text, bắt buộc phải parse được số nguyên dương
+        var s = cell.GetString().Trim();
+        if (string.IsNullOrEmpty(s))
+            throw new Exception("Giá trị bắt buộc, không được để trống");
+
+        if (!int.TryParse(s, out var value))
+            throw new Exception($"Giá trị '{s}' không hợp lệ, phải là số nguyên");
+
+        if (value <= 0)
+            throw new Exception("Giá trị phải là số nguyên dương");
+
+        return value;
     }
 
     private static bool TryBool(IXLCell cell)
