@@ -12,7 +12,7 @@ namespace DataAccessLayer.Entities
         public string? MapImageUrl { get; set; }     // sơ đồ (optional)
         public virtual Store Store { get; set; } = null!;
         public Address? Address { get; set; }
-        public StatusValue Status { get; set; } //Pending - Approve
+        public StatusValue Status { get; set; } //Pending - Approved
         // NEW: kích thước kho (m)
         public decimal HeightM { get; set; }
         public decimal LengthM { get; set; }
