@@ -183,10 +183,14 @@ namespace ServiceLayer.Services
 
                 if(storeByUser != null)
                 {
-                    var principal = await _signInManager.CreateUserPrincipalAsync(user);
-                    var identity = (ClaimsIdentity)principal.Identity!;
+                    // Kiểm tra xem claim đã có chưa
+                    var existingClaims = await _userManager.GetClaimsAsync(user);
+                    if (!existingClaims.Any(c => c.Type == "StoreId"))
+                    {
+                        await _userManager.AddClaimAsync(user, new Claim("StoreId", storeByUser.Id.ToString()));
+                    }
 
-                    await _signInManager.SignInWithClaimsAsync(user!, rememberMe, [new Claim("StoreId", storeByUser.Id.ToString())]);
+                    await _signInManager.SignInAsync(user, isPersistent: rememberMe);
                 }
                 else 
                     await _signInManager.SignInAsync(user, isPersistent: rememberMe);
