@@ -118,10 +118,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
         public async Task<IActionResult> Suggest(Guid id, [FromBody] SuggestQuotationDto dto)
         {
             var idUser = Guid.Parse(_context.GetUserId()!);
-            var storeId = await _db.Stores
-                    .Where(e => e.OwnerUserId == idUser)
-                    .Select(e => e.Id).FirstOrDefaultAsync();
-            var qt = await _db.Quotations.FirstOrDefaultAsync(x => x.Id == id && x.StoreId == storeId);
+            // var storeId = await _db.Stores
+            //         .Where(e => e.OwnerUserId == idUser)
+            //         .Select(e => e.Id).FirstOrDefaultAsync();
+            // var qt = await _db.Quotations.FirstOrDefaultAsync(x => x.Id == id && x.StoreId == storeId);
+            
+            var qt = await _db.Quotations.FirstOrDefaultAsync(x => x.Id == id );
             if (qt == null) return NotFound();
 
             if (dto.PercentDiscount is > 0) qt.TotalAmount = Math.Max(0, qt.TotalAmount - Math.Round(qt.TotalAmount * dto.PercentDiscount.Value / 100m, 0));
