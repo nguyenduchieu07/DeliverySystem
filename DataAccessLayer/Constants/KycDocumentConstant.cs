@@ -32,10 +32,16 @@ public class KycDocumentConstant
             public string Label { get; set; } = "";
         }
 
-        public static readonly List<DocumentType> TypesWithLabel = new()
+        public static readonly List<DocumentType> TypesWithLabelObject = new()
         {
             new() { Key = LicenseNumberKey, Label = "Giấy phép kinh doanh" },
             new() { Key = TaxNumberKey, Label = "Giấy chứng nhận thuế" },
             new() { Key = IDKey, Label = "CMND/CCCD chủ sở hữu" }
+        };
+        public static readonly Dictionary<string, string> TypesWithLabelDict = new()
+        {
+            {   LicenseNumberKey,  "Giấy phép kinh doanh" },
+            {   TaxNumberKey, "Giấy chứng nhận thuế" },
+            {   IDKey,  "CMND/CCCD chủ sở hữu" }
         };
 }

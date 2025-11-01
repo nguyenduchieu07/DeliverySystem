@@ -430,7 +430,7 @@
 
 <!-- Quick Stats -->
 <div class="stats-mini">
-	<div class="stat-mini-card">
+	@* <div class="stat-mini-card">
 		<div class="stat-mini-icon">
 			@if (Model.Store.IsVerified)
 			{
@@ -443,7 +443,7 @@
 		</div>
 		<div class="stat-mini-label">Trạng thái xác minh</div>
 		<div class="stat-mini-value">@(Model.Store.IsVerified ? "Đã xác minh" : "Chưa xác minh")</div>
-	</div>
+	</div> *@
 	<div class="stat-mini-card">
 		<div class="stat-mini-icon"><i class="fas fa-star"></i></div>
 		<div class="stat-mini-label">Điểm đánh giá</div>
@@ -495,7 +495,7 @@
 				<div class="detail-label">KYC Level</div>
 				<div class="detail-value"><span class="badge badge-kyc">@Model.Store.KycLevel</span></div>
 			</div>
-			<div class="detail-item">
+			@* <div class="detail-item">
 				<div class="detail-label">Đã xác minh</div>
 				<div class="detail-value">
 					@if (Model.Store.IsVerified)
@@ -509,7 +509,7 @@
 						<span style="color: var(--danger); font-weight: 600;">Chưa xác minh</span>
 					}
 				</div>
-			</div>
+			</div> *@
 		</div>
 	</div>
 </div>
@@ -1091,7 +1091,7 @@
 				<th>Địa chỉ</th>
 				<th style="width:12%;">Diện tích (C×D×R)</th>
 				<th>Slots</th>
-				<th>Trạng thái</th>
+			@* 	<th>Trạng thái</th> *@
 				<th>Ngày tạo</th>
 			</tr>
 			</thead>
@@ -1133,7 +1133,7 @@
 								}
 							</td>
 							<td><span class="badge" style="color: #858796">@(Model.WarehouseSlotCount[w.Id])</span></td>
-							<td>
+							@* <td>
 								@{
 									var status = w.Status.ToDisplayStringForWarehouse() ?? "Pending";
 									string badgeClass =  w.Status switch
@@ -1145,7 +1145,7 @@
 									};
 								}
 								<span class="@badgeClass">@status</span>
-							</td>
+							</td> *@
 							<td>@w.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
 							<td>
 								<a class="btn" asp-area="Admin" asp-controller="Store" asp-action="GetWarehouseDetail" asp-route-id="@w.Id">Xem chi tết</a>

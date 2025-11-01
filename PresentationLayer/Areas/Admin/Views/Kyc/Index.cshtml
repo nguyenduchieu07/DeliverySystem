@@ -454,7 +454,7 @@
 
 <!-- Page Heading -->
 <div class="page-heading">
-    <h1>Hồ sơ xác minh (KYC)</h1>
+    <h1>Xác minh cửa hàng</h1>
 </div>
 
 <div class="stats-grid">
@@ -503,7 +503,7 @@
                 <tr>
                     <th>Cửa hàng</th>
                     <th>Ngày nộp</th>
-                    <th>Giấy tờ</th>
+                        <th style="width: 20%;">Giấy tờ</th>
                     <th>Trạng thái</th>
                     <th>Hành động</th>
                 </tr>
@@ -530,8 +530,8 @@
                                     {
                                         var doc = s.Documents.FirstOrDefault(d => d.DocType == type.Key);
                                         <tr>
-                                            <th>@type.Key</th>
-                                            <td>
+                                                    <th>@(KycDocumentConstant.TypesWithLabelDict[type.Key])</th>
+                                                    <td style="width: 30%;">
                                                 @if (doc != null)
                                                 {
                                                     <a href="@doc.FilePath" target="_blank" title="Xem tài liệu">

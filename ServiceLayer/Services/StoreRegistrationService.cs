@@ -59,7 +59,7 @@ namespace ServiceLayer.Services
                     LicenseNumber = request.LicenseNumber,
                     TaxNumber = request.TaxNumber,
                     Status = StatusValue.PendingKyc, // Initial status
-                    KycLevel = "None",
+                    KycLevel = "Chưa xác minh",
                     RatingAvg = 0,
                     RatingCount = 0,
                     UpdatedAt = DateTime.UtcNow
