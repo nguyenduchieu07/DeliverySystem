@@ -62,8 +62,12 @@ namespace PresentationLayer.Controllers
                     StatusDisplay = GetStatusDisplay(o.Status),
                     StatusColor = GetStatusColor(o.Status),
                     TotalAmount = o.TotalAmount,
-                    PickupAddress = o.Pickup?.Ward is null ? "" : $"{o.Pickup.Ward}, {o.Pickup.District}, {o.Pickup.City}",
-                    DropoffAddress = o.Dropoff?.Ward is null ? "" : $"{o.Dropoff.Ward}, {o.Dropoff.District}, {o.Dropoff.City}",
+                    PickupAddress = o.Pickup?.Ward is null
+                        ? ""
+                        : $"{o.Pickup.Ward}, {o.Pickup.District}, {o.Pickup.City}",
+                    DropoffAddress = o.Dropoff?.Ward is null
+                        ? ""
+                        : $"{o.Dropoff.Ward}, {o.Dropoff.District}, {o.Dropoff.City}",
                     DeliveryDate = o.DeliveryDate
                 })
                 .ToList();
@@ -86,7 +90,10 @@ namespace PresentationLayer.Controllers
                 .Include(o => o.PickupAddress)
                 .Include(o => o.DropoffAddress)
                 .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Service)
+                .ThenInclude(oi => oi.Service)
+                .Include(x => x.OrderItems)
+                .ThenInclude(x => x.IncidentReports)
+                .ThenInclude(x => x.Actions)
                 .Include(o => o.Quotation)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
@@ -102,10 +109,8 @@ namespace PresentationLayer.Controllers
                 CustomerName = order.Customer.FullName,
                 CustomerPhone = order.Customer.PhoneNumber,
                 StoreName = order.Store.StoreName,
-                PickupAddress = order.PickupAddress != null ?
-                    $"{order.PickupAddress.AddressLine}" : "",
-                DropoffAddress = order.DropoffAddress != null ?
-                    $"{order.DropoffAddress.AddressLine}" : "",
+                PickupAddress = order.PickupAddress != null ? $"{order.PickupAddress.AddressLine}" : "",
+                DropoffAddress = order.DropoffAddress != null ? $"{order.DropoffAddress.AddressLine}" : "",
                 CreatedAt = order.CreatedAt,
                 PickupDate = order.PickupDate,
                 DeliveryDate = order.DeliveryDate,
@@ -118,6 +123,7 @@ namespace PresentationLayer.Controllers
                 Note = order.Note,
                 Items = order.OrderItems.Select(oi => new OrderItemTrackingViewModel
                 {
+                    Id = oi.Id,
                     ItemName = oi.ItemName,
                     Description = oi.Description,
                     Quantity = oi.Quantity,
@@ -126,7 +132,31 @@ namespace PresentationLayer.Controllers
                     VolumeM3 = oi.VolumeM3,
                     CategoryName = oi.Service?.Name,
                     UnitPrice = oi.UnitPrice,
-                    Subtotal = oi.Subtotal
+                    Subtotal = oi.Subtotal,
+                    IncidentReports = oi.IncidentReports.Select(ir => new IncidentReportViewModel
+                        {
+                            Id = ir.Id,
+                            Description = ir.Description,
+                            ImageUrl = ir.ImageUrl,
+                            OrderId = ir.OrderId,
+                            CompensationAmount = ir.CompensationAmount,
+                            IncidentType = ir.IncidentType,
+                            IsCompensated = ir.IsCompensated,
+                            IsReturned = ir.IsReturned,
+                            OrderItemId = ir.OrderItemId,
+                            ReportedAt = ir.ReportedAt,
+                            Status = ir.Status,
+                            Actions = ir.Actions.Select(ia => new IncidentActionViewModel
+                            {
+                                Id = ia.Id,
+                                ActionDate = ia.ActionDate,
+                                ActionType = ia.ActionType,
+                                IncidentReportId = ia.IncidentReportId,
+                                Note = ia.Note,
+                                StaffId = ia.StaffId,
+                            }).ToList()
+                        }
+                    ).ToList()
                 }).ToList(),
                 TrackingEvents = GetTrackingEvents(order),
                 ContractInfo = GetContractInfo(order)
@@ -142,10 +172,8 @@ namespace PresentationLayer.Controllers
             }
             else
             {
-
                 if ((st == StatusValue.Approved || st == StatusValue.Reserved) && order.UpdatedAt.HasValue)
                     viewModel.CheckInTime = order.UpdatedAt;
-
             }
 
             if (st == StatusValue.Completed && order.DeliveryDate.HasValue)
@@ -154,16 +182,14 @@ namespace PresentationLayer.Controllers
             }
             else
             {
-
                 if (order.DeliveryDate.HasValue)
                     viewModel.CheckOutTime = order.DeliveryDate;
             }
 
             if (viewModel.CheckInTime.HasValue && viewModel.CheckOutTime.HasValue
-                && viewModel.CheckOutTime < viewModel.CheckInTime)
+                                               && viewModel.CheckOutTime < viewModel.CheckInTime)
             {
-
-                viewModel.CheckOutTime = null; 
+                viewModel.CheckOutTime = null;
             }
 
             return View(viewModel);
@@ -244,7 +270,7 @@ namespace PresentationLayer.Controllers
 
         // Helper methods
         private static bool IsOneOf(StatusValue s, params StatusValue[] states)
-     => states.Contains(s);
+            => states.Contains(s);
 
         private List<TrackingEventViewModel> GetTrackingEvents(DataAccessLayer.Entities.Order order)
         {
@@ -278,7 +304,8 @@ namespace PresentationLayer.Controllers
             }
 
             // 3) Chờ xử lý (Pending) – coi như giai đoạn sau CreatedAt
-            if (IsOneOf(st, StatusValue.Pending, StatusValue.Approved, StatusValue.Reserved, StatusValue.InUse, StatusValue.Completed))
+            if (IsOneOf(st, StatusValue.Pending, StatusValue.Approved, StatusValue.Reserved, StatusValue.InUse,
+                    StatusValue.Completed))
             {
                 events.Add(new TrackingEventViewModel
                 {
@@ -422,6 +449,32 @@ namespace PresentationLayer.Controllers
                 StatusValue.Rejected => "danger",
                 _ => "secondary"
             };
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddAction(CreateIncidentActionDto dto)
+        {
+            var incidentAction = new IncidentAction()
+            {
+                Id = Guid.NewGuid(),
+                ActionDate = DateTime.UtcNow,
+                ActionType = dto.ActionType,
+                Note = dto.Note,
+                CreatedAt = DateTime.UtcNow,
+                IncidentReportId = dto.IncidentReportId,
+            };
+            await _context.IncidentActions.AddAsync(incidentAction);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Thêm hành động xử lý thành công!";
+            return RedirectToAction("Detail", "Tracking", new { id = dto.OrderId });
+        }
+
+        public class CreateIncidentActionDto
+        {
+            public Guid IncidentReportId { get; set; }
+            public IncidentActionType ActionType { get; set; }
+            public string Note { get; set; }
+            public string OrderId { get; set; }
         }
     }
 }
