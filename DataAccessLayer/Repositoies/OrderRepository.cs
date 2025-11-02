@@ -25,11 +25,12 @@ namespace DataAccessLayer.Repositoies
                  .Include(o => o.OrderWarehouseSlots).ThenInclude(ows => ows.WarehouseSlot).ThenInclude(ws => ws.Warehouse)
                  .Include(o => o.DropoffAddress)
                  .Include(o => o.PickupAddress)
+                 .Include(o => o.Quotation)
                  .Include(o => o.Store);
             return await query.SingleOrDefaultAsync(x => x.Id.Equals(orderId));
         }
 
-        public async Task<List<Order>> GetOrdersInfoByStoreIdAsync(Guid orderId, StatusValue? status = null)
+        public async Task<List<Order>> GetOrdersInfoByStoreIdAsync(Guid storeId, StatusValue? status = null)
         {
             var query = _context.Orders.AsNoTracking();
             if (status != null)
@@ -44,7 +45,8 @@ namespace DataAccessLayer.Repositoies
                 .Include(o => o.DropoffAddress)
                 .Include(o => o.PickupAddress)
                 .Include(o => o.Store);
-            return await query.Where(x => x.StoreId.Equals(orderId)).ToListAsync();
+            return await query.Where(x => x.StoreId.Equals(storeId)).ToListAsync();
         }
+
     }
 }

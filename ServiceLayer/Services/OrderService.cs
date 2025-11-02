@@ -26,6 +26,7 @@ namespace ServiceLayer.Services
         public async Task<Order?> GetByIdAsync(Guid orderId)
         {
             return await _orderRepository.FindSingleAsync(x => x.Id.Equals(orderId), cancellationToken: default, includeProperties: [o => o.PickupAddress,
+                o => o.OrderItems,
                 o => o.DropoffAddress,
                 o => o.Store ]
             );

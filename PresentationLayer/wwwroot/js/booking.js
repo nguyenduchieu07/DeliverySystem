@@ -1218,7 +1218,7 @@ function showQuoteBreakdown(quote, orderId) {
                     
                     <!-- Nút hành động -->
                     <div style="display: flex; gap: 12px; margin-top: 24px;">
-                        <button onclick="window.location.href='/Booking/Success?Id=' + encodeURIComponent('${orderId}')" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận đơn hàng</button>
+                        <button onclick="window.location.href='/Contract?orderId=' + encodeURIComponent('${orderId}')" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận đơn hàng</button>
                         <button onclick="this.closest('[style*=position]').remove()" style="flex: 1; background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Đóng</button>
                     </div>
                 </div>
@@ -1228,6 +1228,7 @@ function showQuoteBreakdown(quote, orderId) {
     
     document.body.insertAdjacentHTML('beforeend', html);
 }
+
 
 // ============ ESTIMATION CARD (CHỈ TÍNH DỊCH VỤ THÊM) ============
 function initEstimationCard() {

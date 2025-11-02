@@ -1,0 +1,140 @@
+﻿@using DataAccessLayer.Enums
+
+
+@model ContractIndexViewModel
+@{
+    ViewData["Title"] = $"Hợp đồng dịch vụ lưu kho";
+    var order = Model.Order;
+    var contract = Model.Contract;
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg p-4 rounded-4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-uppercase">Hợp đồng lưu kho & vận chuyển</h2>
+            <p class="text-muted">Mã hợp đồng: @contract.Id.ToString().Replace("-", "").ToUpper()</p>
+        </div>
+
+        <section class="mb-4">
+            <h4 class="text-primary border-bottom pb-2">I. Thông tin chung</h4>
+            <p><strong>Khách hàng:</strong> @contract.Customer.FullName</p>
+            <p><strong>Email:</strong> @contract.Customer.Email</p>
+            <p><strong>Số điện thoại:</strong> @contract.Customer.PhoneNumber</p>
+            <p><strong>Cửa hàng:</strong> @contract.Store?.StoreName</p>
+            <p><strong>Kho hàng:</strong> @contract.Warehouse?.Name</p>
+            @if (contract.WarehouseSlot != null)
+            {
+                <p><strong>Vị trí kho:</strong> @contract.WarehouseSlot.Code</p>
+            }
+            <p><strong>Thời hạn hợp đồng:</strong> @contract.StartDate.ToString("dd/MM/yyyy") - @contract.EndDate.ToString("dd/MM/yyyy")</p>
+            <p><strong>Tổng giá trị hợp đồng:</strong> @contract.TotalAmount.ToString("N0") VNĐ</p>
+        </section>
+
+        <section class="mb-4">
+            <h4 class="text-primary border-bottom pb-2">II. Thông tin đơn hàng</h4>
+            <p><strong>Mã đơn hàng:</strong> @order.Id</p>
+            <p><strong>Trạng thái:</strong> @order.Status</p>
+            <p><strong>Ngày đặt:</strong> @order.CreatedAt.ToString("dd/MM/yyyy")</p>
+            <p><strong>Tổng giá trị đơn hàng:</strong> @order.TotalAmount.ToString("N0") VNĐ</p>
+
+            <table class="table table-bordered mt-3">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tên sản phẩm</th>
+                        <th>Số lượng</th>
+                        @*   <th>Đơn giá (VNĐ)</th>
+                        <th>Thành tiền (VNĐ)</th> *@
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in order.OrderItems)
+                    {
+                        <tr>
+                            <td>@item.ItemName</td>
+                            <td>@item.Quantity</td>
+                            @*   <td>@(item.UnitPrice?.ToString("N0" ?? "N/A"))</td>
+                            <td>@(item.Subtotal?.ToString("N0") )</td> *@
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+
+        <section class="mb-4">
+            <h4 class="text-primary border-bottom pb-2">III. Điều khoản hợp đồng</h4>
+
+            <h5 class="fw-semibold mt-3">1. Điều khoản chung</h5>
+            <p>
+                Hai bên cam kết tuân thủ đúng các nội dung trong hợp đồng này. 
+                Mọi sửa đổi, bổ sung chỉ có giá trị khi được lập thành văn bản có chữ ký của hai bên.
+            </p>
+
+            <h5 class="fw-semibold mt-3">2. Điều khoản về đơn hàng</h5>
+            <ul>
+                <li>Bên A (Khách hàng) có trách nhiệm kiểm tra thông tin đơn hàng trước khi xác nhận hợp đồng.</li>
+                <li>Mọi thay đổi về số lượng hoặc chủng loại hàng hóa phải được thông báo trước tối thiểu 24 giờ.</li>
+                <li><strong>Thanh toán & Nhận hàng:</strong> 
+                    Bên A phải hoàn tất thanh toán toàn bộ giá trị đơn hàng trước khi tiến hành nhận hàng tại kho. 
+                    Việc giao nhận chỉ được thực hiện khi hệ thống xác nhận trạng thái thanh toán "Đã hoàn tất".
+                </li>
+            </ul>
+
+            <h5 class="fw-semibold mt-3">3. Điều khoản về kho bãi và lưu trữ</h5>
+            <ul>
+                <li>Kho bãi chỉ chịu trách nhiệm lưu giữ hàng hóa đúng như mô tả và thời hạn trong hợp đồng.</li>
+                <li>Hàng hóa hư hỏng do nguyên nhân khách quan (thiên tai, hỏa hoạn, v.v.) sẽ được xử lý theo chính sách bảo hiểm (nếu có).</li>
+            </ul>
+
+            <h5 class="fw-semibold mt-3">4. Điều khoản về xử lý tranh chấp</h5>
+            <p>
+                Mọi tranh chấp phát sinh từ hợp đồng sẽ được ưu tiên giải quyết thông qua thương lượng.
+                Nếu không đạt thỏa thuận, vụ việc sẽ được đưa ra Tòa án có thẩm quyền tại nơi ký kết hợp đồng.
+            </p>
+
+            @if (!string.IsNullOrEmpty(contract.TermsAndConditions))
+            {
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="fw-semibold">Điều khoản bổ sung:</h6>
+                    <p>@contract.TermsAndConditions</p>
+                </div>
+            }
+        </section>
+
+        <section class="text-center mt-5">
+            <h5 class="fw-bold">Xác nhận hai bên</h5>
+            <div class="d-flex justify-content-around mt-4">
+                <div>
+                    <p><strong>Đại diện Bên A (Khách hàng)</strong></p>
+                    <p class="mt-5">______________________</p>
+                    <p>@contract.Customer.FullName</p>
+                </div>
+                <div>
+                    <p><strong>Đại diện Bên B (Đơn vị cung cấp)</strong></p>
+                    <p class="mt-5">______________________</p>
+                    <p>@contract.Store?.StoreName</p>
+                </div>
+            </div>
+        </section>
+        @if (contract.Status == ContractStatus.Draft)
+        { 
+        <div class="mt-5 text-center">
+            <form asp-action="Confirm" method="post" class="d-inline">
+                <input type="hidden" name="orderId" value="@order.Id" />
+                <input type="hidden" name="contractId" value="@contract.Id" />
+                <button type="submit" class="btn btn-success px-4 me-2">
+                    <i class="bi bi-check-circle"></i> Xác nhận hợp đồng
+                </button>
+            </form>
+
+            <form asp-action="Cancel" method="post" class="d-inline">
+                <input type="hidden" name="orderId" value="@order.Id" />
+                <input type="hidden" name="contractId" value="@contract.Id" />
+                <button type="submit" class="btn btn-danger px-4">
+                    <i class="bi bi-x-circle"></i> Hủy hợp đồng
+                </button>
+            </form>
+        </div>
+        }
+    </div>
+</div>
+
