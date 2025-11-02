@@ -99,7 +99,6 @@ namespace DataAccessLayer.Migrations
                             AddressLine = "12 Nguyễn Huệ",
                             City = "Hồ Chí Minh",
                             CreatedAt = new DateTime(2025, 11, 1, 19, 49, 42, 614, DateTimeKind.Local).AddTicks(2216),
-                            CreatedAt = new DateTime(2025, 11, 1, 13, 31, 7, 751, DateTimeKind.Local).AddTicks(9381),
                             District = "Q.1",
                             IsDefault = true,
                             Label = "Store HQ",
