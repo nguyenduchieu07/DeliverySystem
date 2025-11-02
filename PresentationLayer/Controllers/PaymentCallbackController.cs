@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 
 namespace PresentationLayer.Controllers
@@ -10,13 +12,18 @@ namespace PresentationLayer.Controllers
     {
         private readonly IPaymentService _paymentService;
         private readonly ILogger<PaymentCallbackController> _logger;
-
+        private readonly IContractService _contractService;
+        private readonly DeliverySytemContext _db;
         public PaymentCallbackController(
             IPaymentService paymentService,
-            ILogger<PaymentCallbackController> logger)
+            ILogger<PaymentCallbackController> logger,
+            IContractService contractService,
+            DeliverySytemContext deliverySytemContext)
         {
             _paymentService = paymentService;
             _logger = logger;
+            _contractService = contractService;
+            _db = deliverySytemContext;
         }
 
         /// <summary>
@@ -148,6 +155,11 @@ namespace PresentationLayer.Controllers
 
                 if (responseCode == "00") // Success
                 {
+                    var payment = await _db.Payments.Include(e => e.Order)
+                        .FirstOrDefaultAsync(e => e.Id.ToString() == txnRef);
+                    var quotationId = payment!.Order.QuotationId;
+                    await _contractService.GenerateContractsAsync((Guid)quotationId!);
+                    
                     return Redirect($"/Payment/Success?transactionId={txnRef}");
                 }
                 else

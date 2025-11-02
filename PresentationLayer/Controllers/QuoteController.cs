@@ -487,13 +487,27 @@ namespace PresentationLayer.Controllers
                 var subtotal = totalPrice; // Đã bao gồm cả addons
                 var vatAmount = subtotal * 0.1m; // VAT 10%
                 var grandTotal = subtotal + vatAmount;
-
+                var quotation = new Quotation
+                {
+                    Id = Guid.NewGuid(),
+                    StoreId = storeId,
+                    CustomerId = userId,
+                    TotalAmount = grandTotal,                  // đã gồm VAT
+                    ValidUntil = DateTime.UtcNow.AddHours(48), // hết hạn sau 48h
+                    Status = StatusValue.Sent,                 // vừa gửi báo giá
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                createdOrder.QuotationId = quotation.Id;
+                _db.Quotations.Add(quotation);
+                await _db.SaveChangesAsync();
                 // Trả về báo giá chi tiết
                 return Json(new
                 {
                     success = true,
                     orderId = createdOrder.Id,
                     message = "Đơn hàng đã được tạo thành công!",
+                    quotationId = quotation.Id,
                     quote = new
                     {
                         // Thông tin kho

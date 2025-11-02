@@ -49,6 +49,7 @@ namespace ServiceLayer.Dtos.OrderTracking
 
     public class OrderItemTrackingViewModel
     {
+        public Guid Id { get; set; }
         public string ItemName { get; set; }
         public string Description { get; set; }
         public int Quantity { get; set; }
@@ -58,6 +59,8 @@ namespace ServiceLayer.Dtos.OrderTracking
         public string CategoryName { get; set; }
         public decimal? UnitPrice { get; set; }
         public decimal? Subtotal { get; set; }
+
+        public List<IncidentReportViewModel> IncidentReports { get; set; } = new List<IncidentReportViewModel>();
     }
 
     public class TrackingEventViewModel
@@ -93,5 +96,44 @@ namespace ServiceLayer.Dtos.OrderTracking
         public string PickupAddress { get; set; }
         public string DropoffAddress { get; set; }
         public DateTime? DeliveryDate { get; set; }
+    }
+
+
+    public partial class IncidentActionViewModel
+    {
+        public Guid Id { get; set; }
+        public Guid IncidentReportId { get; set; }
+
+        /*
+         các mức đền bù được triển khai ở FE
+        Nhẹ: đền ~30–50% giá trị mặt hàng.
+        Nặng: đền ~70–90% giá trị mặt hàng.
+         */
+        public IncidentActionType ActionType { get; set; } // e.g. ConfirmDamage, ReturnItem, Compensate, Close
+
+        public string? Note { get; set; }
+        public DateTime ActionDate { get; set; } = DateTime.UtcNow;
+        public Guid? StaffId { get; set; } // nhân viên kho xử lý
+        
+    }
+
+    public partial class IncidentReportViewModel
+    {
+        public Guid Id { get; set; }
+        public Guid OrderId { get; set; }
+        public Guid OrderItemId { get; set; }
+        public IncidentType IncidentType { get; set; } // Hư hỏng / Sai mô tả / Thiếu hàng
+        public string? Description { get; set; } // Mô tả chi tiết sự cố
+        public string? ImageUrl { get; set; } // Ảnh minh chứng
+        public ReportStatus Status { get; set; } = ReportStatus.Pending; // Chờ xử lý, Đã xử lý
+        public DateTime ReportedAt { get; set; } = DateTime.UtcNow;
+
+        // Nếu có bồi thường / hoàn hàng
+        public bool IsReturned { get; set; } = false;
+        public bool IsCompensated { get; set; } = false;
+        public decimal? CompensationAmount { get; set; }
+
+        // Navigation
+        public virtual ICollection<IncidentActionViewModel> Actions { get; set; } = new List<IncidentActionViewModel>();
     }
 }

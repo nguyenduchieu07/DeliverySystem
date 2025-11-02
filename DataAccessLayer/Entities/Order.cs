@@ -16,7 +16,7 @@ namespace DataAccessLayer.Entities
         public DateTime? PickupDate { get; set; }
         public decimal? DistanceKm { get; set; }
         public int? EtaMinutes { get; set; }
-        public StatusValue Status { get; set; }
+        public StatusValue Status { get; set; } //Pending - Approved - Complete - Cancelled - IncidentProcessing
         public decimal TotalAmount { get; set; }
         public string? Note { get; set; }
 

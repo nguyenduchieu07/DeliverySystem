@@ -72,7 +72,7 @@ namespace ServiceLayer.Services
             
             var store = sub.Store;
             store.Status = StatusValue.Active;
-            store.KycLevel = "Verified"; 
+            store.KycLevel = "Đã xác minh"; 
             store.MaxOrdersPerDay = maxPerDay;
             store.ActiveRegions = regions != null ? string.Join(",", regions) : store.ActiveRegions;
 
