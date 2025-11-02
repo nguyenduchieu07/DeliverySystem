@@ -882,13 +882,29 @@ function updateItemIndexes() {
 function previewTotalImage(input) {
     const file = input.files[0];
     const preview = document.getElementById('productImagePreview');
-    if (file && preview) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+    
+    if (file) {
+        console.log('📷 Image selected:');
+        console.log('  - File name:', file.name);
+        console.log('  - File size:', (file.size / 1024).toFixed(2), 'KB');
+        console.log('  - File type:', file.type);
+        
+        if (preview) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                console.log('  ✅ Image preview loaded successfully');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            console.warn('  ⚠️ Preview element not found');
+        }
+    } else {
+        console.log('📷 No image selected (file input cleared)');
+        if (preview) {
+            preview.style.display = 'none';
+        }
     }
 }
 
@@ -1006,8 +1022,13 @@ async function submitWarehouseOrder() {
 
     // Add product image if available
     const productImageInput = document.getElementById('productImageInput');
+    let hasImage = false;
     if (productImageInput && productImageInput.files && productImageInput.files[0]) {
         formData.append('productImage', productImageInput.files[0]);
+        hasImage = true;
+        console.log('📷 Product image will be uploaded:', productImageInput.files[0].name, `(${(productImageInput.files[0].size / 1024).toFixed(2)} KB)`);
+    } else {
+        console.log('⚠️ No product image uploaded - Gemini analysis will be skipped');
     }
 
     // Submit
@@ -1018,13 +1039,14 @@ async function submitWarehouseOrder() {
         bookBtn.disabled = true;
 
         try {
-            console.log('Submitting order with data:');
+            console.log('=== Submitting order with data ===');
             console.log('PickupAddress:', pickupAddressLine, pickupLat, pickupLng);
             console.log('WarehouseArea:', warehouseAreaLine, warehouseLat, warehouseLng);
             console.log('WarehouseId:', warehouseId);
             console.log('SelectedWarehouse:', selectedWarehouse);
             console.log('Items:', items);
             console.log('Dates:', startDate, endDate);
+            console.log('Has product image:', hasImage);
             
             const response = await fetch('/Quote/CreateWarehouseOrder', {
                 method: 'POST',
@@ -1072,10 +1094,56 @@ async function submitWarehouseOrder() {
             }
 
             if (response.ok && result && result.success) {
+                // Log kết quả Gemini analysis từ response
+                if (result.quote) {
+                    console.log('=== Quote Response ===');
+                    console.log('OrderId:', result.orderId);
+                    console.log('Has product image (server received):', result.quote.hasProductImage ?? false);
+                    console.log('Gemini analysis available:', result.quote.geminiAnalysisAvailable ?? false);
+                    console.log('Has Gemini analysis data:', !!(result.quote.analysisDetails || result.quote.requiredVolumeM3 || result.quote.requiredAreaM2));
+                    
+                    if (result.quote.hasProductImage === false) {
+                        console.warn('⚠️ No product image was uploaded or received by server');
+                    } else if (result.quote.geminiAnalysisAvailable === false) {
+                        console.warn('⚠️ Product image was uploaded but Gemini analysis failed or returned no result');
+                        if (result.quote.geminiError) {
+                            console.error('❌ Gemini Error:', result.quote.geminiError);
+                        } else {
+                            console.warn('   Check server logs for Gemini API errors (no error message received)');
+                        }
+                    } else if (result.quote.geminiAnalysisAvailable === true) {
+                        console.log('✅ Gemini analysis successful!');
+                        if (result.quote.requiredVolumeM3) {
+                            console.log('📊 Required Volume (from Gemini):', result.quote.requiredVolumeM3, 'm³');
+                        }
+                        if (result.quote.requiredAreaM2) {
+                            console.log('📊 Required Area (from Gemini):', result.quote.requiredAreaM2, 'm²');
+                        }
+                        if (result.quote.analysisDetails) {
+                            console.log('📝 Analysis Details (first 200 chars):', result.quote.analysisDetails.substring(0, 200));
+                        }
+                        if (result.quote.itemEstimates && result.quote.itemEstimates.length > 0) {
+                            console.log('📦 Items found in image:', result.quote.itemEstimates.length);
+                            result.quote.itemEstimates.forEach((item, idx) => {
+                                console.log(`  ${idx + 1}. ${item.name}: ${item.quantity} cái, ${item.estimatedVolumeM3} m³`);
+                            });
+                        } else {
+                            console.warn('⚠️ Gemini analysis returned no items');
+                        }
+                    }
+                }
+                
                 // Hiển thị bảng báo giá
                 if (result.quote) {
+                    // Reset button về trạng thái ban đầu trước khi hiển thị popup
+                    bookBtn.textContent = originalText;
+                    bookBtn.disabled = false;
                     showQuoteBreakdown(result.quote, result.orderId);
                 } else {
+                    // Reset button về trạng thái ban đầu
+                    bookBtn.textContent = originalText;
+                    bookBtn.disabled = false;
+                    
                     alert(`✅ ${result.message}\n\n📦 Mã đơn hàng: ${result.orderId}`);
                     
                     // Redirect to success page
@@ -1126,7 +1194,7 @@ function showQuoteBreakdown(quote, orderId) {
                 <div style="padding: 24px; border-bottom: 2px solid #667eea;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h2 style="margin: 0; color: #667eea; font-size: 24px;">📄 Báo Giá Chi Tiết</h2>
-                        <button onclick="this.closest('[style*=position]').remove()" style="background: #e74c3c; color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 18px;">✖</button>
+                        <button onclick="closeQuotePopup()" style="background: #e74c3c; color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 18px;">✖</button>
                     </div>
                     <p style="margin: 8px 0 0; color: #666;">Mã đơn hàng: <strong>${orderId}</strong></p>
                 </div>
@@ -1140,20 +1208,21 @@ function showQuoteBreakdown(quote, orderId) {
                     </div>
                     
                     <!-- Thông tin slot -->
-                    <div style="margin-bottom: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
-                        <h3 style="margin: 0 0 12px; color: #333; font-size: 18px;">📦 Thông tin ô kho</h3>
-                        <p style="margin: 4px 0;"><strong>Mã slot:</strong> ${quote.slotCode || 'N/A'}</p>
+                    <div style="margin-bottom: 24px; padding: 16px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <h3 style="margin: 0 0 12px; color: #333; font-size: 18px;">📦 Thông tin ô kho (Chưa gán)</h3>
+                        <p style="margin: 4px 0; padding: 8px; background: #fff; border-radius: 4px; color: #856404; font-weight: 600;">⚠️ Ô kho chưa được gán vào đơn hàng. Vui lòng ấn "Xác nhận gán vào ô kho" để hoàn tất.</p>
+                        <p style="margin: 8px 0 4px 0;"><strong>Mã slot:</strong> ${quote.slotCode || 'N/A'}</p>
                         <p style="margin: 4px 0;"><strong>Kích thước:</strong> ${quote.slotDimensions || `${quote.slotLengthM || 0}m × ${quote.slotWidthM || 0}m × ${quote.slotHeightM || 0}m`}</p>
                         <p style="margin: 4px 0;"><strong>Thể tích:</strong> ${formatNumber(quote.slotVolumeM3 || 0)} m³</p>
                         <p style="margin: 4px 0;"><strong>Diện tích:</strong> ${formatNumber(quote.slotAreaM2 || 0)} m²</p>
                     </div>
                     
-                    <!-- Yêu cầu tính toán -->
-                    ${quote.requiredVolumeM3 || quote.requiredAreaM2 ? `
+                    <!-- Yêu cầu tính toán - chỉ hiển thị khi có kết quả thực từ Gemini (có analysisDetails) -->
+                    ${quote.analysisDetails && (quote.requiredVolumeM3 > 0 || quote.requiredAreaM2 > 0) ? `
                     <div style="margin-bottom: 24px; padding: 16px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-                        <h3 style="margin: 0 0 12px; color: #333; font-size: 18px;">📊 Yêu cầu tính toán</h3>
-                        ${quote.requiredVolumeM3 ? `<p style="margin: 4px 0;"><strong>Thể tích cần:</strong> ${formatNumber(quote.requiredVolumeM3)} m³</p>` : ''}
-                        ${quote.requiredAreaM2 ? `<p style="margin: 4px 0;"><strong>Diện tích cần:</strong> ${formatNumber(quote.requiredAreaM2)} m²</p>` : ''}
+                        <h3 style="margin: 0 0 12px; color: #333; font-size: 18px;">📊 Yêu cầu tính toán (từ phân tích ảnh)</h3>
+                        ${quote.requiredVolumeM3 && quote.requiredVolumeM3 > 0 ? `<p style="margin: 4px 0;"><strong>Thể tích cần:</strong> ${formatNumber(quote.requiredVolumeM3)} m³</p>` : ''}
+                        ${quote.requiredAreaM2 && quote.requiredAreaM2 > 0 ? `<p style="margin: 4px 0;"><strong>Diện tích cần:</strong> ${formatNumber(quote.requiredAreaM2)} m²</p>` : ''}
                         ${quote.analysisDetails ? `<div style="margin-top: 12px; padding: 12px; background: white; border-radius: 6px; font-size: 14px; color: #555;">${quote.analysisDetails.replace(/\n/g, '<br>')}</div>` : ''}
                     </div>
                     ` : ''}
@@ -1218,8 +1287,8 @@ function showQuoteBreakdown(quote, orderId) {
                     
                     <!-- Nút hành động -->
                     <div style="display: flex; gap: 12px; margin-top: 24px;">
-                        <button onclick="window.location.href='/Booking/Success?Id=' + encodeURIComponent('${orderId}')" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận đơn hàng</button>
-                        <button onclick="this.closest('[style*=position]').remove()" style="flex: 1; background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Đóng</button>
+                        <button onclick="confirmAssignSlotToOrder('${orderId}', '${quote.slotId || ''}', this)" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận gán vào ô kho</button>
+                        <button onclick="closeQuotePopup()" style="flex: 1; background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Hủy / Đóng</button>
                     </div>
                 </div>
             </div>
@@ -1227,6 +1296,91 @@ function showQuoteBreakdown(quote, orderId) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// Hàm để xác nhận gán slot vào order
+async function confirmAssignSlotToOrder(orderId, slotId, buttonElement) {
+    if (!orderId || !slotId) {
+        alert('⚠️ Không có thông tin đơn hàng hoặc ô kho. Vui lòng thử lại.');
+        return;
+    }
+
+    // Disable button để tránh click nhiều lần
+    const originalText = buttonElement.textContent;
+    buttonElement.disabled = true;
+    buttonElement.textContent = '⏳ Đang gán ô kho...';
+    buttonElement.style.opacity = '0.6';
+    buttonElement.style.cursor = 'not-allowed';
+
+    try {
+        const response = await fetch('/Quote/AssignSlotToOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
+            body: JSON.stringify({
+                orderId: orderId,
+                slotId: slotId
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // Gán slot thành công - hiển thị thông báo và redirect
+            alert(`✅ ${result.message || 'Đã gán ô kho thành công!'}\n\n📦 Ô kho: ${result.slotCode || 'N/A'}\n📋 Mã đơn hàng: ${orderId}`);
+            
+            // Đóng popup
+            const popup = buttonElement.closest('[style*="position: fixed"]');
+            if (popup) {
+                popup.remove();
+            }
+            
+            // Redirect đến success page
+            window.location.href = '/Booking/Success?Id=' + encodeURIComponent(orderId);
+        } else {
+            // Lỗi khi gán slot
+            const errorMessage = result.message || 'Có lỗi xảy ra khi gán ô kho. Vui lòng thử lại.';
+            alert(`❌ ${errorMessage}`);
+            
+            // Reset button
+            buttonElement.disabled = false;
+            buttonElement.textContent = originalText;
+            buttonElement.style.opacity = '1';
+            buttonElement.style.cursor = 'pointer';
+        }
+    } catch (error) {
+        console.error('Error assigning slot to order:', error);
+        alert(`❌ Không thể kết nối đến máy chủ!\n\nChi tiết: ${error.message}\n\nVui lòng kiểm tra kết nối và thử lại.`);
+        
+        // Reset button
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalText;
+        buttonElement.style.opacity = '1';
+        buttonElement.style.cursor = 'pointer';
+    }
+}
+
+// Hàm để đóng popup (không gán slot)
+function closeQuotePopup() {
+    // Tìm popup báo giá (có chứa "Báo Giá Chi Tiết")
+    const popups = document.querySelectorAll('[style*="position: fixed"][style*="z-index: 10000"]');
+    let quotePopup = null;
+    
+    for (const popup of popups) {
+        if (popup.textContent.includes('Báo Giá Chi Tiết')) {
+            quotePopup = popup;
+            break;
+        }
+    }
+    
+    if (quotePopup) {
+        // Xác nhận với người dùng nếu họ muốn hủy
+        if (confirm('Bạn có chắc muốn hủy? Ô kho sẽ không được gán vào đơn hàng này.')) {
+            quotePopup.remove();
+        }
+    }
 }
 
 // ============ ESTIMATION CARD (CHỈ TÍNH DỊCH VỤ THÊM) ============

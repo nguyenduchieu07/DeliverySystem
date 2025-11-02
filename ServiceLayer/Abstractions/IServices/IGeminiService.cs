@@ -23,12 +23,11 @@ namespace ServiceLayer.Abstractions.IServices
     public interface IGeminiService
     {
         /// <summary>
-        /// Phân tích ảnh và dữ liệu mẫu để tính toán thể tích và diện tích cần thiết
+        /// Phân tích ảnh để đọc thông tin và tính toán thể tích và diện tích cần thiết
         /// </summary>
         /// <param name="imageUrl">URL ảnh sản phẩm</param>
-        /// <param name="items">Danh sách items với tên, số lượng, trọng lượng</param>
         /// <returns>Kết quả tính toán thể tích và diện tích</returns>
-        Task<VolumeCalculationResult> AnalyzeImageAndCalculateVolumeAsync(string imageUrl, List<ItemInfo> items);
+        Task<VolumeCalculationResult> AnalyzeImageAndCalculateVolumeAsync(string imageUrl);
     }
 
     public class ItemInfo

@@ -3,8 +3,17 @@ namespace DataAccessLayer.Configs
     public class GeminiConfig
     {
         public string ApiKey { get; set; } = string.Empty;
-        public string ModelName { get; set; } = "gemini-1.5-flash";
-        public string BaseUrl { get; set; } = "https://generativelanguage.googleapis.com/v1beta";
+        
+        // ✅ Dùng model mới nhất - Gemini 2.5 Flash (nhanh, mạnh, hỗ trợ ảnh tốt)
+        public string ModelName { get; set; } = "gemini-2.5-flash";
+        
+        // Hoặc các lựa chọn khác:
+        // "gemini-2.5-pro" - Mạnh nhất nhưng chậm hơn
+        // "gemini-2.5-flash-lite" - Nhẹ nhất, nhanh nhất
+        // "gemini-2.0-flash" - Phiên bản cũ hơn
+        
+        // ✅ Dùng v1 (không phải v1beta)
+        public string BaseUrl { get; set; } = "https://generativelanguage.googleapis.com/v1";
     }
 }
 

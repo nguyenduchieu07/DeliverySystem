@@ -136,32 +136,59 @@ namespace PresentationLayer.Controllers
                 // Upload ảnh nếu có
                 string? imageUrl = null;
                 VolumeCalculationResult? volumeResult = null;
+                string? geminiError = null; // Lưu thông tin lỗi từ Gemini để trả về client
+                
                 if (productImage != null && productImage.Length > 0)
                 {
                     Console.WriteLine("Uploading product image...");
                     imageUrl = await _cloudinaryService.UploadImageFileAsync(productImage);
                     Console.WriteLine($"Image uploaded: {imageUrl}");
                     
-                    // Gọi Gemini để phân tích ảnh và tính thể tích
+                    // Gọi Gemini để phân tích ảnh và tính thể tích (chỉ đọc từ ảnh, không dùng items)
                     try
                     {
-                        Console.WriteLine("Calling Gemini API...");
-                        var items = viewModel.Items?.Select(i => new ItemInfo
-                        {
-                            Name = i.Name,
-                            Category = i.Category,
-                            Quantity = i.Quantity,
-                            EstimatedWeightKg = i.EstimatedWeightKg
-                        }).ToList() ?? new List<ItemInfo>();
+                        Console.WriteLine("=== Calling Gemini API to analyze image ===");
+                        Console.WriteLine($"Image URL: {imageUrl}");
                         
-                        volumeResult = await _geminiService.AnalyzeImageAndCalculateVolumeAsync(imageUrl, items);
-                        Console.WriteLine($"Gemini result: Volume={volumeResult.RequiredVolumeM3} m³, Area={volumeResult.RequiredAreaM2} m²");
+                        volumeResult = await _geminiService.AnalyzeImageAndCalculateVolumeAsync(imageUrl);
+                        
+                        if (volumeResult != null)
+                        {
+                            Console.WriteLine($"✅ Gemini analysis SUCCESS");
+                            Console.WriteLine($"  Volume: {volumeResult.RequiredVolumeM3} m³");
+                            Console.WriteLine($"  Area: {volumeResult.RequiredAreaM2} m²");
+                            Console.WriteLine($"  Analysis Details: {volumeResult.AnalysisDetails?.Substring(0, Math.Min(100, volumeResult.AnalysisDetails?.Length ?? 0)) ?? "N/A"}...");
+                            if (volumeResult.ItemEstimates != null && volumeResult.ItemEstimates.Count > 0)
+                            {
+                                Console.WriteLine($"  Found {volumeResult.ItemEstimates.Count} items in image:");
+                                foreach (var item in volumeResult.ItemEstimates)
+                                {
+                                    Console.WriteLine($"    - {item.Name}: {item.Quantity} cái, {item.EstimatedVolumeM3} m³");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"  ⚠️ No items found in image analysis");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("❌ Gemini returned null result");
+                            geminiError = "Gemini API trả về null result";
+                        }
                     }
                     catch (Exception geminiEx)
                     {
-                        Console.WriteLine("Gemini analysis error: " + geminiEx.Message);
-                        Console.WriteLine("Gemini stack trace: " + geminiEx.StackTrace);
-                        // Continue without Gemini result - sẽ dùng fallback
+                        Console.WriteLine("❌ Gemini analysis ERROR:");
+                        Console.WriteLine($"  Message: {geminiEx.Message}");
+                        Console.WriteLine($"  Stack trace: {geminiEx.StackTrace}");
+                        if (geminiEx.InnerException != null)
+                        {
+                            Console.WriteLine($"  Inner exception: {geminiEx.InnerException.Message}");
+                        }
+                        volumeResult = null; // Đảm bảo volumeResult = null khi có lỗi
+                        geminiError = geminiEx.Message; // Lưu error message để trả về client
+                        // Continue without Gemini result - sẽ dùng fallback cho tìm slot
                     }
                 }
                 else
@@ -255,11 +282,13 @@ namespace PresentationLayer.Controllers
                 storeId = warehouseFromDb.StoreId;
 
                 // Tìm slot phù hợp dựa trên thể tích/diện tích
-                var requiredVolume = volumeResult?.RequiredVolumeM3 ?? 5m; // Fallback: 5 m³
-                var requiredArea = volumeResult?.RequiredAreaM2 ?? 3m; // Fallback: 3 m²
+                // Sử dụng fallback chỉ để tìm slot, KHÔNG truyền vào quote response
+                var requiredVolume = volumeResult?.RequiredVolumeM3 ?? 5m; // Fallback: 5 m³ (chỉ để tìm slot)
+                var requiredArea = volumeResult?.RequiredAreaM2 ?? 3m; // Fallback: 3 m² (chỉ để tìm slot)
                 
-                Console.WriteLine($"Looking for slots in warehouse {warehouseId}");
-                Console.WriteLine($"Required volume: {requiredVolume} m³, Required area: {requiredArea} m²");
+                Console.WriteLine($"=== Looking for slots in warehouse {warehouseId} ===");
+                Console.WriteLine($"Using volume: {requiredVolume} m³ (from Gemini: {volumeResult?.RequiredVolumeM3.ToString() ?? "null"} or fallback: 5)");
+                Console.WriteLine($"Using area: {requiredArea} m² (from Gemini: {volumeResult?.RequiredAreaM2.ToString() ?? "null"} or fallback: 3)");
                 
                 // Kiểm tra tổng số slot trong warehouse
                 var allSlotsInWarehouse = await _db.WarehouseSlots
@@ -449,11 +478,9 @@ namespace PresentationLayer.Controllers
                 var createdOrder = await _deliveryService.CreateOrderAsync(order);
                 Console.WriteLine($"Order created: {createdOrder.Id}");
                 
-                // Gán slot cho order (có thể lưu vào một bảng trung gian hoặc note)
-                Console.WriteLine($"Reserving slot {selectedSlot.Code} for order {createdOrder.Id}");
-                selectedSlot.CurrentOrderId = createdOrder.Id;
-                await _db.SaveChangesAsync();
-                Console.WriteLine("Slot reserved successfully");
+                // KHÔNG gán slot ngay - chỉ trả về thông tin slot đề xuất để người dùng xác nhận
+                // Slot sẽ được gán khi người dùng xác nhận thông qua API AssignSlotToOrder
+                Console.WriteLine($"Proposed slot {selectedSlot.Code} for order {createdOrder.Id} - waiting for user confirmation");
 
                 // Tính toán chi tiết giá (đã tính addons ở trên)
                 var storageDaysForDisplay = Math.Ceiling((viewModel.StorageEndDate - viewModel.StorageStartDate).TotalDays);
@@ -473,17 +500,21 @@ namespace PresentationLayer.Controllers
                         warehouseName = warehouseFromDb.Name,
                         warehouseAddress = warehouseFromDb.Address?.AddressLine ?? viewModel.WarehouseArea.AddressLine ?? "N/A",
                         
-                        // Thông tin slot
+                        // Thông tin slot (chưa gán, đang chờ xác nhận)
+                        slotId = selectedSlot.Id.ToString(), // Thêm slotId để client có thể gán sau khi xác nhận
                         slotCode = selectedSlot.Code,
                         slotVolumeM3 = Math.Round(selectedSlot.HeightM * selectedSlot.LengthM * selectedSlot.WidthM, 2), // Tính trực tiếp thay vì dùng VolumeM3 property
                         slotAreaM2 = Math.Round(selectedSlot.LengthM * selectedSlot.WidthM, 2),
                         slotDimensions = $"{selectedSlot.LengthM:F2}m × {selectedSlot.WidthM:F2}m × {selectedSlot.HeightM:F2}m",
                         
-                        // Yêu cầu tính toán từ Gemini
-                        requiredVolumeM3 = Math.Round(requiredVolume, 2),
-                        requiredAreaM2 = Math.Round(requiredArea, 2),
+                        // Yêu cầu tính toán từ Gemini - chỉ truyền nếu có kết quả thực từ Gemini
+                        requiredVolumeM3 = volumeResult != null ? Math.Round(volumeResult.RequiredVolumeM3, 2) : (decimal?)null,
+                        requiredAreaM2 = volumeResult != null ? Math.Round(volumeResult.RequiredAreaM2, 2) : (decimal?)null,
                         analysisDetails = volumeResult?.AnalysisDetails,
                         itemEstimates = volumeResult?.ItemEstimates,
+                        geminiAnalysisAvailable = volumeResult != null, // Flag để client biết có kết quả Gemini không
+                        hasProductImage = productImage != null && productImage.Length > 0, // Flag để client biết có upload ảnh không
+                        geminiError = geminiError, // Thông tin lỗi từ Gemini (nếu có)
                         
                         // Thông tin thời gian
                         storageStartDate = viewModel.StorageStartDate.ToString("dd/MM/yyyy"),
@@ -528,6 +559,109 @@ namespace PresentationLayer.Controllers
                     stackTrace = ex.StackTrace
                 });
             }
+        }
+
+        // API để gán slot vào order sau khi người dùng xác nhận
+        [HttpPost]
+        public async Task<IActionResult> AssignSlotToOrder([FromBody] AssignSlotToOrderRequest request)
+        {
+            if (request == null || request.OrderId == Guid.Empty || request.SlotId == Guid.Empty)
+            {
+                return BadRequest(new { success = false, message = "OrderId và SlotId là bắt buộc." });
+            }
+
+            try
+            {
+                // Kiểm tra order có tồn tại không
+                var order = await _orderService.GetByIdAsync(request.OrderId);
+                if (order == null)
+                {
+                    return NotFound(new { success = false, message = "Không tìm thấy đơn hàng." });
+                }
+
+                // Kiểm tra slot có tồn tại và còn trống không
+                var slot = await _db.WarehouseSlots
+                    .FirstOrDefaultAsync(s => s.Id == request.SlotId);
+
+                if (slot == null)
+                {
+                    return NotFound(new { success = false, message = "Không tìm thấy ô kho." });
+                }
+
+                if (slot.IsBlocked)
+                {
+                    return BadRequest(new { success = false, message = "Ô kho này đã bị khóa." });
+                }
+
+                if (slot.CurrentOrderId != null && slot.CurrentOrderId != request.OrderId)
+                {
+                    return BadRequest(new { success = false, message = "Ô kho này đã được gán cho đơn hàng khác." });
+                }
+
+                // Kiểm tra xem đã có bản ghi OrderWarehouseSlot chưa (để tránh trùng lặp)
+                var existingAssignment = await _db.OrderWarehouseSlots
+                    .FirstOrDefaultAsync(ows => ows.OrderId == request.OrderId && 
+                                                 ows.WarehouseSlotId == request.SlotId &&
+                                                 ows.DeletedAt == null);
+
+                if (existingAssignment != null)
+                {
+                    // Nếu đã có bản ghi nhưng chưa có ReleasedAt, nghĩa là đang active
+                    if (existingAssignment.ReleasedAt == null)
+                    {
+                        return BadRequest(new { success = false, message = "Ô kho này đã được gán cho đơn hàng này rồi." });
+                    }
+                    // Nếu đã có ReleasedAt (đã giải phóng), tạo bản ghi mới
+                }
+
+                // Tạo bản ghi lịch sử trong bảng OrderWarehouseSlot
+                var orderWarehouseSlot = new OrderWarehouseSlot
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = request.OrderId,
+                    WarehouseSlotId = request.SlotId,
+                    AssignedAt = DateTime.Now, // Thời gian gán slot
+                    ReleasedAt = null, // Chưa giải phóng
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
+                _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
+
+                // Cập nhật CurrentOrderId trong WarehouseSlot để đảm bảo tính nhất quán
+                slot.CurrentOrderId = request.OrderId;
+                slot.Status = DataAccessLayer.Enums.StatusValue.Reserved; // Đánh dấu slot là Reserved
+                
+                await _db.SaveChangesAsync();
+
+                Console.WriteLine($"Slot {slot.Code} (ID: {slot.Id}) assigned to order {request.OrderId} successfully");
+                Console.WriteLine($"OrderWarehouseSlot record created: ID={orderWarehouseSlot.Id}, AssignedAt={orderWarehouseSlot.AssignedAt}");
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Đã gán ô kho thành công!",
+                    slotCode = slot.Code,
+                    orderId = request.OrderId
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in AssignSlotToOrder: " + ex.Message);
+                Console.WriteLine("Stack trace: " + ex.StackTrace);
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Có lỗi xảy ra khi gán ô kho. Vui lòng thử lại sau.",
+                    detail = ex.Message
+                });
+            }
+        }
+
+        public class AssignSlotToOrderRequest
+        {
+            public Guid OrderId { get; set; }
+            public Guid SlotId { get; set; }
         }
 
         [HttpGet]
