@@ -3,6 +3,11 @@ let map, warehouseMarker;
 let warehouseData = null;
 let selectedWarehouse = null;
 let nearbyWarehouses = [];
+let currentQuotationId = null;
+
+function getCsrf() {
+    return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function () {
@@ -1074,6 +1079,9 @@ async function submitWarehouseOrder() {
             if (response.ok && result && result.success) {
                 // Hiển thị bảng báo giá
                 if (result.quote) {
+                    currentQuotationId = result.quote.quotationId || result.quotationId || null;
+                    const hid = document.getElementById('quotationIdInput');
+                    if (hid && currentQuotationId) hid.value = currentQuotationId;
                     showQuoteBreakdown(result.quote, result.orderId);
                 } else {
                     alert(`✅ ${result.message}\n\n📦 Mã đơn hàng: ${result.orderId}`);
@@ -1218,7 +1226,7 @@ function showQuoteBreakdown(quote, orderId) {
                     
                     <!-- Nút hành động -->
                     <div style="display: flex; gap: 12px; margin-top: 24px;">
-                        <button onclick="window.location.href='/Booking/Success?Id=' + encodeURIComponent('${orderId}')" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận đơn hàng</button>
+                        <button onclick="acceptQuotationFromBreakdown('${orderId}', '${quote.quotationId || ''}')" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận đơn hàng</button>
                         <button onclick="this.closest('[style*=position]').remove()" style="flex: 1; background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Đóng</button>
                     </div>
                 </div>
@@ -1275,6 +1283,8 @@ function updateEstimationCard() {
         const end = new Date(endDate);
         if (end > start) {
             totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        } else {
+            totalDays = 0;
         }
     }
     
@@ -1370,3 +1380,47 @@ window.bookingDebug = {
     displayWarehousesOnMap: displayWarehousesOnMap,
     updateEstimationCard: updateEstimationCard
 };
+
+
+
+async function acceptQuotationFromBreakdown(orderId, qidFromQuote) {
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    const quotationId = qidFromQuote || currentQuotationId || document.getElementById('quotationIdInput')?.value;
+    if (!quotationId) { alert('Không tìm thấy mã báo giá để xác nhận.'); return; }
+
+    try {
+        const res = await fetch('/Quote/Accept', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify({
+                quotationId: quotationId,
+                slotIds: selectedSlots || [],
+                from: document.getElementById('storageStartDate')?.value,
+                to: document.getElementById('storageEndDate')?.value,
+                selectedWarehouseId: (selectedWarehouse?.id || selectedWarehouse?.Id)
+            })
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.success) {
+            alert(data?.message || '❌ Không chấp nhận được báo giá.');
+            return;
+        }
+
+        if (data.redirectUrl) {
+            window.location.href = data.redirectUrl; // ví dụ: /Payment?orderId=...
+        } else if (data.orderId) {
+            window.location.href = '/Payment?orderId=' + encodeURIComponent(data.orderId);
+        } else if (orderId) {
+            window.location.href = '/Booking/Success?Id=' + encodeURIComponent(orderId);
+        } else {
+            alert('✅ Đã chấp nhận báo giá.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+    }
+}

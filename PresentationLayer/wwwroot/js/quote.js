@@ -818,3 +818,25 @@ async function acceptQuote(quotationId, extraNote) {
         alert('Có lỗi xảy ra. Vui lòng thử lại.');
     }
 }
+async function acceptQuotation(quotationId) {
+    quotationId = quotationId || document.getElementById('quotationIdInput')?.value;
+    if (!quotationId) { alert('Không tìm thấy mã báo giá.'); return; }
+
+    const res = await fetch('/Quote/Accept', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+        },
+        body: JSON.stringify({ quotationId, slotIds: [] }) // slotIds để trống vì slot đã reserve ở CreateWarehouseOrder
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) {
+        alert('❌ Không chấp nhận được báo giá.'); return;
+    }
+
+    if (data.redirectUrl) window.location.href = data.redirectUrl;
+    else if (data.orderId) window.location.href = '/Payment?orderId=' + encodeURIComponent(data.orderId);
+    else alert('✅ Đã chấp nhận báo giá.');
+}

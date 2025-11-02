@@ -23,12 +23,13 @@ namespace ServiceLayer.Services
         private readonly IBaseRepository<WarehouseSlot, Guid> _warehouseSlotRepository;
         private readonly IBaseRepository<SlotReservation, Guid> _slotReservationRepository;
         private readonly IBaseRepository<Contract, Guid> _contractRepository;
-
+        private readonly IContractService _contractService;
         public QuotationService(DeliverySytemContext db, IUserContextService context,
             IBaseRepository<DataAccessLayer.Entities.Order, Guid> orderRepository,
             IBaseRepository<WarehouseSlot, Guid> warehouseSlotRepository,
             IBaseRepository<SlotReservation, Guid> slotReservationRepository,
-            IBaseRepository<Contract, Guid> contractRepository)
+            IBaseRepository<Contract, Guid> contractRepository,
+            IContractService contractService)
         {
             _db = db;
             _context = context;
@@ -36,6 +37,7 @@ namespace ServiceLayer.Services
             _warehouseSlotRepository = warehouseSlotRepository;
             _slotReservationRepository = slotReservationRepository;
             _contractRepository = contractRepository;
+            _contractService = contractService;
         }
 
         public async Task<QuoteResultVm> CalculateAndCreateQuotationAsync(
@@ -181,75 +183,41 @@ namespace ServiceLayer.Services
 
         public async Task<AcceptQuoteResult> AcceptQuotationAsync(AcceptQuoteVm vm, CancellationToken ct)
         {
-            // validate input date range (tùy chọn)
-            if (vm.From >= vm.To)
-                return new AcceptQuoteResult { Success = false, Message = "Khoảng thời gian không hợp lệ." };
+            using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-            using var trx = await _db.Database.BeginTransactionAsync(ct);
-            try
+            var quotation = await _db.Quotations
+                .Include(q => q.Orders) // đề phòng có nhiều, nhưng case này là 1
+                .FirstOrDefaultAsync(q => q.Id == vm.QuotationId, ct);
+
+            if (quotation == null)
+                return new AcceptQuoteResult { Success = false };
+
+            // Nếu CreateWarehouseOrder đã tạo Order + gán slot rồi, ta chỉ việc dùng lại:
+            var order = quotation.Orders.FirstOrDefault()
+                ?? await _db.Orders.FirstOrDefaultAsync(o => o.QuotationId == quotation.Id, ct);
+
+            if (order == null)
             {
-                // Lấy quotation + kiểm tra hạn
-                var quotation = await _db.Quotations
-                    .Include(q => q.Orders) // để lấy order cũ nếu đã tạo
-                    .FirstOrDefaultAsync(q => q.Id == vm.QuotationId, ct);
-
-                if (quotation == null)
-                    return new AcceptQuoteResult { Success = false, Message = "Không tìm thấy báo giá." };
-
-                if (quotation.ValidUntil < DateTime.Now)
-                    return new AcceptQuoteResult { Success = false, Message = "Báo giá đã hết hạn." };
-
-                // Nếu đã accepted trước đó, tái sử dụng order (idempotent)
-                var existingOrderId = quotation.Orders
-                    ?.OrderByDescending(o => o.CreatedAt)
-                    .FirstOrDefault()?.Id;
-                if (quotation.Status == StatusValue.Approved || quotation.Status == StatusValue.Active)
-                {
-                    await trx.CommitAsync(ct);
-                    return new AcceptQuoteResult
-                    {
-                        Success = true,
-                        OrderId = existingOrderId,
-                        Message = "Báo giá đã được chấp nhận trước đó."
-                    };
-                }
-
-                // Chấp nhận báo giá
-                quotation.Status = StatusValue.Approved; // hoặc Active nếu đại ca đang dùng vậy
-                quotation.UpdatedAt = DateTime.Now;
-
-                // Tạo Order + giữ slot cứng (firm reservation)
-                var order = await CreateOrderAndSlotReservationsAsync(
-                    quotation,
-                    vm.SlotIds,
-                    ct,
-                    vm.From,
-                    vm.To);
-
-                // Đảm bảo Order có trạng thái hợp lệ để đi thanh toán
-                order.Item1.Status = StatusValue.AwaitingPayment;
-                order.Item1.TotalAmount = quotation.TotalAmount;
-                order.Item1.UpdatedAt = DateTime.Now;
-
-                await _db.SaveChangesAsync(ct);
-                await trx.CommitAsync(ct);
-
-                return new AcceptQuoteResult
-                {
-                    Success = true,
-                    OrderId = order.Item1.Id,
-                    Message = "Chấp nhận báo giá thành công."
-                };
+                // Trường hợp cũ/ngoại lệ: fallback tạo order tại đây (nếu muốn).
+                // Nhưng chuẩn là đã có sẵn order rồi.
+                // order = await CreateOrderAndSlotReservationsAsync(...);
             }
-            catch (Exception ex)
-            {
-                await trx.RollbackAsync(ct);
-                return new AcceptQuoteResult
-                {
-                    Success = false,
-                    Message = "Có lỗi khi chấp nhận báo giá: " + ex.Message
-                };
-            }
+
+            // Kích hoạt báo giá + duyệt đơn
+            quotation.Status = StatusValue.Active;
+            quotation.UpdatedAt = DateTime.UtcNow;
+
+            order.Status = StatusValue.AwaitingPayment;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync(ct);
+
+            // *** SINH HỢP ĐỒNG Ở ĐÂY ***
+            
+
+            await tx.CommitAsync(ct);
+
+            return new AcceptQuoteResult { Success = true, OrderId = order.Id };
         }
 
 
