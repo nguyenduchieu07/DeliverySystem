@@ -262,10 +262,13 @@ public class ContractService : IContractService
             //Kích hoạt hợp đồng
             var contract = await _db.Contracts
                 .AsTracking()
+                .Include(c => c.Quotation)
                 .SingleOrDefaultAsync(x => x.Id == contractId);
 
             if (contract == null)
                 return false;
+            
+            contract.Quotation.Status = StatusValue.Active;
 
             contract.Status = ContractStatus.Active;
             _db.Contracts.Update(contract);
@@ -316,6 +319,7 @@ public class ContractService : IContractService
                 return false;
 
             contract.Status = ContractStatus.Terminated;
+            contract.Quotation.Status = StatusValue.InActive;
             _db.Contracts.Update(contract);
 
             //Cập nhật trạng thái slot & reservation
