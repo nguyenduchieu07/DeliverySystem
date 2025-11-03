@@ -1,4 +1,5 @@
-﻿using DataAccessLayer.Entities;
+﻿using Application.Services;
+using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -269,7 +270,7 @@ namespace PresentationLayer.Controllers
         private async Task<PaymentResultViewModel> ProcessBankTransfer(Payment payment, string? provider)
         {
             // Chuyển khoản ngân hàng - tạo thông tin chuyển khoản
-            payment.Status = StatusValue.Pending;
+            payment.Status = StatusValue.Completed;
             payment.Provider = provider ?? "Manual Bank Transfer";
             payment.ProviderTxnId = $"BANK_{DateTime.UtcNow:yyyyMMddHHmmss}";
 
@@ -283,7 +284,7 @@ namespace PresentationLayer.Controllers
         private async Task<PaymentResultViewModel> ProcessMoMoPayment(Payment payment)
         {
             // Tích hợp MoMo API (giả lập)
-            payment.Status = StatusValue.Pending;
+            payment.Status = StatusValue.Completed;
             payment.Provider = "MoMo";
             payment.ProviderTxnId = $"MOMO_{Guid.NewGuid().ToString("N")[..10].ToUpper()}";
 
@@ -316,15 +317,17 @@ namespace PresentationLayer.Controllers
         private async Task<PaymentResultViewModel> ProcessVNPayPayment(Payment payment)
         {
             // Tích hợp VNPay API (giả lập)
-            payment.Status = StatusValue.Pending;
+            payment.Status = StatusValue.Completed;
             payment.Provider = "VNPay";
             payment.ProviderTxnId = $"VNP_{Guid.NewGuid().ToString("N")[..10].ToUpper()}";
 
+            var vnpay = new VnpayService();
+            var url = vnpay.CreatePaymentUrl(HttpContext, (int)(payment.Amount*100),payment.Id.ToString());
             return new PaymentResultViewModel
             {
                 IsSuccess = true,
                 Message = "Đang chuyển hướng đến VNPay...",
-                RedirectUrl = $"https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_TxnRef={payment.ProviderTxnId}"
+                RedirectUrl = url
             };
         }
 

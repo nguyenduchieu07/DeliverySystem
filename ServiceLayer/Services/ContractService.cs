@@ -53,7 +53,6 @@ public class ContractService : IContractService
     
     public async Task<List<Contract>> GenerateContractsAsync(Guid quotationId)
     {
-        using var ts = await _db.Database.BeginTransactionAsync();
 
         try
         {
@@ -99,7 +98,6 @@ public class ContractService : IContractService
                 s.Status = StatusValue.InActive;
                 _slotReservationRepository.Update(s);
             });
-            await ts.CommitAsync();
             
             //get contracts by OrderId 
             var returnContracts = _contractRepository.FindAll(c => c.QuotationId == quotationId, includeProperties: o => o.WarehouseSlot).ToList();
@@ -108,7 +106,6 @@ public class ContractService : IContractService
         }
         catch (Exception e)
         {
-            await ts.RollbackAsync();
             return [];
         }
         

@@ -35,6 +35,7 @@ namespace DataAccessLayer.Enums
         Revised,
         Used,
         AwaitingPickup,
-        AwaitingPayment
+        AwaitingPayment,
+        IncidentProcessing
     }
 }

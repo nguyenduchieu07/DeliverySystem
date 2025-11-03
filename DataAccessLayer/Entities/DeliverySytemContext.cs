@@ -57,6 +57,10 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
     public virtual DbSet<Contract> Contracts { get; set; }
     
     public virtual DbSet<OrderWarehouseSlot> OrderWarehouseSlots { get; set; }
+    public virtual DbSet<IncidentReport> IncidentReports { get; set; }
+    public virtual DbSet<IncidentAction> IncidentActions { get; set; }
+
+
     public virtual DbSet<ServiceSizeOption> ServiceSizeOptions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

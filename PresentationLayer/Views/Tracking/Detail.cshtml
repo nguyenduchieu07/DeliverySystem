@@ -1,4 +1,5 @@
-﻿@using ServiceLayer.Dtos.OrderTracking
+﻿@using DataAccessLayer.Enums
+@using ServiceLayer.Dtos.OrderTracking
 @model OrderTrackingViewModel
 @{
     ViewData["Title"] = "Chi tiết đơn hàng";
@@ -34,13 +35,14 @@
                         </div>
                         <div class="col-md-6">
                             <strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")<br>
-                            <strong>Tổng tiền:</strong> <span class="text-danger fw-bold">@Model.TotalAmount.ToString("N0") VNĐ</span><br>
+                            <strong>Tổng tiền:</strong> <span
+                                class="text-danger fw-bold">@Model.TotalAmount.ToString("N0") VNĐ</span><br>
                             @if (Model.DistanceKm.HasValue)
                             {
-                                <strong>Khoảng cách:</strong> 
+                                <strong>Khoảng cách:</strong>
                                 @Model.DistanceKm.Value.ToString("F1")
                                 @::km
-                                                        }
+                            }
                         </div>
                     </div>
 
@@ -51,7 +53,8 @@
                                 <p class="mb-0">@Model.DropoffAddress</p>
                                 @if (Model.DeliveryDate.HasValue)
                                 {
-                                    <small class="text-muted">Ngày lấy: @Model.DeliveryDate.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                    <small class="text-muted">Ngày
+                                        lấy: @Model.DeliveryDate.Value.ToString("dd/MM/yyyy HH:mm")</small>
                                 }
                             </div>
                         </div>
@@ -61,7 +64,8 @@
                                 <p class="mb-0">@Model.PickupAddress</p>
                                 @if (Model.PickupDate.HasValue)
                                 {
-                                    <small class="text-muted">Ngày trả: @Model.PickupDate.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                    <small class="text-muted">Ngày
+                                        trả: @Model.PickupDate.Value.ToString("dd/MM/yyyy HH:mm")</small>
                                 }
                             </div>
                         </div>
@@ -83,7 +87,8 @@
                                     <strong>Check-in:</strong><br>
                                     @if (Model.CheckOutTime.HasValue)
                                     {
-                                        <span class="text-success">@Model.CheckOutTime.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                        <span
+                                            class="text-success">@Model.CheckOutTime.Value.ToString("dd/MM/yyyy HH:mm")</span>
                                     }
                                     else
                                     {
@@ -99,7 +104,8 @@
                                     <strong>Check-out:</strong><br>
                                     @if (Model.CheckInTime.HasValue)
                                     {
-                                        <span class="text-success">@Model.CheckInTime.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                        <span
+                                            class="text-success">@Model.CheckInTime.Value.ToString("dd/MM/yyyy HH:mm")</span>
                                     }
                                     else
                                     {
@@ -121,27 +127,43 @@
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
-                                <tr>
-                                    <th>Tên hàng</th>
-                                    <th>Mô tả</th>
-                                    <th>SL</th>
-                                    <th>Khối lượng</th>
-                                    <th>Thể tích</th>
-                                    <th>Thành tiền</th>
-                                </tr>
+                            <tr>
+                                <th>Tên hàng</th>
+                                <th>Mô tả</th>
+                                <th>SL</th>
+                                <th>Khối lượng</th>
+                                <th>Thể tích</th>
+                                <th>Thành tiền</th>
+                                <th>Báo cáo</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.Items)
-                                {
-                                    <tr>
-                                        <td>@item.ItemName</td>
-                                        <td>@item.Description</td>
-                                        <td>@item.Quantity</td>
-                                        <td>@(item.WeightKg?.ToString("F2") ?? "-") kg</td>
-                                        <td>@(item.VolumeM3?.ToString("F3") ?? "-") m³</td>
-                                        <td>@(item.Subtotal?.ToString("N0") ?? "-") VNĐ</td>
-                                    </tr>
-                                }
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>@item.ItemName</td>
+                                    <td>@item.Description</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@(item.WeightKg?.ToString("F2") ?? "-") kg</td>
+                                    <td>@(item.VolumeM3?.ToString("F3") ?? "-") m³</td>
+                                    <td>@(item.Subtotal?.ToString("N0") ?? "-") VNĐ</td>
+                                    <td>
+                                        @if (item.IncidentReports.Count > 0)
+                                        {
+                                            <button class="btn btn-sm btn-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#incidentModal_@item.Id">
+                                                Xem tổn thất
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">Bình thường</span>
+                                        }
+                                    </td>
+
+                                </tr>
+                            }
                             </tbody>
                         </table>
                     </div>
@@ -161,7 +183,8 @@
                     <div class="card-body">
                         <dl class="row mb-0">
                             <dt class="col-5">Mã báo giá:</dt>
-                            <dd class="col-7"><code>@Model.ContractInfo.QuotationId?.ToString().Substring(0, 8).ToUpper()</code></dd>
+                            <dd class="col-7">
+                                <code>@Model.ContractInfo.QuotationId?.ToString().Substring(0, 8).ToUpper()</code></dd>
 
                             <dt class="col-5">Hiệu lực đến:</dt>
                             <dd class="col-7">
@@ -206,8 +229,9 @@
                                     <p class="mb-1">@evt.Description</p>
                                     @if (!string.IsNullOrEmpty(evt.Location))
                                     {
-                                        <small class="text-muted"><i class="fas fa-map-marker-alt"></i> @evt.Location</small>
-                                
+                                        <small class="text-muted"><i class="fas fa-map-marker-alt"></i> @evt.Location
+                                        </small>
+
                                         <br>
                                     }
                                     <small class="text-muted">@evt.EventTime.ToString("dd/MM/yyyy HH:mm")</small>
@@ -221,21 +245,186 @@
     </div>
 </div>
 
+@foreach (var item in Model.Items)
+{
+    if (item.IncidentReports.Count > 0)
+    {
+        <div class="modal fade" id="incidentModal_@item.Id" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            Báo cáo tổn thất - @item.ItemName
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        @foreach (var report in item.IncidentReports)
+                        {
+                            <div class="border rounded p-3 mb-4">
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">Mã báo cáo: <code>@report.Id.ToString().Substring(0, 8)</code></span>
+                                    <span
+                                        class="badge bg-@(report.Status == ReportStatus.Pending ? "warning" : "success")">
+                                        @report.Status
+                                    </span>
+                                </div>
+
+                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.IncidentType</p>
+                                <p class="mb-1"><strong>Mô tả:</strong> @report.Description</p>
+
+                                @if (!string.IsNullOrEmpty(report.ImageUrl))
+                                {
+                                    <div class="mb-2">
+                                        <strong>Ảnh minh chứng:</strong><br/>
+                                        <img src="@report.ImageUrl" class="img-thumbnail mt-2"
+                                             style="max-width: 200px"/>
+                                    </div>
+                                }
+
+                                <p class="mb-1"><strong>Ngày báo
+                                        cáo:</strong> @report.ReportedAt.ToString("dd/MM/yyyy HH:mm")</p>
+
+                                @if (report.IsReturned || report.IsCompensated)
+                                {
+                                    <div class="mt-2">
+                                        <span class="badge bg-info">Đã xử lý</span>
+                                        @if (report.IsReturned)
+                                        {
+                                            <span class="badge bg-secondary">Đã hoàn/ký gửi hàng</span>
+                                        }
+                                        @if (report.IsCompensated)
+                                        {
+                                            <span
+                                                class="badge bg-success">Đã bồi thường @report.CompensationAmount?.ToString("N0") VNĐ</span>
+                                        }
+                                    </div>
+                                }
+
+                                <!-- Hiển thị lịch sử xử lý -->
+                                @if (report.Actions.Any())
+                                {
+                                    <div class="mt-3">
+                                        <h6>Lịch sử xử lý</h6>
+                                        <table class="table table-sm table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>Thao tác</th>
+                                                <th>Ghi chú</th>
+                                                <th>Ngày thực hiện</th>
+                                                <th>Nhân viên</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var action in report.Actions)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @(
+                                                        action.ActionType switch
+                                                        {
+                                                            IncidentActionType.ConfirmDamage => "Xác nhận hư hỏng",
+                                                            IncidentActionType.ReturnItem => "Hoàn trả hàng",
+                                                            IncidentActionType.Compensate => "Đền bù",
+                                                            IncidentActionType.Close => "Đóng khiếu nại",
+                                                            _ => action.ActionType.ToString()
+                                                        }
+                                                        )
+                                                    </td>
+                                                    <td>@action.Note</td>
+                                                    <td>@action.ActionDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                                    <td>@(action.StaffId?.ToString().Substring(0, 8) ?? "-")</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted fst-italic mt-2">Chưa có hành động xử lý nào.</p>
+                                }
+                            </div>
+
+                            <form method="post" asp-controller="Tracking" asp-action="AddAction">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Gửi khiếu nại</h5>
+                                </div>
+
+                                <div class="modal-body">
+
+                                    <input type="hidden" name="IncidentReportId" value="@report.Id"/>
+                                    <input type="hidden" name="OrderId" value="@Model.Id"/>
+
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Loại hành động</label>
+                                        <select class="form-select action-type" name="ActionType" required data-item-price="@item.Subtotal">
+                                            <option value="">-- Chọn loại hành động --</option>
+                                            <option value="0">Xác nhận hư hỏng</option>
+                                            <option value="1">Hoàn trả hàng</option>
+                                            <option value="2">Đền bù</option>
+                                            <option value="3">Đóng khiếu nại</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Khối bồi thường (ẩn mặc định) -->
+                                    <div class="compensate-box d-none">
+                                        <label class="form-label">Mức độ thiệt hại</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input compensate-level" type="radio" name="CompensationLevel" value="light">
+                                            <label class="form-check-label">Nhẹ (30% – 50%)</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input compensate-level" type="radio" name="CompensationLevel" value="heavy">
+                                            <label class="form-check-label">Nặng (70% – 90%)</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Ghi chú</label>
+                                        <textarea class="form-control note" name="Note" rows="3"
+                                                  required></textarea>
+                                    </div>
+
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        Hủy
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                                </div>
+                            </form>
+                        }
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    }
+}
+
+
+
 <style>
     .timeline {
         position: relative;
         padding-left: 40px;
     }
 
-        .timeline:before {
-            content: '';
-            position: absolute;
-            left: 20px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #dee2e6;
-        }
+    .timeline:before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
 
     .timeline-item {
         position: relative;
@@ -281,3 +470,31 @@
         background-color: #dc3545 !important;
     }
 </style>
+
+<script>
+document.addEventListener("change", function (e) {
+    const select = e.target.closest(".action-type");
+    if (select) {
+        const box = select.closest("form").querySelector(".compensate-box");
+        if (select.value === "2") { // Compensate
+            box.classList.remove("d-none");
+        } else {
+            box.classList.add("d-none");
+        }
+    }
+
+    if (e.target.classList.contains("compensate-level")) {
+        const form = e.target.closest("form");
+        const price = parseFloat(form.querySelector(".action-type").dataset.itemPrice);
+        const input = form.querySelector(".note");
+
+        let percent = 0;
+        if (e.target.value === "light") {
+            percent = 0.4; // FE chọn mức 40% trung bình
+        } else if (e.target.value === "heavy") {
+            percent = 0.8; // FE chọn mức 80% trung bình
+        }
+        input.value = "Tôi muốn số tiền đền bù là " + Math.round(price * percent) + " VNĐ";
+    }
+});
+</script>
