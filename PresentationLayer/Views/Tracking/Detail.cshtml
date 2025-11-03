@@ -350,7 +350,7 @@
 
                             <form method="post" asp-controller="Tracking" asp-action="AddAction">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Gửi khiếu nại</h5>
+                                    <h5 class="modal-title">Phản hồi báo cáo</h5>
                                 </div>
 
                                 <div class="modal-body">
@@ -364,9 +364,9 @@
                                         <select class="form-select action-type" name="ActionType" required data-item-price="@item.Subtotal">
                                             <option value="">-- Chọn loại hành động --</option>
                                             <option value="0">Xác nhận hư hỏng</option>
-                                            <option value="1">Hoàn trả hàng</option>
+                                            @* <option value="1">Hoàn trả hàng</option> *@
                                             <option value="2">Đền bù</option>
-                                            <option value="3">Đóng khiếu nại</option>
+                                            @* <option value="3">Đóng khiếu nại</option> *@
                                         </select>
                                     </div>
 

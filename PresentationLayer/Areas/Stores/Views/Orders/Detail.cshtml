@@ -1,6 +1,11 @@
-﻿@model PresentationLayer.Areas.Stores.Controllers.OrdersController.StoreOrderDetailViewModel
+﻿@using System.Security.Claims
+@model PresentationLayer.Areas.Stores.Controllers.OrdersController.StoreOrderDetailViewModel
 @{
-ViewBag.Title = "Chi tiết đơn hàng";
+    ViewBag.Title = "Chi tiết đơn hàng";
+    // var roles = User.Claims
+    //     .Where(c => c.Type == ClaimTypes.Role)
+    //     .Select(c => c.Value)
+    //     .ToList();
 }
 
 <style>
@@ -467,31 +472,31 @@ ViewBag.Title = "Chi tiết đơn hàng";
 
     /* Responsive */
     @@media (max-width: 768px) {
-    .detail-container {
-        padding: 1rem;
-    }
+        .detail-container {
+            padding: 1rem;
+        }
 
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
 
-    .info-grid,
-    .address-grid {
-        grid-template-columns: 1fr;
-    }
+        .info-grid,
+        .address-grid {
+            grid-template-columns: 1fr;
+        }
 
-    .items-table,
-    .warehouse-table {
-        font-size: 0.75rem;
-    }
+        .items-table,
+        .warehouse-table {
+            font-size: 0.75rem;
+        }
 
-    .items-table th,
-    .items-table td,
-    .warehouse-table th,
-    .warehouse-table td {
-        padding: 0.75rem 0.5rem;
-    }
+        .items-table th,
+        .items-table td,
+        .warehouse-table th,
+        .warehouse-table td {
+            padding: 0.75rem 0.5rem;
+        }
     }
 </style>
 
@@ -578,7 +583,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
                 </div>
             </div>
 
-            <hr />
+            <hr/>
 
             <!-- Items Section -->
             <h5 class="section-title"><i class="fas fa-boxes"></i> Danh sách sản phẩm</h5>
@@ -591,6 +596,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
                         <th>Kích thước (m)</th>
                         <th>Trọng lượng (kg)</th>
                         <th style="text-align: right;">Thành tiền</th>
+                        <th style="text-align: right;">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -606,6 +612,30 @@ ViewBag.Title = "Chi tiết đơn hàng";
                                 </td>
                                 <td>@item.WeightKg kg</td>
                                 <td class="item-subtotal">@(item.Subtotal?.ToString("N0") ?? "0") ₫</td>
+                                <td>
+
+                                    <button class="btn btn-sm btn-danger"
+                                            data-bs-toggle="modal"
+                                            data-order-id="@Model.Order.Id"
+                                            data-item-id="@item.Id"
+                                            data-bs-target="#createReportModal">
+
+                                        Tạo báo cáo
+                                    </button>
+                                    @if (item.IncidentReports.Any())
+                                    {
+                                        <button class="btn btn-sm btn-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#incidentModal_@item.Id">
+                                            Xem báo cáo
+                                            <button class="btn btn-sm btn-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#handleIncidentModal_@item.Id">
+                                                Xử lý
+                                            </button>
+                                        </button>
+                                    }
+                                </td>
                             </tr>
                         }
                     }
@@ -627,7 +657,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
                 <span class="total-value">@Model.Order.TotalAmount.ToString("N0") ₫</span>
             </div>
 
-            <hr />
+            <hr/>
 
             <!-- Addresses Section -->
             <h5 class="section-title"><i class="fas fa-map-marker-alt"></i> Địa chỉ giao nhận</h5>
@@ -645,7 +675,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
                                 @Model.PickupAddress.AddressLine
                                 @if (!string.IsNullOrEmpty(Model.PickupAddress.City))
                                 {
-                                    <br />
+                                    <br/>
                                     <span style="color: var(#858796);">@Model.PickupAddress.City</span>
                                 }
                             </p>
@@ -670,7 +700,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
                                 @Model.DropoffAddress.AddressLine
                                 @if (!string.IsNullOrEmpty(Model.DropoffAddress.City))
                                 {
-                                    <br />
+                                    <br/>
                                     <span style="color: var(#858796);">@Model.DropoffAddress.City</span>
                                 }
                             </p>
@@ -681,6 +711,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
                         }
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -773,7 +804,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
 
             <div class="modal-body">
                 <form id="editOrderForm">
-                    <input type="hidden" name="OrderId" value="@Model.Order.Id" />
+                    <input type="hidden" name="OrderId" value="@Model.Order.Id"/>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Ngày gửi hàng</label>
@@ -790,11 +821,21 @@ ViewBag.Title = "Chi tiết đơn hàng";
                     <div class="mb-3">
                         <label class="form-label">Trạng thái</label>
                         <select class="form-select" name="Status">
-                            <option value="@StatusValue.Draft" selected="@(Model.Order.Status == StatusValue.Draft)">Tạm Lưu</option>
-                            <option value="@StatusValue.Pending" selected="@(Model.Order.Status == StatusValue.Pending)">Chờ xử lý</option>
-                            <option value="@StatusValue.Approved" selected="@(@Model.Order.Status == StatusValue.Approved)">Đã duyệt</option>
-                            <option value="@StatusValue.Completed" selected="@(@Model.Order.Status == StatusValue.Completed)">Hoàn thành</option>
-                            <option value="@StatusValue.Canceled" selected="@(@Model.Order.Status == StatusValue.Canceled)">Hủy</option>
+                            <option value="@StatusValue.Draft" selected="@(Model.Order.Status == StatusValue.Draft)">Tạm
+                                Lưu
+                            </option>
+                            <option value="@StatusValue.Pending"
+                                    selected="@(Model.Order.Status == StatusValue.Pending)">Chờ xử lý
+                            </option>
+                            <option value="@StatusValue.Approved"
+                                    selected="@(@Model.Order.Status == StatusValue.Approved)">Đã duyệt
+                            </option>
+                            <option value="@StatusValue.Completed"
+                                    selected="@(@Model.Order.Status == StatusValue.Completed)">Hoàn thành
+                            </option>
+                            <option value="@StatusValue.Canceled"
+                                    selected="@(@Model.Order.Status == StatusValue.Canceled)">Hủy
+                            </option>
                         </select>
                     </div>
 
@@ -812,8 +853,9 @@ ViewBag.Title = "Chi tiết đơn hàng";
         </div>
     </div>
 </div>
-<!--Modal điều chỉnh ngày lưu kho của đơn hàng--> 
-<div class="modal fade" id="editSlotModal" tabindex="-1" role="dialog" aria-labelledby="editSlotModalLabel" aria-hidden="true">
+<!--Modal điều chỉnh ngày lưu kho của đơn hàng-->
+<div class="modal fade" id="editSlotModal" tabindex="-1" role="dialog" aria-labelledby="editSlotModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <form id="editSlotForm">
@@ -821,14 +863,14 @@ ViewBag.Title = "Chi tiết đơn hàng";
                     <h5 class="modal-title" id="editSlotModalLabel">Chỉnh sửa ngày lưu kho</h5>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="slotId" id="slotId" />
+                    <input type="hidden" name="slotId" id="slotId"/>
                     <div class="form-group">
                         <label for="assignedAt">Ngày bắt đầu lưu</label>
-                        <input type="datetime-local" class="form-control" id="assignedAt" name="assignedAt" required />
+                        <input type="datetime-local" class="form-control" id="assignedAt" name="assignedAt" required/>
                     </div>
                     <div class="form-group">
                         <label for="releasedAt">Ngày kết thúc</label>
-                        <input type="datetime-local" class="form-control" id="releasedAt" name="releasedAt" />
+                        <input type="datetime-local" class="form-control" id="releasedAt" name="releasedAt"/>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -840,9 +882,312 @@ ViewBag.Title = "Chi tiết đơn hàng";
 </div>
 
 
+@foreach (var item in Model.Order.OrderItems)
+{
+    if (item.IncidentReports.Count > 0)
+    {
+        <!-- Modal xử lý sự cố -->
+        <div class="modal fade" id="handleIncidentModal_@item.Id" tabindex="-1"
+             aria-labelledby="incidentModalLabel_@item.Id" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="incidentModalLabel_@item.Id">
+                            Xử lý sự cố - @item.ItemName
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <form id="handleIncidentForm_@item.Id" enctype="multipart/form-data">
+                            <!-- Hidden field -->
+                            <input type="hidden" name="IncidentReportId" value="@item.Id"/>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Hành động xử lý</label>
+                                <select name="ActionType" class="form-select" required>
+                                    <option value="">-- Chọn hành động --</option>
+                                    <option value="1">Hoàn trả hàng</option>
+                                    <option value="2">Bồi thường</option>
+                                    <option value="3">Đóng sự cố</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Ghi chú xử lý</label>
+                                <textarea name="Note" class="form-control" rows="3"
+                                          placeholder="Nhập ghi chú..."></textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-primary"
+                                        onclick="submitIncidentAction('@item.Id')">
+                                    <i class="fas fa-check"></i> Xác nhận xử lý
+                                </button>
+                                <button type="button" class="btn btn-secondary ms-2" data-bs-dismiss="modal">Hủy
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="incidentModal_@item.Id" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            Báo cáo tổn thất - @item.ItemName
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        @foreach (var report in item.IncidentReports)
+                        {
+                            <div class="border rounded p-3 mb-4">
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">Mã báo cáo: <code>@report.Id.ToString().Substring(0, 8)</code></span>
+                                    <span
+                                        class="badge bg-@(report.Status == ReportStatus.Pending ? "warning" : "success")">
+                                        @report.Status
+                                    </span>
+                                </div>
+
+                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.IncidentType</p>
+                                <p class="mb-1"><strong>Mô tả:</strong> @report.Description</p>
+
+                                @if (!string.IsNullOrEmpty(report.ImageUrl))
+                                {
+                                    <div class="mb-2">
+                                        <strong>Ảnh minh chứng:</strong><br/>
+                                        <img src="@report.ImageUrl" class="img-thumbnail mt-2"
+                                             style="max-width: 200px"/>
+                                    </div>
+                                }
+
+                                <p class="mb-1">
+                                    <strong>
+                                        Ngày báo
+                                        cáo:
+                                    </strong> @report.ReportedAt.ToString("dd/MM/yyyy HH:mm")
+                                </p>
+
+                                @if (report.IsReturned || report.IsCompensated)
+                                {
+                                    <div class="mt-2">
+                                        <span class="badge bg-info">Đã xử lý</span>
+                                        @if (report.IsReturned)
+                                        {
+                                            <span class="badgey">Đã hoàn/ký gửi hàng</span>
+                                        }
+                                        @if (report.IsCompensated)
+                                        {
+                                            <span
+                                                class="badge bg-success">Đã bồi thường @report.CompensationAmount?.ToString("N0") VNĐ</span>
+                                        }
+                                    </div>
+                                }
+
+                                <!-- Hiển thị lịch sử xử lý -->
+                                @if (report.Actions.Any())
+                                {
+                                    <div class="mt-3">
+                                        <h6>Lịch sử xử lý</h6>
+                                        <table class="table table-sm table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>Thao tác</th>
+                                                <th>Ghi chú</th>
+                                                <th>Ngày thực hiện</th>
+                                                <th>Nhân viên</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var action in report.Actions)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @(
+                                                        action.ActionType switch
+                                                        {
+                                                            IncidentActionType.ConfirmDamage => "Xác nhận hư hỏng",
+                                                            IncidentActionType.ReturnItem => "Hoàn trả hàng",
+                                                            IncidentActionType.Compensate => "Đền bù",
+                                                            IncidentActionType.Close => "Đóng khiếu nại",
+                                                            _ => action.ActionType.ToString()
+                                                        }
+                                                        )
+                                                    </td>
+                                                    <td>@action.Note</td>
+                                                    <td>@action.ActionDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                                    <td>@(action.StaffId?.ToString().Substring(0, 8) ?? "-")</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-muted fst-italic mt-2">Chưa có hành động xử lý nào.</p>
+                                }
+                            </div>
+                        }
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    }
+}
+<!-- Modal để tạo report -->
+<div class="modal fade" id="createReportModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tạo báo cáo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="createReportForm" method="post" enctype="multipart/form-data" class="card p-4 shadow-sm">
+                    <!-- hidden inputs để JS gán giá trị -->
+                    <input type="hidden" name="OrderId" id="OrderIdInput"/>
+                    <input type="hidden" name="OrderItemId" id="OrderItemIdInput"/>
+
+                    <div class="mb-3">
+                        <label class="form-label">Loại sự cố</label>
+                        <select name="IncidentType" class="form-select">
+                            <option value="0">Đồ bị hư hỏng</option>
+                            <option value="1">Không như mô tả</option>
+                            <option value="2">Thiếu hoặc thất thoát đồ</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả chi tiết</label>
+                        <textarea name="Description" class="form-control" rows="3"
+                                  placeholder="Mô tả sự cố..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh minh chứng</label>
+                        <input type="file" name="imageFile" class="form-control"/>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" name="IsReturned" type="checkbox"/>
+                        <label class="form-check-label">Hoàn hàng</label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" name="IsCompensated" type="checkbox"/>
+                        <label class="form-check-label">Bồi thường</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Số tiền bồi thường (nếu có)</label>
+                        <input name="CompensationAmount" type="number" class="form-control"
+                               placeholder="Nhập số tiền..."/>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Tạo
+                        </button>
+                        <button type="button" class="btn btn-secondary ms-2" data-bs-dismiss="modal">Hủy</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts
-{ 
+{
     <script>
+        async function submitIncidentAction(itemId) {
+            const form = document.getElementById(`handleIncidentForm_${itemId}`);
+            const formData = new FormData(form);
+
+            const response = await fetch('/Stores/Orders/HandleIncident', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                const modalEl = document.getElementById(`handleIncidentModal_${itemId}`);
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                location.reload();
+            } else {
+                alert(result.message || 'Xảy ra lỗi khi xử lý sự cố.');
+            }
+            
+
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const compensateCheckbox = document.querySelector('input[name="IsCompensated"]');
+            const compensationInput = document.querySelector('input[name="CompensationAmount"]');
+
+            // Ban đầu khóa input
+            compensationInput.disabled = true;
+
+            // Lắng nghe sự kiện thay đổi checkbox
+            compensateCheckbox.addEventListener('change', function () {
+                compensationInput.disabled = !this.checked;
+                if (!this.checked) compensationInput.value = ''; // nếu bỏ tick thì xóa luôn giá trị
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // Khi người dùng bấm nút "Tạo báo cáo"
+            const reportModal = document.getElementById('createReportModal');
+            reportModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const orderId = button.getAttribute('data-order-id');
+                const itemId = button.getAttribute('data-item-id');
+
+                // Gán giá trị vào input hidden
+                document.getElementById('OrderIdInput').value = orderId;
+                document.getElementById('OrderItemIdInput').value = itemId;
+            });
+
+            // Khi submit form
+            const form = reportModal.querySelector('form');
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+
+                const response = await fetch('/Stores/Orders/CreateReport', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    const modal = bootstrap.Modal.getInstance(reportModal);
+                    modal.hide();
+                    form.reset();
+                    location.reload(); // Reload để thấy kết quả mới
+                } else {
+                    alert(result.message || 'Đã xảy ra lỗi.');
+                    console.error(result.error);
+                }
+            });
+        });
+
+
         //Chỉnh sửa đơn hàng
         $(document).ready(function () {
             // Mở modal
@@ -853,7 +1198,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
             // Lưu dữ liệu
             $('#btnSaveOrder').on('click', function () {
                 const form = $('#editOrderForm');
-                const formData = form.serialize(); 
+                const formData = form.serialize();
 
                 $.ajax({
                     url: '@Url.Action("UpdateOrder", "Orders", new { orderId = Model.Order.Id })',
@@ -907,7 +1252,7 @@ ViewBag.Title = "Chi tiết đơn hàng";
                     success: function (res) {
                         if (res.success) {
                             alert(res.message || "Cập nhật thành công!");
-                            $("#editSlotModal").modal("hide"); 
+                            $("#editSlotModal").modal("hide");
                             location.reload();
                         } else {
                             alert("⚠️ " + (res.message || "Có lỗi xảy ra."));

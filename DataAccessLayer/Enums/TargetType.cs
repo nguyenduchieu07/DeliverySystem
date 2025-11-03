@@ -8,6 +8,6 @@ namespace DataAccessLayer.Enums
 {
     public enum TargetType
     {
-        Customer,  Store
+        Customer,  Store , StoreStaff
     }
 }
