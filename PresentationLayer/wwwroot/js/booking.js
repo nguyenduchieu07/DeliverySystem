@@ -1267,6 +1267,185 @@ async function submitWarehouseOrder() {
             );
             if (result.quote.geminiError) {
               console.error("❌ Gemini Error:", result.quote.geminiError);
+    // Collect special requirements
+    const specialRequirements = [];
+    document.querySelectorAll('input[name="SpecialRequirements"]:checked').forEach(cb => {
+        specialRequirements.push(cb.value);
+    });
+
+    // Build form data
+    const formData = new FormData();
+    
+    // PickupAddress - Lấy từ input tìm kiếm hoặc warehouseData
+    // Đây là địa chỉ nhận hàng (nơi khách hàng muốn gửi hàng đi)
+    const pickupAddressLine = pickupAddressText;
+    const pickupLat = warehouseData.lat;
+    const pickupLng = warehouseData.lng;
+    
+    formData.append('PickupAddress.AddressLine', pickupAddressLine);
+    formData.append('PickupAddress.Latitude', pickupLat);
+    formData.append('PickupAddress.Longitude', pickupLng);
+    
+    // WarehouseArea - Địa chỉ kho đã chọn (nơi lưu trữ)
+    const warehouseAreaLine = selectedWarehouse.full || selectedWarehouse.addressLine || selectedWarehouse.AddressLine || selectedWarehouse.name || 'Kho đã chọn';
+    const warehouseLat = selectedWarehouse.latitude || selectedWarehouse.Latitude || selectedWarehouse.lat || selectedWarehouse.Lat;
+    const warehouseLng = selectedWarehouse.longitude || selectedWarehouse.Longitude || selectedWarehouse.lng || selectedWarehouse.Lng;
+    
+    // Gửi WarehouseId (ưu tiên) để tìm warehouse chính xác
+    const warehouseId = selectedWarehouse.id || selectedWarehouse.Id;
+    if (warehouseId) {
+        formData.append('WarehouseId', warehouseId.toString());
+    }
+    
+    formData.append('WarehouseArea.AddressLine', warehouseAreaLine);
+    formData.append('WarehouseArea.Latitude', warehouseLat);
+    formData.append('WarehouseArea.Longitude', warehouseLng);
+    formData.append('StorageStartDate', startDate);
+    formData.append('StorageEndDate', endDate);
+    formData.append('Note', document.getElementById('orderNote')?.value || '');
+
+    items.forEach((item, idx) => {
+        formData.append(`Items[${idx}].Name`, item.name);
+        formData.append(`Items[${idx}].Category`, item.category || '');
+        formData.append(`Items[${idx}].Quantity`, item.quantity);
+        formData.append(`Items[${idx}].EstimatedWeightKg`, item.estimatedWeightKg || 0);
+    });
+
+    specialRequirements.forEach((req, idx) => {
+        formData.append(`SpecialRequirements[${idx}]`, req);
+    });
+
+    // Add product image if available
+    const productImageInput = document.getElementById('productImageInput');
+    let hasImage = false;
+    if (productImageInput && productImageInput.files && productImageInput.files[0]) {
+        formData.append('productImage', productImageInput.files[0]);
+        hasImage = true;
+        console.log('📷 Product image will be uploaded:', productImageInput.files[0].name, `(${(productImageInput.files[0].size / 1024).toFixed(2)} KB)`);
+    } else {
+        console.log('⚠️ No product image uploaded - Gemini analysis will be skipped');
+    }
+
+    // Submit
+    const bookBtn = document.getElementById('bookBtn');
+    if (bookBtn) {
+        const originalText = bookBtn.textContent;
+        bookBtn.textContent = '⏳ Đang gửi yêu cầu...';
+        bookBtn.disabled = true;
+
+        try {
+            console.log('=== Submitting order with data ===');
+            console.log('PickupAddress:', pickupAddressLine, pickupLat, pickupLng);
+            console.log('WarehouseArea:', warehouseAreaLine, warehouseLat, warehouseLng);
+            console.log('WarehouseId:', warehouseId);
+            console.log('SelectedWarehouse:', selectedWarehouse);
+            console.log('Items:', items);
+            console.log('Dates:', startDate, endDate);
+            console.log('Has product image:', hasImage);
+            
+            const response = await fetch('/Quote/CreateWarehouseOrder', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: formData
+            });
+
+            console.log('Response status:', response.status, response.statusText);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+            let result;
+            const contentType = response.headers.get('content-type') || '';
+            
+            try {
+                if (contentType.includes('application/json')) {
+                    result = await response.json();
+                    console.log('Response JSON:', result);
+                } else {
+                    const text = await response.text();
+                    console.error('Server response (not JSON):', text);
+                    console.error('Status:', response.status);
+                    console.error('StatusText:', response.statusText);
+                    
+                    // Thử parse như JSON nếu có thể
+                    try {
+                        result = JSON.parse(text);
+                    } catch {
+                        // Nếu không parse được, dùng text như message
+                        result = { 
+                            success: false, 
+                            message: text || `Lỗi ${response.status}: ${response.statusText}`,
+                            status: response.status
+                        };
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing response:', parseError);
+                result = { 
+                    success: false, 
+                    message: `Lỗi khi xử lý phản hồi từ server (${response.status})`,
+                    status: response.status
+                };
+            }
+
+            if (response.ok && result && result.success) {
+                // Log kết quả Gemini analysis từ response
+                if (result.quote) {
+                    console.log('=== Quote Response ===');
+                    console.log('OrderId:', result.orderId);
+                    console.log('Has product image (server received):', result.quote.hasProductImage ?? false);
+                    console.log('Gemini analysis available:', result.quote.geminiAnalysisAvailable ?? false);
+                    console.log('Has Gemini analysis data:', !!(result.quote.analysisDetails || result.quote.requiredVolumeM3 || result.quote.requiredAreaM2));
+                    
+                    if (result.quote.hasProductImage === false) {
+                        console.warn('⚠️ No product image was uploaded or received by server');
+                    } else if (result.quote.geminiAnalysisAvailable === false) {
+                        console.warn('⚠️ Product image was uploaded but Gemini analysis failed or returned no result');
+                        if (result.quote.geminiError) {
+                            console.error('❌ Gemini Error:', result.quote.geminiError);
+                        } else {
+                            console.warn('   Check server logs for Gemini API errors (no error message received)');
+                        }
+                    } else if (result.quote.geminiAnalysisAvailable === true) {
+                        console.log('✅ Gemini analysis successful!');
+                        if (result.quote.requiredVolumeM3) {
+                            console.log('📊 Required Volume (from Gemini):', result.quote.requiredVolumeM3, 'm³');
+                        }
+                        if (result.quote.requiredAreaM2) {
+                            console.log('📊 Required Area (from Gemini):', result.quote.requiredAreaM2, 'm²');
+                        }
+                        if (result.quote.analysisDetails) {
+                            console.log('📝 Analysis Details (first 200 chars):', result.quote.analysisDetails.substring(0, 200));
+                        }
+                        if (result.quote.itemEstimates && result.quote.itemEstimates.length > 0) {
+                            console.log('📦 Items found in image:', result.quote.itemEstimates.length);
+                            result.quote.itemEstimates.forEach((item, idx) => {
+                                console.log(`  ${idx + 1}. ${item.name}: ${item.quantity} cái, ${item.estimatedVolumeM3} m³`);
+                            });
+                        } else {
+                            console.warn('⚠️ Gemini analysis returned no items');
+                        }
+                    }
+                }
+                
+                // Hiển thị bảng báo giá
+                if (result.quote) {
+                    // Reset button về trạng thái ban đầu trước khi hiển thị popup
+                    bookBtn.textContent = originalText;
+                    bookBtn.disabled = false;
+                    showQuoteBreakdown(result.quote, result.orderId, result.quotationId);
+                } else {
+                    // Reset button về trạng thái ban đầu
+                    bookBtn.textContent = originalText;
+                    bookBtn.disabled = false;
+                    
+                    alert(`✅ ${result.message}\n\n📦 Mã đơn hàng: ${result.orderId}`);
+                    
+                    // Redirect to success page
+                    if (result.orderId) {
+                        window.location.href = '/Booking/Success?Id=' + encodeURIComponent(result.orderId);
+                    }
+                }
             } else {
               console.warn(
                 "   Check server logs for Gemini API errors (no error message received)"
@@ -1574,6 +1753,7 @@ function showQuoteBreakdown(quote, orderId) {
     quote.slotId || ""
   }', this)" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận gán vào ô kho</button>
                         -->
+                        <button onclick="confirmAssignSlotToOrder('${orderId}', '${quote.slotId || ''}','${quotationId }', this)" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận gán vào ô kho</button>
                         <button onclick="closeQuotePopup()" style="flex: 1; background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Hủy / Đóng</button>
                     </div>
                 </div>
@@ -1643,6 +1823,10 @@ async function confirmAssignSlotToOrder(orderId, slotId, buttonElement) {
       buttonElement.textContent = originalText;
       buttonElement.style.opacity = "1";
       buttonElement.style.cursor = "pointer";
+async function confirmAssignSlotToOrder(orderId, slotId, qidFromQuote, buttonElement) {
+    if (!orderId || !slotId) {
+        alert('⚠️ Không có thông tin đơn hàng hoặc ô kho. Vui lòng thử lại.');
+        return;
     }
   } catch (error) {
     console.error("Error assigning slot to order:", error);
@@ -1656,6 +1840,61 @@ async function confirmAssignSlotToOrder(orderId, slotId, buttonElement) {
     buttonElement.style.opacity = "1";
     buttonElement.style.cursor = "pointer";
   }
+    // Disable button để tránh click nhiều lần
+    const originalText = buttonElement.textContent;
+    buttonElement.disabled = true;
+    buttonElement.textContent = '⏳ Đang gán ô kho...';
+    buttonElement.style.opacity = '0.6';
+    buttonElement.style.cursor = 'not-allowed';
+
+    try {
+        const response = await fetch('/Quote/AssignSlotToOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
+            body: JSON.stringify({
+                orderId: orderId,
+                slotId: slotId
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // Gán slot thành công - hiển thị thông báo và redirect
+            alert(`✅ ${result.message || 'Đã gán ô kho thành công!'}\n\n📦 Ô kho: ${result.slotCode || 'N/A'}\n📋 Mã đơn hàng: ${orderId}`);
+            
+            // Đóng popup
+            const popup = buttonElement.closest('[style*="position: fixed"]');
+            if (popup) {
+                popup.remove();
+            }
+            
+            // Redirect đến success page
+            acceptQuotationFromBreakdown(orderId, qidFromQuote);
+        } else {
+            // Lỗi khi gán slot
+            const errorMessage = result.message || 'Có lỗi xảy ra khi gán ô kho. Vui lòng thử lại.';
+            alert(`❌ ${errorMessage}`);
+            
+            // Reset button
+            buttonElement.disabled = false;
+            buttonElement.textContent = originalText;
+            buttonElement.style.opacity = '1';
+            buttonElement.style.cursor = 'pointer';
+        }
+    } catch (error) {
+        console.error('Error assigning slot to order:', error);
+        alert(`❌ Không thể kết nối đến máy chủ!\n\nChi tiết: ${error.message}\n\nVui lòng kiểm tra kết nối và thử lại.`);
+        
+        // Reset button
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalText;
+        buttonElement.style.opacity = '1';
+        buttonElement.style.cursor = 'pointer';
+    }
 }
 
 // Hàm để đóng popup (không gán slot)

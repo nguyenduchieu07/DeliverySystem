@@ -160,7 +160,7 @@ namespace PresentationLayer.Controllers
                     var quotationId = payment!.Order.QuotationId;
                     await _contractService.GenerateContractsAsync((Guid)quotationId!);
                     
-                    return Redirect($"/Payment/Success?transactionId={txnRef}");
+                    return Redirect($"/Contract/Index");
                 }
                 else
                 {

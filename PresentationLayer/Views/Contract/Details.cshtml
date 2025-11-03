@@ -1,0 +1,599 @@
+﻿@model DataAccessLayer.Entities.Contract
+@{
+    ViewBag.Title = "Chi tiết Hợp đồng";
+}
+
+@section styles {
+    <style>
+        .detail-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+            .section-title i {
+                color: var(--primary-color);
+                margin-right: 0.5rem;
+            }
+
+        .info-row {
+            display: flex;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+            .info-row:last-child {
+                border-bottom: none;
+            }
+
+        .info-label {
+            flex: 0 0 200px;
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        .info-value {
+            flex: 1;
+            color: var(--text-dark);
+        }
+
+        .status-badge-large {
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-expired {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-terminating {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-terminated {
+            background-color: #d6d8db;
+            color: #383d41;
+        }
+
+        .contract-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .contract-id {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .contract-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+            .timeline::before {
+                content: '';
+                position: absolute;
+                left: 0.5rem;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: #e0e0e0;
+            }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -1.5rem;
+            width: 1rem;
+            height: 1rem;
+            background: var(--primary-color);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #e0e0e0;
+        }
+
+        .warehouse-info-card {
+            background: #f8f9fa;
+            padding: 1.25rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .action-buttons .btn {
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .terms-box {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        @@media print {
+            .action-buttons, .navbar, .footer
+
+        {
+            display: none !important;
+        }
+
+        }
+    </style>
+}
+
+<div class="container py-5">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <!-- Contract Header -->
+    <div class="contract-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="contract-id">
+                    <i class="fas fa-file-contract"></i> HỢP ĐỒNG #@Model.Id.ToString().Substring(0, 8).ToUpper()
+                </div>
+                <div class="mb-2">
+                    @{
+                        var statusClass = Model.Status switch
+                        {
+                            DataAccessLayer.Enums.ContractStatus.Active => "status-active",
+                            DataAccessLayer.Enums.ContractStatus.Expired => "status-expired",
+                            DataAccessLayer.Enums.ContractStatus.Terminating => "status-terminating",
+                            DataAccessLayer.Enums.ContractStatus.Terminated => "status-terminated",
+                            _ => "status-active"
+                        };
+
+                        var statusText = Model.Status switch
+                        {
+                            DataAccessLayer.Enums.ContractStatus.Active => "Đang hoạt động",
+                            DataAccessLayer.Enums.ContractStatus.Expired => "Hết hạn",
+                            DataAccessLayer.Enums.ContractStatus.Terminating => "Đang kết thúc",
+                            DataAccessLayer.Enums.ContractStatus.Terminated => "Đã chấm dứt",
+                            _ => "Không xác định"
+                        };
+                    }
+                    <span class="status-badge-large @statusClass">@statusText</span>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="text-white-50 mb-1">Tổng giá trị</div>
+                <div class="contract-amount">@Model.TotalAmount.ToString("N0") VNĐ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Customer Information -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-user"></i> Thông tin Khách hàng
+                </h3>
+                <div class="info-row">
+                    <div class="info-label">Họ và tên:</div>
+                    <div class="info-value">@Model.Customer?.FullName</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Email:</div>
+                    <div class="info-value">
+                        <a href="mailto:@Model.Customer?.Email">@Model.Customer?.Email</a>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Số điện thoại:</div>
+                    <div class="info-value">
+                        <a href="tel:@Model.Customer?.PhoneNumber">@Model.Customer?.PhoneNumber</a>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Customer?.Tier))
+                {
+                    <div class="info-row">
+                        <div class="info-label">Hạng thành viên:</div>
+                        <div class="info-value">
+                            <span class="badge bg-warning">@Model.Customer.Tier</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Store Information -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-store"></i> Thông tin Cửa hàng
+                </h3>
+                <div class="info-row">
+                    <div class="info-label">Tên cửa hàng:</div>
+                    <div class="info-value">@Model.Store?.StoreName</div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Store?.LegalName))
+                {
+                    <div class="info-row">
+                        <div class="info-label">Tên pháp lý:</div>
+                        <div class="info-value">@Model.Store?.LegalName</div>
+                    </div>
+                }
+                <div class="info-row">
+                    <div class="info-label">Số điện thoại:</div>
+                    <div class="info-value">
+                        <a href="tel:@Model.Store?.ContactPhone">@Model.Store?.ContactPhone</a>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Email:</div>
+                    <div class="info-value">
+                        <a href="mailto:@Model.Store?.ContactEmail">@Model.Store?.ContactEmail</a>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Đánh giá:</div>
+                    <div class="info-value">
+                        <i class="fas fa-star text-warning"></i> @Model.Store?.RatingAvg.ToString("0.0")
+                        <small class="text-muted">(@Model.Store?.RatingCount đánh giá)</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warehouse Information -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-warehouse"></i> Thông tin Kho và Slot
+                </h3>
+
+                <div class="warehouse-info-card mb-3">
+                    <h5 class="mb-3"><i class="fas fa-building"></i> Kho hàng</h5>
+                    <div class="info-row">
+                        <div class="info-label">Tên kho:</div>
+                        <div class="info-value">@Model.Warehouse?.Name</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Địa chỉ:</div>
+                        <div class="info-value">
+                            @if (Model.Warehouse?.Address != null)
+                            {
+                                @Model.Warehouse.Address.AddressLine
+                            }
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Kích thước kho:</div>
+                        <div class="info-value">
+                            <span class="badge bg-info">
+                                D: @Model.Warehouse?.LengthM m ×
+                                R: @Model.Warehouse?.WidthM m ×
+                                C: @Model.Warehouse?.HeightM m
+                            </span>
+                            <span class="text-muted ms-2">
+                                (Thể tích: @Model.Warehouse?.VolumeM3 m³)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.WarehouseSlot != null)
+                {
+                    <div class="warehouse-info-card">
+                        <h5 class="mb-3"><i class="fas fa-cube"></i> Slot thuê</h5>
+                        <div class="info-row">
+                            <div class="info-label">Mã slot:</div>
+                            <div class="info-value">
+                                <span class="badge bg-primary">@Model.WarehouseSlot.Code</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Vị trí:</div>
+                            <div class="info-value">
+                                Hàng @Model.WarehouseSlot.Row, Cột @Model.WarehouseSlot.Col
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Kích thước slot:</div>
+                            <div class="info-value">
+                                <span class="badge bg-secondary">
+                                    D: @Model.WarehouseSlot.LengthM m ×
+                                    R: @Model.WarehouseSlot.WidthM m ×
+                                    C: @Model.WarehouseSlot.HeightM m
+                                </span>
+                                <span class="text-muted ms-2">
+                                    (Thể tích: @Model.WarehouseSlot.VolumeM3 m³)
+                                </span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Giá cơ bản:</div>
+                            <div class="info-value">
+                                <strong>@Model.WarehouseSlot.BasePricePerHour.ToString("N0") VNĐ/giờ</strong>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Terms and Conditions -->
+            @if (!string.IsNullOrEmpty(Model.TermsAndConditions))
+            {
+                <div class="detail-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-clipboard-list"></i> Điều khoản và Điều kiện
+                    </h3>
+                    <div class="terms-box">
+                        @Html.Raw(Model.TermsAndConditions?.Replace("\n", "<br>"))
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Contract Timeline -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-clock"></i> Thời hạn Hợp đồng
+                </h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div>
+                            <div class="text-muted small">Ngày bắt đầu</div>
+                            <div class="fw-bold">@Model.StartDate.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background: #dc3545;"></div>
+                        <div>
+                            <div class="text-muted small">Ngày kết thúc</div>
+                            <div class="fw-bold">@Model.EndDate.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                </div>
+
+                @{
+                    var daysRemaining = (Model.EndDate - DateTime.Now).Days;
+                    var totalDays = (Model.EndDate - Model.StartDate).Days;
+                    var progress = totalDays > 0 ? (int)(((double)(totalDays - daysRemaining) / totalDays) * 100) : 0;
+                }
+
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Tiến độ hợp đồng</span>
+                        <span class="small">@progress%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: @progress%" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        @if (daysRemaining > 0)
+                        {
+                            <span class="badge bg-info">Còn @daysRemaining ngày</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Đã hết hạn @Math.Abs(daysRemaining) ngày</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quotation Reference -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-file-invoice"></i> Báo giá liên quan
+                </h3>
+                <div class="info-row">
+                    <div class="info-label">Mã báo giá:</div>
+                    <div class="info-value">
+                        <a asp-controller="Quote" asp-action="Details" asp-route-id="@Model.QuotationId">
+                            #@Model.QuotationId.ToString().Substring(0, 8).ToUpper()
+                        </a>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Trạng thái báo giá:</div>
+                    <div class="info-value">
+                        <span class="badge bg-success">@Model.Quotation?.Status</span>
+                    </div>
+                </div>
+                @if (Model.Quotation?.ValidUntil != null)
+                {
+                    <div class="info-row">
+                        <div class="info-label">Hiệu lực đến:</div>
+                        <div class="info-value">@Model.Quotation.ValidUntil.ToString("dd/MM/yyyy")</div>
+                    </div>
+                }
+            </div>
+
+            <!-- Important Dates -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-calendar-check"></i> Ngày quan trọng
+                </h3>
+                <div class="info-row">
+                    <div class="info-label">Ngày tạo:</div>
+                    <div class="info-value">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+                @if (Model.UpdatedAt.HasValue)
+                {
+                    <div class="info-row">
+                        <div class="info-label">Cập nhật lần cuối:</div>
+                        <div class="info-value">@Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                }
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="detail-section">
+                <h3 class="section-title">
+                    <i class="fas fa-tasks"></i> Thao tác
+                </h3>
+                <div class="action-buttons d-grid gap-2">
+                    @if (!string.IsNullOrEmpty(Model.PdfUrl))
+                    {
+                        <a href="@Model.PdfUrl" target="_blank" class="btn btn-primary">
+                            <i class="fas fa-file-pdf"></i> Tải hợp đồng PDF
+                        </a>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-primary" onclick="generatePDF()">
+                            <i class="fas fa-file-pdf"></i> Tạo hợp đồng PDF
+                        </button>
+                    }
+
+                    <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> In hợp đồng
+                    </button>
+
+                    @if (Model.Status == DataAccessLayer.Enums.ContractStatus.Active)
+                    {
+                        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#renewModal">
+                            <i class="fas fa-sync"></i> Gia hạn hợp đồng
+                        </button>
+
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#terminateModal">
+                            <i class="fas fa-times-circle"></i> Chấm dứt hợp đồng
+                        </button>
+                    }
+
+                    <a asp-controller="Tracking" asp-action="Index" asp-route-contractId="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fas fa-truck"></i> Theo dõi đơn hàng
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Renew Modal -->
+<div class="modal fade" id="renewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gia hạn Hợp đồng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Renew" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="contractId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Ngày kết thúc mới</label>
+                        <input type="date" name="newEndDate" class="form-control" min="@Model.EndDate.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Hợp đồng sẽ được gia hạn đến ngày bạn chọn.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-sync"></i> Xác nhận gia hạn
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Terminate Modal -->
+<div class="modal fade" id="terminateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Chấm dứt Hợp đồng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Terminate" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="contractId" value="@Model.Id" />
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Cảnh báo!</strong> Hành động này không thể hoàn tác.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Lý do chấm dứt</label>
+                        <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do chấm dứt hợp đồng..." required></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmTerminate" required>
+                        <label class="form-check-label" for="confirmTerminate">
+                            Tôi xác nhận muốn chấm dứt hợp đồng này
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times-circle"></i> Xác nhận chấm dứt
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function generatePDF() {
+            if (confirm('Bạn có muốn tạo file PDF cho hợp đồng này?')) {
+                // Call API to generate PDF
+                fetch('@Url.Action("GeneratePDF", "Contract")?id=@Model.Id', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Tạo PDF thành công!');
+                        location.reload();
+                    } else {
+                        alert('Có lỗi xảy ra: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Có lỗi xảy ra khi tạo PDF');
+                    console.error(error);
+                });
+            }
+        }
+    </script>
+}
