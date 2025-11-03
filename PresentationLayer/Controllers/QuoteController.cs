@@ -422,24 +422,24 @@ namespace PresentationLayer.Controllers
                 //create quotation
                 var VALIDITY_FOR_QUOTATION_HOUR = 24; // Báo giá có giá trị trong 24 giờ
                 var validUntil = DateTime.Now.AddHours(VALIDITY_FOR_QUOTATION_HOUR);
-                var quotation = new Quotation
-                {
-                    Id = Guid.NewGuid(),
-                    StoreId = storeId,
-                    CustomerId = userId, // Get from authenticated user
-                    TotalAmount = totalPrice,
-                    ValidUntil = validUntil,
-                    Status = StatusValue.Draft,
-                    CreatedAt = DateTime.Now
-                };
-                await _db.Quotations.AddAsync(quotation);
+                //var quotation = new Quotation
+                //{
+                //    Id = Guid.NewGuid(),
+                //    StoreId = storeId,
+                //    CustomerId = userId, // Get from authenticated user
+                //    TotalAmount = totalPrice,
+                //    ValidUntil = validUntil,
+                //    Status = StatusValue.Draft,
+                //    CreatedAt = DateTime.Now
+                //};
+                //await _db.Quotations.AddAsync(quotation);
                 var order = new Order
                 {
                     Id = Guid.NewGuid(),
                     CustomerId = userId,
                     StoreId = storeId,
                     //add quotationID
-                    QuotationId = quotation.Id,
+                    //QuotationId = quotation.Id,
                     PickupAddress = new Address
                     {
                         Id = Guid.NewGuid(),
@@ -550,6 +550,8 @@ namespace PresentationLayer.Controllers
                     UpdatedAt = DateTime.UtcNow
                 };
                 createdOrder.QuotationId = quotation.Id;
+                //gán quotation cho order
+                order.QuotationId = quotation.Id;
                 _db.Quotations.Add(quotation);
                 await _db.SaveChangesAsync();
                 // Trả về báo giá chi tiết
