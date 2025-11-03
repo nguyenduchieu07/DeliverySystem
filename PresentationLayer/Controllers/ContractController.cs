@@ -16,7 +16,7 @@ namespace PresentationLayer.Controllers
             _orderService = orderService;
         }
 
-        public async Task<IActionResult> Index([FromQuery] Guid orderId)
+        public async Task<IActionResult> GetContract([FromQuery] Guid orderId)
         {
             try
             {
