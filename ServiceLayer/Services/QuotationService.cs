@@ -24,11 +24,13 @@ namespace ServiceLayer.Services
         private readonly IBaseRepository<SlotReservation, Guid> _slotReservationRepository;
         private readonly IBaseRepository<Contract, Guid> _contractRepository;
         private readonly IContractService _contractService;
+        private readonly IOrderRepository _orderRepositoryDi;
         public QuotationService(DeliverySytemContext db, IUserContextService context,
             IBaseRepository<DataAccessLayer.Entities.Order, Guid> orderRepository,
             IBaseRepository<WarehouseSlot, Guid> warehouseSlotRepository,
             IBaseRepository<SlotReservation, Guid> slotReservationRepository,
             IBaseRepository<Contract, Guid> contractRepository,
+            IOrderRepository orderRepositoryDi,
             IContractService contractService)
         {
             _db = db;
@@ -37,6 +39,7 @@ namespace ServiceLayer.Services
             _warehouseSlotRepository = warehouseSlotRepository;
             _slotReservationRepository = slotReservationRepository;
             _contractRepository = contractRepository;
+            _orderRepositoryDi = orderRepositoryDi;
             _contractService = contractService;
         }
 
@@ -288,5 +291,7 @@ namespace ServiceLayer.Services
             await _slotReservationRepository.AddRangeAsync(reservations);
             return (newOrder, reservations);
         }
+
+       
     }
 }

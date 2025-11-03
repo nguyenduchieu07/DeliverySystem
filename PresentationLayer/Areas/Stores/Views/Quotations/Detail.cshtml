@@ -497,13 +497,13 @@
 							{
 								<div class="order-item">
 									<div class="item-info">
-										<div class="item-name">@item</div>
+										<div class="item-name">@item.ItemName</div>
 										<div class="item-details">
-											Số lượng: @item.Quantity @item
+											Số lượng: @item.Quantity
 										</div>
 									</div>
 									<div class="item-price">
-										@item
+										@(item.UnitPrice?.ToString("N0") ?? "N/A")
 									</div>
 								</div>
 							}

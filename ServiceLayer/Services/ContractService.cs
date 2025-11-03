@@ -16,7 +16,7 @@ public class ContractService : IContractService
     private readonly IContractRepository _contractRepository;
     private readonly IQuotationRepository _quotationRepository;
     private readonly IBaseRepository<Order, Guid> _orderRepository;
-    private readonly IBaseRepository<OrderWarehouseSlot, Guid> _slotReservationRepository;
+    private readonly IBaseRepository<SlotReservation, Guid> _slotReservationRepository;
 
     private readonly IConverter _converter;
     private readonly IWebHostEnvironment _env;
@@ -24,7 +24,7 @@ public class ContractService : IContractService
     public ContractService(DeliverySytemContext db, IContractRepository contractRepository,
         IQuotationRepository quotationRepository,
         IBaseRepository<Order, Guid> orderRepository,
-        IBaseRepository<OrderWarehouseSlot, Guid> slotReservationRepository,
+        IBaseRepository<SlotReservation, Guid> slotReservationRepository,
         IConverter converter, IWebHostEnvironment env)
     {
         _db = db;
@@ -107,7 +107,76 @@ public class ContractService : IContractService
         }
         
     }
-    
+    public async Task<Contract> GenerateContractAsync(Guid quotationId)
+    {
+        using var ts = await _db.Database.BeginTransactionAsync();
+
+        try
+        {
+            var quotation = await _quotationRepository.GetQuotationInfo(quotationId);
+
+            if (quotation == null)
+                throw new Exception("Quotation not found");
+
+            var newestOrder = quotation.Orders.OrderByDescending(x => x.CreatedAt).First();
+            if (newestOrder == null)
+                throw new Exception("No orders found for quotation");
+            newestOrder.Status = StatusValue.Approved;
+            _orderRepository.Update(newestOrder);
+
+            var slotReservations = await _slotReservationRepository.FindAll(s => s.OrderId == newestOrder.Id,
+                includeProperties: [o => o.WarehouseSlot]
+            ).ToListAsync();
+
+            var returnContract = await _db.Contracts
+                     .Include(c => c.Warehouse)
+                     .Include(c => c.WarehouseSlot)
+                     .Include(c => c.Customer)
+                     .Include(c => c.Store)
+                    .SingleOrDefaultAsync(c => c.QuotationId == quotationId);
+            if (returnContract == null)
+            {
+                var contracts = new List<Contract>();
+                //create pending contract
+                foreach (var slot in slotReservations)
+                {
+                    var contract = new Contract
+                    {
+                        Id = Guid.NewGuid(),
+                        QuotationId = quotation.Id,
+                        CustomerId = quotation.CustomerId,
+                        StoreId = quotation.StoreId ?? Guid.Empty,
+                        WarehouseId = slot.WarehouseSlot.WarehouseId,
+                        WarehouseSlotId = slot.WarehouseSlotId,
+                        TotalAmount = quotation.TotalAmount,
+                        StartDate = slot.From,
+                        EndDate = slot.To,
+                        Status = ContractStatus.Draft,
+                    };
+                    contracts.Add(contract);
+                }
+
+                await _contractRepository.AddRangeAsync(contracts);
+            }
+
+            //set slot reservation to InActive for not check again
+            await ts.CommitAsync();
+
+            //get contracts by OrderId 
+            returnContract = await _contractRepository.FindSingleAsync(c => c.QuotationId == quotationId, 
+                cancellationToken: default, includeProperties: [o => o.Warehouse, o => o.WarehouseSlot, o => o.Customer, o => o.Store]);
+
+            return returnContract;
+        }
+        catch (Exception e)
+        {
+            await ts.RollbackAsync();
+            return null;
+        }
+
+    }
+
+
     public async Task<string> GenerateContractHtmlAsync(Guid contractId, bool forceGenerate = false)
     {
         var contract = await _contractRepository.GetContractWithAllInfoAsync(contractId);
@@ -177,5 +246,102 @@ public class ContractService : IContractService
         sb.AppendLine($"  <td>{fee:N0} VND</td>");
         sb.AppendLine("</tr>");
         return sb.ToString();
+    }
+
+    public async Task<bool> ConfirmContract(Guid contractId, Guid orderId)
+    {
+        await using var ts = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            //Kích hoạt hợp đồng
+            var contract = await _db.Contracts
+                .AsTracking()
+                .Include(c => c.Quotation)
+                .SingleOrDefaultAsync(x => x.Id == contractId);
+
+            if (contract == null)
+                return false;
+            
+            contract.Quotation.Status = StatusValue.Active;
+
+            contract.Status = ContractStatus.Active;
+            _db.Contracts.Update(contract);
+
+            //Cập nhật trạng thái slot & reservation
+            var orderSlot = await _db.SlotReservations
+                .Include(s => s.WarehouseSlot)
+                .AsTracking()
+                .FirstOrDefaultAsync(s => s.OrderId == orderId);
+
+            if (orderSlot == null)
+                throw new InvalidOperationException("Không tìm thấy slot reservation cho đơn hàng.");
+
+            // Đặt reservation sang Inactive (đã sử dụng)
+            orderSlot.Status = StatusValue.InActive;
+            _db.SlotReservations.Update(orderSlot);
+
+            // Đặt slot thật sự sang InUse (đang dùng)
+            if (orderSlot.WarehouseSlot != null)
+            {
+                orderSlot.WarehouseSlot.Status = StatusValue.InUse;
+                _db.WarehouseSlots.Update(orderSlot.WarehouseSlot);
+            }
+            await _db.SaveChangesAsync();
+            await ts.CommitAsync();
+
+            return true;
+        }
+        catch (Exception)
+        {
+            await ts.RollbackAsync();
+            return false;
+        }
+    }
+
+
+    public async Task<bool> CancleContract(Guid contractId, Guid orderId)
+    {
+        await using var ts = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            //Hủy hợp đồng
+            var contract = await _db.Contracts
+                .AsTracking()
+                .SingleOrDefaultAsync(x => x.Id == contractId);
+
+            if (contract == null)
+                return false;
+
+            contract.Status = ContractStatus.Terminated;
+            contract.Quotation.Status = StatusValue.InActive;
+            _db.Contracts.Update(contract);
+
+            //Cập nhật trạng thái slot & reservation
+            var orderSlot = await _db.SlotReservations
+                .Include(s => s.WarehouseSlot)
+                .AsTracking()
+                .FirstOrDefaultAsync(s => s.OrderId == orderId);
+
+            if (orderSlot == null)
+                throw new InvalidOperationException("Không tìm thấy slot reservation cho đơn hàng.");
+            orderSlot.Status = StatusValue.InActive;
+            _db.SlotReservations.Update(orderSlot);
+
+            if (orderSlot.WarehouseSlot != null)
+            {
+                orderSlot.WarehouseSlot.Status = StatusValue.Available;
+                _db.WarehouseSlots.Update(orderSlot.WarehouseSlot);
+            }
+            await _db.SaveChangesAsync();
+            await ts.CommitAsync();
+
+            return true;
+        }
+        catch (Exception)
+        {
+            ts.Rollback();
+            return false;
+        }
+        
     }
 }
