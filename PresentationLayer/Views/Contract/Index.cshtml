@@ -1,0 +1,306 @@
+﻿@model IEnumerable<DataAccessLayer.Entities.Contract>
+@{
+    ViewBag.Title = "Quản lý Hợp đồng";
+}
+
+@section styles {
+    <style>
+        .contract-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+
+            .contract-card:hover {
+                box-shadow: 0 4px 12px rgba(241, 102, 34, 0.15);
+                transform: translateY(-2px);
+            }
+
+        .status-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-expired {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-terminating {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-terminated {
+            background-color: #d6d8db;
+            color: #383d41;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .contract-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+    </style>
+}
+
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-2"><i class="fas fa-file-contract text-primary"></i> Quản lý Hợp đồng</h2>
+            <p class="text-muted">Danh sách các hợp đồng lưu kho của bạn</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-controller="Quote" asp-action="Index" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tạo báo giá mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="get" asp-action="Index">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Tìm kiếm</label>
+                    <input type="text" name="search" class="form-control" placeholder="Mã HĐ, khách hàng..." value="@ViewBag.Search">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="status" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="Active">Đang hoạt động</option>
+                        <option value="Expired">Đã hết hạn</option>
+                        <option value="Terminating">Đang kết thúc</option>
+                        <option value="Terminated">Đã chấm dứt</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Từ ngày</label>
+                    <input type="date" name="fromDate" class="form-control" value="@ViewBag.FromDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Đến ngày</label>
+                    <input type="date" name="toDate" class="form-control" value="@ViewBag.ToDate">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fas fa-redo"></i> Đặt lại
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Tổng hợp đồng</h6>
+                            <h3 class="mb-0">@Model.Count()</h3>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-file-contract fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Đang hoạt động</h6>
+                            <h3 class="mb-0 text-success">@Model.Count(c => c.Status == DataAccessLayer.Enums.ContractStatus.Active)</h3>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Hết hạn</h6>
+                            <h3 class="mb-0 text-danger">@Model.Count(c => c.Status == DataAccessLayer.Enums.ContractStatus.Expired)</h3>
+                        </div>
+                        <div class="text-danger">
+                            <i class="fas fa-exclamation-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Tổng giá trị</h6>
+                            <h3 class="mb-0 text-primary">@Model.Sum(c => c.TotalAmount).ToString("N0")</h3>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+            <h4>Chưa có hợp đồng nào</h4>
+            <p class="text-muted">Hãy tạo báo giá để bắt đầu</p>
+            <a asp-controller="Quote" asp-action="Index" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tạo báo giá
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Contract List -->
+        <div class="row g-3">
+            @foreach (var contract in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card contract-card h-100">
+                        <div class="card-body">
+                            <!-- Status Badge -->
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-hashtag"></i> @contract.Id.ToString().Substring(0, 8)
+                                </span>
+                                @{
+                                    var statusClass = contract.Status switch
+                                    {
+                                        DataAccessLayer.Enums.ContractStatus.Active => "status-active",
+                                        DataAccessLayer.Enums.ContractStatus.Expired => "status-expired",
+                                        DataAccessLayer.Enums.ContractStatus.Terminating => "status-terminating",
+                                        DataAccessLayer.Enums.ContractStatus.Terminated => "status-terminated",
+                                        _ => "status-active"
+                                    };
+
+                                    var statusText = contract.Status switch
+                                    {
+                                        DataAccessLayer.Enums.ContractStatus.Active => "Đang hoạt động",
+                                        DataAccessLayer.Enums.ContractStatus.Expired => "Hết hạn",
+                                        DataAccessLayer.Enums.ContractStatus.Terminating => "Đang kết thúc",
+                                        DataAccessLayer.Enums.ContractStatus.Terminated => "Đã chấm dứt",
+                                        _ => "Không xác định"
+                                    };
+                                }
+                                <span class="status-badge @statusClass">@statusText</span>
+                            </div>
+
+                            <!-- Customer Info -->
+                            <div class="mb-3">
+                                <div class="info-label">
+                                    <i class="fas fa-user"></i> Khách hàng
+                                </div>
+                                <div class="info-value">@contract.Customer?.FullName</div>
+                            </div>
+
+                            <!-- Store Info -->
+                            <div class="mb-3">
+                                <div class="info-label">
+                                    <i class="fas fa-store"></i> Cửa hàng
+                                </div>
+                                <div class="info-value">@contract.Store?.StoreName</div>
+                            </div>
+
+                            <!-- Warehouse Info -->
+                            <div class="mb-3">
+                                <div class="info-label">
+                                    <i class="fas fa-warehouse"></i> Kho
+                                </div>
+                                <div class="info-value">
+                                    @contract.Warehouse?.Name
+                                    @if (contract.WarehouseSlot != null)
+                                    {
+                                        <span class="badge bg-info text-white ms-1">@contract.WarehouseSlot.Code</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Duration -->
+                            <div class="mb-3">
+                                <div class="info-label">
+                                    <i class="fas fa-calendar-alt"></i> Thời hạn
+                                </div>
+                                <div class="info-value">
+                                    @contract.StartDate.ToString("dd/MM/yyyy") - @contract.EndDate.ToString("dd/MM/yyyy")
+                                </div>
+                                <small class="text-muted">
+                                    (@((contract.EndDate - contract.StartDate).Days) ngày)
+                                </small>
+                            </div>
+
+                            <!-- Total Amount -->
+                            <div class="mb-3">
+                                <div class="info-label">
+                                    <i class="fas fa-money-bill-wave"></i> Giá trị hợp đồng
+                                </div>
+                                <div class="contract-value">@contract.TotalAmount.ToString("N0") VNĐ</div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="d-flex gap-2 mt-3">
+                                <a asp-action="Details" asp-route-id="@contract.Id" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                    <i class="fas fa-eye"></i> Chi tiết
+                                </a>
+                                @if (!string.IsNullOrEmpty(contract.PdfUrl))
+                                {
+                                    <a href="@contract.PdfUrl" target="_blank" class="btn btn-outline-secondary btn-sm" title="Tải PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

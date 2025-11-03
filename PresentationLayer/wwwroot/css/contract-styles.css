@@ -1,0 +1,607 @@
+/* ================================================
+   CONTRACT VIEWS STYLES
+   Tệp CSS riêng cho các views hợp đồng
+   ================================================ */
+
+/* ====== VARIABLES ====== */
+:root {
+    --contract-primary: #f16622;
+    --contract-secondary: #d44d0a;
+    --contract-text-dark: #171717;
+    --contract-bg-light: #f8f8f8;
+    --contract-success: #28a745;
+    --contract-danger: #dc3545;
+    --contract-warning: #ffc107;
+    --contract-info: #17a2b8;
+    --contract-border: #e0e0e0;
+    --contract-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --contract-shadow-hover: 0 4px 12px rgba(241, 102, 34, 0.15);
+    --contract-radius: 8px;
+}
+
+/* ====== CONTRACT LIST STYLES ====== */
+
+/* Filter Section */
+.filter-section {
+    background: white;
+    border-radius: var(--contract-radius);
+    padding: 1.5rem;
+    box-shadow: var(--contract-shadow);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.filter-section:hover {
+    box-shadow: var(--contract-shadow-hover);
+}
+
+.filter-section .form-label {
+    font-weight: 500;
+    color: var(--contract-text-dark);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.filter-section .form-control,
+.filter-section .form-select {
+    border: 1px solid var(--contract-border);
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.filter-section .form-control:focus,
+.filter-section .form-select:focus {
+    border-color: var(--contract-primary);
+    box-shadow: 0 0 0 0.2rem rgba(241, 102, 34, 0.25);
+}
+
+/* Statistics Cards */
+.statistics-card {
+    background: white;
+    border-radius: var(--contract-radius);
+    padding: 1.5rem;
+    box-shadow: var(--contract-shadow);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.statistics-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--contract-shadow-hover);
+}
+
+.statistics-card .stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.2;
+}
+
+.statistics-card h6 {
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.statistics-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Contract Cards */
+.contract-card {
+    transition: all 0.3s ease;
+    border: 1px solid var(--contract-border);
+    border-radius: var(--contract-radius);
+    background: white;
+    overflow: hidden;
+}
+
+.contract-card:hover {
+    box-shadow: var(--contract-shadow-hover);
+    transform: translateY(-5px);
+    border-color: var(--contract-primary);
+}
+
+.contract-card .card-body {
+    padding: 1.5rem;
+}
+
+.contract-card .info-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.contract-card .info-label i {
+    color: var(--contract-primary);
+    font-size: 0.9rem;
+}
+
+.contract-card .info-value {
+    font-weight: 500;
+    color: var(--contract-text-dark);
+    margin-bottom: 0.75rem;
+}
+
+.contract-card .contract-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--contract-primary);
+    margin-bottom: 0;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-expired {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-terminating {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-terminated {
+    background-color: #d6d8db;
+    color: #383d41;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state i {
+    font-size: 5rem;
+    color: #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h4 {
+    color: var(--contract-text-dark);
+    margin-bottom: 0.75rem;
+}
+
+.empty-state p {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+/* ====== CONTRACT DETAILS STYLES ====== */
+
+/* Contract Header */
+.contract-header {
+    background: linear-gradient(135deg, var(--contract-primary), var(--contract-secondary));
+    color: white;
+    padding: 2.5rem;
+    border-radius: var(--contract-radius);
+    margin-bottom: 2rem;
+    box-shadow: var(--contract-shadow);
+}
+
+.contract-header .contract-id {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.contract-header .contract-amount {
+    font-size: 2.75rem;
+    font-weight: 700;
+    margin: 1rem 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.contract-header .status-badge-large {
+    padding: 0.6rem 1.75rem;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: inline-block;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Detail Sections */
+.detail-section {
+    background: white;
+    border-radius: var(--contract-radius);
+    padding: 1.75rem;
+    box-shadow: var(--contract-shadow);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.detail-section:hover {
+    box-shadow: var(--contract-shadow-hover);
+}
+
+.section-title {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--contract-text-dark);
+    margin-bottom: 1.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--contract-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    color: var(--contract-primary);
+    font-size: 1.5rem;
+}
+
+/* Info Rows */
+.info-row {
+    display: flex;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: flex-start;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row .info-label {
+    flex: 0 0 200px;
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.info-row .info-value {
+    flex: 1;
+    color: var(--contract-text-dark);
+    font-size: 0.95rem;
+}
+
+.info-row .info-value a {
+    color: var(--contract-primary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.info-row .info-value a:hover {
+    color: var(--contract-secondary);
+    text-decoration: underline;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 2.5rem;
+    margin-top: 1rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.6rem;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--contract-primary), var(--contract-danger));
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -1.65rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: var(--contract-primary);
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 0 0 4px var(--contract-border);
+    z-index: 1;
+}
+
+.timeline-item .text-muted {
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-item .fw-bold {
+    font-size: 1.1rem;
+    color: var(--contract-text-dark);
+}
+
+/* Progress Bar */
+.progress {
+    height: 10px;
+    border-radius: 10px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+/* Warehouse Info Card */
+.warehouse-info-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-radius: var(--contract-radius);
+    border-left: 5px solid var(--contract-primary);
+    margin-bottom: 1.25rem;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.warehouse-info-card h5 {
+    color: var(--contract-text-dark);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.warehouse-info-card .info-row {
+    padding: 0.75rem 0;
+}
+
+/* Terms Box */
+.terms-box {
+    background: #f8f9fa;
+    padding: 1.75rem;
+    border-radius: var(--contract-radius);
+    border: 2px solid var(--contract-border);
+    max-height: 350px;
+    overflow-y: auto;
+    line-height: 1.8;
+    font-size: 0.95rem;
+}
+
+.terms-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terms-box::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.terms-box::-webkit-scrollbar-thumb {
+    background: var(--contract-primary);
+    border-radius: 10px;
+}
+
+.terms-box::-webkit-scrollbar-thumb:hover {
+    background: var(--contract-secondary);
+}
+
+/* Action Buttons */
+.action-buttons {
+    margin-top: 1rem;
+}
+
+.action-buttons .btn {
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.action-buttons .btn i {
+    font-size: 1.1rem;
+}
+
+/* Modal Customization */
+.modal-header {
+    border-bottom: 2px solid var(--contract-border);
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-header.bg-danger {
+    background-color: var(--contract-danger) !important;
+}
+
+.modal-body {
+    padding: 1.75rem;
+}
+
+.modal-footer {
+    border-top: 2px solid var(--contract-border);
+    padding: 1rem 1.5rem;
+}
+
+/* Badge Styles */
+.badge {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ====== RESPONSIVE DESIGN ====== */
+
+@media (max-width: 991px) {
+    .contract-header {
+        padding: 2rem 1.5rem;
+    }
+
+    .contract-header .contract-id {
+        font-size: 1.5rem;
+    }
+
+    .contract-header .contract-amount {
+        font-size: 2.25rem;
+    }
+
+    .info-row {
+        flex-direction: column;
+    }
+
+    .info-row .info-label {
+        flex: initial;
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .filter-section {
+        padding: 1.25rem;
+    }
+
+    .contract-header {
+        padding: 1.5rem 1rem;
+    }
+
+    .contract-header .contract-amount {
+        font-size: 2rem;
+    }
+
+    .detail-section {
+        padding: 1.25rem;
+    }
+
+    .section-title {
+        font-size: 1.15rem;
+    }
+
+    .timeline {
+        padding-left: 2rem;
+    }
+
+    .action-buttons .btn {
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 575px) {
+    .statistics-card h3 {
+        font-size: 1.5rem;
+    }
+
+    .contract-card .contract-value {
+        font-size: 1.25rem;
+    }
+
+    .status-badge-large {
+        font-size: 0.9rem !important;
+        padding: 0.5rem 1.25rem !important;
+    }
+}
+
+/* ====== PRINT STYLES ====== */
+
+@media print {
+    .navbar,
+    .footer,
+    .action-buttons,
+    .btn,
+    button {
+        display: none !important;
+    }
+
+    .detail-section {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+
+    .contract-header {
+        background: white !important;
+        color: black !important;
+        border: 2px solid #ddd;
+    }
+
+    .section-title {
+        color: black !important;
+        border-bottom-color: black !important;
+    }
+}
+
+/* ====== ANIMATIONS ====== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.contract-card,
+.detail-section {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.status-badge {
+    animation: pulse 2s infinite;
+}
+
+/* ====== UTILITIES ====== */
+
+.text-contract-primary {
+    color: var(--contract-primary) !important;
+}
+
+.bg-contract-primary {
+    background-color: var(--contract-primary) !important;
+}
+
+.border-contract-primary {
+    border-color: var(--contract-primary) !important;
+}
+
+.hover-shadow:hover {
+    box-shadow: var(--contract-shadow-hover) !important;
+    transition: all 0.3s ease;
+}

@@ -72,6 +72,9 @@ public class ContractService : IContractService
             ).ToListAsync();
             var contracts = new List<Contract>();
             //create pending contract
+
+            var order = quotation.Orders.FirstOrDefault(e => e.QuotationId == quotationId);
+
             foreach (var slot in slotReservations)
             {
                 var contract = new Contract
@@ -83,7 +86,9 @@ public class ContractService : IContractService
                     WarehouseId = slot.WarehouseSlot.WarehouseId,
                     WarehouseSlotId = slot.WarehouseSlotId,
                     TotalAmount = quotation.TotalAmount,
-                    Status = ContractStatus.Draft,
+                    Status = ContractStatus.Active,
+                    StartDate = order.DeliveryDate.Value,
+                    EndDate = order.PickupDate.Value,
                 };
                 contracts.Add(contract);
             }
