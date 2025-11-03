@@ -16,7 +16,7 @@ public class ContractService : IContractService
     private readonly IContractRepository _contractRepository;
     private readonly IQuotationRepository _quotationRepository;
     private readonly IBaseRepository<Order, Guid> _orderRepository;
-    private readonly IBaseRepository<SlotReservation, Guid> _slotReservationRepository;
+    private readonly IBaseRepository<OrderWarehouseSlot, Guid> _slotReservationRepository;
 
     private readonly IConverter _converter;
     private readonly IWebHostEnvironment _env;
@@ -24,7 +24,7 @@ public class ContractService : IContractService
     public ContractService(DeliverySytemContext db, IContractRepository contractRepository,
         IQuotationRepository quotationRepository,
         IBaseRepository<Order, Guid> orderRepository,
-        IBaseRepository<SlotReservation, Guid> slotReservationRepository,
+        IBaseRepository<OrderWarehouseSlot, Guid> slotReservationRepository,
         IConverter converter, IWebHostEnvironment env)
     {
         _db = db;
@@ -67,7 +67,7 @@ public class ContractService : IContractService
             newestOrder.Status = StatusValue.Approved;
             _orderRepository.Update(newestOrder);
 
-            var slotReservations = await _slotReservationRepository.FindAll(s => s.OrderId == newestOrder.Id && s.Status == StatusValue.Reserved,
+            var slotReservations = await _slotReservationRepository.FindAll(s => s.OrderId == newestOrder.Id,
                 includeProperties: [o => o.WarehouseSlot]
             ).ToListAsync();
             var contracts = new List<Contract>();
@@ -83,8 +83,6 @@ public class ContractService : IContractService
                     WarehouseId = slot.WarehouseSlot.WarehouseId,
                     WarehouseSlotId = slot.WarehouseSlotId,
                     TotalAmount = quotation.TotalAmount,
-                    StartDate = slot.From,
-                    EndDate = slot.To,
                     Status = ContractStatus.Draft,
                 };
                 contracts.Add(contract);
@@ -92,13 +90,7 @@ public class ContractService : IContractService
 
             await _contractRepository.AddRangeAsync(contracts);
             
-            //set slot reservation to InActive for not check again
-            slotReservations.ForEach(s =>
-            {
-                s.Status = StatusValue.InActive;
-                _slotReservationRepository.Update(s);
-            });
-            
+           
             //get contracts by OrderId 
             var returnContracts = _contractRepository.FindAll(c => c.QuotationId == quotationId, includeProperties: o => o.WarehouseSlot).ToList();
             

@@ -1143,7 +1143,7 @@ async function submitWarehouseOrder() {
                     // Reset button về trạng thái ban đầu trước khi hiển thị popup
                     bookBtn.textContent = originalText;
                     bookBtn.disabled = false;
-                    showQuoteBreakdown(result.quote, result.orderId);
+                    showQuoteBreakdown(result.quote, result.orderId, result.quotationId);
                 } else {
                     // Reset button về trạng thái ban đầu
                     bookBtn.textContent = originalText;
@@ -1181,7 +1181,7 @@ async function submitWarehouseOrder() {
 }
 
 // Hiển thị bảng báo giá chi tiết
-function showQuoteBreakdown(quote, orderId) {
+function showQuoteBreakdown(quote, orderId, quotationId) {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -1292,7 +1292,7 @@ function showQuoteBreakdown(quote, orderId) {
                     
                     <!-- Nút hành động -->
                     <div style="display: flex; gap: 12px; margin-top: 24px;">
-                        <button onclick="confirmAssignSlotToOrder('${orderId}', '${quote.slotId || ''}', this)" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận gán vào ô kho</button>
+                        <button onclick="confirmAssignSlotToOrder('${orderId}', '${quote.slotId || ''}','${quotationId }', this)" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận gán vào ô kho</button>
                         <button onclick="closeQuotePopup()" style="flex: 1; background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Hủy / Đóng</button>
                     </div>
                 </div>
@@ -1304,7 +1304,7 @@ function showQuoteBreakdown(quote, orderId) {
 }
 
 // Hàm để xác nhận gán slot vào order
-async function confirmAssignSlotToOrder(orderId, slotId, buttonElement) {
+async function confirmAssignSlotToOrder(orderId, slotId, qidFromQuote, buttonElement) {
     if (!orderId || !slotId) {
         alert('⚠️ Không có thông tin đơn hàng hoặc ô kho. Vui lòng thử lại.');
         return;
@@ -1343,7 +1343,7 @@ async function confirmAssignSlotToOrder(orderId, slotId, buttonElement) {
             }
             
             // Redirect đến success page
-            window.location.href = '/Booking/Success?Id=' + encodeURIComponent(orderId);
+            acceptQuotationFromBreakdown(orderId, qidFromQuote);
         } else {
             // Lỗi khi gán slot
             const errorMessage = result.message || 'Có lỗi xảy ra khi gán ô kho. Vui lòng thử lại.';
@@ -1538,7 +1538,8 @@ async function acceptQuotationFromBreakdown(orderId, qidFromQuote) {
     const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
     const quotationId = qidFromQuote || currentQuotationId || document.getElementById('quotationIdInput')?.value;
     if (!quotationId) { alert('Không tìm thấy mã báo giá để xác nhận.'); return; }
-
+    console.log(orderId);
+    console.log(qidFromQuote);
     try {
         const res = await fetch('/Quote/Accept', {
             method: 'POST',
