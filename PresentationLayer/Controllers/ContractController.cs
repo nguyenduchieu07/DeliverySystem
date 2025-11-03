@@ -61,7 +61,7 @@ namespace PresentationLayer.Controllers
         {
             await _contractService.CancleContract(contractId, orderId);
             return RedirectToAction("Index", "Home");
-       
+        }
 
         // GET: Contract/Index
         public async Task<IActionResult> Index(string search, string status, DateTime? fromDate, DateTime? toDate)
@@ -294,4 +294,4 @@ namespace PresentationLayer.Controllers
         }
     }
 }
-}
+

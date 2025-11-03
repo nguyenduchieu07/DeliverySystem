@@ -16,7 +16,7 @@ public class ContractService : IContractService
     private readonly IContractRepository _contractRepository;
     private readonly IQuotationRepository _quotationRepository;
     private readonly IBaseRepository<Order, Guid> _orderRepository;
-    private readonly IBaseRepository<OrderWarehouseSlot, Guid> _slotReservationRepository;
+    private readonly IBaseRepository<SlotReservation, Guid> _slotReservationRepository;
 
     private readonly IConverter _converter;
     private readonly IWebHostEnvironment _env;
@@ -24,7 +24,7 @@ public class ContractService : IContractService
     public ContractService(DeliverySytemContext db, IContractRepository contractRepository,
         IQuotationRepository quotationRepository,
         IBaseRepository<Order, Guid> orderRepository,
-        IBaseRepository<OrderWarehouseSlot, Guid> slotReservationRepository,
+        IBaseRepository<SlotReservation, Guid> slotReservationRepository,
         IConverter converter, IWebHostEnvironment env)
     {
         _db = db;
