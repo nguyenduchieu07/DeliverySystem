@@ -229,11 +229,17 @@ namespace ServiceLayer.Services
             using var transaction = await _db.Database.BeginTransactionAsync(ct);
             try
             {
-                var quotation = await _db.Quotations.FindAsync(vm.QuotationId);
+                var quotation = await _db.Quotations.FindAsync(new object[] { vm.QuotationId }, ct);
                 if (quotation == null) return false;
+                
+                // Đánh dấu status là Revised để store biết có yêu cầu chỉnh giá
                 quotation.Status = StatusValue.Revised;
-
-                await CreateOrderAndSlotReservationsAsync(quotation, vm.SlotIds, ct, vm.From, vm.To);
+                quotation.UpdatedAt = DateTime.UtcNow;
+                
+                // Note có thể được lưu vào UpdatedBy field tạm thời (hoặc tạo migration để thêm field Note)
+                // Tạm thời không lưu note vì entity không có field này
+                // Có thể log note vào console hoặc lưu vào bảng khác nếu cần
+                
                 await _db.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
                 return true;
