@@ -3,6 +3,14 @@
 @model OrderTrackingViewModel
 @{
     ViewData["Title"] = "Chi tiết đơn hàng";
+    
+    var itemCount = Model.Items.Count;
+    var checkInCount = Model.Items.Count(oi => oi.IncidentReports.Any(x => x.Status == ReportStatus.CheckIn));
+    var checkInAlready = itemCount == checkInCount;
+    
+    
+    var checkOutCount = Model.Items.Count(oi => oi.IncidentReports.Any(x => x.Status == ReportStatus.CheckOut));
+    var checkOutAlready = itemCount == checkOutCount;
 }
 
 <div class="container mt-4">
@@ -153,7 +161,7 @@
                                             <button class="btn btn-sm btn-danger"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#incidentModal_@item.Id">
-                                                Xem tổn thất
+                                                Xem báo cáo
                                             </button>
                                         }
                                         else
@@ -347,8 +355,10 @@
                                     <p class="text-muted fst-italic mt-2">Chưa có hành động xử lý nào.</p>
                                 }
                             </div>
-
-                            <form method="post" asp-controller="Tracking" asp-action="AddAction">
+                            
+                            @if (Model.Status != StatusValue.Completed && (report.Status != ReportStatus.CheckIn && report.Status != ReportStatus.CheckOut))
+                            {
+                                <form method="post" asp-controller="Tracking" asp-action="AddAction">
                                 <div class="modal-header">
                                     <h5 class="modal-title">Phản hồi báo cáo</h5>
                                 </div>
@@ -398,6 +408,8 @@
                                     <button type="submit" class="btn btn-primary">Xác nhận</button>
                                 </div>
                             </form>
+                            }
+                            
                         }
                     </div>
 
