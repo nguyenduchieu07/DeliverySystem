@@ -22,6 +22,7 @@ namespace DataAccessLayer.Repositoies
              query = query
                  .Include(o => o.Customer)
                  .Include(o => o.OrderItems)
+                 .ThenInclude( oi => oi.IncidentReports).ThenInclude(ir => ir.Actions)
                  .Include(o => o.OrderWarehouseSlots).ThenInclude(ows => ows.WarehouseSlot).ThenInclude(ws => ws.Warehouse)
                  .Include(o => o.DropoffAddress)
                  .Include(o => o.PickupAddress)
@@ -37,14 +38,20 @@ namespace DataAccessLayer.Repositoies
             {
                 query = query.Where(x => x.Status == status);
             }
-            
+
             query = query
-                .Include(o => o.Customer)
-                .Include(o => o.OrderItems)
-                .Include(o => o.OrderWarehouseSlots).ThenInclude(ows => ows.WarehouseSlot)
-                .Include(o => o.DropoffAddress)
-                .Include(o => o.PickupAddress)
-                .Include(o => o.Store);
+              .Include(o => o.Customer)
+              .Include(o => o.Store)
+              .Include(o => o.PickupAddress)
+              .Include(o => o.DropoffAddress)
+              .Include(o => o.OrderItems)
+                  .ThenInclude(oi => oi.Service)
+              .Include(o => o.OrderItems)
+                  .ThenInclude(oi => oi.IncidentReports)
+                      .ThenInclude(ir => ir.Actions)
+              .Include(o => o.Quotation)
+              .Include(o => o.OrderWarehouseSlots)
+                  .ThenInclude(ows => ows.WarehouseSlot);
             return await query.Where(x => x.StoreId.Equals(storeId)).ToListAsync();
         }
 

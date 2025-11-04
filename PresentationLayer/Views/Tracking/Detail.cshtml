@@ -272,7 +272,7 @@
                                     </span>
                                 </div>
 
-                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.IncidentType</p>
+                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.ItemReportType</p>
                                 <p class="mb-1"><strong>Mô tả:</strong> @report.Description</p>
 
                                 @if (!string.IsNullOrEmpty(report.ImageUrl))
@@ -325,10 +325,10 @@
                                                         @(
                                                         action.ActionType switch
                                                         {
-                                                            IncidentActionType.ConfirmDamage => "Xác nhận hư hỏng",
-                                                            IncidentActionType.ReturnItem => "Hoàn trả hàng",
-                                                            IncidentActionType.Compensate => "Đền bù",
-                                                            IncidentActionType.Close => "Đóng khiếu nại",
+                                                            ItemReportActionType.ConfirmDamage => "Xác nhận hư hỏng",
+                                                            ItemReportActionType.ReturnItem => "Hoàn trả hàng",
+                                                            ItemReportActionType.Compensate => "Đền bù",
+                                                            ItemReportActionType.Close => "Đóng khiếu nại",
                                                             _ => action.ActionType.ToString()
                                                         }
                                                         )
@@ -350,7 +350,7 @@
 
                             <form method="post" asp-controller="Tracking" asp-action="AddAction">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Gửi khiếu nại</h5>
+                                    <h5 class="modal-title">Phản hồi báo cáo</h5>
                                 </div>
 
                                 <div class="modal-body">
@@ -364,9 +364,9 @@
                                         <select class="form-select action-type" name="ActionType" required data-item-price="@item.Subtotal">
                                             <option value="">-- Chọn loại hành động --</option>
                                             <option value="0">Xác nhận hư hỏng</option>
-                                            <option value="1">Hoàn trả hàng</option>
+                                            @* <option value="1">Hoàn trả hàng</option> *@
                                             <option value="2">Đền bù</option>
-                                            <option value="3">Đóng khiếu nại</option>
+                                            @* <option value="3">Đóng khiếu nại</option> *@
                                         </select>
                                     </div>
 

@@ -6,10 +6,13 @@ using System.Threading.Tasks;
 
 namespace DataAccessLayer.Enums
 {
-    public enum IncidentType
+    public enum ItemReportType
     {
         Damaged,
         NotAsDescribed,
-        MissingItem
+        MissingItem,
+        
+        CheckedIn,   // Đã nhập kho
+        CheckedOut   // Đã xuất kho
     }
 }

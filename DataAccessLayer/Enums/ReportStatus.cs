@@ -9,6 +9,9 @@ namespace DataAccessLayer.Enums
     public enum ReportStatus
     {
         Pending,
-        Done
+        Done,
+        
+        CheckIn,
+        CheckOut
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DataAccessLayer.Enums
 {
-    public enum IncidentActionType
+    public enum ItemReportActionType
     {
         ConfirmDamage, //xác nhận hư hỏng
         ReturnItem,

@@ -109,7 +109,7 @@ namespace ServiceLayer.Dtos.OrderTracking
         Nhẹ: đền ~30–50% giá trị mặt hàng.
         Nặng: đền ~70–90% giá trị mặt hàng.
          */
-        public IncidentActionType ActionType { get; set; } // e.g. ConfirmDamage, ReturnItem, Compensate, Close
+        public ItemReportActionType ActionType { get; set; } // e.g. ConfirmDamage, ReturnItem, Compensate, Close
 
         public string? Note { get; set; }
         public DateTime ActionDate { get; set; } = DateTime.UtcNow;
@@ -122,7 +122,7 @@ namespace ServiceLayer.Dtos.OrderTracking
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
         public Guid OrderItemId { get; set; }
-        public IncidentType IncidentType { get; set; } // Hư hỏng / Sai mô tả / Thiếu hàng
+        public ItemReportType ItemReportType { get; set; } // Hư hỏng / Sai mô tả / Thiếu hàng
         public string? Description { get; set; } // Mô tả chi tiết sự cố
         public string? ImageUrl { get; set; } // Ảnh minh chứng
         public ReportStatus Status { get; set; } = ReportStatus.Pending; // Chờ xử lý, Đã xử lý
