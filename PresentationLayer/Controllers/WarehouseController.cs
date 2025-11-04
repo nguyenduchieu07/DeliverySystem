@@ -16,6 +16,19 @@ namespace PresentationLayer.Controllers
         [HttpGet("{id:guid}/slots")]
         public async Task<IActionResult> GetSlots(Guid id, CancellationToken ct)
         {
+            var now = DateTimeOffset.UtcNow;
+            
+            // Lấy danh sách slot IDs có reservation còn hiệu lực
+            // Join với WarehouseSlots để filter theo WarehouseId
+            var reservedSlotIds = await (from r in _db.SlotReservations
+                                        join s in _db.WarehouseSlots on r.WarehouseSlotId equals s.Id
+                                        where r.Status == StatusValue.Active 
+                                           && r.ExpiresAt > now
+                                           && s.WarehouseId == id
+                                        select r.WarehouseSlotId)
+                                        .Distinct()
+                                        .ToListAsync(ct);
+
             var slots = await _db.WarehouseSlots
                 .AsNoTracking()
                 .Where(s => s.WarehouseId == id)
@@ -29,11 +42,8 @@ namespace PresentationLayer.Controllers
                     volumeM3 = s.VolumeM3,
                     basePricePerHour = s.BasePricePerHour,
                     status = s.IsBlocked ? "blocked"
-                            : (s.CurrentOrderId != null ? "occupied" : "available"),
-                    
-                    // status = s.IsBlocked ? "blocked"
-                    //         : (s.CurrentOrderId != null ? "occupied"
-                    //         : (s.TempReservationExpiresAt != null && s.TempReservationExpiresAt > DateTime.UtcNow ? "reserved" : "available")),
+                            : (s.CurrentOrderId != null ? "occupied" 
+                            : (reservedSlotIds.Contains(s.Id) ? "reserved" : "available")),
                     imageUrl = s.ImageUrl
                 })
                 .ToListAsync(ct);

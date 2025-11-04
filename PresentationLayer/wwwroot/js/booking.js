@@ -722,10 +722,16 @@ function renderWarehouseGrid(slots) {
                 slotEl.title = `Slot: ${slot.code || "N/A"}\nSize: ${slot.size || "N/A"
                     }\nPrice: ${slot.basePricePerHour || "N/A"} đ/h`;
 
-                if (statusClass !== "blocked" && statusClass !== "occupied") {
+                // Chỉ cho phép click nếu slot available (không blocked, occupied, hoặc reserved)
+                if (statusClass === "available") {
                     slotEl.addEventListener("click", function () {
                         toggleSlotSelection(slotEl, slot);
                     });
+                } else if (statusClass === "reserved") {
+                    // Slot reserved hiển thị tooltip thông tin
+                    slotEl.title = `Slot: ${slot.code || "N/A"}\nSize: ${slot.size || "N/A"
+                    }\nPrice: ${slot.basePricePerHour || "N/A"} đ/h\n⚠️ Đang được giữ chỗ`;
+                    slotEl.style.cursor = "not-allowed";
                 }
             } else {
                 // Empty cell
@@ -743,7 +749,8 @@ let selectedSlots = []; // Array to store selected slot IDs
 function toggleSlotSelection(element, slot) {
     if (
         element.classList.contains("occupied") ||
-        element.classList.contains("blocked")
+        element.classList.contains("blocked") ||
+        element.classList.contains("reserved")
     ) {
         return;
     }
@@ -1311,7 +1318,7 @@ async function submitWarehouseOrder() {
                     // Reset button về trạng thái ban đầu trước khi hiển thị popup
                     bookBtn.textContent = originalText;
                     bookBtn.disabled = false;
-                    showQuoteBreakdown(result.quote, result.orderId);
+                    showQuoteBreakdown(result.quote, result.quotationId);
                 } else {
                     // Reset button về trạng thái ban đầu
                     bookBtn.textContent = originalText;
@@ -1357,7 +1364,7 @@ async function submitWarehouseOrder() {
 }
 
 // Hiển thị bảng báo giá chi tiết
-function showQuoteBreakdown(quote, orderId) {
+function showQuoteBreakdown(quote, quotationId) {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat("vi-VN", {
             style: "currency",
@@ -1377,7 +1384,8 @@ function showQuoteBreakdown(quote, orderId) {
                         <h2 style="margin: 0; color: #667eea; font-size: 24px;">📄 Báo Giá Chi Tiết</h2>
                         <button onclick="closeQuotePopup()" style="background: #e74c3c; color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 18px;">✖</button>
                     </div>
-                    <p style="margin: 8px 0 0; color: #666;">Mã đơn hàng: <strong>${orderId}</strong></p>
+                    <p style="margin: 8px 0 0; color: #666;">Mã báo giá: <strong>${quotationId}</strong></p>
+                    <p style="margin: 4px 0 0; color: #ff9800; font-size: 14px;">⏰ Slot đã được giữ chỗ trong 24 giờ</p>
                 </div>
                 
                 <div style="padding: 24px;">
@@ -1539,15 +1547,12 @@ function showQuoteBreakdown(quote, orderId) {
                     </div>
                     
                     <!-- Nút hành động -->
-                    <div style="display: flex; gap: 12px; margin-top: 24px;">
-                        <button onclick="window.location.href='/Contract/GetContract?orderId=' + encodeURIComponent('${orderId}')" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận đơn hàng</button>
-                        
-                        <!--
-                        <button onclick="this.closest('[style*=position]').remove()" style="flex: 1; background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Đóng</button>
-                        <button onclick="confirmAssignSlotToOrder('${orderId}', '${quote.slotId || ""
-        }', this)" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận gán vào ô kho</button>
-                        -->
-                        <button onclick="closeQuotePopup()" style="flex: 1; background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Hủy / Đóng</button>
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+                        <div style="display: flex; gap: 12px;">
+                            <button onclick="confirmQuotation('${quotationId}', '${quote.slotId || ""}', this)" style="flex: 1; background: #667eea; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">✅ Xác nhận đơn hàng</button>
+                            <button onclick="requestPriceRevision('${quotationId}', '${quote.slotId || ""}', this)" style="flex: 1; background: #ff9800; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">💰 Yêu cầu chỉnh giá</button>
+                        </div>
+                        <button onclick="closeQuotePopup()" style="background: #95a5a6; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;">Hủy / Đóng</button>
                     </div>
                 </div>
             </div>
@@ -1557,7 +1562,162 @@ function showQuoteBreakdown(quote, orderId) {
     document.body.insertAdjacentHTML("beforeend", html);
 }
 
-// Hàm để xác nhận gán slot vào order
+// Hàm để xác nhận quotation và tạo Order
+async function confirmQuotation(quotationId, slotId, buttonElement) {
+    if (!quotationId || !slotId) {
+        alert("⚠️ Không có thông tin báo giá hoặc ô kho. Vui lòng thử lại.");
+        return;
+    }
+
+    // Disable button để tránh click nhiều lần
+    const originalText = buttonElement.textContent;
+    buttonElement.disabled = true;
+    buttonElement.textContent = "⏳ Đang xác nhận...";
+    buttonElement.style.opacity = "0.6";
+    buttonElement.style.cursor = "not-allowed";
+
+    try {
+        const response = await fetch("/Quote/ConfirmQuotation", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                RequestVerificationToken:
+                    document.querySelector('input[name="__RequestVerificationToken"]')
+                        ?.value || "",
+            },
+            body: JSON.stringify({
+                quotationId: quotationId,
+                slotId: slotId,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // Xác nhận thành công - hiển thị thông báo và redirect
+            alert(
+                `✅ ${result.message || "Đã xác nhận báo giá thành công!"}\n\n📦 Ô kho: ${result.slotCode || "N/A"
+                }\n📋 Mã đơn hàng: ${result.orderId}`
+            );
+
+            // Đóng popup
+            const popup = buttonElement.closest('[style*="position: fixed"]');
+            if (popup) {
+                popup.remove();
+            }
+
+            // Redirect đến trang hợp đồng
+            if (result.orderId) {
+                window.location.href = "/Contract/GetContract?orderId=" + encodeURIComponent(result.orderId);
+            }
+        } else {
+            // Lỗi khi xác nhận
+            const errorMessage =
+                result.message || "Có lỗi xảy ra khi xác nhận báo giá. Vui lòng thử lại.";
+            alert(`❌ ${errorMessage}`);
+
+            // Reset button
+            buttonElement.disabled = false;
+            buttonElement.textContent = originalText;
+            buttonElement.style.opacity = "1";
+            buttonElement.style.cursor = "pointer";
+        }
+    } catch (error) {
+        console.error("Error confirming quotation:", error);
+        alert(
+            `❌ Không thể kết nối đến máy chủ!\n\nChi tiết: ${error.message}\n\nVui lòng kiểm tra kết nối và thử lại.`
+        );
+
+        // Reset button
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalText;
+        buttonElement.style.opacity = "1";
+        buttonElement.style.cursor = "pointer";
+    }
+}
+
+// Hàm để yêu cầu chỉnh giá
+async function requestPriceRevision(quotationId, slotId, buttonElement) {
+    if (!quotationId) {
+        alert("⚠️ Không có thông tin báo giá. Vui lòng thử lại.");
+        return;
+    }
+
+    // Yêu cầu nhập note
+    const note = prompt(
+        "💰 Yêu cầu chỉnh giá\n\nVui lòng nhập lý do và yêu cầu chỉnh giá của bạn:"
+    );
+
+    if (!note || note.trim() === "") {
+        return; // Người dùng hủy hoặc không nhập gì
+    }
+
+    // Disable button để tránh click nhiều lần
+    const originalText = buttonElement.textContent;
+    buttonElement.disabled = true;
+    buttonElement.textContent = "⏳ Đang gửi yêu cầu...";
+    buttonElement.style.opacity = "0.6";
+    buttonElement.style.cursor = "not-allowed";
+
+    try {
+        // Lấy thông tin từ quote để gửi kèm
+        const startDate = document.getElementById("storageStartDate")?.value;
+        const endDate = document.getElementById("storageEndDate")?.value;
+
+        const response = await fetch("/Quote/RequestRevision", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                RequestVerificationToken:
+                    document.querySelector('input[name="__RequestVerificationToken"]')
+                        ?.value || "",
+            },
+            body: JSON.stringify({
+                quotationId: quotationId,
+                slotIds: slotId ? [slotId] : [],
+                from: startDate ? new Date(startDate) : new Date(),
+                to: endDate ? new Date(endDate) : new Date(),
+                note: note.trim(),
+            }),
+        });
+
+        if (response.ok) {
+            alert(
+                "✅ Yêu cầu chỉnh giá đã được gửi thành công!\n\nCửa hàng sẽ xem xét và phản hồi trong thời gian sớm nhất."
+            );
+
+            // Đóng popup
+            const popup = buttonElement.closest('[style*="position: fixed"]');
+            if (popup) {
+                popup.remove();
+            }
+        } else {
+            const result = await response.json().catch(() => ({}));
+            const errorMessage =
+                result.message || "Có lỗi xảy ra khi gửi yêu cầu chỉnh giá. Vui lòng thử lại.";
+            alert(`❌ ${errorMessage}`);
+
+            // Reset button
+            buttonElement.disabled = false;
+            buttonElement.textContent = originalText;
+            buttonElement.style.opacity = "1";
+            buttonElement.style.cursor = "pointer";
+        }
+    } catch (error) {
+        console.error("Error requesting price revision:", error);
+        alert(
+            `❌ Không thể kết nối đến máy chủ!\n\nChi tiết: ${error.message}\n\nVui lòng kiểm tra kết nối và thử lại.`
+        );
+
+        // Reset button
+        buttonElement.disabled = false;
+        buttonElement.textContent = originalText;
+        buttonElement.style.opacity = "1";
+        buttonElement.style.cursor = "pointer";
+    }
+}
+
+// Hàm để xác nhận gán slot vào order (deprecated - giữ lại để tương thích)
 async function confirmAssignSlotToOrder(orderId, slotId, buttonElement) {
     if (!orderId || !slotId) {
         alert("⚠️ Không có thông tin đơn hàng hoặc ô kho. Vui lòng thử lại.");

@@ -419,147 +419,52 @@ namespace PresentationLayer.Controllers
                 Console.WriteLine($"Total addon price: {totalAddonPrice:F0} VND");
                 Console.WriteLine($"Total price (slot + addons): {totalPrice:F0} VND");
 
-                //create quotation
-                var VALIDITY_FOR_QUOTATION_HOUR = 24; // Báo giá có giá trị trong 24 giờ
-                var validUntil = DateTime.Now.AddHours(VALIDITY_FOR_QUOTATION_HOUR);
-                //var quotation = new Quotation
-                //{
-                //    Id = Guid.NewGuid(),
-                //    StoreId = storeId,
-                //    CustomerId = userId, // Get from authenticated user
-                //    TotalAmount = totalPrice,
-                //    ValidUntil = validUntil,
-                //    Status = StatusValue.Draft,
-                //    CreatedAt = DateTime.Now
-                //};
-                //await _db.Quotations.AddAsync(quotation);
-                var order = new Order
-                {
-                    Id = Guid.NewGuid(),
-                    CustomerId = userId,
-                    StoreId = storeId,
-                    //add quotationID
-                    //QuotationId = quotation.Id,
-                    PickupAddress = new Address
-                    {
-                        Id = Guid.NewGuid(),
-                        AddressLine = viewModel.PickupAddress.AddressLine,
-                        Latitude = viewModel.PickupAddress.Latitude,
-                        Longitude = viewModel.PickupAddress.Longitude,
-                        City = "Hà Nội"
-                    },
-                    DropoffAddress = new Address
-                    {
-                        Id = Guid.NewGuid(),
-                        AddressLine = viewModel.WarehouseArea.AddressLine,
-                        Latitude = viewModel.WarehouseArea.Latitude,
-                        Longitude = viewModel.WarehouseArea.Longitude,
-                        City = "Hà Nội"
-                    },
-                    DeliveryDate = viewModel.StorageStartDate,
-                    PickupDate = viewModel.StorageEndDate,
-                    Note = viewModel.Note ?? string.Empty,
-                    ProductImageUrl = imageUrl, // Lưu URL ảnh tổng
-                    Status = StatusValue.Pending,
-                    TotalAmount = totalPrice, // Giá đã tính từ slot + các dịch vụ đặc biệt
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    OrderItems = new List<OrderItem>()
-                };
-
-                if (viewModel.SpecialRequirements != null && viewModel.SpecialRequirements.Any())
-                {
-                    order.Note += "\n\n📋 Yêu cầu đặc biệt:\n" + string.Join("\n", viewModel.SpecialRequirements.Select(r => "• " + r));
-                }
-
-                if (viewModel.Items != null && viewModel.Items.Any())
-                {
-                    foreach (var itemVm in viewModel.Items)
-                    {
-                        if (string.IsNullOrWhiteSpace(itemVm.Name) || itemVm.Quantity <= 0)
-                        {
-                            continue;
-                        }
-
-                        order.OrderItems.Add(new OrderItem
-                        {
-                            Id = Guid.NewGuid(),
-                            OrderId = order.Id,
-                            ItemName = itemVm.Name.Trim(),
-                            Description = itemVm.Category,
-                            Quantity = itemVm.Quantity,
-                            WeightKg = itemVm.EstimatedWeightKg,
-                            UnitPrice = 0m,
-                            Subtotal = 0m
-                        });
-                    }
-                }
-               
-                Console.WriteLine("Creating order in database...");
-                var createdOrder = await _deliveryService.CreateOrderAsync(order);
-                Console.WriteLine($"Order created: {createdOrder.Id}");
-                
-               /*
-               Handle later from Tuan & Giang
-                // KHÔNG gán slot ngay - chỉ trả về thông tin slot đề xuất để người dùng xác nhận
-                // Slot sẽ được gán khi người dùng xác nhận thông qua API AssignSlotToOrder
-                //Console.WriteLine($"Proposed slot {selectedSlot.Code} for order {createdOrder.Id} - waiting for user confirmation");
-               
-               */
-
-                // Gán slot cho order (có thể lưu vào một bảng trung gian hoặc note)
-                //Console.WriteLine($"Reserving slot {selectedSlot.Code} for order {createdOrder.Id}");
-                //selectedSlot.CurrentOrderId = createdOrder.Id;
-                //await _db.SaveChangesAsync();
-                //Console.WriteLine("Slot reserved successfully");
-
-                //KHÔNG GÁN CURRENTORDERID VÀO WAREHOUSESLOT -> HÃY THÊM VÀO SLOT RESERVATION ĐỂ GIỮ CHỖ ~ khi đã chốt hợp đồng và chuyển khoản thì thêm OrderWarehouseSlot và SlotReservation tương ứng sẽ là InActive
-                var slotReservatopm = new SlotReservation
-                {
-                    Id = Guid.NewGuid(),
-                    OrderId = createdOrder.Id,
-                    WarehouseSlotId = selectedSlot.Id,
-                    ExpiresAt = validUntil,
-                    Status = StatusValue.Active,
-                    From = viewModel.StorageStartDate,
-                    To = viewModel.StorageEndDate
-                };
-                _db.SlotReservations.Add(slotReservatopm);
-
-                //UPDATE TRẠNG THÁI CỦA WAREHOUSESLOT THÀNH Reserved
-                selectedSlot.Status = StatusValue.Reserved;
-
-                _db.WarehouseSlots.Update(selectedSlot);
-
-                await _db.SaveChangesAsync();
-                await transaction.CommitAsync();
                 // Tính toán chi tiết giá (đã tính addons ở trên)
                 var storageDaysForDisplay = Math.Ceiling((viewModel.StorageEndDate - viewModel.StorageStartDate).TotalDays);
                 var subtotal = totalPrice; // Đã bao gồm cả addons
                 var vatAmount = subtotal * 0.1m; // VAT 10%
                 var grandTotal = subtotal + vatAmount;
+                
+                // Tạo Quotation trước (chưa có Order)
+                var VALIDITY_FOR_QUOTATION_HOUR = 24; // Báo giá có giá trị trong 24 giờ
+                var validUntil = DateTime.UtcNow.AddHours(VALIDITY_FOR_QUOTATION_HOUR);
                 var quotation = new Quotation
                 {
                     Id = Guid.NewGuid(),
                     StoreId = storeId,
                     CustomerId = userId,
                     TotalAmount = grandTotal,                  // đã gồm VAT
-                    ValidUntil = DateTime.UtcNow.AddHours(48), // hết hạn sau 48h
+                    ValidUntil = validUntil,                    // hết hạn sau 24h
                     Status = StatusValue.Sent,                 // vừa gửi báo giá
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                createdOrder.QuotationId = quotation.Id;
-                //gán quotation cho order
-                order.QuotationId = quotation.Id;
                 _db.Quotations.Add(quotation);
+
+                // Tạo SlotReservation để giữ chỗ trong 24h (chưa có OrderId)
+                var slotReservation = new SlotReservation
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = null, // Chưa có Order, sẽ gán khi xác nhận
+                    WarehouseSlotId = selectedSlot.Id,
+                    ExpiresAt = validUntil, // Hết hạn sau 24h
+                    Status = StatusValue.Active,
+                    From = viewModel.StorageStartDate,
+                    To = viewModel.StorageEndDate
+                };
+                _db.SlotReservations.Add(slotReservation);
+
+                // UPDATE TRẠNG THÁI CỦA WAREHOUSESLOT THÀNH Reserved
+                selectedSlot.Status = StatusValue.Reserved;
+                _db.WarehouseSlots.Update(selectedSlot);
+
                 await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
                 // Trả về báo giá chi tiết
                 return Json(new
                 {
                     success = true,
-                    orderId = createdOrder.Id,
-                    message = "Đơn hàng đã được tạo thành công!",
+                    message = "Báo giá đã được tạo thành công! Slot đã được giữ chỗ trong 24 giờ.",
                     quotationId = quotation.Id,
                     quote = new
                     {
@@ -728,9 +633,120 @@ namespace PresentationLayer.Controllers
             }
         }
 
+        // API để xác nhận quotation và tạo Order
+        [HttpPost]
+        public async Task<IActionResult> ConfirmQuotation([FromBody] ConfirmQuotationRequest request)
+        {
+            if (request == null || request.QuotationId == Guid.Empty || request.SlotId == Guid.Empty)
+            {
+                return BadRequest(new { success = false, message = "QuotationId và SlotId là bắt buộc." });
+            }
+
+            try
+            {
+                using var transaction = await _db.Database.BeginTransactionAsync();
+
+                // Kiểm tra quotation
+                var quotation = await _db.Quotations
+                    .FirstOrDefaultAsync(q => q.Id == request.QuotationId);
+
+                if (quotation == null)
+                {
+                    return NotFound(new { success = false, message = "Không tìm thấy báo giá." });
+                }
+
+                // Kiểm tra slot reservation còn hiệu lực không
+                var reservation = await _db.SlotReservations
+                    .FirstOrDefaultAsync(r => r.WarehouseSlotId == request.SlotId 
+                                            && r.OrderId == null 
+                                            && r.Status == StatusValue.Active
+                                            && r.ExpiresAt > DateTimeOffset.UtcNow);
+
+                if (reservation == null)
+                {
+                    return BadRequest(new { success = false, message = "Slot reservation đã hết hạn hoặc không tồn tại." });
+                }
+
+                // Tạo Order từ Quotation
+                var order = new Order
+                {
+                    Id = Guid.NewGuid(),
+                    QuotationId = quotation.Id,
+                    CustomerId = quotation.CustomerId,
+                    StoreId = quotation.StoreId ?? Guid.Empty,
+                    Status = StatusValue.Pending,
+                    TotalAmount = quotation.TotalAmount,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    Note = "Order created from quotation confirmation"
+                };
+
+                _db.Orders.Add(order);
+                await _db.SaveChangesAsync();
+
+                // Cập nhật SlotReservation với OrderId
+                reservation.OrderId = order.Id;
+                _db.SlotReservations.Update(reservation);
+
+                // Tạo OrderWarehouseSlot
+                var orderWarehouseSlot = new OrderWarehouseSlot
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = order.Id,
+                    WarehouseSlotId = request.SlotId,
+                    AssignedAt = DateTime.UtcNow,
+                    ReleasedAt = null,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
+
+                // Cập nhật slot status
+                var slot = await _db.WarehouseSlots.FirstOrDefaultAsync(s => s.Id == request.SlotId);
+                if (slot != null)
+                {
+                    slot.CurrentOrderId = order.Id;
+                    slot.Status = StatusValue.Reserved;
+                    _db.WarehouseSlots.Update(slot);
+                }
+
+                // Cập nhật quotation status
+                quotation.Status = StatusValue.Active;
+                _db.Quotations.Update(quotation);
+
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Đã xác nhận báo giá và tạo đơn hàng thành công!",
+                    orderId = order.Id,
+                    slotCode = slot?.Code
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in ConfirmQuotation: " + ex.Message);
+                Console.WriteLine("Stack trace: " + ex.StackTrace);
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Có lỗi xảy ra khi xác nhận báo giá. Vui lòng thử lại sau.",
+                    detail = ex.Message
+                });
+            }
+        }
+
         public class AssignSlotToOrderRequest
         {
             public Guid OrderId { get; set; }
+            public Guid SlotId { get; set; }
+        }
+
+        public class ConfirmQuotationRequest
+        {
+            public Guid QuotationId { get; set; }
             public Guid SlotId { get; set; }
         }
 
