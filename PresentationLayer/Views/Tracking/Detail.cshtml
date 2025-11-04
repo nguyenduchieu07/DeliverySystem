@@ -272,7 +272,7 @@
                                     </span>
                                 </div>
 
-                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.IncidentType</p>
+                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.ItemReportType</p>
                                 <p class="mb-1"><strong>Mô tả:</strong> @report.Description</p>
 
                                 @if (!string.IsNullOrEmpty(report.ImageUrl))
@@ -325,10 +325,10 @@
                                                         @(
                                                         action.ActionType switch
                                                         {
-                                                            IncidentActionType.ConfirmDamage => "Xác nhận hư hỏng",
-                                                            IncidentActionType.ReturnItem => "Hoàn trả hàng",
-                                                            IncidentActionType.Compensate => "Đền bù",
-                                                            IncidentActionType.Close => "Đóng khiếu nại",
+                                                            ItemReportActionType.ConfirmDamage => "Xác nhận hư hỏng",
+                                                            ItemReportActionType.ReturnItem => "Hoàn trả hàng",
+                                                            ItemReportActionType.Compensate => "Đền bù",
+                                                            ItemReportActionType.Close => "Đóng khiếu nại",
                                                             _ => action.ActionType.ToString()
                                                         }
                                                         )
