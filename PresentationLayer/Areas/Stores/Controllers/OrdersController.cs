@@ -17,6 +17,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
         private readonly IOrderService _orderService;
         private readonly IBaseRepository<OrderWarehouseSlot, Guid> _orderWarehouseSlotRepository;
         private readonly ICloudinaryService _cloudinaryService;
+
         public OrdersController(IOrderService orderService,
             IBaseRepository<OrderWarehouseSlot, Guid> orderWarehouseSlotRepository, DeliverySytemContext context,
             ICloudinaryService cloudinaryService)
@@ -24,7 +25,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             _orderService = orderService;
             _orderWarehouseSlotRepository = orderWarehouseSlotRepository;
             _context = context;
-            _cloudinaryService =  cloudinaryService;
+            _cloudinaryService = cloudinaryService;
         }
 
 
@@ -97,6 +98,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
                 return Json(new { success = false, message = firstError });
             }
+
             var order = await _orderService.GetByIdAsync(orderId);
             if (order == null)
                 return Json(new { success = false, message = "Không tìm thấy đơn hàng" });
@@ -118,14 +120,15 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             if (data.PickupDate > orderWarehouseSlot.AssignedAt)
             {
-                return Json(new { success = false, message = "Ngày lấy hàng phải trước hoặc bằng ngày bắt đầu lưu kho" });
+                return Json(
+                    new { success = false, message = "Ngày lấy hàng phải trước hoặc bằng ngày bắt đầu lưu kho" });
             }
-            
+
             if (data.DeliveryDate > orderWarehouseSlot.ReleasedAt)
             {
                 return Json(new { success = false, message = "Ngày giao hàng phải trước ngày kết thúc lưu kho" });
             }
-            
+
             bool IsValidTransition(StatusValue current, StatusValue next) =>
                 current switch
                 {
@@ -133,15 +136,21 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     StatusValue.Pending => next is StatusValue.Approved or StatusValue.Rejected or StatusValue.Canceled,
                     StatusValue.Approved => next is StatusValue.Completed or StatusValue.Canceled,
                     StatusValue.Completed => false, // completed rồi thì không đổi nữa
-                    StatusValue.Rejected => false,  // rejected thì không phục hồi
-                    StatusValue.Canceled => false,  // canceled thì không quay lại
+                    StatusValue.Rejected => false, // rejected thì không phục hồi
+                    StatusValue.Canceled => false, // canceled thì không quay lại
                     _ => false
                 };
+
             var currentStatus = order.Status;
             var newStatus = data.Status;
             if (!IsValidTransition(currentStatus, newStatus))
-                return Json(new { success = false, message = $"Không thể chuyển từ trạng thái {currentStatus.ToDisplayStringForOrder()} sang {newStatus.ToDisplayStringForOrder()}" });
-            
+                return Json(new
+                {
+                    success = false,
+                    message =
+                        $"Không thể chuyển từ trạng thái {currentStatus.ToDisplayStringForOrder()} sang {newStatus.ToDisplayStringForOrder()}"
+                });
+
             order.Status = data.Status;
             order.Note = data.Note;
             order.PickupDate = data.PickupDate;
@@ -194,12 +203,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
             var order = await _orderService.GetByIdAsync(orderId);
             if (order == null) return Json(new { success = false, message = "Không tìm thấy đơn hàng" });
 
-            if (order.PickupDate.HasValue && data.AssignedAt <  order.PickupDate)
+            if (order.PickupDate.HasValue && data.AssignedAt < order.PickupDate)
             {
                 return Json(new { success = false, message = "Ngày lưu kho phải sau hoặc bằng ngày lấy hàng" });
             }
-            
-            if (order.DeliveryDate.HasValue && data.ReleasedAt <  order.DeliveryDate)
+
+            if (order.DeliveryDate.HasValue && data.ReleasedAt < order.DeliveryDate)
             {
                 return Json(new { success = false, message = "Ngày kết thúc phải trước hoặc bằng ngày giao hàng" });
             }
@@ -211,41 +220,36 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             return Json(new { success = true });
         }
-        
+
         public class IncidentReportCreateViewModel
         {
-            [Required]
-            public Guid OrderId { get; set; }
+            [Required] public Guid OrderId { get; set; }
 
-            [Required]
-            public Guid OrderItemId { get; set; }
+            [Required] public Guid OrderItemId { get; set; }
 
-            [Required]
-            public IncidentType IncidentType { get; set; }
+            [Required] public ItemReportType ItemReportType { get; set; }
 
-            [Required]
-            [StringLength(1000)]
-            public string Description { get; set; } = string.Empty;
+            [Required] [StringLength(1000)] public string Description { get; set; } = string.Empty;
 
             public bool IsReturned { get; set; }
 
             public bool IsCompensated { get; set; }
 
-            [Range(0, double.MaxValue)]
-            public decimal? CompensationAmount { get; set; }
+            [Range(0, double.MaxValue)] public decimal? CompensationAmount { get; set; }
         }
-        
-        [HttpPost("/Orders/CreateReport")]
-        public async Task<IActionResult> CreateReport([FromForm] IncidentReportCreateViewModel request, IFormFile? imageFile)
+
+        [HttpPost("/Stores/Orders/CreateReport")]
+        public async Task<IActionResult> CreateReport([FromForm] IncidentReportCreateViewModel request,
+            IFormFile? imageFile)
         {
             try
             {
-                var report = new IncidentReport
+                var report = new ItemReport
                 {
                     Id = Guid.NewGuid(),
-                    OrderId = request.OrderId,
+                    // OrderId = request.OrderId,
                     OrderItemId = request.OrderItemId,
-                    IncidentType = request.IncidentType,
+                    Type = request.ItemReportType,
                     Description = request.Description,
                     IsReturned = request.IsReturned,
                     IsCompensated = request.IsCompensated,
@@ -268,14 +272,14 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 return Json(new { success = false, message = "Lỗi khi tạo báo cáo", error = ex.Message });
             }
         }
-        
+
         public partial class HandleReportViewModel
         {
-            public Guid IncidentReportId { get; set; }
-            public IncidentActionType ActionType { get; set; } 
+            public Guid OrderItemId { get; set; }
+            public ItemReportActionType ActionType { get; set; }
             public string? Note { get; set; }
         }
-        
+
         [HttpPost("/Stores/Orders/HandleIncident")]
         public async Task<IActionResult> HandleIncident([FromForm] HandleReportViewModel model)
         {
@@ -286,23 +290,23 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     return Json(new { success = false, message = "Dữ liệu không hợp lệ." });
 
                 var report = await _context.IncidentReports
-                    .FirstOrDefaultAsync(x => x.Id == model.IncidentReportId);
+                    .FirstOrDefaultAsync(x => x.OrderItemId == model.OrderItemId && x.Status != ReportStatus.Done);
 
                 if (report == null)
                     return Json(new { success = false, message = "Không tìm thấy báo cáo." });
 
-                var action = new IncidentAction
+                var action = new ItemReportAction
                 {
                     Id = Guid.NewGuid(),
-                    IncidentReportId = model.IncidentReportId,
+                    ItemReportId = report.Id,
                     ActionType = model.ActionType,
                     Note = model.Note,
                     CreatedAt = DateTime.Now
                 };
-                
+
                 _context.IncidentActions.Add(action);
 
-                if (model.ActionType == IncidentActionType.Close)
+                if (model.ActionType == ItemReportActionType.Close)
                 {
                     report.Status = ReportStatus.Done;
                     // Không cần _context.IncidentReports.Update(report);
@@ -320,5 +324,6 @@ namespace PresentationLayer.Areas.Stores.Controllers
             }
         }
 
+     
     }
 }

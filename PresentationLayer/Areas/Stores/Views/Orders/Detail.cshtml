@@ -2,10 +2,15 @@
 @model PresentationLayer.Areas.Stores.Controllers.OrdersController.StoreOrderDetailViewModel
 @{
     ViewBag.Title = "Chi tiết đơn hàng";
-    // var roles = User.Claims
-    //     .Where(c => c.Type == ClaimTypes.Role)
-    //     .Select(c => c.Value)
-    //     .ToList();
+
+    var itemCount = Model.OrderItems.Count;
+    var checkInCount = Model.OrderItems.Count(oi => oi.IncidentReports.Any(x => x.Status == ReportStatus.CheckIn));
+    var checkInAlready = itemCount == checkInCount;
+    
+    
+    var checkOutCount = Model.OrderItems.Count(oi => oi.IncidentReports.Any(x => x.Status == ReportStatus.CheckOut));
+    var checkOutAlready = itemCount == checkOutCount;
+
 }
 
 <style>
@@ -515,15 +520,41 @@
             <a id="btnEditOrder" data-id="@Model.Order.Id" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Chỉnh sửa
             </a>
+           
         </div>
     </div>
 
     <!-- Order Info Card -->
     <div class="card">
         <div class="card-body">
+            <div class="mb-2 d-flex justify-content-end">
+                
+                @if (!checkInAlready)
+                {
+                    <!-- Nút Kiểm tra vào -->
+                    <button class="btn btn-sm btn-danger mr-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#checkinModal"
+                            style="background-color:#e5501b; border-color:#e5501b;">
+                        <i class="fas fa-sign-in-alt me-1"></i> Check In
+                    </button>
+                }
+                
+                @if (!checkOutAlready)
+                {
+                    <!-- Nút Kiểm tra ra -->
+                    <button class="btn btn-sm btn-success"
+                            data-bs-toggle="modal"
+                            data-bs-target="#checkoutModal">
+                        <i class="fas fa-sign-out-alt me-1"></i> Check Out
+                    </button>
+                }
+                
+            </div>
             <!-- Info Grid -->
             <div class="info-grid">
                 <!-- Order Information -->
+
                 <div class="info-section">
                     <h5><i class="fas fa-info-circle"></i> Thông tin đơn hàng</h5>
                     <div class="info-item">
@@ -613,28 +644,38 @@
                                 <td>@item.WeightKg kg</td>
                                 <td class="item-subtotal">@(item.Subtotal?.ToString("N0") ?? "0") ₫</td>
                                 <td>
-
-                                    <button class="btn btn-sm btn-danger"
-                                            data-bs-toggle="modal"
-                                            data-order-id="@Model.Order.Id"
-                                            data-item-id="@item.Id"
-                                            data-bs-target="#createReportModal">
-
-                                        Tạo báo cáo
-                                    </button>
-                                    @if (item.IncidentReports.Any())
+                                    @{
+                                        var hasPending = item.IncidentReports.Any(r => r.Status == ReportStatus.Pending);
+                                    }
+                                    @* Nếu KHÔNG có báo cáo pending -> Hiện nút "Tạo báo cáo" *@
+                                    @if (!checkOutAlready && !hasPending)
                                     {
                                         <button class="btn btn-sm btn-danger"
                                                 data-bs-toggle="modal"
-                                                data-bs-target="#incidentModal_@item.Id">
-                                            Xem báo cáo
-                                            <button class="btn btn-sm btn-danger"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#handleIncidentModal_@item.Id">
-                                                Xử lý
-                                            </button>
+                                                data-order-id="@Model.Order.Id"
+                                                data-item-id="@item.Id"
+                                                data-bs-target="#createReportModal">
+                                            Tạo báo cáo
                                         </button>
                                     }
+
+                                    @* Nếu CÓ ít nhất 1 báo cáo pending -> Hiện nút "Xem" + "Xử lý" *@
+                                    <button class="btn btn-sm btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#incidentModal_@item.Id">
+                                        Xem báo cáo
+                                    </button>
+                                    @if (hasPending)
+                                    {
+                                        
+
+                                        <button class="btn btn-sm btn-warning"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#handleIncidentModal_@item.Id">
+                                            Xử lý
+                                        </button>
+                                    }
+
                                 </td>
                             </tr>
                         }
@@ -886,6 +927,7 @@
 {
     if (item.IncidentReports.Count > 0)
     {
+        
         <!-- Modal xử lý sự cố -->
         <div class="modal fade" id="handleIncidentModal_@item.Id" tabindex="-1"
              aria-labelledby="incidentModalLabel_@item.Id" aria-hidden="true">
@@ -901,7 +943,7 @@
                     <div class="modal-body">
                         <form id="handleIncidentForm_@item.Id" enctype="multipart/form-data">
                             <!-- Hidden field -->
-                            <input type="hidden" name="IncidentReportId" value="@item.Id"/>
+                            <input type="hidden" name="OrderItemId" value="@item.Id"/>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Hành động xử lý</label>
@@ -955,7 +997,7 @@
                                     </span>
                                 </div>
 
-                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.IncidentType</p>
+                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.Type</p>
                                 <p class="mb-1"><strong>Mô tả:</strong> @report.Description</p>
 
                                 @if (!string.IsNullOrEmpty(report.ImageUrl))
@@ -1012,10 +1054,10 @@
                                                         @(
                                                         action.ActionType switch
                                                         {
-                                                            IncidentActionType.ConfirmDamage => "Xác nhận hư hỏng",
-                                                            IncidentActionType.ReturnItem => "Hoàn trả hàng",
-                                                            IncidentActionType.Compensate => "Đền bù",
-                                                            IncidentActionType.Close => "Đóng khiếu nại",
+                                                            ItemReportActionType.ConfirmDamage => "Xác nhận hư hỏng",
+                                                            ItemReportActionType.ReturnItem => "Hoàn trả hàng",
+                                                            ItemReportActionType.Compensate => "Đền bù",
+                                                            ItemReportActionType.Close => "Đóng khiếu nại",
                                                             _ => action.ActionType.ToString()
                                                         }
                                                         )
@@ -1031,7 +1073,10 @@
                                 }
                                 else
                                 {
-                                    <p class="text-muted fst-italic mt-2">Chưa có hành động xử lý nào.</p>
+                                    if (report.Status != ReportStatus.CheckIn && report.Status != ReportStatus.CheckOut)
+                                    {
+                                        <p class="text-muted fst-italic mt-2">Chưa có hành động xử lý nào.</p>
+                                    }
                                 }
                             </div>
                         }
@@ -1106,9 +1151,13 @@
     </div>
 </div>
 
+
+
 @section Scripts
 {
     <script>
+        
+        
         async function submitIncidentAction(itemId) {
             const form = document.getElementById(`handleIncidentForm_${itemId}`);
             const formData = new FormData(form);

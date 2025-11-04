@@ -138,9 +138,9 @@ namespace PresentationLayer.Controllers
                             Id = ir.Id,
                             Description = ir.Description,
                             ImageUrl = ir.ImageUrl,
-                            OrderId = ir.OrderId,
+                            // OrderId = ir.OrderId,
                             CompensationAmount = ir.CompensationAmount,
-                            IncidentType = ir.IncidentType,
+                            ItemReportType = ir.Type,
                             IsCompensated = ir.IsCompensated,
                             IsReturned = ir.IsReturned,
                             OrderItemId = ir.OrderItemId,
@@ -151,7 +151,7 @@ namespace PresentationLayer.Controllers
                                 Id = ia.Id,
                                 ActionDate = ia.ActionDate,
                                 ActionType = ia.ActionType,
-                                IncidentReportId = ia.IncidentReportId,
+                                IncidentReportId = ia.ItemReportId,
                                 Note = ia.Note,
                                 StaffId = ia.StaffId,
                             }).ToList()
@@ -454,14 +454,14 @@ namespace PresentationLayer.Controllers
         [HttpPost]
         public async Task<IActionResult> AddAction(CreateIncidentActionDto dto)
         {
-            var incidentAction = new IncidentAction()
+            var incidentAction = new ItemReportAction()
             {
                 Id = Guid.NewGuid(),
                 ActionDate = DateTime.UtcNow,
                 ActionType = dto.ActionType,
                 Note = dto.Note,
                 CreatedAt = DateTime.UtcNow,
-                IncidentReportId = dto.IncidentReportId,
+                ItemReportId = dto.IncidentReportId,
             };
             await _context.IncidentActions.AddAsync(incidentAction);
             await _context.SaveChangesAsync();
@@ -472,7 +472,7 @@ namespace PresentationLayer.Controllers
         public class CreateIncidentActionDto
         {
             public Guid IncidentReportId { get; set; }
-            public IncidentActionType ActionType { get; set; }
+            public ItemReportActionType ActionType { get; set; }
             public string Note { get; set; }
             public string OrderId { get; set; }
         }
