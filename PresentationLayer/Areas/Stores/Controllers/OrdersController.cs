@@ -324,6 +324,61 @@ namespace PresentationLayer.Areas.Stores.Controllers
             }
         }
 
-     
+        public class CheckInItemRequest
+        {
+            public Guid OrderItemId { get; set; }
+            public int Quantity { get; set; }
+            public string? ConditionNote { get; set; }
+            public IFormFile? Image { get; set; }
+        }
+
+        public class CheckInAllRequest
+        {
+            public Guid OrderId { get; set; }
+            public List<CheckInItemRequest> Items { get; set; } = new();
+        }
+
+        [HttpPost("/Stores/Orders/CheckInAll")]
+        public async Task<IActionResult> CheckInAll([FromForm] CheckInAllRequest request)
+        {
+            try
+            {
+                var records = new List<ItemReport>();
+                foreach (var item in request.Items)
+                {
+                    var orderItem = await _context.OrderItems.FindAsync(item.OrderItemId);
+                    if (orderItem == null) continue;
+
+                    string? imageUrl = null;
+                    if (item.Image != null)
+                    {
+                        imageUrl = await _cloudinaryService.UploadImageFileAsync(item.Image);
+                    }
+
+                    var record = new ItemReport
+                    {
+                        OrderItemId = item.OrderItemId,
+                        Quantity = item.Quantity,
+                        ConditionNote = item.ConditionNote,
+                        ImageUrl = imageUrl,
+                        CreatedAt = DateTime.UtcNow,
+                        Status = ReportStatus.CheckIn
+                    };
+
+                    records.Add(record);
+                }
+
+                await _context.IncidentReports.AddRangeAsync(records);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Nhập kho thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi xử lý nhập kho.", error = ex.Message });
+            }
+        }
+
+        
     }
 }
