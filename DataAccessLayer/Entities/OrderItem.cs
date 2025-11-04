@@ -36,6 +36,6 @@ namespace DataAccessLayer.Entities
         public virtual Order Order { get; set; } = null!;
         public virtual Service? Service { get; set; }
         
-        public virtual ICollection<IncidentReport> IncidentReports { get; set; } = new List<IncidentReport>();
+        public virtual ICollection<ItemReport> IncidentReports { get; set; } = new List<ItemReport>();
     }
 }
