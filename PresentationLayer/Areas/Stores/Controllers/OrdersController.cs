@@ -379,6 +379,71 @@ namespace PresentationLayer.Areas.Stores.Controllers
             }
         }
 
-        
+        public class CheckOutAllRequest : CheckInAllRequest
+        {
+        }
+
+        [HttpPost("/Stores/Orders/CheckOutAll")]
+        public async Task<IActionResult> CheckOutAll([FromForm] CheckOutAllRequest request)
+        {
+            await using var ts = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                if (request.Items == null || request.Items.Count == 0)
+                    return Json(new { success = false, message = "Không có sản phẩm để xuất kho." });
+
+                foreach (var item in request.Items)
+                {
+                    var orderItem = await _context.OrderItems.FindAsync(item.OrderItemId);
+                    if (orderItem == null)
+                        continue;
+
+                    string? imageUrl = null;
+                    if (item.Image != null)
+                        imageUrl = await _cloudinaryService.UploadImageFileAsync(item.Image);
+
+                    // Ghi nhận xuất kho
+                    var report = new ItemReport
+                    {
+                        OrderItemId = item.OrderItemId,
+                        Quantity = item.Quantity,
+                        ConditionNote = item.ConditionNote,
+                        ImageUrl = imageUrl,
+                        Status = ReportStatus.CheckOut,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.IncidentReports.Add(report);
+                }
+                
+                //Cập nhật kho
+                var orderWarehouseSlot = await _context.OrderWarehouseSlots.AsNoTracking()
+                    .Include(x => x.WarehouseSlot)
+                    .OrderByDescending(x => x.CreatedAt)
+                    .FirstOrDefaultAsync(x => x.OrderId.Equals(request.OrderId));
+                if (orderWarehouseSlot == null)
+                    return Json(new { success = false, message = "Thông tin slot bị thiếu. Thực hiện thất bại" });
+
+                var slot = orderWarehouseSlot.WarehouseSlot;
+
+                slot.Status = StatusValue.Available;
+
+                _context.WarehouseSlots.Update(slot);
+
+                // Cập nhật trạng thái đơn hàng
+                var order = await _context.Orders.FindAsync(request.OrderId);
+                if (order != null)
+                    order.Status = StatusValue.Completed;
+
+                await _context.SaveChangesAsync();
+                await ts.CommitAsync();
+                return Json(new { success = true, message = "Xuất kho thành công và đã giải phóng ô lưu trữ." });
+            }
+            catch (Exception e)
+            {
+                await ts.RollbackAsync();
+                return Json(new { success = false, message = "Thao tác thất bại: " + e.Message });
+            }
+        }
     }
 }

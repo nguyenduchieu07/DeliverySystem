@@ -1206,13 +1206,111 @@
     </div>
 </div>
 
+<!-- Modal Check-out -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="checkoutLabel">Check Out Đơn Hàng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
 
+            <form id="checkoutForm" enctype="multipart/form-data">
+                <input type="hidden" name="OrderId" value="@Model.Order.Id" />
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Số lượng thực tế xuất</th>
+                                    <th>Ghi chú tình trạng</th>
+                                    <th>Ảnh minh chứng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.OrderItems.Count; i++)
+                                {
+                                    var item = Model.OrderItems[i];
+                                    <tr>
+                                        <td>@(i + 1)</td>
+                                        <td>@item.ItemName</td>
+                                        <td>
+                                            <input type="number" class="form-control" name="OrderItems[@i].Quantity" min="1" value="@item.Quantity" />
+                                            <input type="hidden" name="OrderItems[@i].OrderItemId" value="@item.Id" />
+                                        </td>
+                                        <td>
+                                            <textarea class="form-control" name="OrderItems[@i].ConditionNote" placeholder="Nhập ghi chú..."></textarea>
+                                        </td>
+                                        <td>
+                                            <input type="file" class="form-control" name="OrderItems[@i].Image" accept="image/*" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success">Xác nhận Check Out</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 
 @section Scripts
 {
     <script>
-        
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("checkoutForm");
+            if (!form) return;
+
+            form.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
+                const formData = new FormData();
+                const orderId = "@Model.Order.Id";
+                formData.append("OrderId", orderId);
+
+                const rows = form.querySelectorAll("tbody tr");
+                rows.forEach((row, index) => {
+                    const orderItemId = row.querySelector(`input[name="OrderItems[${index}].OrderItemId"]`)?.value;
+                    const quantity = row.querySelector(`input[name="OrderItems[${index}].Quantity"]`)?.value;
+                    const note = row.querySelector(`textarea[name="OrderItems[${index}].ConditionNote"]`)?.value;
+                    const imageFile = row.querySelector(`input[name="OrderItems[${index}].Image"]`)?.files?.[0];
+
+                    formData.append(`Items[${index}].OrderItemId`, orderItemId);
+                    formData.append(`Items[${index}].Quantity`, quantity);
+                    formData.append(`Items[${index}].ConditionNote`, note || "");
+                    if (imageFile)
+                        formData.append(`Items[${index}].Image`, imageFile);
+                });
+
+                try {
+                    const response = await fetch("/Stores/Orders/CheckOutAll", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(result.message || "Xuất kho thành công!");
+                        bootstrap.Modal.getInstance(document.getElementById("checkoutModal")).hide();
+                        location.reload();
+                    } else {
+                        alert(result.message || "Có lỗi xảy ra!");
+                    }
+                } catch (err) {
+                    console.error("Lỗi:", err);
+                    alert("Không thể kết nối tới máy chủ.");
+                }
+            });
+        });
         
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("checkinForm");
