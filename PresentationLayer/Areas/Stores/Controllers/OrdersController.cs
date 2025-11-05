@@ -290,7 +290,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     return Json(new { success = false, message = "Dữ liệu không hợp lệ." });
 
                 var report = await _context.IncidentReports
-                    .FirstOrDefaultAsync(x => x.OrderItemId == model.OrderItemId && x.Status != ReportStatus.Done);
+                    .FirstOrDefaultAsync(x => x.OrderItemId == model.OrderItemId && x.Status != ReportStatus.Done && x.Status != ReportStatus.CheckIn && x.Status != ReportStatus.CheckOut);
 
                 if (report == null)
                     return Json(new { success = false, message = "Không tìm thấy báo cáo." });
