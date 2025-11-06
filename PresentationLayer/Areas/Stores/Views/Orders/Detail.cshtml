@@ -11,6 +11,8 @@
     var checkOutCount = Model.OrderItems.Count(oi => oi.IncidentReports.Any(x => x.Status == ReportStatus.CheckOut));
     var checkOutAlready = itemCount == checkOutCount;
 
+    var isApproved = Model.Order.Status == StatusValue.Approved;
+    var isCompleted = Model.Order.Status == StatusValue.Completed;
 }
 
 <style>
@@ -529,7 +531,7 @@
         <div class="card-body">
             <div class="mb-2 d-flex justify-content-end">
                 
-                @if (!checkInAlready)
+                @if (isApproved && !checkInAlready)
                 {
                     <!-- Nút Kiểm tra vào -->
                     <button class="btn btn-sm btn-danger mr-2"
@@ -540,7 +542,7 @@
                     </button>
                 }
                 
-                @if (!checkOutAlready)
+                @if (isApproved && !checkOutAlready)
                 {
                     <!-- Nút Kiểm tra ra -->
                     <button class="btn btn-sm btn-success"
@@ -648,7 +650,7 @@
                                         var hasPending = item.IncidentReports.Any(r => r.Status == ReportStatus.Pending);
                                     }
                                     @* Nếu KHÔNG có báo cáo pending -> Hiện nút "Tạo báo cáo" *@
-                                    @if (!checkOutAlready && !hasPending)
+                                    @if (isApproved && !checkOutAlready && !hasPending)
                                     {
                                         <button class="btn btn-sm btn-danger"
                                                 data-bs-toggle="modal"
@@ -658,14 +660,17 @@
                                             Tạo báo cáo
                                         </button>
                                     }
-
-                                    @* Nếu CÓ ít nhất 1 báo cáo pending -> Hiện nút "Xem" + "Xử lý" *@
-                                    <button class="btn btn-sm btn-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#incidentModal_@item.Id">
-                                        Xem báo cáo
-                                    </button>
-                                    @if (hasPending)
+                                    @if (isCompleted || isApproved)
+                                    {
+                                        @* Nếu CÓ ít nhất 1 báo cáo pending -> Hiện nút "Xem" + "Xử lý" *@
+                                        <button class="btn btn-sm btn-primary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#incidentModal_@item.Id">
+                                            Xem báo cáo
+                                        </button>
+                                    }
+                                    
+                                    @if (isApproved && hasPending)
                                     {
                                         
 
