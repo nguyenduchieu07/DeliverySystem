@@ -286,6 +286,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
             await using var ts = await _context.Database.BeginTransactionAsync();
             try
             {
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
                 if (!ModelState.IsValid)
                     return Json(new { success = false, message = "Dữ liệu không hợp lệ." });
 
@@ -301,8 +303,13 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     ItemReportId = report.Id,
                     ActionType = model.ActionType,
                     Note = model.Note,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                   
                 };
+                if (Guid.TryParse(userId, out var staffGuid) && role == TargetType.StoreStaff.ToString())
+                {
+                    action.StaffId = staffGuid;
+                }
 
                 _context.IncidentActions.Add(action);
 
