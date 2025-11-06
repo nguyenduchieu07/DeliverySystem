@@ -53,7 +53,7 @@ namespace PresentationLayer.Controllers
         public async Task<IActionResult> Confirm(Guid contractId, Guid orderId)
         {
             await _contractService.ConfirmContract(contractId, orderId);
-            return RedirectToAction("Index", "Home"); //SẼ CHUYỂN SANG TRANG THANH TOÁN VỚI ORERID TƯƠNG ỨNG
+            return RedirectToAction("Index", "Payment", new { orderId });
         }
 
         [HttpPost]

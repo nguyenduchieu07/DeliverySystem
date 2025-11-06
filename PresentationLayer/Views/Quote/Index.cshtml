@@ -90,7 +90,6 @@
                                             <th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0;">Tên đồ</th>
                                             <th style="padding: 10px; text-align: left;">Danh mục</th>
                                             <th style="padding: 10px; text-align: center; min-width: 100px;">Số lượng</th>
-                                            <th style="padding: 10px; text-align: center; min-width: 100px;">Trọng lượng (Kg)</th>
                                             <th style="padding: 10px; text-align: center; min-width: 50px;"></th>
                                         </tr>
                                     </thead>
@@ -108,9 +107,6 @@
                                                     </td>
                                                     <td style="padding: 10px;">
                                                         <input type="number" class="form-control" name="Items[@i].Quantity" value="@Model.Items[i].Quantity" min="1" placeholder="1" style="text-align: center;">
-                                                    </td>
-                                                    <td style="padding: 10px;">
-                                                        <input type="number" class="form-control" name="Items[@i].EstimatedWeightKg" value="@Model.Items[i].EstimatedWeightKg" min="0" step="0.1" placeholder="0" style="text-align: center;">
                                                     </td>
                                                     <td style="padding: 10px; text-align: center;">
                                                         <button type="button" class="location-btn" onclick="removeItemRow(this)" style="padding: 6px 10px; background: #e74c3c;">✖</button>
@@ -131,7 +127,6 @@
                             </div>
                             <div style="display: flex; gap: 10px; margin-top: 10px;">
                                 <button type="button" class="location-btn secondary" onclick="addItemRow()">+ Thêm món</button>
-                                <button type="button" class="location-btn" onclick="loadSampleData()" style="background: #95a5a6;">📋 Load dữ liệu mẫu</button>
                             </div>
                         </div>
 
@@ -270,49 +265,3 @@
     }
 </script>
 <script src="/js/booking.js" asp-append-version="true"></script>
-<script>
-    // Test functions để debug - có thể gọi từ console
-    window.testLoadWarehouses = function(lat, lng) {
-        if (window.bookingDebug && window.bookingDebug.loadNearbyWarehouses) {
-            window.bookingDebug.loadNearbyWarehouses(lat || 21.028511, lng || 105.804817);
-        } else {
-            console.error('loadNearbyWarehouses function not found. Check bookingDebug object.');
-        }
-    };
-
-    // Test function để kiểm tra map
-    window.testMap = function() {
-        console.log('=== MAP DEBUG INFO ===');
-        console.log('Map element exists:', !!document.getElementById('map'));
-        console.log('Leaflet loaded:', typeof L !== 'undefined');
-        if (window.bookingDebug) {
-            console.log('Map object:', window.bookingDebug.map());
-            const map = window.bookingDebug.map();
-            if (map) {
-                console.log('Map center:', map.getCenter());
-                console.log('Map zoom:', map.getZoom());
-                console.log('Map bounds:', map.getBounds());
-            } else {
-                console.warn('Map is not initialized yet');
-            }
-            console.log('Nearby warehouses:', window.bookingDebug.nearbyWarehouses());
-        } else {
-            console.error('bookingDebug object not found');
-        }
-    };
-
-    // Test API endpoint
-    window.testWarehouseAPI = async function(lat, lng) {
-        const url = `/Quote/NearbyWarehouses?lat=${lat || 21.028511}&lng=${lng || 105.804817}&take=10`;
-        console.log('Testing API:', url);
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            console.log('API Response:', data);
-            console.log('Warehouses count:', data.length);
-            return data;
-        } catch (error) {
-            console.error('API Error:', error);
-        }
-    };
-</script>

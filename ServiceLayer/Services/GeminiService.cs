@@ -65,7 +65,7 @@ namespace ServiceLayer.Services
                 generationConfig = new
                 {
                     temperature = 0.4,
-                    topK = 32,
+                    topK = 20,
                     topP = 1,
                     maxOutputTokens = 16384, // Tăng giới hạn output token để tránh cắt ngang response
                 },
@@ -198,32 +198,20 @@ namespace ServiceLayer.Services
             sb.AppendLine("Bạn là chuyên gia tính toán không gian kho hàng. Hãy phân tích hình ảnh để đọc thông tin và tính toán:");
             sb.AppendLine();
             sb.AppendLine("**Yêu cầu:**");
-            sb.AppendLine("1. Quan sát kỹ hình ảnh và liệt kê TẤT CẢ các đồ vật có trong ảnh (tên đồ vật, số lượng).");
-            sb.AppendLine("2. Ước tính kích thước của từng loại đồ vật (Dài x Rộng x Cao, đơn vị mét) dựa trên hình ảnh.");
-            sb.AppendLine("3. Tính toán thể tích vật lý chiếm chỗ khi xếp gọn TỐI ƯU NHẤT (có thể xếp chồng, tháo rời các bộ phận, lồng ghép để tiết kiệm không gian).");
-            sb.AppendLine("4. Tính diện tích sàn tối thiểu cần thiết (m²) khi xếp gọn nhất, bao gồm cả khoảng trống cần thiết.");
-            sb.AppendLine("5. Tính thể tích ô kho cần thiết (m³) với chiều cao trần kho đề xuất khoảng 2.5m.");
+            sb.AppendLine("**YÊU CẦU:**\r\n1. Liệt kê TẤT CẢ đồ vật trong ảnh (tên, số lượng) và ƯỚC TÍNH kích thước (DxRxC, mét).\r\n2." +
+                " Tính toán thể tích vật lý chiếm chỗ TỐI ƯU NHẤT (xếp chồng/lồng ghép/tháo rời).\r\n3." +
+                " Tính diện tích sàn TỐI THIỂU cần thiết (m²), bao gồm khoảng trống.\r\n4." +
+                " Tính thể tích ô kho cần thiết (m³) với chiều cao trần đề xuất 2.5m.");
             sb.AppendLine();
             sb.AppendLine("**Trả về JSON với format sau (CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC):**");
-            sb.AppendLine("{");
-            sb.AppendLine("  \"requiredVolumeM3\": <số thực>, // Thể tích ô kho cần thiết khi xếp gọn nhất (m³)");
-            sb.AppendLine("  \"requiredAreaM2\": <số thực>, // Diện tích sàn tối thiểu khi xếp gọn nhất (m²)");
-            sb.AppendLine("  \"analysisDetails\": \"<mô tả chi tiết: liệt kê các đồ vật trong ảnh, cách xếp gọn nhất, tối đa 200 từ>\",");
-            sb.AppendLine("  \"itemEstimates\": [");
-            sb.AppendLine("    {");
-            sb.AppendLine("      \"name\": \"<tên đồ vật trong ảnh>\",");
-            sb.AppendLine("      \"quantity\": <số lượng trong ảnh>,");
-            sb.AppendLine("      \"estimatedVolumeM3\": <thể tích ước tính cho món này, m³>,");
-            sb.AppendLine("      \"notes\": \"<ghi chú về kích thước và cách xếp, tối đa 50 từ>\",");
-            sb.AppendLine("    }");
-            sb.AppendLine("  ]");
-            sb.AppendLine("}");
-            sb.AppendLine();
-            sb.AppendLine("**Lưu ý quan trọng:**");
-            sb.AppendLine("- Chỉ đọc thông tin từ hình ảnh, KHÔNG sử dụng thông tin từ bên ngoài.");
-            sb.AppendLine("- Liệt kê đầy đủ các đồ vật có trong ảnh.");
-            sb.AppendLine("- Tính toán với giả định xếp gọn TỐI ƯU NHẤT (xếp chồng, lồng ghép, tháo rời nếu có thể).");
-            sb.AppendLine("- requiredVolumeM3 và requiredAreaM2 phải là giá trị gọn nhất có thể.");
+           
+            sb.AppendLine("{\r\n  \\\"requiredVolumeM3\\\": <số thực>," +
+                "\r\n  \\\"requiredAreaM2\\\": <số thực>," +
+                "\r\n  \\\"analysisDetails\\\":" +
+                " \\\"<mô tả chi tiết: liệt kê đồ vật, cách xếp gọn nhất, tối đa 100 từ>\\\"," +
+                "\r\n  \\\"itemEstimates\\\": [\r\n    {\r\n      \\\"name\\\": \\\"<tên đồ vật>\\\"," +
+                "\r\n      \\\"quantity\\\": <số lượng>,\r\n      \\\"estimatedVolumeM3\\\": <thể tích ước tính cho món này, m³>," +
+                "\r\n      \\\"notes\\\": \\\"<ghi chú kích thước và cách xếp, tối đa 50 từ>\\\"\r\n    }\r\n  ]\r\n}");
             sb.AppendLine("- analysisDetails tối đa 200 từ, notes tối đa 50 từ để response ngắn gọn.");
 
             return sb.ToString();

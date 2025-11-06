@@ -4,7 +4,8 @@ let warehouseData = null;
 let selectedWarehouse = null;
 let nearbyWarehouses = [];
 let currentQuotationId = null;
-
+let savedPickupAddress = null; // Lưu địa chỉ pickup để dùng khi confirm quotation
+let savedItems = []; // Lưu items để dùng khi confirm quotation
 function getCsrf() {
     return (
         document.querySelector('input[name="__RequestVerificationToken"]')?.value ||
@@ -858,7 +859,7 @@ function toggleSlotSection() {
 }
 
 // ============ ITEMS MANAGEMENT ============
-function addItemRow(name = "", category = "", quantity = 1, weight = 0) {
+function addItemRow(name = "", category = "", quantity = 1) {
     const tbody = document.getElementById("itemsTableBody");
     if (!tbody) return;
 
@@ -884,57 +885,11 @@ function addItemRow(name = "", category = "", quantity = 1, weight = 0) {
         <td style="padding: 10px;">
             <input type="number" class="form-control" name="Items[${idx}].Quantity" value="${quantity}" min="1" placeholder="1" style="text-align: center;">
         </td>
-        <td style="padding: 10px;">
-            <input type="number" class="form-control" name="Items[${idx}].EstimatedWeightKg" value="${weight}" min="0" step="0.1" placeholder="0" style="text-align: center;">
-        </td>
         <td style="padding: 10px; text-align: center;">
             <button type="button" class="location-btn" onclick="removeItemRow(this)" style="padding: 6px 10px; background: #e74c3c;">✖</button>
         </td>
     `;
     tbody.appendChild(row);
-}
-
-// Function để load dữ liệu mẫu (có thể gọi từ console hoặc button)
-function loadSampleData() {
-    const sampleItems = [
-        {
-            name: "Bàn học sinh",
-            category: "Nội thất phòng học",
-            quantity: 15,
-            weight: 12,
-        },
-        {
-            name: "Ghế học sinh",
-            category: "Nội thất phòng học",
-            quantity: 15,
-            weight: 5,
-        },
-        {
-            name: "Bàn giáo viên",
-            category: "Nội thất phòng học",
-            quantity: 1,
-            weight: 25,
-        },
-        {
-            name: "Ghế giáo viên",
-            category: "Nội thất phòng học",
-            quantity: 1,
-            weight: 8,
-        },
-    ];
-
-    // Xóa tất cả rows hiện tại
-    const tbody = document.getElementById("itemsTableBody");
-    if (!tbody) return;
-
-    tbody.innerHTML = "";
-
-    // Thêm sample data
-    sampleItems.forEach((item) => {
-        addItemRow(item.name, item.category, item.quantity, item.weight);
-    });
-
-    console.log("✅ Đã load dữ liệu mẫu:", sampleItems);
 }
 
 function removeItemRow(button) {
@@ -979,7 +934,7 @@ function updateItemIndexes() {
 }
 
 // ============ IMAGE PREVIEW ============
-function previewTotalImage(input) {
+async function previewTotalImage(input) {
     const file = input.files[0];
     const preview = document.getElementById("productImagePreview");
 
@@ -1000,12 +955,126 @@ function previewTotalImage(input) {
         } else {
             console.warn("  ⚠️ Preview element not found");
         }
+
+        // Gọi AI để phân tích ảnh và tự động điền vào bảng
+        await analyzeImageAndFillItems(file);
     } else {
         console.log("📷 No image selected (file input cleared)");
         if (preview) {
             preview.style.display = "none";
         }
     }
+}
+
+// Hàm gọi AI để phân tích ảnh và tự động điền vào bảng items
+async function analyzeImageAndFillItems(imageFile) {
+    const tbody = document.getElementById("itemsTableBody");
+    if (!tbody) {
+        console.error("Items table body not found");
+        return;
+    }
+
+    // Hiển thị loading indicator
+    const loadingMsg = document.createElement("div");
+    loadingMsg.id = "aiLoadingMsg";
+    loadingMsg.style.cssText = "padding: 15px; background: #e8f0fe; border-radius: 8px; margin: 10px 0; text-align: center; color: #667eea;";
+    loadingMsg.innerHTML = "🤖 AI đang phân tích ảnh... Vui lòng đợi...";
+    tbody.parentElement.insertBefore(loadingMsg, tbody);
+
+    try {
+        const formData = new FormData();
+        formData.append("productImage", imageFile);
+
+        const response = await fetch("/Quote/AnalyzeProductImage", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "RequestVerificationToken": getCsrf()
+            }
+        });
+
+        const result = await response.json();
+
+        // Xóa loading indicator
+        const loadingElement = document.getElementById("aiLoadingMsg");
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+
+        if (!result.success) {
+            alert("⚠️ " + (result.message || "Không thể phân tích ảnh. Vui lòng thử lại."));
+            return;
+        }
+
+        if (!result.items || result.items.length === 0) {
+            alert("ℹ️ " + (result.message || "Không phát hiện được sản phẩm trong ảnh."));
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        // Điền dữ liệu từ AI vào bảng
+        result.items.forEach((item, index) => {
+            addItemRowFromAI(item, index);
+        });
+
+        // Hiển thị thông báo thành công
+        const successMsg = document.createElement("div");
+        successMsg.style.cssText = "padding: 10px; background: #d4edda; border-radius: 8px; margin: 10px 0; color: #155724;";
+        successMsg.innerHTML = `✅ ${result.message || `Đã phát hiện ${result.items.length} loại sản phẩm và tự động điền vào bảng.`}`;
+        tbody.parentElement.insertBefore(successMsg, tbody);
+
+        // Tự động xóa thông báo sau 5 giây
+        setTimeout(() => {
+            if (successMsg.parentElement) {
+                successMsg.remove();
+            }
+        }, 5000);
+
+        console.log("✅ AI analysis completed:", result.items);
+    } catch (error) {
+        console.error("Error analyzing image:", error);
+        
+        // Xóa loading indicator
+        const loadingElement = document.getElementById("aiLoadingMsg");
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+
+        alert("⚠️ Có lỗi xảy ra khi phân tích ảnh. Vui lòng thử lại sau.");
+    }
+}
+
+// Hàm thêm một dòng item từ kết quả AI
+function addItemRowFromAI(item, index) {
+    const tbody = document.getElementById("itemsTableBody");
+    if (!tbody) return;
+
+    const tr = document.createElement("tr");
+    tr.style.borderBottom = "1px solid #e0e0e0";
+    tr.innerHTML = `
+        <td style="padding: 10px;">
+            <input type="text" class="form-control" name="Items[${index}].Name" value="${escapeHtml(item.name || "")}" placeholder="Ví dụ: Bàn học sinh" required>
+        </td>
+        <td style="padding: 10px;">
+            <input type="text" class="form-control" name="Items[${index}].Category" value="${escapeHtml(item.category || "")}" placeholder="Ví dụ: Nội thất">
+        </td>
+        <td style="padding: 10px;">
+            <input type="number" class="form-control" name="Items[${index}].Quantity" value="${item.quantity || 1}" min="1" placeholder="1" style="text-align: center;" required>
+        </td>
+        <td style="padding: 10px; text-align: center;">
+            <button type="button" class="location-btn" onclick="removeItemRow(this)" style="padding: 6px 10px; background: #e74c3c;">✖</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+// Hàm escape HTML để tránh XSS
+function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ============ SUBMIT ORDER ============
@@ -1058,15 +1127,13 @@ async function submitWarehouseOrder() {
         const nameInput = row.querySelector('input[name*=".Name"]');
         const categoryInput = row.querySelector('input[name*=".Category"]');
         const quantityInput = row.querySelector('input[name*=".Quantity"]');
-        const weightInput = row.querySelector('input[name*=".EstimatedWeightKg"]');
 
         const name = nameInput?.value?.trim();
         const category = categoryInput?.value?.trim();
         const quantity = parseInt(quantityInput?.value) || 0;
-        const weight = parseFloat(weightInput?.value) || 0;
 
         if (name && quantity > 0) {
-            items.push({ name, category, quantity, estimatedWeightKg: weight });
+            items.push({ name, category, quantity });
         }
     });
 
@@ -1131,10 +1198,6 @@ async function submitWarehouseOrder() {
         formData.append(`Items[${idx}].Name`, item.name);
         formData.append(`Items[${idx}].Category`, item.category || "");
         formData.append(`Items[${idx}].Quantity`, item.quantity);
-        formData.append(
-            `Items[${idx}].EstimatedWeightKg`,
-            item.estimatedWeightKg || 0
-        );
     });
 
     specialRequirements.forEach((req, idx) => {
@@ -1235,6 +1298,15 @@ async function submitWarehouseOrder() {
             }
 
             if (response.ok && result && result.success) {
+                // Lưu pickup address và items để dùng khi confirm quotation
+                savedPickupAddress = {
+                    addressLine: pickupAddressLine,
+                    latitude: pickupLat,
+                    longitude: pickupLng
+                };
+                savedItems = items; // Lưu items đã gửi
+                currentQuotationId = result.quotationId; // Lưu quotation ID
+
                 // Log kết quả Gemini analysis từ response
                 if (result.quote) {
                     console.log("=== Quote Response ===");
@@ -1576,7 +1648,70 @@ async function confirmQuotation(quotationId, slotId, buttonElement) {
     buttonElement.style.opacity = "0.6";
     buttonElement.style.cursor = "not-allowed";
 
+    // Lấy pickup address và items từ biến đã lưu hoặc từ DOM
+    let pickupAddress = savedPickupAddress;
+    let items = savedItems;
+
+    // Nếu không có trong biến đã lưu, lấy từ DOM
+    if (!pickupAddress) {
+        const warehouseAreaInput = document.getElementById("warehouseAreaInput");
+        const pickupAddressText = warehouseAreaInput?.value?.trim() || warehouseData?.address || "";
+        if (pickupAddressText && warehouseData) {
+            pickupAddress = {
+                addressLine: pickupAddressText,
+                latitude: warehouseData.lat,
+                longitude: warehouseData.lng
+            };
+        }
+    }
+
+    // Nếu không có items trong biến đã lưu, lấy từ bảng items
+    if (!items || items.length === 0) {
+        items = [];
+        const rows = document.querySelectorAll("#itemsTableBody > tr");
+        rows.forEach((row) => {
+            if (row.querySelector("td[colspan]")) return; // Skip empty row
+
+            const nameInput = row.querySelector('input[name*=".Name"]');
+            const categoryInput = row.querySelector('input[name*=".Category"]');
+            const quantityInput = row.querySelector('input[name*=".Quantity"]');
+
+            const name = nameInput?.value?.trim();
+            const category = categoryInput?.value?.trim();
+            const quantity = parseInt(quantityInput?.value) || 0;
+
+            if (name && quantity > 0) {
+                items.push({ name, category, quantity });
+            }
+        });
+    }
+
     try {
+        const requestBody = {
+            quotationId: quotationId,
+            slotId: slotId,
+        };
+
+        // Thêm pickup address nếu có
+        if (pickupAddress) {
+            requestBody.pickupAddress = {
+                addressLine: pickupAddress.addressLine,
+                latitude: pickupAddress.latitude,
+                longitude: pickupAddress.longitude
+            };
+        }
+
+        // Thêm items nếu có
+        if (items && items.length > 0) {
+            requestBody.items = items.map(item => ({
+                name: item.name,
+                category: item.category || "",
+                quantity: item.quantity
+            }));
+        }
+
+        console.log("Confirming quotation with data:", requestBody);
+
         const response = await fetch("/Quote/ConfirmQuotation", {
             method: "POST",
             headers: {
@@ -1585,10 +1720,7 @@ async function confirmQuotation(quotationId, slotId, buttonElement) {
                     document.querySelector('input[name="__RequestVerificationToken"]')
                         ?.value || "",
             },
-            body: JSON.stringify({
-                quotationId: quotationId,
-                slotId: slotId,
-            }),
+            body: JSON.stringify(requestBody),
         });
 
         const result = await response.json();
@@ -2022,9 +2154,6 @@ async function acceptQuotationFromBreakdown(orderId, qidFromQuote) {
         } else if (data.orderId) {
             window.location.href =
                 "/Payment?orderId=" + encodeURIComponent(data.orderId);
-        } else if (orderId) {
-            window.location.href =
-                "/Booking/Success?Id=" + encodeURIComponent(orderId);
         } else {
             alert("✅ Đã chấp nhận báo giá.");
         }

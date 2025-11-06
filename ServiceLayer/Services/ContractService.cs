@@ -267,6 +267,18 @@ public class ContractService : IContractService
             contract.Status = ContractStatus.Active;
             _db.Contracts.Update(contract);
 
+            // Cập nhật trạng thái đơn hàng thành AwaitingPayment để có thể thanh toán
+            var order = await _db.Orders
+                .AsTracking()
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+            
+            if (order != null)
+            {
+                order.Status = StatusValue.AwaitingPayment;
+                order.UpdatedAt = DateTime.UtcNow;
+                _db.Orders.Update(order);
+            }
+
             //Cập nhật trạng thái slot & reservation
             var orderSlot = await _db.SlotReservations
                 .Include(s => s.WarehouseSlot)

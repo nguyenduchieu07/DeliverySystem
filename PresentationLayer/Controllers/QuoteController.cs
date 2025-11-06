@@ -77,7 +77,6 @@ namespace PresentationLayer.Controllers
                 DropoffAddressText = defaultAddress == null ? null : ($"{defaultAddress.AddressLine}, {defaultAddress.Ward}, {defaultAddress.District}, {defaultAddress.City}")?.Replace("  ", " ")
             };
 
-            // Không prefill items - để user tự nhập hoặc dùng nút "Load dữ liệu mẫu"
             vm.Items = new List<BookingItemVM>();
 
             // Prefill customer info from profile if available
@@ -132,72 +131,30 @@ namespace PresentationLayer.Controllers
             var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
-                Console.WriteLine("=== Starting CreateWarehouseOrder ===");
-                Console.WriteLine($"Received WarehouseId: {viewModel.WarehouseId}");
-                Console.WriteLine($"PickupAddress: {viewModel.PickupAddress?.AddressLine}");
-                Console.WriteLine($"WarehouseArea: {viewModel.WarehouseArea?.AddressLine}");
-
                 // Upload ảnh nếu có
                 string? imageUrl = null;
                 VolumeCalculationResult? volumeResult = null;
-                string? geminiError = null; // Lưu thông tin lỗi từ Gemini để trả về client
+                string? geminiError = null;
                 
                 if (productImage != null && productImage.Length > 0)
                 {
-                    Console.WriteLine("Uploading product image...");
                     imageUrl = await _cloudinaryService.UploadImageFileAsync(productImage);
-                    Console.WriteLine($"Image uploaded: {imageUrl}");
                     
-                    // Gọi Gemini để phân tích ảnh và tính thể tích (chỉ đọc từ ảnh, không dùng items)
                     try
                     {
-                        Console.WriteLine("=== Calling Gemini API to analyze image ===");
-                        Console.WriteLine($"Image URL: {imageUrl}");
-                        
                         volumeResult = await _geminiService.AnalyzeImageAndCalculateVolumeAsync(imageUrl);
                         
-                        if (volumeResult != null)
+                        if (volumeResult == null)
                         {
-                            Console.WriteLine($"✅ Gemini analysis SUCCESS");
-                            Console.WriteLine($"  Volume: {volumeResult.RequiredVolumeM3} m³");
-                            Console.WriteLine($"  Area: {volumeResult.RequiredAreaM2} m²");
-                            Console.WriteLine($"  Analysis Details: {volumeResult.AnalysisDetails?.Substring(0, Math.Min(100, volumeResult.AnalysisDetails?.Length ?? 0)) ?? "N/A"}...");
-                            if (volumeResult.ItemEstimates != null && volumeResult.ItemEstimates.Count > 0)
-                            {
-                                Console.WriteLine($"  Found {volumeResult.ItemEstimates.Count} items in image:");
-                                foreach (var item in volumeResult.ItemEstimates)
-                                {
-                                    Console.WriteLine($"    - {item.Name}: {item.Quantity} cái, {item.EstimatedVolumeM3} m³");
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine($"  ⚠️ No items found in image analysis");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("❌ Gemini returned null result");
                             geminiError = "Gemini API trả về null result";
                         }
                     }
                     catch (Exception geminiEx)
                     {
-                        Console.WriteLine("❌ Gemini analysis ERROR:");
-                        Console.WriteLine($"  Message: {geminiEx.Message}");
-                        Console.WriteLine($"  Stack trace: {geminiEx.StackTrace}");
-                        if (geminiEx.InnerException != null)
-                        {
-                            Console.WriteLine($"  Inner exception: {geminiEx.InnerException.Message}");
-                        }
-                        volumeResult = null; // Đảm bảo volumeResult = null khi có lỗi
-                        geminiError = geminiEx.Message; // Lưu error message để trả về client
-                        // Continue without Gemini result - sẽ dùng fallback cho tìm slot
+                        Console.WriteLine($"Gemini analysis error: {geminiEx.Message}");
+                        volumeResult = null;
+                        geminiError = geminiEx.Message;
                     }
-                }
-                else
-                {
-                    Console.WriteLine("No product image provided, skipping Gemini analysis");
                 }
 
                 // Tìm warehouse từ WarehouseId (ưu tiên) hoặc WarehouseArea
@@ -208,7 +165,6 @@ namespace PresentationLayer.Controllers
                 // Ưu tiên: Tìm warehouse bằng ID nếu có
                 if (viewModel.WarehouseId.HasValue)
                 {
-                    Console.WriteLine($"Looking for warehouse by ID: {viewModel.WarehouseId.Value}");
                     warehouseFromDb = await _db.Warehouses
                         .Include(w => w.Address)
                         .Where(w => w.Id == viewModel.WarehouseId.Value)
@@ -216,69 +172,68 @@ namespace PresentationLayer.Controllers
 
                     if (warehouseFromDb == null)
                     {
-                        Console.WriteLine($"Warehouse with ID {viewModel.WarehouseId.Value} not found in database");
                         return BadRequest(new { success = false, message = "Kho hàng đã chọn không tồn tại." });
                     }
-                    Console.WriteLine($"Found warehouse by ID: {warehouseFromDb.Name} (Status: {warehouseFromDb.Status})");
-                }
-                else
-                {
-                    Console.WriteLine("No WarehouseId provided, trying to find by address or coordinates");
                 }
 
                 // Fallback: Tìm warehouse bằng địa chỉ nếu không có ID
                 if (warehouseFromDb == null)
                 {
                     var warehouseAddress = viewModel.WarehouseArea.AddressLine;
-                    Console.WriteLine($"Trying to find warehouse by address: {warehouseAddress}");
                     warehouseFromDb = await _db.Warehouses
                         .Include(w => w.Address)
                         .Where(w => w.Address != null &&
                                     (w.Address.AddressLine.Contains(warehouseAddress) ||
                                      w.Name.Contains(warehouseAddress)))
                         .FirstOrDefaultAsync();
-
-                    if (warehouseFromDb != null)
-                    {
-                        Console.WriteLine($"Found warehouse by address: {warehouseFromDb.Name}");
-                    }
                 }
 
-                // Fallback: Tìm kho gần nhất với tọa độ
+                // Fallback: Tìm 3 kho hàng gần nhất với tọa độ
                 if (warehouseFromDb == null)
                 {
-                    Console.WriteLine($"Trying to find nearest store by coordinates: {viewModel.WarehouseArea.Latitude}, {viewModel.WarehouseArea.Longitude}");
                     try
                     {
-                        storeId = await _deliveryService.FindNearestStoreAsync(
-                            viewModel.WarehouseArea.Latitude ?? 0,
-                            viewModel.WarehouseArea.Longitude ?? 0
-                        );
+                        var lat = viewModel.WarehouseArea.Latitude ?? 0;
+                        var lng = viewModel.WarehouseArea.Longitude ?? 0;
 
-                        Console.WriteLine($"Found nearest store ID: {storeId}");
+                        var warehouses = await _db.Warehouses
+                            .Include(w => w.Address)
+                            .Where(w => w.Address != null && 
+                                       w.Address.Latitude != null && 
+                                       w.Address.Longitude != null &&
+                                       w.Status == StatusValue.Approved)
+                            .ToListAsync();
 
-                        warehouseFromDb = await _db.Warehouses
-                            .Where(w => w.StoreId == storeId && w.Status == StatusValue.Approved)
-                            .FirstOrDefaultAsync();
+                        static double ToRad(double d) => d * Math.PI / 180.0;
+                        var warehousesWithDistance = warehouses
+                            .Select(w =>
+                            {
+                                var R = 6371.0;
+                                var wLat = w.Address!.Latitude!.Value;
+                                var wLng = w.Address!.Longitude!.Value;
+                                var dLat = ToRad(wLat - lat);
+                                var dLng = ToRad(wLng - lng);
+                                var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                                       Math.Cos(ToRad(lat)) * Math.Cos(ToRad(wLat)) *
+                                       Math.Sin(dLng / 2) * Math.Sin(dLng / 2);
+                                var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+                                var distanceKm = R * c;
+                                return new { Warehouse = w, DistanceKm = distanceKm };
+                            })
+                            .OrderBy(x => x.DistanceKm)
+                            .Take(3)
+                            .ToList();
 
-                        if (warehouseFromDb != null)
-                        {
-                            Console.WriteLine($"Found warehouse by nearest store: {warehouseFromDb.Name}");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"No approved warehouse found for store ID: {storeId}");
-                        }
+                        warehouseFromDb = warehousesWithDistance.FirstOrDefault()?.Warehouse;
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error finding nearest store: {ex.Message}");
+                        Console.WriteLine($"Error finding nearest warehouses: {ex.Message}");
                     }
                 }
 
                 if (warehouseFromDb == null)
                 {
-                    Console.WriteLine("Failed to find any warehouse. All fallback methods exhausted.");
                     return BadRequest(new { success = false, message = "Không tìm thấy kho hàng phù hợp. Vui lòng kiểm tra lại kho đã chọn hoặc thử chọn kho khác." });
                 }
 
@@ -286,24 +241,8 @@ namespace PresentationLayer.Controllers
                 storeId = warehouseFromDb.StoreId;
 
                 // Tìm slot phù hợp dựa trên thể tích/diện tích
-                // Sử dụng fallback chỉ để tìm slot, KHÔNG truyền vào quote response
-                var requiredVolume = volumeResult?.RequiredVolumeM3 ?? 5m; // Fallback: 5 m³ (chỉ để tìm slot)
-                var requiredArea = volumeResult?.RequiredAreaM2 ?? 3m; // Fallback: 3 m² (chỉ để tìm slot)
-                
-                Console.WriteLine($"=== Looking for slots in warehouse {warehouseId} ===");
-                Console.WriteLine($"Using volume: {requiredVolume} m³ (from Gemini: {volumeResult?.RequiredVolumeM3.ToString() ?? "null"} or fallback: 5)");
-                Console.WriteLine($"Using area: {requiredArea} m² (from Gemini: {volumeResult?.RequiredAreaM2.ToString() ?? "null"} or fallback: 3)");
-                
-                // Kiểm tra tổng số slot trong warehouse
-                var allSlotsInWarehouse = await _db.WarehouseSlots
-                    .Where(s => s.WarehouseId == warehouseId)
-                    .CountAsync();
-                Console.WriteLine($"Total slots in warehouse: {allSlotsInWarehouse}");
-
-                var availableSlotsCount = await _db.WarehouseSlots
-                    .Where(s => s.WarehouseId == warehouseId && !s.IsBlocked && s.CurrentOrderId == null)
-                    .CountAsync();
-                Console.WriteLine($"Available slots (not blocked, not reserved): {availableSlotsCount}");
+                var requiredVolume = volumeResult?.RequiredVolumeM3 ?? 5m;
+                var requiredArea = volumeResult?.RequiredAreaM2 ?? 3m;
 
                 // Tính toán thể tích và diện tích trực tiếp trong LINQ (không dùng computed property VolumeM3)
                 // Load vào memory trước để có thể tính toán thể tích
@@ -315,53 +254,18 @@ namespace PresentationLayer.Controllers
 
                 // Lọc và sắp xếp trong memory
                 var suitableSlots = allSlots
-                    .Where(s => (s.HeightM * s.LengthM * s.WidthM) >= requiredVolume && // Tính thể tích trực tiếp
-                               (s.LengthM * s.WidthM) >= requiredArea) // Diện tích sàn
-                    .OrderBy(s => s.HeightM * s.LengthM * s.WidthM) // Ưu tiên slot nhỏ nhất phù hợp
+                    .Where(s => (s.HeightM * s.LengthM * s.WidthM) >= requiredVolume &&
+                               (s.LengthM * s.WidthM) >= requiredArea)
+                    .OrderBy(s => s.HeightM * s.LengthM * s.WidthM)
                     .ThenBy(s => s.BasePricePerHour)
                     .ToList();
 
-                Console.WriteLine($"Found {suitableSlots.Count} suitable slots");
-
-                // Tính thể tích thực tế của các slot phù hợp để log
-                foreach (var slot in suitableSlots.Take(3))
-                {
-                    var actualVolume = slot.HeightM * slot.LengthM * slot.WidthM;
-                    var actualArea = slot.LengthM * slot.WidthM;
-                    Console.WriteLine($"  Slot {slot.Code}: Volume={actualVolume:F2} m³, Area={actualArea:F2} m², Price={slot.BasePricePerHour} VND/h");
-                }
-
                 if (!suitableSlots.Any())
                 {
-                    // Thử tìm slot gần nhất về thể tích/diện tích (không cần đúng yêu cầu)
-                    var allAvailableSlots = await _db.WarehouseSlots
-                        .Where(s => s.WarehouseId == warehouseId && !s.IsBlocked && s.CurrentOrderId == null)
-                        .ToListAsync();
-
-                    var closestSlots = allAvailableSlots
-                        .OrderBy(s => Math.Abs((double)((s.HeightM * s.LengthM * s.WidthM) - requiredVolume)))
-                        .ThenBy(s => Math.Abs((double)((s.LengthM * s.WidthM) - requiredArea)))
-                        .Take(5)
-                        .ToList();
-
-                    if (closestSlots.Any())
-                    {
-                        Console.WriteLine($"Found {closestSlots.Count} closest slots (not exact match)");
-                        var closest = closestSlots.First();
-                        var closestVolume = closest.HeightM * closest.LengthM * closest.WidthM;
-                        Console.WriteLine($"Closest slot: Code={closest.Code}, Volume={closestVolume:F2} m³, Area={closest.LengthM * closest.WidthM:F2} m²");
-                    }
-
                     return BadRequest(new
                     {
                         success = false,
-                        message = $"Không tìm thấy ô kho phù hợp trong kho '{warehouseFromDb.Name}'. Yêu cầu tối thiểu: {requiredVolume:F2} m³ thể tích, {requiredArea:F2} m² diện tích.",
-                        warehouseId = warehouseId.ToString(),
-                        warehouseName = warehouseFromDb.Name,
-                        totalSlots = allSlotsInWarehouse,
-                        availableSlots = availableSlotsCount,
-                        requiredVolume = requiredVolume,
-                        requiredArea = requiredArea
+                        message = $"Không tìm thấy ô kho phù hợp trong kho '{warehouseFromDb.Name}'. Yêu cầu tối thiểu: {requiredVolume:F2} m³ thể tích, {requiredArea:F2} m² diện tích."
                     });
                 }
 
@@ -369,7 +273,6 @@ namespace PresentationLayer.Controllers
                 var storageDuration = (viewModel.StorageEndDate - viewModel.StorageStartDate).TotalHours;
                 var storageDays = Math.Ceiling(storageDuration / 24.0);
                 var baseSlotPrice = selectedSlot.BasePricePerHour * (decimal)storageDuration;
-                Console.WriteLine($"Storage duration: {storageDuration:F1} hours ({storageDays} days), Base slot price: {baseSlotPrice:F0} VND");
 
                 // Tính giá cho các dịch vụ đặc biệt
                 var addonPrices = new Dictionary<string, decimal>
@@ -390,7 +293,6 @@ namespace PresentationLayer.Controllers
 
                 if (viewModel.SpecialRequirements != null && viewModel.SpecialRequirements.Any())
                 {
-                    Console.WriteLine($"Calculating addon prices for {viewModel.SpecialRequirements.Count} services");
                     foreach (var requirement in viewModel.SpecialRequirements)
                     {
                         if (addonPrices.ContainsKey(requirement))
@@ -398,7 +300,7 @@ namespace PresentationLayer.Controllers
                             var addonPrice = addonPrices[requirement];
                             var serviceTotal = dailyAddons.Contains(requirement)
                                 ? addonPrice * (decimal)storageDays
-                                : addonPrice; // Bảo hiểm tính một lần
+                                : addonPrice;
 
                             totalAddonPrice += serviceTotal;
                             addonDetails.Add(new
@@ -409,15 +311,11 @@ namespace PresentationLayer.Controllers
                                 quantity = dailyAddons.Contains(requirement) ? (int)storageDays : 1,
                                 total = serviceTotal
                             });
-
-                            Console.WriteLine($"  {requirement}: {(dailyAddons.Contains(requirement) ? $"{addonPrice:F0} VND/ngày × {storageDays} ngày" : $"{addonPrice:F0} VND (một lần)")} = {serviceTotal:F0} VND");
                         }
                     }
                 }
 
                 var totalPrice = baseSlotPrice + totalAddonPrice;
-                Console.WriteLine($"Total addon price: {totalAddonPrice:F0} VND");
-                Console.WriteLine($"Total price (slot + addons): {totalPrice:F0} VND");
 
                 // Tính toán chi tiết giá (đã tính addons ở trên)
                 var storageDaysForDisplay = Math.Ceiling((viewModel.StorageEndDate - viewModel.StorageStartDate).TotalDays);
@@ -609,8 +507,6 @@ namespace PresentationLayer.Controllers
                 
                 await _db.SaveChangesAsync();
 
-                Console.WriteLine($"Slot {slot.Code} (ID: {slot.Id}) assigned to order {request.OrderId} successfully");
-                Console.WriteLine($"OrderWarehouseSlot record created: ID={orderWarehouseSlot.Id}, AssignedAt={orderWarehouseSlot.AssignedAt}");
 
                 return Json(new
                 {
@@ -667,6 +563,79 @@ namespace PresentationLayer.Controllers
                     return BadRequest(new { success = false, message = "Slot reservation đã hết hạn hoặc không tồn tại." });
                 }
 
+                // Lấy thông tin warehouse từ slot để lấy địa chỉ dropoff (địa chỉ kho hàng)
+                var slot = await _db.WarehouseSlots
+                    .Include(s => s.Warehouse)
+                        .ThenInclude(w => w.Address)
+                    .FirstOrDefaultAsync(s => s.Id == request.SlotId);
+
+                if (slot == null || slot.Warehouse == null)
+                {
+                    return BadRequest(new { success = false, message = "Không tìm thấy thông tin kho hàng." });
+                }
+
+                // Tạo địa chỉ pickup (địa chỉ khách hàng) nếu có trong request
+                Address? pickupAddress = null;
+                Address? dropoffAddress = null;
+
+                if (request.PickupAddress != null && !string.IsNullOrWhiteSpace(request.PickupAddress.AddressLine))
+                {
+                    pickupAddress = new Address
+                    {
+                        Id = Guid.NewGuid(),
+                        AddressLine = request.PickupAddress.AddressLine,
+                        Latitude = request.PickupAddress.Latitude,
+                        Longitude = request.PickupAddress.Longitude,
+                        City = "Hà Nội",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _db.Addresses.Add(pickupAddress);
+                }
+
+                // Tạo địa chỉ dropoff (địa chỉ kho hàng)
+                // Ưu tiên: lấy từ warehouse nếu có, nếu không thì lấy từ request
+                var warehouseAddress = slot.Warehouse.Address;
+                if (warehouseAddress != null)
+                {
+                    // Sử dụng địa chỉ warehouse làm dropoff address
+                    dropoffAddress = new Address
+                    {
+                        Id = Guid.NewGuid(),
+                        AddressLine = warehouseAddress.AddressLine,
+                        Latitude = warehouseAddress.Latitude,
+                        Longitude = warehouseAddress.Longitude,
+                        Ward = warehouseAddress.Ward,
+                        District = warehouseAddress.District,
+                        City = warehouseAddress.City ?? "Hà Nội",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _db.Addresses.Add(dropoffAddress);
+                }
+                else if (request.DropoffAddress != null && !string.IsNullOrWhiteSpace(request.DropoffAddress.AddressLine))
+                {
+                    // Fallback: sử dụng địa chỉ từ request nếu warehouse không có địa chỉ
+                    dropoffAddress = new Address
+                    {
+                        Id = Guid.NewGuid(),
+                        AddressLine = request.DropoffAddress.AddressLine,
+                        Latitude = request.DropoffAddress.Latitude,
+                        Longitude = request.DropoffAddress.Longitude,
+                        City = "Hà Nội",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _db.Addresses.Add(dropoffAddress);
+                }
+
+                // Lưu addresses trước để có ID
+                await _db.SaveChangesAsync();
+
+                // Lấy thời gian từ reservation nếu không có trong request
+                var deliveryDate = request.DeliveryDate ?? reservation.From;
+                var pickupDate = request.PickupDate ?? reservation.To;
+
                 // Tạo Order từ Quotation
                 var order = new Order
                 {
@@ -674,12 +643,44 @@ namespace PresentationLayer.Controllers
                     QuotationId = quotation.Id,
                     CustomerId = quotation.CustomerId,
                     StoreId = quotation.StoreId ?? Guid.Empty,
+                    PickupAddress = pickupAddress,
+                    PickupAddressId = pickupAddress?.Id, // Gán ID để lưu vào DB
+                    DropoffAddress = dropoffAddress,
+                    DropoffAddressId = dropoffAddress?.Id, // Gán ID để lưu vào DB
+                    DeliveryDate = deliveryDate, // Thời gian gửi vào kho
+                    PickupDate = pickupDate, // Thời gian lấy ra
                     Status = StatusValue.Pending,
                     TotalAmount = quotation.TotalAmount,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
-                    Note = "Order created from quotation confirmation"
+                    Note = "Order created from quotation confirmation",
+                    OrderItems = new List<OrderItem>()
                 };
+
+                // Thêm OrderItems nếu có trong request
+                if (request.Items != null && request.Items.Any())
+                {
+                    foreach (var itemVm in request.Items)
+                    {
+                        if (string.IsNullOrWhiteSpace(itemVm.Name) || itemVm.Quantity <= 0)
+                        {
+                            continue;
+                        }
+
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            ItemName = itemVm.Name.Trim(),
+                            Description = itemVm.Category,
+                            Quantity = itemVm.Quantity,
+                            UnitPrice = 0m,
+                            Subtotal = 0m,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
 
                 _db.Orders.Add(order);
                 await _db.SaveChangesAsync();
@@ -701,8 +702,7 @@ namespace PresentationLayer.Controllers
                 };
                 _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
 
-                // Cập nhật slot status
-                var slot = await _db.WarehouseSlots.FirstOrDefaultAsync(s => s.Id == request.SlotId);
+                // Cập nhật slot status (sử dụng biến slot đã lấy ở trên)
                 if (slot != null)
                 {
                     slot.CurrentOrderId = order.Id;
@@ -748,6 +748,83 @@ namespace PresentationLayer.Controllers
         {
             public Guid QuotationId { get; set; }
             public Guid SlotId { get; set; }
+            public AddressViewModel? PickupAddress { get; set; }
+            public AddressViewModel? DropoffAddress { get; set; }
+            public DateTime? DeliveryDate { get; set; } // Thời gian gửi vào kho
+            public DateTime? PickupDate { get; set; } // Thời gian lấy ra
+            public List<OrderItemViewModel>? Items { get; set; }
+        }
+
+        // API endpoint để AI đọc ảnh và trả về danh sách sản phẩm
+        [HttpPost]
+        public async Task<IActionResult> AnalyzeProductImage(IFormFile productImage)
+        {
+            if (productImage == null || productImage.Length == 0)
+            {
+                return BadRequest(new { success = false, message = "Vui lòng chọn ảnh để phân tích." });
+            }
+
+            try
+            {
+                // Upload ảnh lên Cloudinary
+                var imageUrl = await _cloudinaryService.UploadImageFileAsync(productImage);
+                
+                // Gọi Gemini để phân tích ảnh
+                var volumeResult = await _geminiService.AnalyzeImageAndCalculateVolumeAsync(imageUrl);
+                
+                // Chuyển đổi ItemEstimates thành ItemInfo để trả về
+                var items = new List<ItemInfo>();
+                if (volumeResult?.ItemEstimates != null && volumeResult.ItemEstimates.Any())
+                {
+                    foreach (var itemEstimate in volumeResult.ItemEstimates)
+                    {
+                        // Tách category từ name hoặc notes nếu có
+                        var category = ExtractCategoryFromName(itemEstimate.Name);
+                        
+                        items.Add(new ItemInfo
+                        {
+                            Name = itemEstimate.Name,
+                            Category = category,
+                            Quantity = itemEstimate.Quantity
+                        });
+                    }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    items = items,
+                    imageUrl = imageUrl,
+                    message = items.Any() 
+                        ? $"Đã phát hiện {items.Count} loại sản phẩm trong ảnh." 
+                        : "Không phát hiện được sản phẩm trong ảnh. Vui lòng thử lại với ảnh khác."
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error analyzing product image: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Có lỗi xảy ra khi phân tích ảnh. Vui lòng thử lại sau.",
+                    detail = ex.Message
+                });
+            }
+        }
+
+        private string? ExtractCategoryFromName(string name)
+        {
+            // Logic đơn giản để đoán category từ tên sản phẩm
+            var lowerName = name.ToLower();
+            if (lowerName.Contains("bàn") || lowerName.Contains("ghế") || lowerName.Contains("tủ") || lowerName.Contains("giường"))
+                return "Nội thất";
+            if (lowerName.Contains("tivi") || lowerName.Contains("máy") || lowerName.Contains("điện"))
+                return "Điện tử";
+            if (lowerName.Contains("quần") || lowerName.Contains("áo") || lowerName.Contains("giày"))
+                return "Thời trang";
+            if (lowerName.Contains("sách") || lowerName.Contains("vở") || lowerName.Contains("bút"))
+                return "Văn phòng phẩm";
+            return "Khác";
         }
 
         [HttpGet]

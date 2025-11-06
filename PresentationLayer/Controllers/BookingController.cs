@@ -66,12 +66,7 @@ namespace PresentationLayer.Controllers
                     ?.Replace("  ", " ")
             };
 
-            vm.Items = new List<BookingItemVM>
-            {
-                new BookingItemVM { Name = "Sofa da 3 chỗ", Category = "Đồ gỗ", EstimatedWeightKg = 60, Quantity = 1 },
-                new BookingItemVM { Name = "Tủ lạnh 300L", Category = "Điện tử", EstimatedWeightKg = 50, Quantity = 1 },
-                new BookingItemVM { Name = "Thùng sách", Category = "Giấy tờ", EstimatedWeightKg = 10, Quantity = 10 }
-            };
+            vm.Items = new List<BookingItemVM>();
 
             // Prefill customer info from profile if available
             var userIdClaim = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -185,7 +180,6 @@ namespace PresentationLayer.Controllers
                             ItemName = itemVm.Name.Trim(),
                             Description = itemVm.Category,
                             Quantity = itemVm.Quantity,
-                            WeightKg = itemVm.EstimatedWeightKg,
                             UnitPrice = 0m,
                             Subtotal = 0m
                         });

@@ -262,7 +262,6 @@
                 <th>Tên đồ *</th>
                 <th>Danh mục</th>
                 <th style="width:100px;">Số lượng</th>
-                <th style="width:120px;">Ước tính (kg)</th>
                 <th style="width:150px;">Ảnh (tùy chọn)</th>
                 <th style="width:50px;"></th>
             </tr>
@@ -274,7 +273,6 @@
                     <td><input name="Items[@i].Name" value="@Model.Items[i].Name" required /></td>
                     <td><input name="Items[@i].Category" value="@Model.Items[i].Category" placeholder="Ví dụ: Nội thất" /></td>
                     <td><input name="Items[@i].Quantity" type="number" min="1" value="@Model.Items[i].Quantity" required /></td>
-                    <td><input name="Items[@i].EstimatedWeightKg" type="number" min="0" step="0.1" value="@Model.Items[i].EstimatedWeightKg" placeholder="0" /></td>
                     <td>
                         <input type="file" name="ItemImages[@i]" accept="image/*" class="item-image-input" data-index="@i" onchange="previewImage(this, @i)" />
                         <img class="image-preview" id="preview-@i" />
@@ -319,7 +317,6 @@
             <td><input name="Items[${idx}].Name" required /></td>
             <td><input name="Items[${idx}].Category" placeholder="Ví dụ: Nội thất" /></td>
             <td><input name="Items[${idx}].Quantity" type="number" min="1" value="1" required /></td>
-            <td><input name="Items[${idx}].EstimatedWeightKg" type="number" min="0" step="0.1" placeholder="0" /></td>
             <td>
                 <input type="file" name="ItemImages[${idx}]" accept="image/*" class="item-image-input" data-index="${idx}" onchange="previewImage(this, ${idx})" />
                 <img class="image-preview" id="preview-${idx}" />
