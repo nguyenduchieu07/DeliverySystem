@@ -53,8 +53,8 @@ namespace PresentationLayer.Controllers
 
             var vm = new BookingRequestVM
             {
-                StorageStartDate = DateTime.UtcNow.Date.AddDays(1),
-                StorageEndDate = DateTime.UtcNow.Date.AddDays(30),
+                StorageStartDate = DateTime.Now.Date.AddDays(1),
+                StorageEndDate = DateTime.Now.Date.AddDays(30),
                 AddressOptions = addressOptions,
                 DropoffAddressId = defaultAddress?.Id,
                 DropoffLatitude = defaultAddress?.Latitude,

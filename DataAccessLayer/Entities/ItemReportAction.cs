@@ -21,7 +21,7 @@ namespace DataAccessLayer.Entities
         public ItemReportActionType ActionType { get; set; }  // e.g. ConfirmDamage, ReturnItem, Compensate, Close
 
         public string? Note { get; set; }
-        public DateTime ActionDate { get; set; } = DateTime.UtcNow;
+        public DateTime ActionDate { get; set; } = DateTime.Now;
         public Guid? StaffId { get; set; } // nhân viên kho xử lý
 
         // Navigation

@@ -397,7 +397,7 @@
                     <tbody>
                         @foreach (var item in ViewBag.Draft)
                         {
-                            var timeLeft = (item.ValidUntil - DateTime.UtcNow).TotalHours;
+                            var timeLeft = (item.ValidUntil - DateTime.Now).TotalHours;
                             var isUrgent = timeLeft <= 24;
 
                             <tr class="quotation-row" onclick="window.location.href='@Url.Action("Detail", new { id = item.Id })'">
@@ -466,7 +466,7 @@
                     <tbody>
                         @foreach (var item in ViewBag.Waiting)
                         {
-                            var timeLeft = (item.ValidUntil - DateTime.UtcNow).TotalHours;
+                            var timeLeft = (item.ValidUntil - DateTime.Now).TotalHours;
                             var isUrgent = timeLeft <= 24;
 
                             <tr class="quotation-row" onclick="window.location.href='@Url.Action("Detail", new { id = item.Id })'">

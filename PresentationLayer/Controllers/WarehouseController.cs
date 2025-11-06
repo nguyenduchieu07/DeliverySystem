@@ -16,7 +16,7 @@ namespace PresentationLayer.Controllers
         [HttpGet("{id:guid}/slots")]
         public async Task<IActionResult> GetSlots(Guid id, CancellationToken ct)
         {
-            var now = DateTimeOffset.UtcNow;
+            var now = DateTimeOffset.Now;
             
             // Lấy danh sách slot IDs có reservation còn hiệu lực
             // Join với WarehouseSlots để filter theo WarehouseId

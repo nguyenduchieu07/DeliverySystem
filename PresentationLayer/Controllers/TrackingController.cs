@@ -457,10 +457,10 @@ namespace PresentationLayer.Controllers
             var incidentAction = new ItemReportAction()
             {
                 Id = Guid.NewGuid(),
-                ActionDate = DateTime.UtcNow,
+                ActionDate = DateTime.Now,
                 ActionType = dto.ActionType,
                 Note = dto.Note,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 ItemReportId = dto.IncidentReportId,
             };
             await _context.IncidentActions.AddAsync(incidentAction);

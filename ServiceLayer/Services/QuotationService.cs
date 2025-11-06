@@ -208,10 +208,10 @@ namespace ServiceLayer.Services
 
             // Kích hoạt báo giá + duyệt đơn
             quotation.Status = StatusValue.Active;
-            quotation.UpdatedAt = DateTime.UtcNow;
+            quotation.UpdatedAt = DateTime.Now;
 
             order.Status = StatusValue.AwaitingPayment;
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = DateTime.Now;
 
             await _db.SaveChangesAsync(ct);
 
@@ -234,7 +234,7 @@ namespace ServiceLayer.Services
                 
                 // Đánh dấu status là Revised để store biết có yêu cầu chỉnh giá
                 quotation.Status = StatusValue.Revised;
-                quotation.UpdatedAt = DateTime.UtcNow;
+                quotation.UpdatedAt = DateTime.Now;
                 
                 // Note có thể được lưu vào UpdatedBy field tạm thời (hoặc tạo migration để thêm field Note)
                 // Tạm thời không lưu note vì entity không có field này

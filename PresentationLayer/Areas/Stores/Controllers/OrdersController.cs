@@ -254,7 +254,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     IsReturned = request.IsReturned,
                     IsCompensated = request.IsCompensated,
                     CompensationAmount = request.CompensationAmount,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 if (imageFile != null && imageFile.Length > 0)
@@ -361,7 +361,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                         Quantity = item.Quantity,
                         ConditionNote = item.ConditionNote,
                         ImageUrl = imageUrl,
-                        CreatedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.Now,
                         Status = ReportStatus.CheckIn
                     };
 
@@ -410,7 +410,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                         ConditionNote = item.ConditionNote,
                         ImageUrl = imageUrl,
                         Status = ReportStatus.CheckOut,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     };
 
                     _context.IncidentReports.Add(report);

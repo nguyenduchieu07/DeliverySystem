@@ -132,8 +132,8 @@ namespace PresentationLayer.Controllers
                     Method = model.PaymentMethod,
                     Provider = model.Provider,
                     Status = StatusValue.Pending,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
 
                 // Xử lý theo phương thức thanh toán
@@ -147,7 +147,7 @@ namespace PresentationLayer.Controllers
                     order.Status = payment.Status == StatusValue.Completed
                         ? StatusValue.AwaitingPickup
                         : StatusValue.AwaitingPayment;
-                    order.UpdatedAt = DateTime.UtcNow;
+                    order.UpdatedAt = DateTime.Now;
 
                     await _context.SaveChangesAsync();
 
@@ -258,7 +258,7 @@ namespace PresentationLayer.Controllers
         {
             // Thanh toán tiền mặt - chỉ cần tạo record, sẽ thu tiền khi giao hàng
             payment.Status = StatusValue.Pending;
-            payment.ProviderTxnId = $"CASH_{DateTime.UtcNow:yyyyMMddHHmmss}";
+            payment.ProviderTxnId = $"CASH_{DateTime.Now:yyyyMMddHHmmss}";
 
             return new PaymentResultViewModel
             {
@@ -272,7 +272,7 @@ namespace PresentationLayer.Controllers
             // Chuyển khoản ngân hàng - tạo thông tin chuyển khoản
             payment.Status = StatusValue.Completed;
             payment.Provider = provider ?? "Manual Bank Transfer";
-            payment.ProviderTxnId = $"BANK_{DateTime.UtcNow:yyyyMMddHHmmss}";
+            payment.ProviderTxnId = $"BANK_{DateTime.Now:yyyyMMddHHmmss}";
 
             return new PaymentResultViewModel
             {

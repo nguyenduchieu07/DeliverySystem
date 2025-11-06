@@ -20,7 +20,7 @@ namespace ServiceLayer.Services
 
         public async Task<WarehouseSlot?> GetSlotByOrderIdAsync(Guid orderId)
         {
-            var today = DateTime.UtcNow;
+            var today = DateTime.Now;
 
             return await _warehouseSlotRepository.FindAll(x => x.CurrentOrderId == orderId && x.LeaseStart <= today && x.LeaseEnd >= today)
                 .OrderByDescending(s => s.CreatedAt)

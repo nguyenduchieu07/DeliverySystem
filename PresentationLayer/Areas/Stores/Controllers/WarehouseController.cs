@@ -453,7 +453,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
         public async Task<IActionResult> DownloadSlotTemplate([FromQuery] string warehouseName, CancellationToken ct)
         {
             var bytes = await _export.ExportTemplateAsync(warehouseName, ct);
-            var fileName = $"SlotTemplate_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            var fileName = $"SlotTemplate_{DateTime.Now:yyyyMMdd}.xlsx";
             return File(bytes,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 fileName);
@@ -463,7 +463,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
         public async Task<IActionResult> ExportSlots(Guid id, CancellationToken ct) // id = warehouseId
         {
             var bytes = await _export.ExportWarehouseSlotsAsync(id, ct);
-            var fileName = $"WarehouseSlots_{id}_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            var fileName = $"WarehouseSlots_{id}_{DateTime.Now:yyyyMMdd}.xlsx";
             return File(bytes,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 fileName);
@@ -477,7 +477,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 return BadRequest("Chọn ít nhất 1 kho.");
 
             var bytes = await _export.ExportMultiWarehousesAsync(warehouseIds, ct);
-            var fileName = $"WarehouseSlots_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+            var fileName = $"WarehouseSlots_{DateTime.Now:yyyyMMdd}.xlsx";
             return File(bytes,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 fileName);

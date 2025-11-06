@@ -85,8 +85,8 @@ namespace ServiceLayer.Services
                     PhoneNumberConfirmed = false,
                     EmailConfirmed = false,
                     Status = StatusValue.Active,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
 
                 // Tạo người dùng với mật khẩu
@@ -107,8 +107,8 @@ namespace ServiceLayer.Services
                     PreferredLang = "vi",
                     Tier = "Basic",
                     KycLevel = "None",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
                 _customerRepo.Add(customer);
                 await _context.SaveChangesAsync();
@@ -296,7 +296,7 @@ namespace ServiceLayer.Services
                 customer.FullName = fullName;
                 customer.PreferredLang = lang ?? customer.PreferredLang;
                 customer.Tier = tier ?? customer.Tier;
-                customer.UpdatedAt = DateTime.UtcNow;
+                customer.UpdatedAt = DateTime.Now;
 
                 // Cập nhật email và số điện thoại nếu được cung cấp
                 if (!string.IsNullOrWhiteSpace(email) || !string.IsNullOrWhiteSpace(phoneNumber))
@@ -361,8 +361,8 @@ namespace ServiceLayer.Services
             {
                 address.UserId = userId;
                 address.Active = true;
-                address.CreatedAt = DateTime.UtcNow;
-                address.UpdatedAt = DateTime.UtcNow;
+                address.CreatedAt = DateTime.Now;
+                address.UpdatedAt = DateTime.Now;
                 _addressRepo.Add(address);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -383,7 +383,7 @@ namespace ServiceLayer.Services
                 if (address != null)
                 {
                     address.Active = false;
-                    address.UpdatedAt = DateTime.UtcNow;
+                    address.UpdatedAt = DateTime.Now;
                     _addressRepo.Update(address);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();

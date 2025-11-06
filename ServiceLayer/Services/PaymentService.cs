@@ -85,7 +85,7 @@ namespace ServiceLayer.Services
                 if (isValid)
                 {
                     payment.Status = StatusValue.Completed;
-                    payment.UpdatedAt = DateTime.UtcNow;
+                    payment.UpdatedAt = DateTime.Now;
                     await _context.SaveChangesAsync();
                 }
 
@@ -137,7 +137,7 @@ namespace ServiceLayer.Services
                 _ => "TXN"
             };
 
-            return $"{prefix}_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
+            return $"{prefix}_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
         }
 
         private async Task<PaymentResultViewModel> ProcessCashPayment(Payment payment)
@@ -315,7 +315,7 @@ namespace ServiceLayer.Services
                 if (payment != null)
                 {
                     payment.Status = StatusValue.Completed;
-                    payment.UpdatedAt = DateTime.UtcNow;
+                    payment.UpdatedAt = DateTime.Now;
                     await _context.SaveChangesAsync();
                 }
 

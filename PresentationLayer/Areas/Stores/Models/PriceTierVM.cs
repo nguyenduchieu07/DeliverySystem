@@ -6,7 +6,7 @@ namespace PresentationLayer.Areas.Stores.Models
     {
         public Guid? Id { get; set; }
         public Guid ServiceId { get; set; }
-        [Required] public DateTime ValidFrom { get; set; } = DateTime.UtcNow.Date;
+        [Required] public DateTime ValidFrom { get; set; } = DateTime.Now.Date;
         public DateTime? ValidTo { get; set; }
         [Range(0.01, 999999999)] public decimal Price { get; set; }
         public int? MinQty { get; set; }
