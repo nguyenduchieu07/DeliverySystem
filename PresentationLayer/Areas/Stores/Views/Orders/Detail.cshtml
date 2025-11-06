@@ -1272,6 +1272,10 @@
 
             form.addEventListener("submit", async function (e) {
                 e.preventDefault();
+                
+                if (!confirm("Bạn có chắc muốn xác nhận Check Out cho đơn hàng này không?")) {
+                    return;
+                }
 
                 const formData = new FormData();
                 const orderId = "@Model.Order.Id";
@@ -1311,19 +1315,23 @@
                 }
             });
         });
-        
+
+
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("checkinForm");
             if (!form) return;
 
             form.addEventListener("submit", async function (e) {
                 e.preventDefault();
+                
+                if (!confirm("Bạn có chắc muốn xác nhận Check In cho đơn hàng này không?")) {
+                    return;
+                }
 
                 const formData = new FormData();
                 const orderId = "@Model.Order.Id"; // Lấy OrderId từ ViewModel
                 formData.append("OrderId", orderId);
-
-                // Tìm tất cả hàng trong bảng
+                
                 const rows = form.querySelectorAll("tbody tr");
                 rows.forEach((row, index) => {
                     const orderItemId = row.querySelector(`input[name="OrderItems[${index}].OrderItemId"]`)?.value;
@@ -1361,7 +1369,8 @@
                 }
             });
         });
-        
+
+
         async function submitIncidentAction(itemId) {
             const form = document.getElementById(`handleIncidentForm_${itemId}`);
             const formData = new FormData(form);
