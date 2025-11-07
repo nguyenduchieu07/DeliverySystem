@@ -208,7 +208,7 @@ public class ContractService : IContractService
         // replace tokens
         // html = html.Replace("{{CompanyLogoUrl}}", contract.Store?.LogoUrl ?? "");
         html = html.Replace("{{ContractNumber}}", contract.Id.ToString().ToUpper());
-        html = html.Replace("{{ContractDate}}", DateTime.UtcNow.ToString("dd/MM/yyyy"));
+        html = html.Replace("{{ContractDate}}", DateTime.Now.ToString("dd/MM/yyyy"));
         html = html.Replace("{{ContractStatus}}", contract.Status.ToDisplayString());
         html = html.Replace("{{StoreName}}", contract.Store?.LegalName ?? "");
         html = html.Replace("{{StoreAddress}}", contract.Store?.Addresses.FirstOrDefault(a => a.IsDefault)?.AddressLine ?? "");

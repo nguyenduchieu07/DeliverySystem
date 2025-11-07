@@ -50,7 +50,7 @@ public class AccountController : Controller
         var s = await _db.Stores.FindAsync(id);
         if (s == null) return NotFound();
         s.Status = StatusValue.Ban;
-        s.UpdatedAt = DateTime.UtcNow;
+        s.UpdatedAt = DateTime.Now;
         await _db.SaveChangesAsync();
         TempData["ok"] = $"Store {s.StoreName} banned.";
         return RedirectToAction(nameof(Index), new { scope = "Store" });
@@ -62,7 +62,7 @@ public class AccountController : Controller
         var s = await _db.Stores.FindAsync(id);
         if (s == null) return NotFound();
         s.Status = StatusValue.Active;
-        s.UpdatedAt = DateTime.UtcNow;
+        s.UpdatedAt = DateTime.Now;
         await _db.SaveChangesAsync();
         TempData["ok"] = $"Store {s.StoreName} unbanned.";
         return RedirectToAction(nameof(Index), new { scope = "Store" });
@@ -75,7 +75,7 @@ public class AccountController : Controller
         var u = await _db.Users.FindAsync(id);
         if (u == null) return NotFound();
         u.Status = StatusValue.Ban;
-        u.UpdatedAt = DateTime.UtcNow;
+        u.UpdatedAt = DateTime.Now;
         await _db.SaveChangesAsync();
         TempData["ok"] = $"User {(u.UserName ?? u.Email)} banned.";
         return RedirectToAction(nameof(Index), new { scope = "User" });
@@ -87,7 +87,7 @@ public class AccountController : Controller
         var u = await _db.Users.FindAsync(id);
         if (u == null) return NotFound();
         u.Status = StatusValue.Active;
-        u.UpdatedAt = DateTime.UtcNow;
+        u.UpdatedAt = DateTime.Now;
         await _db.SaveChangesAsync();
         TempData["ok"] = $"User {(u.UserName ?? u.Email)} unbanned.";
         return RedirectToAction(nameof(Index), new { scope = "User" });

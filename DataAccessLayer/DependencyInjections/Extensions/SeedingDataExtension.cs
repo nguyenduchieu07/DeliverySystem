@@ -209,9 +209,9 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             var storePrimeId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3");
 
             b.Entity<Store>().HasData(
-                new Store { Id = storeBlueId, OwnerUserId = blueOwnerId, StoreName = "Blue Wash", Status = Enums.StatusValue.InActive, RatingCount= 0,RatingAvg=0, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new Store { Id = storeFreshId, OwnerUserId = freshOwnerId, StoreName = "Fresh Laundry", Status = Enums.StatusValue.InActive, RatingCount = 0, RatingAvg = 0, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new Store { Id = storePrimeId, OwnerUserId = primeOwnerId, StoreName = "Prime Cleaners", Status = Enums.StatusValue.Active, RatingCount = 0, RatingAvg = 0, KycLevel = "Verified", MaxOrdersPerDay = 80, ActiveRegions = "HN,HCM", CreatedAt = DateTime.UtcNow.AddDays(-30), UpdatedAt = DateTime.UtcNow }
+                new Store { Id = storeBlueId, OwnerUserId = blueOwnerId, StoreName = "Blue Wash", Status = Enums.StatusValue.InActive, RatingCount= 0,RatingAvg=0, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
+                new Store { Id = storeFreshId, OwnerUserId = freshOwnerId, StoreName = "Fresh Laundry", Status = Enums.StatusValue.InActive, RatingCount = 0, RatingAvg = 0, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
+                new Store { Id = storePrimeId, OwnerUserId = primeOwnerId, StoreName = "Prime Cleaners", Status = Enums.StatusValue.Active, RatingCount = 0, RatingAvg = 0, KycLevel = "Verified", MaxOrdersPerDay = 80, ActiveRegions = "HN,HCM", CreatedAt = DateTime.Now.AddDays(-30), UpdatedAt = DateTime.Now }
             );
 
             var kycBlueId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1");
@@ -219,22 +219,22 @@ namespace DataAccessLayer.DependencyInjections.Extensions
             var kycPrimeId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3");
 
             b.Entity<KycSubmission>().HasData(
-                new KycSubmission { Id = kycBlueId, StoreId = storeBlueId, Status = Enums.KycStatus.Pending, AdminNote = (string?)null, SubmittedAt = DateTime.UtcNow.AddDays(-6), ReviewedAt = (DateTime?)null, ReviewedBy = (Guid?)null, CreatedAt = DateTime.UtcNow.AddDays(-6) },
-                new KycSubmission { Id = kycFreshId, StoreId = storeFreshId, Status = Enums.KycStatus.NeedChanges, AdminNote = "Thiếu giấy tờ thuế / ảnh mờ, vui lòng bổ sung.", SubmittedAt = DateTime.UtcNow.AddDays(-5), ReviewedAt = DateTime.UtcNow.AddDays(-4), ReviewedBy = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), CreatedAt = DateTime.UtcNow.AddDays(-5) },
-                new KycSubmission { Id = kycPrimeId, StoreId = storePrimeId, Status = Enums.KycStatus.Approved, AdminNote = "Ok", SubmittedAt = DateTime.UtcNow.AddDays(-15), ReviewedAt = DateTime.UtcNow.AddDays(-14), ReviewedBy = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), CreatedAt = DateTime.UtcNow.AddDays(-15) }
+                new KycSubmission { Id = kycBlueId, StoreId = storeBlueId, Status = Enums.KycStatus.Pending, AdminNote = (string?)null, SubmittedAt = DateTime.Now.AddDays(-6), ReviewedAt = (DateTime?)null, ReviewedBy = (Guid?)null, CreatedAt = DateTime.Now.AddDays(-6) },
+                new KycSubmission { Id = kycFreshId, StoreId = storeFreshId, Status = Enums.KycStatus.NeedChanges, AdminNote = "Thiếu giấy tờ thuế / ảnh mờ, vui lòng bổ sung.", SubmittedAt = DateTime.Now.AddDays(-5), ReviewedAt = DateTime.Now.AddDays(-4), ReviewedBy = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), CreatedAt = DateTime.Now.AddDays(-5) },
+                new KycSubmission { Id = kycPrimeId, StoreId = storePrimeId, Status = Enums.KycStatus.Approved, AdminNote = "Ok", SubmittedAt = DateTime.Now.AddDays(-15), ReviewedAt = DateTime.Now.AddDays(-14), ReviewedBy = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), CreatedAt = DateTime.Now.AddDays(-15) }
             );
 
             b.Entity<KycDocument>().HasData(
-                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc1"), KycSubmissionId = kycBlueId, DocType = "License", FilePath = "/uploads/kyc/blue/license.pdf", CreatedAt = DateTime.UtcNow.AddDays(-6) },
-                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc2"), KycSubmissionId = kycBlueId, DocType = "ID", FilePath = "/uploads/kyc/blue/id.jpg", CreatedAt = DateTime.UtcNow.AddDays(-6) },
-                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc3"), KycSubmissionId = kycBlueId, DocType = "Tax", FilePath = "/uploads/kyc/blue/tax.pdf", CreatedAt = DateTime.UtcNow.AddDays(-6) },
+                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc1"), KycSubmissionId = kycBlueId, DocType = "License", FilePath = "/uploads/kyc/blue/license.pdf", CreatedAt = DateTime.Now.AddDays(-6) },
+                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc2"), KycSubmissionId = kycBlueId, DocType = "ID", FilePath = "/uploads/kyc/blue/id.jpg", CreatedAt = DateTime.Now.AddDays(-6) },
+                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc3"), KycSubmissionId = kycBlueId, DocType = "Tax", FilePath = "/uploads/kyc/blue/tax.pdf", CreatedAt = DateTime.Now.AddDays(-6) },
 
-                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc4"), KycSubmissionId = kycFreshId, DocType = "License", FilePath = "/uploads/kyc/fresh/license.pdf", CreatedAt = DateTime.UtcNow.AddDays(-5) },
-                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc5"), KycSubmissionId = kycFreshId, DocType = "ID", FilePath = "/uploads/kyc/fresh/id.jpg", CreatedAt = DateTime.UtcNow.AddDays(-5) },
+                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc4"), KycSubmissionId = kycFreshId, DocType = "License", FilePath = "/uploads/kyc/fresh/license.pdf", CreatedAt = DateTime.Now.AddDays(-5) },
+                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc5"), KycSubmissionId = kycFreshId, DocType = "ID", FilePath = "/uploads/kyc/fresh/id.jpg", CreatedAt = DateTime.Now.AddDays(-5) },
 
-                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc6"), KycSubmissionId = kycPrimeId, DocType = "License", FilePath = "/uploads/kyc/prime/license.pdf", CreatedAt = DateTime.UtcNow.AddDays(-15) },
-                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc7"), KycSubmissionId = kycPrimeId, DocType = "ID", FilePath = "/uploads/kyc/prime/id.jpg", CreatedAt = DateTime.UtcNow.AddDays(-15) },
-                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc8"), KycSubmissionId = kycPrimeId, DocType = "Tax", FilePath = "/uploads/kyc/prime/tax.pdf", CreatedAt = DateTime.UtcNow.AddDays(-15) }
+                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc6"), KycSubmissionId = kycPrimeId, DocType = "License", FilePath = "/uploads/kyc/prime/license.pdf", CreatedAt = DateTime.Now.AddDays(-15) },
+                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc7"), KycSubmissionId = kycPrimeId, DocType = "ID", FilePath = "/uploads/kyc/prime/id.jpg", CreatedAt = DateTime.Now.AddDays(-15) },
+                new KycDocument { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccc8"), KycSubmissionId = kycPrimeId, DocType = "Tax", FilePath = "/uploads/kyc/prime/tax.pdf", CreatedAt = DateTime.Now.AddDays(-15) }
             );
         }
     }

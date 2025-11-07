@@ -14,7 +14,7 @@ namespace DataAccessLayer.Entities
         public KycStatus Status { get; set; } // Pending | NeedChanges | Approved | Rejected
         public string? AdminNote { get; set; }
 
-        public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
+        public DateTime SubmittedAt { get; set; } = DateTime.Now;
         public DateTime? ReviewedAt { get; set; }
         public Guid? ReviewedBy { get; set; }
 

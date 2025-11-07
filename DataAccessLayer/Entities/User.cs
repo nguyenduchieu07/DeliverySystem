@@ -9,8 +9,8 @@ namespace DataAccessLayer.Entities;
 public partial class User : IdentityUser<Guid>
 {
     public StatusValue Status { get; set; } 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 

@@ -13,4 +13,19 @@ namespace DataAccessLayer.Enums
         Compensate, //đền bù
         Close //đóng 
     }
+    
+    public static class  ItemReportActionTypeExtensions 
+    {
+        public static string ToDisplayString(this ItemReportActionType itemReportActionType)
+        {
+            return itemReportActionType switch
+            {
+                ItemReportActionType.ConfirmDamage => "Xác nhận hư hỏng",
+                ItemReportActionType.ReturnItem => "Hoàn hàng", 
+                ItemReportActionType.Compensate => "Bồi thường", 
+                ItemReportActionType.Close => "Đóng báo cáo", 
+                _ => itemReportActionType.ToString()
+            };
+        }
+    }
 }

@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using DataAccessLayer.Abstractions.IRepositories;
+using DataAccessLayer.Constants;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Models;
@@ -11,6 +13,7 @@ using ServiceLayer.Helpers;
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
+    [Authorize(Roles = $"{UserRoles.STORE}, {UserRoles.STORESTAFF}")]
     public class OrdersController : Controller
     {
         private readonly DeliverySytemContext _context;
@@ -254,7 +257,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     IsReturned = request.IsReturned,
                     IsCompensated = request.IsCompensated,
                     CompensationAmount = request.CompensationAmount,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 if (imageFile != null && imageFile.Length > 0)
@@ -273,56 +276,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
             }
         }
 
-        public partial class HandleReportViewModel
-        {
-            public Guid OrderItemId { get; set; }
-            public ItemReportActionType ActionType { get; set; }
-            public string? Note { get; set; }
-        }
-
-        [HttpPost("/Stores/Orders/HandleIncident")]
-        public async Task<IActionResult> HandleIncident([FromForm] HandleReportViewModel model)
-        {
-            await using var ts = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                if (!ModelState.IsValid)
-                    return Json(new { success = false, message = "Dữ liệu không hợp lệ." });
-
-                var report = await _context.IncidentReports
-                    .FirstOrDefaultAsync(x => x.OrderItemId == model.OrderItemId && x.Status != ReportStatus.Done && x.Status != ReportStatus.CheckIn && x.Status != ReportStatus.CheckOut);
-
-                if (report == null)
-                    return Json(new { success = false, message = "Không tìm thấy báo cáo." });
-
-                var action = new ItemReportAction
-                {
-                    Id = Guid.NewGuid(),
-                    ItemReportId = report.Id,
-                    ActionType = model.ActionType,
-                    Note = model.Note,
-                    CreatedAt = DateTime.Now
-                };
-
-                _context.IncidentActions.Add(action);
-
-                if (model.ActionType == ItemReportActionType.Close)
-                {
-                    report.Status = ReportStatus.Done;
-                    // Không cần _context.IncidentReports.Update(report);
-                }
-
-                await _context.SaveChangesAsync();
-                await ts.CommitAsync();
-
-                return Json(new { success = true, message = "Xử lý sự cố thành công!" });
-            }
-            catch (Exception ex)
-            {
-                await ts.RollbackAsync();
-                return Json(new { success = false, message = "Lỗi xử lý sự cố.", error = ex.Message });
-            }
-        }
+       
+        
 
         public class CheckInItemRequest
         {
@@ -361,7 +316,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                         Quantity = item.Quantity,
                         ConditionNote = item.ConditionNote,
                         ImageUrl = imageUrl,
-                        CreatedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.Now,
                         Status = ReportStatus.CheckIn
                     };
 
@@ -410,7 +365,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                         ConditionNote = item.ConditionNote,
                         ImageUrl = imageUrl,
                         Status = ReportStatus.CheckOut,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     };
 
                     _context.IncidentReports.Add(report);

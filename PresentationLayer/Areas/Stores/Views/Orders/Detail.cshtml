@@ -11,6 +11,8 @@
     var checkOutCount = Model.OrderItems.Count(oi => oi.IncidentReports.Any(x => x.Status == ReportStatus.CheckOut));
     var checkOutAlready = itemCount == checkOutCount;
 
+    var isApproved = Model.Order.Status == StatusValue.Approved;
+    var isCompleted = Model.Order.Status == StatusValue.Completed;
 }
 
 <style>
@@ -20,10 +22,13 @@
         --danger: #e74a3b;
         --info: #36b9cc;
         --primary: #4e73df;
+        --accent: #e5501b;
         --text: #5a5c69;
+        --muted: #858796;
         --border: #e3e6f0;
         --white: #ffffff;
         --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        --radius: 0.45rem;
     }
 
     .detail-container {
@@ -44,22 +49,34 @@
 
     .page-header h1 {
         font-size: 1.75rem;
-        font-weight: 400;
+        font-weight: 500;
         color: var(--text);
         margin: 0;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.6rem;
     }
 
     .page-header h1 i {
-        color: var(#e5501b);
+        color: var(--accent);
+        font-size: 1.4rem;
     }
 
     .order-id-display {
-        font-family: 'Courier New', monospace;
-        color: var(#e5501b);
+        font-family: "Courier New", monospace;
+        color: var(--accent);
         font-weight: 700;
+        padding: 0.15rem 0.7rem;
+        border-radius: 999px;
+        border: 1px dashed rgba(229, 80, 27, 0.45);
+        background: rgba(229, 80, 27, 0.05);
+    }
+
+    .page-header > div {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
     }
 
     /* Back Button */
@@ -70,17 +87,38 @@
         padding: 0.5rem 1rem;
         background: var(--white);
         border: 1px solid var(--border);
-        border-radius: 0.35rem;
+        border-radius: 999px;
         color: var(--text);
         text-decoration: none;
         font-size: 0.875rem;
         transition: all 0.15s ease-in-out;
     }
 
+    .btn-back i {
+        font-size: 0.8rem;
+    }
+
     .btn-back:hover {
         background: var(#f8f9fc);
-        border-color: var(#e5501b);
-        color: var(#e5501b);
+        border-color: var(--accent);
+        color: var(--accent);
+        transform: translateY(-1px);
+    }
+
+    /* Edit button accent */
+    #btnEditOrder.btn.btn-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        border-radius: 999px;
+        font-size: 0.875rem;
+        padding-inline: 1.1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    #btnEditOrder.btn.btn-primary:hover {
+        filter: brightness(1.05);
         transform: translateY(-1px);
     }
 
@@ -88,22 +126,10 @@
     .card {
         background: var(--white);
         border: 1px solid var(--border);
-        border-radius: 0.35rem;
+        border-radius: var(--radius);
         box-shadow: var(--shadow);
         margin-bottom: 1.25rem;
-    }
-
-    .card-header {
-        background: linear-gradient(180deg, var(#e5501b) 0%, var(#d26c45) 100%);
-        color: var(--white);
-        padding: 0.75rem 1.25rem;
-        border-bottom: none;
-        border-radius: 0.35rem 0.35rem 0 0;
-        font-size: 1rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        overflow: hidden;
     }
 
     .card-body {
@@ -113,7 +139,7 @@
     /* Info Grid */
     .info-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -121,7 +147,7 @@
     .info-section {
         background: var(#f8f9fc);
         padding: 1.25rem;
-        border-radius: 0.35rem;
+        border-radius: var(--radius);
         border: 1px solid var(--border);
     }
 
@@ -130,21 +156,22 @@
         font-weight: 700;
         color: var(--text);
         margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid var(#e5501b);
+        padding-bottom: 0.6rem;
+        border-bottom: 2px solid var(--accent);
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
     .info-section h5 i {
-        color: var(#e5501b);
+        color: var(--accent);
     }
 
     .info-item {
         display: flex;
         justify-content: space-between;
-        padding: 0.75rem 0;
+        gap: 0.75rem;
+        padding: 0.6rem 0;
         border-bottom: 1px solid var(--border);
     }
 
@@ -154,8 +181,8 @@
 
     .info-label {
         font-size: 0.875rem;
-        font-weight: 700;
-        color: var(#858796);
+        font-weight: 600;
+        color: var(--muted);
     }
 
     .info-value {
@@ -163,56 +190,59 @@
         font-weight: 600;
         color: var(--text);
         text-align: right;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .info-value i {
+        color: var(--muted);
+        font-size: 0.8rem;
     }
 
     /* Status Badge */
     .status-badge {
-        display: inline-block;
-        padding: 0.375rem 0.875rem;
-        border-radius: 10rem;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.9rem;
+        border-radius: 999px;
         font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        white-space: nowrap;
     }
 
     .status-badge.pending {
-        background: var(--warning);
-        color: var(--white);
+        background: rgba(246, 194, 62, 0.16);
+        color: #b58614;
     }
 
     .status-badge.approved {
-        background: var(--success);
-        color: var(--white);
+        background: rgba(28, 200, 138, 0.15);
+        color: #13855c;
     }
 
     .status-badge.completed {
-        background: var(--primary);
-        color: var(--white);
+        background: rgba(78, 115, 223, 0.15);
+        color: #23418f;
     }
 
     .status-badge.rejected {
-        background: var(--danger);
-        color: var(--white);
-    }
-
-    /* Price Display */
-    .price-display {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--success);
+        background: rgba(231, 74, 59, 0.16);
+        color: #a63224;
     }
 
     /* Section Divider */
     hr {
         border: 0;
         border-top: 1px solid var(--border);
-        margin: 2rem 0;
+        margin: 1.75rem 0 1.5rem;
     }
 
     /* Section Title */
     .section-title {
-        font-size: 1.125rem;
+        font-size: 1.05rem;
         font-weight: 700;
         color: var(--text);
         margin-bottom: 1rem;
@@ -222,16 +252,17 @@
     }
 
     .section-title i {
-        color: var(#e5501b);
+        color: var(--accent);
     }
 
-    /* Table Styles */
+    /* Table Styles – Items */
     .items-table {
         width: 100%;
         border-collapse: collapse;
         background: var(--white);
-        border-radius: 0.35rem;
+        border-radius: var(--radius);
         overflow: hidden;
+        font-size: 0.875rem;
     }
 
     .items-table thead {
@@ -239,21 +270,22 @@
     }
 
     .items-table th {
-        padding: 1rem;
+        padding: 0.75rem 0.9rem;
         text-align: left;
         font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: var(--text);
+        color: var(--muted);
         border-bottom: 2px solid var(--border);
+        white-space: nowrap;
     }
 
     .items-table td {
-        padding: 1rem;
+        padding: 0.75rem 0.9rem;
         border-bottom: 1px solid var(--border);
         color: var(--text);
-        font-size: 0.875rem;
+        vertical-align: middle;
     }
 
     .items-table tbody tr:hover {
@@ -266,18 +298,17 @@
 
     .item-name {
         font-weight: 600;
-        color: var(--text);
     }
 
     .item-quantity {
         text-align: center;
         font-weight: 700;
-        color: var(#e5501b);
+        color: var(--accent);
     }
 
     .item-dimensions {
-        font-family: 'Courier New', monospace;
-        color: var(#858796);
+        font-family: "Courier New", monospace;
+        color: var(--muted);
         font-size: 0.8rem;
     }
 
@@ -290,15 +321,18 @@
     /* Address Cards */
     .address-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 1.25rem;
     }
 
     .address-card {
         background: var(#f8f9fc);
         padding: 1.25rem;
-        border-radius: 0.35rem;
-        border-left: 4px solid var(#e5501b);
+        border-radius: var(--radius);
+        border-left: 4px solid var(--accent);
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
     }
 
     .address-card.pickup {
@@ -310,10 +344,10 @@
     }
 
     .address-title {
-        font-size: 0.875rem;
+        font-size: 0.9rem;
         font-weight: 700;
         color: var(--text);
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.6rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -332,25 +366,25 @@
     /* Total Summary */
     .total-summary {
         background: var(#f8f9fc);
-        padding: 1.25rem;
-        border-radius: 0.35rem;
+        padding: 1rem 1.25rem;
+        border-radius: var(--radius);
         margin-top: 1rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 2px solid var(#e5501b);
+        border: 2px solid var(--accent);
     }
 
     .total-label {
-        font-size: 1.125rem;
+        font-size: 1.05rem;
         font-weight: 700;
         color: var(--text);
     }
 
     .total-value {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(#e5501b);
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: var(--accent);
     }
 
     /* Warehouse Section */
@@ -359,10 +393,9 @@
     }
 
     .warehouse-header {
-        background: linear-gradient(180deg, var(--info) 0%, #2c9faf 100%);
+        background: linear-gradient(135deg, var(--info) 0%, #2c9faf 100%);
         color: var(--white);
         padding: 0.75rem 1.25rem;
-        border-radius: 0.35rem 0.35rem 0 0;
         font-size: 1rem;
         font-weight: 700;
         display: flex;
@@ -370,10 +403,15 @@
         gap: 0.5rem;
     }
 
+    .warehouse-header i {
+        font-size: 1.1rem;
+    }
+
     .warehouse-table {
         width: 100%;
         border-collapse: collapse;
         background: var(--white);
+        font-size: 0.85rem;
     }
 
     .warehouse-table thead {
@@ -381,21 +419,22 @@
     }
 
     .warehouse-table th {
-        padding: 1rem;
+        padding: 0.75rem 0.9rem;
         text-align: left;
         font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: var(--text);
+        color: var(--muted);
         border-bottom: 2px solid var(--border);
+        white-space: nowrap;
     }
 
     .warehouse-table td {
-        padding: 1rem;
+        padding: 0.75rem 0.9rem;
         border-bottom: 1px solid var(--border);
         color: var(--text);
-        font-size: 0.875rem;
+        vertical-align: middle;
     }
 
     .warehouse-table tbody tr:hover {
@@ -408,21 +447,20 @@
 
     .warehouse-name {
         font-weight: 600;
-        color: var(--text);
     }
 
     .slot-code {
-        font-family: 'Courier New', monospace;
+        font-family: "Courier New", monospace;
         font-weight: 700;
         color: var(--info);
         background: rgba(54, 185, 204, 0.1);
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.5rem;
         border-radius: 0.25rem;
     }
 
     .slot-dimensions {
-        font-family: 'Courier New', monospace;
-        color: var(#858796);
+        font-family: "Courier New", monospace;
+        color: var(--muted);
         font-size: 0.8rem;
     }
 
@@ -432,15 +470,16 @@
     }
 
     .date-cell {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 0.25rem;
+        gap: 0.3rem;
         color: var(--text);
+        font-size: 0.85rem;
     }
 
     .date-cell i {
-        color: var(#858796);
-        font-size: 0.75rem;
+        color: var(--muted);
+        font-size: 0.8rem;
     }
 
     .date-cell.released {
@@ -453,11 +492,11 @@
 
     /* Alert Box */
     .alert-box {
-        background: rgba(54, 185, 204, 0.1);
-        border: 1px solid var(--info);
+        background: rgba(54, 185, 204, 0.08);
+        border: 1px solid rgba(54, 185, 204, 0.5);
         border-left: 4px solid var(--info);
-        padding: 1rem 1.25rem;
-        border-radius: 0.35rem;
+        padding: 0.9rem 1.1rem;
+        border-radius: var(--radius);
         margin-top: 1.5rem;
         display: flex;
         align-items: center;
@@ -466,7 +505,7 @@
 
     .alert-box i {
         color: var(--info);
-        font-size: 1.25rem;
+        font-size: 1.2rem;
     }
 
     .alert-box p {
@@ -475,7 +514,14 @@
         font-size: 0.875rem;
     }
 
-    /* Responsive */
+    /* Check In / Check Out buttons row */
+    .card .mb-2.d-flex button {
+        border-radius: 999px;
+        padding-inline: 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
     @@media (max-width: 768px) {
         .detail-container {
             padding: 1rem;
@@ -486,6 +532,12 @@
             align-items: flex-start;
         }
 
+        .page-header > div {
+            width: 100%;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
         .info-grid,
         .address-grid {
             grid-template-columns: 1fr;
@@ -493,14 +545,24 @@
 
         .items-table,
         .warehouse-table {
-            font-size: 0.75rem;
+            font-size: 0.78rem;
         }
 
         .items-table th,
         .items-table td,
         .warehouse-table th,
         .warehouse-table td {
-            padding: 0.75rem 0.5rem;
+            padding: 0.6rem 0.45rem;
+        }
+
+        .total-summary {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.4rem;
+        }
+
+        .total-value {
+            font-size: 1.4rem;
         }
     }
 </style>
@@ -529,7 +591,7 @@
         <div class="card-body">
             <div class="mb-2 d-flex justify-content-end">
                 
-                @if (!checkInAlready)
+                @if (isApproved && !checkInAlready)
                 {
                     <!-- Nút Kiểm tra vào -->
                     <button class="btn btn-sm btn-danger mr-2"
@@ -540,7 +602,7 @@
                     </button>
                 }
                 
-                @if (!checkOutAlready)
+                @if (isApproved && !checkOutAlready)
                 {
                     <!-- Nút Kiểm tra ra -->
                     <button class="btn btn-sm btn-success"
@@ -648,33 +710,36 @@
                                         var hasPending = item.IncidentReports.Any(r => r.Status == ReportStatus.Pending);
                                     }
                                     @* Nếu KHÔNG có báo cáo pending -> Hiện nút "Tạo báo cáo" *@
-                                    @if (!checkOutAlready && !hasPending)
+                                    @* @if (isApproved && !checkOutAlready && !hasPending) *@
+                                    @* { *@
+                                    @*     <button class="btn btn-sm btn-danger" *@
+                                    @*             data-bs-toggle="modal" *@
+                                    @*             data-order-id="@Model.Order.Id" *@
+                                    @*             data-item-id="@item.Id" *@
+                                    @*             data-bs-target="#createReportModal"> *@
+                                    @*         Tạo báo cáo *@
+                                    @*     </button> *@
+                                    @* } *@
+                                    @if (isCompleted || isApproved)
                                     {
-                                        <button class="btn btn-sm btn-danger"
+                                        @* Nếu CÓ ít nhất 1 báo cáo pending -> Hiện nút "Xem" + "Xử lý" *@
+                                        <button class="btn btn-sm btn-primary"
                                                 data-bs-toggle="modal"
-                                                data-order-id="@Model.Order.Id"
-                                                data-item-id="@item.Id"
-                                                data-bs-target="#createReportModal">
-                                            Tạo báo cáo
+                                                data-bs-target="#incidentModal_@item.Id">
+                                            Xem báo cáo
                                         </button>
                                     }
-
-                                    @* Nếu CÓ ít nhất 1 báo cáo pending -> Hiện nút "Xem" + "Xử lý" *@
-                                    <button class="btn btn-sm btn-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#incidentModal_@item.Id">
-                                        Xem báo cáo
-                                    </button>
-                                    @if (hasPending)
-                                    {
-                                        
-
-                                        <button class="btn btn-sm btn-warning"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#handleIncidentModal_@item.Id">
-                                            Xử lý
-                                        </button>
-                                    }
+                                    
+                                    @* @if (isApproved && hasPending) *@
+                                    @* { *@
+                                    @*      *@
+                                    @* *@
+                                    @*     <button class="btn btn-sm btn-warning" *@
+                                    @*             data-bs-toggle="modal" *@
+                                    @*             data-bs-target="#handleIncidentModal_@item.Id"> *@
+                                    @*         Xử lý *@
+                                    @*     </button> *@
+                                    @* } *@
 
                                 </td>
                             </tr>
@@ -925,55 +990,10 @@
 
 @foreach (var item in Model.Order.OrderItems)
 {
-    if (item.IncidentReports.Count > 0)
+    if (item.IncidentReports.OrderByDescending(x => x.CreatedAt).ToList().Count > 0)
     {
         
-        <!-- Modal xử lý sự cố -->
-        <div class="modal fade" id="handleIncidentModal_@item.Id" tabindex="-1"
-             aria-labelledby="incidentModalLabel_@item.Id" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title" id="incidentModalLabel_@item.Id">
-                            Xử lý sự cố - @item.ItemName
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <form id="handleIncidentForm_@item.Id" enctype="multipart/form-data">
-                            <!-- Hidden field -->
-                            <input type="hidden" name="OrderItemId" value="@item.Id"/>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Hành động xử lý</label>
-                                <select name="ActionType" class="form-select" required>
-                                    <option value="">-- Chọn hành động --</option>
-                                    <option value="1">Hoàn trả hàng</option>
-                                    <option value="2">Bồi thường</option>
-                                    <option value="3">Đóng sự cố</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Ghi chú xử lý</label>
-                                <textarea name="Note" class="form-control" rows="3"
-                                          placeholder="Nhập ghi chú..."></textarea>
-                            </div>
-
-                            <div class="d-flex justify-content-end">
-                                <button type="button" class="btn btn-primary"
-                                        onclick="submitIncidentAction('@item.Id')">
-                                    <i class="fas fa-check"></i> Xác nhận xử lý
-                                </button>
-                                <button type="button" class="btn btn-secondary ms-2" data-bs-dismiss="modal">Hủy
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
         <div class="modal fade" id="incidentModal_@item.Id" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
@@ -997,7 +1017,7 @@
                                     </span>
                                 </div>
 
-                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.Type</p>
+                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.Type.ToStringForType()</p>
                                 <p class="mb-1"><strong>Mô tả:</strong> @report.Description</p>
 
                                 @if (!string.IsNullOrEmpty(report.ImageUrl))
@@ -1047,7 +1067,7 @@
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            @foreach (var action in report.Actions)
+                                            @foreach (var action in report.Actions.OrderByDescending(x => x.ActionDate))
                                             {
                                                 <tr>
                                                     <td>
@@ -1064,7 +1084,7 @@
                                                     </td>
                                                     <td>@action.Note</td>
                                                     <td>@action.ActionDate.ToString("dd/MM/yyyy HH:mm")</td>
-                                                    <td>@(action.StaffId?.ToString().Substring(0, 8) ?? "-")</td>
+                                                    <td>@(action.Staff?.Role ?? "N/A")</td>
                                                 </tr>
                                             }
                                             </tbody>
@@ -1272,6 +1292,10 @@
 
             form.addEventListener("submit", async function (e) {
                 e.preventDefault();
+                
+                if (!confirm("Bạn có chắc muốn xác nhận Check Out cho đơn hàng này không?")) {
+                    return;
+                }
 
                 const formData = new FormData();
                 const orderId = "@Model.Order.Id";
@@ -1311,19 +1335,23 @@
                 }
             });
         });
-        
+
+
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("checkinForm");
             if (!form) return;
 
             form.addEventListener("submit", async function (e) {
                 e.preventDefault();
+                
+                if (!confirm("Bạn có chắc muốn xác nhận Check In cho đơn hàng này không?")) {
+                    return;
+                }
 
                 const formData = new FormData();
                 const orderId = "@Model.Order.Id"; // Lấy OrderId từ ViewModel
                 formData.append("OrderId", orderId);
-
-                // Tìm tất cả hàng trong bảng
+                
                 const rows = form.querySelectorAll("tbody tr");
                 rows.forEach((row, index) => {
                     const orderItemId = row.querySelector(`input[name="OrderItems[${index}].OrderItemId"]`)?.value;
@@ -1361,30 +1389,9 @@
                 }
             });
         });
+
+
         
-        async function submitIncidentAction(itemId) {
-            const form = document.getElementById(`handleIncidentForm_${itemId}`);
-            const formData = new FormData(form);
-
-            const response = await fetch('/Stores/Orders/HandleIncident', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                alert(result.message);
-                const modalEl = document.getElementById(`handleIncidentModal_${itemId}`);
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-                location.reload();
-            } else {
-                alert(result.message || 'Xảy ra lỗi khi xử lý sự cố.');
-            }
-            
-
-        }
 
         document.addEventListener('DOMContentLoaded', function () {
             const compensateCheckbox = document.querySelector('input[name="IsCompensated"]');

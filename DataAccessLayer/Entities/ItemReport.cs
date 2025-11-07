@@ -18,7 +18,7 @@ namespace DataAccessLayer.Entities
         public string? Description { get; set; }        // Mô tả chi tiết sự cố
         public string? ImageUrl { get; set; }           // Ảnh minh chứng
         public ReportStatus Status { get; set; } = ReportStatus.Pending; // Chờ xử lý, Đã xử lý
-        public DateTime ReportedAt { get; set; } = DateTime.UtcNow;
+        public DateTime ReportedAt { get; set; } = DateTime.Now;
 
         // Nếu có bồi thường / hoàn hàng
         public bool IsReturned { get; set; } = false;

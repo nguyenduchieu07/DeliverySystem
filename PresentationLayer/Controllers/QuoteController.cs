@@ -68,8 +68,8 @@ namespace PresentationLayer.Controllers
 
             var vm = new BookingRequestVM
             {
-                StorageStartDate = DateTime.UtcNow.Date.AddDays(1),
-                StorageEndDate = DateTime.UtcNow.Date.AddDays(30),
+                StorageStartDate = DateTime.Now.Date.AddDays(1),
+                StorageEndDate = DateTime.Now.Date.AddDays(30),
                 AddressOptions = addressOptions,
                 DropoffAddressId = defaultAddress?.Id,
                 DropoffLatitude = defaultAddress?.Latitude,
@@ -325,7 +325,7 @@ namespace PresentationLayer.Controllers
                 
                 // Tạo Quotation trước (chưa có Order)
                 var VALIDITY_FOR_QUOTATION_HOUR = 24; // Báo giá có giá trị trong 24 giờ
-                var validUntil = DateTime.UtcNow.AddHours(VALIDITY_FOR_QUOTATION_HOUR);
+                var validUntil = DateTime.Now.AddHours(VALIDITY_FOR_QUOTATION_HOUR);
                 var quotation = new Quotation
                 {
                     Id = Guid.NewGuid(),
@@ -334,8 +334,8 @@ namespace PresentationLayer.Controllers
                     TotalAmount = grandTotal,                  // đã gồm VAT
                     ValidUntil = validUntil,                    // hết hạn sau 24h
                     Status = StatusValue.Sent,                 // vừa gửi báo giá
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
                 _db.Quotations.Add(quotation);
 
@@ -556,7 +556,7 @@ namespace PresentationLayer.Controllers
                     .FirstOrDefaultAsync(r => r.WarehouseSlotId == request.SlotId 
                                             && r.OrderId == null 
                                             && r.Status == StatusValue.Active
-                                            && r.ExpiresAt > DateTimeOffset.UtcNow);
+                                            && r.ExpiresAt > DateTimeOffset.Now);
 
                 if (reservation == null)
                 {
@@ -651,10 +651,9 @@ namespace PresentationLayer.Controllers
                     PickupDate = pickupDate, // Thời gian lấy ra
                     Status = StatusValue.Pending,
                     TotalAmount = quotation.TotalAmount,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    Note = "Order created from quotation confirmation",
-                    OrderItems = new List<OrderItem>()
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    Note = "Order created from quotation confirmation"
                 };
 
                 // Thêm OrderItems nếu có trong request
@@ -695,10 +694,10 @@ namespace PresentationLayer.Controllers
                     Id = Guid.NewGuid(),
                     OrderId = order.Id,
                     WarehouseSlotId = request.SlotId,
-                    AssignedAt = DateTime.UtcNow,
+                    AssignedAt = DateTime.Now,
                     ReleasedAt = null,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
                 _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
 
@@ -937,7 +936,7 @@ namespace PresentationLayer.Controllers
                 ToStoreId = (Guid)quotationInfo.StoreId,
                 Rating = data.Rating,
                 Comment = data.Comment,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             var rs = await _feedbackService.CreateFeedbackAsync(feedback);

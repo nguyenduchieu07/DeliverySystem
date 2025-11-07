@@ -62,7 +62,7 @@ namespace ServiceLayer.Services
                     KycLevel = "Chưa xác minh",
                     RatingAvg = 0,
                     RatingCount = 0,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.Now
                 };
                 await _context.Stores.AddAsync(store);
 
@@ -103,7 +103,7 @@ namespace ServiceLayer.Services
                     Id = Guid.NewGuid(),
                     StoreId = store.Id,
                     Status = KycStatus.Pending,
-                    SubmittedAt = DateTime.UtcNow
+                    SubmittedAt = DateTime.Now
                 };
                 await _context.KycSubmissions.AddAsync(kycSubmission);
 
@@ -190,7 +190,7 @@ namespace ServiceLayer.Services
                     Id = Guid.NewGuid(),
                     StoreId = request.StoreId,
                     Status = KycStatus.Pending,
-                    SubmittedAt = DateTime.UtcNow
+                    SubmittedAt = DateTime.Now
                 };
                 await _context.KycSubmissions.AddAsync(kycSubmission);
             }

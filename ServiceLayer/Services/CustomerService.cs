@@ -27,7 +27,7 @@ namespace ServiceLayer.Services
 
         public CustomerService(
             IUserRepository userRepository,
-           IStoreRepository storeRepo,
+            IStoreRepository storeRepo,
             IBaseRepository<Customer, Guid> customerRepo,
             IBaseRepository<Address, Guid> addressRepo,
             IBaseRepository<Order, Guid> orderRepo,
@@ -85,8 +85,8 @@ namespace ServiceLayer.Services
                     PhoneNumberConfirmed = false,
                     EmailConfirmed = false,
                     Status = StatusValue.Active,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
 
                 // Tạo người dùng với mật khẩu
@@ -107,8 +107,8 @@ namespace ServiceLayer.Services
                     PreferredLang = "vi",
                     Tier = "Basic",
                     KycLevel = "None",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
                 _customerRepo.Add(customer);
                 await _context.SaveChangesAsync();
@@ -163,9 +163,10 @@ namespace ServiceLayer.Services
             // Đoạn code mới
             var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
             var isCustomer = await _userManager.IsInRoleAsync(user, "Customer");
+            var isStoreStaff = await _userManager.IsInRoleAsync(user, "StoreStaff");
 
             // Nếu không phải Admin VÀ cũng không phải Customer thì mới chặn
-            if (!isAdmin && !isCustomer)
+            if (!isAdmin && !isCustomer && !isStoreStaff)
             {
                 return (false, "Tài khoản không có quyền đăng nhập vào hệ thống này.");
             }
@@ -179,21 +180,41 @@ namespace ServiceLayer.Services
 
             if (result.Succeeded)
             {
-                var storeByUser = await _storeRepo.GetStoreByCustomerIdAsync(user.Id);
-
-                if(storeByUser != null)
+                if (isStoreStaff)
                 {
+                    var storeStaff = await _context.StoreStaffs.SingleOrDefaultAsync(x => x.UserId == user.Id);
+                    if (storeStaff == null)
+                    {
+                        return (false, "Không tìm thấy nhân viên cửa hàng tương ứng");
+                    }
                     // Kiểm tra xem claim đã có chưa
                     var existingClaims = await _userManager.GetClaimsAsync(user);
                     if (!existingClaims.Any(c => c.Type == "StoreId"))
                     {
-                        await _userManager.AddClaimAsync(user, new Claim("StoreId", storeByUser.Id.ToString()));
+                        await _userManager.AddClaimAsync(user, new Claim("StoreId", storeStaff.StoreId.ToString()));
                     }
-
                     await _signInManager.SignInAsync(user, isPersistent: rememberMe);
                 }
-                else 
-                    await _signInManager.SignInAsync(user, isPersistent: rememberMe);
+                else
+                {
+                    Store? storeByUser = await _storeRepo.GetStoreByCustomerIdAsync(user.Id);
+
+                    if (storeByUser != null)
+                    {
+                        // Kiểm tra xem claim đã có chưa
+                        var existingClaims = await _userManager.GetClaimsAsync(user);
+                        if (!existingClaims.Any(c => c.Type == "StoreId"))
+                        {
+                            await _userManager.AddClaimAsync(user, new Claim("StoreId", storeByUser.Id.ToString()));
+                        }
+
+                        await _signInManager.SignInAsync(user, isPersistent: rememberMe);
+                    }
+                    else
+                        await _signInManager.SignInAsync(user, isPersistent: rememberMe);
+                }
+                  
+
                 return (true, "Đăng nhập thành công");
             }
             else if (result.IsLockedOut)
@@ -225,7 +246,8 @@ namespace ServiceLayer.Services
             }
         }
 
-        public async Task<(bool Success, string Message)> ResetPasswordAsync(string userId, string token, string newPassword)
+        public async Task<(bool Success, string Message)> ResetPasswordAsync(string userId, string token,
+            string newPassword)
         {
             try
             {
@@ -250,7 +272,8 @@ namespace ServiceLayer.Services
             }
         }
 
-        public async Task<(bool Success, string Message)> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword)
+        public async Task<(bool Success, string Message)> ChangePasswordAsync(Guid userId, string currentPassword,
+            string newPassword)
         {
             try
             {
@@ -281,7 +304,8 @@ namespace ServiceLayer.Services
             return await _customerRepo.FindSingleAsync(c => c.Id == userId);
         }
 
-        public async Task UpdateProfileAsync(Guid userId, string fullName, string? email, string? phoneNumber, string? lang, string? tier)
+        public async Task UpdateProfileAsync(Guid userId, string fullName, string? email, string? phoneNumber,
+            string? lang, string? tier)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -296,7 +320,7 @@ namespace ServiceLayer.Services
                 customer.FullName = fullName;
                 customer.PreferredLang = lang ?? customer.PreferredLang;
                 customer.Tier = tier ?? customer.Tier;
-                customer.UpdatedAt = DateTime.UtcNow;
+                customer.UpdatedAt = DateTime.Now;
 
                 // Cập nhật email và số điện thoại nếu được cung cấp
                 if (!string.IsNullOrWhiteSpace(email) || !string.IsNullOrWhiteSpace(phoneNumber))
@@ -311,6 +335,7 @@ namespace ServiceLayer.Services
                             {
                                 throw new Exception("Email đã được sử dụng.");
                             }
+
                             user.Email = email;
                             customer.Email = email;
                         }
@@ -324,6 +349,7 @@ namespace ServiceLayer.Services
                             {
                                 throw new Exception("Số điện thoại đã được sử dụng.");
                             }
+
                             user.PhoneNumber = cleanPhone;
                             customer.PhoneNumber = cleanPhone;
                         }
@@ -361,8 +387,8 @@ namespace ServiceLayer.Services
             {
                 address.UserId = userId;
                 address.Active = true;
-                address.CreatedAt = DateTime.UtcNow;
-                address.UpdatedAt = DateTime.UtcNow;
+                address.CreatedAt = DateTime.Now;
+                address.UpdatedAt = DateTime.Now;
                 _addressRepo.Add(address);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -383,7 +409,7 @@ namespace ServiceLayer.Services
                 if (address != null)
                 {
                     address.Active = false;
-                    address.UpdatedAt = DateTime.UtcNow;
+                    address.UpdatedAt = DateTime.Now;
                     _addressRepo.Update(address);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();

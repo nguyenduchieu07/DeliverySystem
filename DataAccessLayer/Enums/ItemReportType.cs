@@ -15,4 +15,21 @@ namespace DataAccessLayer.Enums
         CheckedIn,   // Đã nhập kho
         CheckedOut   // Đã xuất kho
     }
+
+    public static class ItemReportTypeExtensions
+    {
+        public static string ToStringForType(this ItemReportType itemReportType)
+        {
+            return itemReportType switch
+            {
+                ItemReportType.Damaged => "Hư hỏng",
+                ItemReportType.NotAsDescribed => "Không như mô tả", 
+                ItemReportType.MissingItem => "Mất hàng", 
+                
+                ItemReportType.CheckedIn => "Nhập kho", 
+                ItemReportType.CheckedOut => "Xuất kho", 
+                _ => itemReportType.ToString()
+            };
+        }
+    }
 }

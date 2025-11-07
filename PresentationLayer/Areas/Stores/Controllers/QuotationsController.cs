@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 using System;
+using DataAccessLayer.Constants;
+using Microsoft.AspNetCore.Authorization;
 using PresentationLayer.Models;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
+    [Authorize(Roles = $"{UserRoles.STORE}, {UserRoles.STORESTAFF}")]
     public class QuotationsController : Controller
     {
         private readonly DeliverySytemContext _db;
@@ -29,12 +32,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
             var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync(); 
             var q = _db.Quotations.AsNoTracking().Where(x => x.StoreId == storeId);
 
-            ViewBag.Draft = await _db.Quotations.Where(x => x.Status == StatusValue.Draft && x.ValidUntil < DateTime.UtcNow)
+            ViewBag.Draft = await _db.Quotations.Where(x => x.Status == StatusValue.Draft && x.ValidUntil < DateTime.Now)
                .OrderBy(x => x.ValidUntil)
                .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
                .ToListAsync();
 
-            ViewBag.Waiting = await q.Where(x => x.Status == StatusValue.Sent && x.ValidUntil >= DateTime.UtcNow)
+            ViewBag.Waiting = await q.Where(x => x.Status == StatusValue.Sent && x.ValidUntil >= DateTime.Now)
                 .OrderBy(x => x.ValidUntil)
                 .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
                 .ToListAsync();
@@ -86,7 +89,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             if (qt.Status is not (StatusValue.Sent or StatusValue.Revised))
                 return BadRequest("Sai trạng thái.");
             qt.Status = StatusValue.Active;    // coi như 'Approved'
-            qt.UpdatedAt = DateTime.UtcNow;
+            qt.UpdatedAt = DateTime.Now;
             await _db.SaveChangesAsync();
             return Ok();
         }
@@ -105,9 +108,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             if (dto.PercentDiscount is > 0) qt.TotalAmount = Math.Max(0, qt.TotalAmount - Math.Round(qt.TotalAmount * dto.PercentDiscount.Value / 100m, 0));
             if (dto.AbsoluteDiscount is > 0) qt.TotalAmount = Math.Max(0, qt.TotalAmount - dto.AbsoluteDiscount.Value);
-            qt.ValidUntil = DateTime.UtcNow.AddHours(48);
+            qt.ValidUntil = DateTime.Now.AddHours(48);
             qt.Status = StatusValue.Revised;
-            qt.UpdatedAt = DateTime.UtcNow;
+            qt.UpdatedAt = DateTime.Now;
             await _db.SaveChangesAsync();
             return Ok(new { qt.TotalAmount, qt.ValidUntil });
         }
@@ -128,9 +131,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             if (dto.PercentDiscount is > 0) qt.TotalAmount = Math.Max(0, qt.TotalAmount - Math.Round(qt.TotalAmount * dto.PercentDiscount.Value / 100m, 0));
             if (dto.AbsoluteDiscount is > 0) qt.TotalAmount = Math.Max(0, qt.TotalAmount - dto.AbsoluteDiscount.Value);
-            qt.ValidUntil = DateTime.UtcNow.AddHours(48);
+            qt.ValidUntil = DateTime.Now.AddHours(48);
             qt.Status = StatusValue.Draft;
-            qt.UpdatedAt = DateTime.UtcNow;
+            qt.UpdatedAt = DateTime.Now;
             await _db.SaveChangesAsync();
             return Ok(new { qt.TotalAmount, qt.ValidUntil });
         }
@@ -147,7 +150,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             var qt = await _db.Quotations.FirstOrDefaultAsync(x => x.Id == id && x.StoreId == storeId);
             if (qt == null) return NotFound();
             qt.Status = StatusValue.InActive;
-            qt.UpdatedAt = DateTime.UtcNow;
+            qt.UpdatedAt = DateTime.Now;
             await _db.SaveChangesAsync();
             return Ok();
         }

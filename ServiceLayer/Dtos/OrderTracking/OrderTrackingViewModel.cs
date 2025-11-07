@@ -112,7 +112,7 @@ namespace ServiceLayer.Dtos.OrderTracking
         public ItemReportActionType ActionType { get; set; } // e.g. ConfirmDamage, ReturnItem, Compensate, Close
 
         public string? Note { get; set; }
-        public DateTime ActionDate { get; set; } = DateTime.UtcNow;
+        public DateTime ActionDate { get; set; } = DateTime.Now;
         public Guid? StaffId { get; set; } // nhân viên kho xử lý
         
     }
@@ -126,7 +126,7 @@ namespace ServiceLayer.Dtos.OrderTracking
         public string? Description { get; set; } // Mô tả chi tiết sự cố
         public string? ImageUrl { get; set; } // Ảnh minh chứng
         public ReportStatus Status { get; set; } = ReportStatus.Pending; // Chờ xử lý, Đã xử lý
-        public DateTime ReportedAt { get; set; } = DateTime.UtcNow;
+        public DateTime ReportedAt { get; set; } = DateTime.Now;
 
         // Nếu có bồi thường / hoàn hàng
         public bool IsReturned { get; set; } = false;

@@ -33,7 +33,7 @@ namespace ServiceLayer.Services
                 StoreId = storeId,
                 Status = KycStatus.Pending,
                 AdminNote = note,
-                SubmittedAt = DateTime.UtcNow
+                SubmittedAt = DateTime.Now
             };
             _db.Add(sub);
 
@@ -66,7 +66,7 @@ namespace ServiceLayer.Services
                 throw new InvalidOperationException("Trạng thái không hợp lệ để duyệt.");
 
             sub.Status = KycStatus.Approved;
-            sub.ReviewedAt = DateTime.UtcNow;
+            sub.ReviewedAt = DateTime.Now;
             sub.ReviewedBy = adminId;
 
             
@@ -86,7 +86,7 @@ namespace ServiceLayer.Services
            
             sub.Status = KycStatus.NeedChanges;
             sub.AdminNote = note;
-            sub.ReviewedAt = DateTime.UtcNow;
+            sub.ReviewedAt = DateTime.Now;
             sub.ReviewedBy = adminId;
 
             await _db.SaveChangesAsync();
@@ -103,7 +103,7 @@ namespace ServiceLayer.Services
 
             sub.Status = KycStatus.Rejected;
             sub.AdminNote = note;
-            sub.ReviewedAt = DateTime.UtcNow;
+            sub.ReviewedAt = DateTime.Now;
             sub.ReviewedBy = adminId;
 
             

@@ -162,7 +162,7 @@ namespace PresentationLayer.Controllers
 
             // Update contract
             contract.EndDate = newEndDate;
-            contract.UpdatedAt = DateTime.UtcNow;
+            contract.UpdatedAt = DateTime.Now;
 
             // Recalculate amount if needed based on new duration
             // var additionalDays = (newEndDate - contract.EndDate).Days;
@@ -194,7 +194,7 @@ namespace PresentationLayer.Controllers
 
             // Update contract status
             contract.Status = ContractStatus.Terminated;
-            contract.UpdatedAt = DateTime.UtcNow;
+            contract.UpdatedAt = DateTime.Now;
 
             // You might want to save the reason in a separate table or field
             // contract.TerminationReason = reason;
@@ -265,13 +265,13 @@ namespace PresentationLayer.Controllers
         public async Task UpdateExpiredContracts()
         {
             var expiredContracts = await _context.Contracts
-                .Where(c => c.Status == ContractStatus.Active && c.EndDate < DateTime.UtcNow)
+                .Where(c => c.Status == ContractStatus.Active && c.EndDate < DateTime.Now)
                 .ToListAsync();
 
             foreach (var contract in expiredContracts)
             {
                 contract.Status = ContractStatus.Expired;
-                contract.UpdatedAt = DateTime.UtcNow;
+                contract.UpdatedAt = DateTime.Now;
 
                 // Free up warehouse slot if exists
                 if (contract.WarehouseSlotId.HasValue)

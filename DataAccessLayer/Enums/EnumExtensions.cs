@@ -14,12 +14,24 @@ public partial class EnumExtensions
         };
     }
     
+    public static string ToDisplayStringForWarehouseSlotStatus(this StatusValue status)
+    {
+        return status switch
+        {
+            StatusValue.Pending => "Chờ duyệt",
+            StatusValue.Approved => "Đã duyệt",
+            StatusValue.Rejected => "Đã duyệt",
+            _ => status.ToString()
+        };
+    }
+    
     public static string ToDisplayStringForWarehouse(this StatusValue status)
     {
         return status switch
         {
             StatusValue.Pending => "Chờ duyệt",
             StatusValue.Approved => "Đã duyệt", 
+            StatusValue.Rejected => "Từ chối", 
             _ => status.ToString()
         };
     }
