@@ -61,44 +61,55 @@
         </section>
 
         <section class="mb-4">
-            <h4 class="text-primary border-bottom pb-2">III. Điều khoản hợp đồng</h4>
+    <h4 class="text-primary border-bottom pb-2">III. Điều khoản hợp đồng</h4>
 
-            <h5 class="fw-semibold mt-3">1. Điều khoản chung</h5>
-            <p>
-                Hai bên cam kết tuân thủ đúng các nội dung trong hợp đồng này. 
-                Mọi sửa đổi, bổ sung chỉ có giá trị khi được lập thành văn bản có chữ ký của hai bên.
-            </p>
+    <h5 class="fw-semibold mt-3">1. Điều khoản chung</h5>
+    <p>
+        Hai bên cam kết tuân thủ đúng các nội dung trong hợp đồng này. 
+        Mọi sửa đổi, bổ sung chỉ có giá trị khi được lập thành văn bản có chữ ký của hai bên.
+    </p>
 
-            <h5 class="fw-semibold mt-3">2. Điều khoản về đơn hàng</h5>
-            <ul>
-                <li>Bên A (Khách hàng) có trách nhiệm kiểm tra thông tin đơn hàng trước khi xác nhận hợp đồng.</li>
-                <li>Mọi thay đổi về số lượng hoặc chủng loại hàng hóa phải được thông báo trước tối thiểu 24 giờ.</li>
-                <li><strong>Thanh toán & Nhận hàng:</strong> 
-                    Bên A phải hoàn tất thanh toán toàn bộ giá trị đơn hàng trước khi tiến hành nhận hàng tại kho. 
-                    Việc giao nhận chỉ được thực hiện khi hệ thống xác nhận trạng thái thanh toán "Đã hoàn tất".
-                </li>
-            </ul>
+    <h5 class="fw-semibold mt-3">2. Điều khoản về đơn hàng</h5>
+    <ul>
+        <li>Bên A (Khách hàng) có trách nhiệm kiểm tra thông tin đơn hàng trước khi xác nhận hợp đồng.</li>
+        <li>Mọi thay đổi về số lượng hoặc chủng loại hàng hóa phải được thông báo trước tối thiểu 24 giờ.</li>
+        <li><strong>Thanh toán & Nhận hàng:</strong> 
+            Bên A phải hoàn tất thanh toán toàn bộ giá trị đơn hàng trước khi tiến hành nhận hàng tại kho. 
+            Việc giao nhận chỉ được thực hiện khi hệ thống xác nhận trạng thái thanh toán "Đã hoàn tất".
+        </li>
+    </ul>
 
-            <h5 class="fw-semibold mt-3">3. Điều khoản về kho bãi và lưu trữ</h5>
-            <ul>
-                <li>Kho bãi chỉ chịu trách nhiệm lưu giữ hàng hóa đúng như mô tả và thời hạn trong hợp đồng.</li>
-                <li>Hàng hóa hư hỏng do nguyên nhân khách quan (thiên tai, hỏa hoạn, v.v.) sẽ được xử lý theo chính sách bảo hiểm (nếu có).</li>
-            </ul>
+    <h5 class="fw-semibold mt-3">2.1. Điều khoản về thanh toán, hủy đơn và bồi thường</h5>
+    <ul>
+        <li><strong>Đặt cọc:</strong> Khi chốt báo giá, Bên A (Khách hàng) phải thanh toán trước <strong>25% giá trị đơn hàng</strong> để xác nhận hợp đồng.</li>
+        <li><strong>Hủy đơn hàng:</strong> Nếu Bên A đơn phương hủy hợp đồng sau khi đã xác nhận, 
+            số tiền đặt cọc <strong>sẽ không được hoàn lại</strong> và được tính là khoản <strong>phí hủy đơn 20% tổng giá trị đơn hàng</strong>.</li>
+        <li><strong>Trách nhiệm đền bù:</strong> 
+            Trong trường hợp hàng hóa bị mất mát, hư hỏng hoặc thiệt hại do lỗi từ phía Bên B (Cửa hàng hoặc Đơn vị lưu kho), 
+            Bên B có trách nhiệm <strong>đền bù thiệt hại từ 50% đến 100% giá trị hàng hóa</strong> tùy theo mức độ sự cố và biên bản xác nhận của hai bên.</li>
+    </ul>
 
-            <h5 class="fw-semibold mt-3">4. Điều khoản về xử lý tranh chấp</h5>
-            <p>
-                Mọi tranh chấp phát sinh từ hợp đồng sẽ được ưu tiên giải quyết thông qua thương lượng.
-                Nếu không đạt thỏa thuận, vụ việc sẽ được đưa ra Tòa án có thẩm quyền tại nơi ký kết hợp đồng.
-            </p>
+    <h5 class="fw-semibold mt-3">3. Điều khoản về kho bãi và lưu trữ</h5>
+    <ul>
+        <li>Kho bãi chỉ chịu trách nhiệm lưu giữ hàng hóa đúng như mô tả và thời hạn trong hợp đồng.</li>
+        <li>Hàng hóa hư hỏng do nguyên nhân khách quan (thiên tai, hỏa hoạn, v.v.) sẽ được xử lý theo chính sách bảo hiểm (nếu có).</li>
+    </ul>
 
-            @if (!string.IsNullOrEmpty(contract.TermsAndConditions))
-            {
-                <div class="mt-4 p-3 bg-light rounded">
-                    <h6 class="fw-semibold">Điều khoản bổ sung:</h6>
-                    <p>@contract.TermsAndConditions</p>
-                </div>
-            }
-        </section>
+    <h5 class="fw-semibold mt-3">4. Điều khoản về xử lý tranh chấp</h5>
+    <p>
+        Mọi tranh chấp phát sinh từ hợp đồng sẽ được ưu tiên giải quyết thông qua thương lượng.
+        Nếu không đạt thỏa thuận, vụ việc sẽ được đưa ra Tòa án có thẩm quyền tại nơi ký kết hợp đồng.
+    </p>
+
+    @if (!string.IsNullOrEmpty(contract.TermsAndConditions))
+    {
+        <div class="mt-4 p-3 bg-light rounded">
+            <h6 class="fw-semibold">Điều khoản bổ sung:</h6>
+            <p>@contract.TermsAndConditions</p>
+        </div>
+    }
+</section>
+
 
         <section class="text-center mt-5">
             <h5 class="fw-bold">Xác nhận hai bên</h5>
