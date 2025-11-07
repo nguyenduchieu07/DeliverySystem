@@ -314,6 +314,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     {
                         OrderItemId = item.OrderItemId,
                         Quantity = item.Quantity,
+                        Type = ItemReportType.CheckedIn,
                         ConditionNote = item.ConditionNote,
                         ImageUrl = imageUrl,
                         CreatedAt = DateTime.Now,
@@ -362,6 +363,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     {
                         OrderItemId = item.OrderItemId,
                         Quantity = item.Quantity,
+                        Type = ItemReportType.CheckedOut,
                         ConditionNote = item.ConditionNote,
                         ImageUrl = imageUrl,
                         Status = ReportStatus.CheckOut,
