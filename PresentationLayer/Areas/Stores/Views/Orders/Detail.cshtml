@@ -710,16 +710,16 @@
                                         var hasPending = item.IncidentReports.Any(r => r.Status == ReportStatus.Pending);
                                     }
                                     @* Nếu KHÔNG có báo cáo pending -> Hiện nút "Tạo báo cáo" *@
-                                    @if (isApproved && !checkOutAlready && !hasPending)
-                                    {
-                                        <button class="btn btn-sm btn-danger"
-                                                data-bs-toggle="modal"
-                                                data-order-id="@Model.Order.Id"
-                                                data-item-id="@item.Id"
-                                                data-bs-target="#createReportModal">
-                                            Tạo báo cáo
-                                        </button>
-                                    }
+                                    @* @if (isApproved && !checkOutAlready && !hasPending) *@
+                                    @* { *@
+                                    @*     <button class="btn btn-sm btn-danger" *@
+                                    @*             data-bs-toggle="modal" *@
+                                    @*             data-order-id="@Model.Order.Id" *@
+                                    @*             data-item-id="@item.Id" *@
+                                    @*             data-bs-target="#createReportModal"> *@
+                                    @*         Tạo báo cáo *@
+                                    @*     </button> *@
+                                    @* } *@
                                     @if (isCompleted || isApproved)
                                     {
                                         @* Nếu CÓ ít nhất 1 báo cáo pending -> Hiện nút "Xem" + "Xử lý" *@
@@ -730,16 +730,16 @@
                                         </button>
                                     }
                                     
-                                    @if (isApproved && hasPending)
-                                    {
-                                        
-
-                                        <button class="btn btn-sm btn-warning"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#handleIncidentModal_@item.Id">
-                                            Xử lý
-                                        </button>
-                                    }
+                                    @* @if (isApproved && hasPending) *@
+                                    @* { *@
+                                    @*      *@
+                                    @* *@
+                                    @*     <button class="btn btn-sm btn-warning" *@
+                                    @*             data-bs-toggle="modal" *@
+                                    @*             data-bs-target="#handleIncidentModal_@item.Id"> *@
+                                    @*         Xử lý *@
+                                    @*     </button> *@
+                                    @* } *@
 
                                 </td>
                             </tr>
@@ -993,52 +993,7 @@
     if (item.IncidentReports.OrderByDescending(x => x.CreatedAt).ToList().Count > 0)
     {
         
-        <!-- Modal xử lý sự cố -->
-        <div class="modal fade" id="handleIncidentModal_@item.Id" tabindex="-1"
-             aria-labelledby="incidentModalLabel_@item.Id" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title" id="incidentModalLabel_@item.Id">
-                            Xử lý sự cố - @item.ItemName
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <form id="handleIncidentForm_@item.Id" enctype="multipart/form-data">
-                            <!-- Hidden field -->
-                            <input type="hidden" name="OrderItemId" value="@item.Id"/>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Hành động xử lý</label>
-                                <select name="ActionType" class="form-select" required>
-                                    <option value="">-- Chọn hành động --</option>
-                                    <option value="1">Hoàn trả hàng</option>
-                                    <option value="2">Bồi thường</option>
-                                    <option value="3">Đóng sự cố</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Ghi chú xử lý</label>
-                                <textarea name="Note" class="form-control" rows="3"
-                                          placeholder="Nhập ghi chú..."></textarea>
-                            </div>
-
-                            <div class="d-flex justify-content-end">
-                                <button type="button" class="btn btn-primary"
-                                        onclick="submitIncidentAction('@item.Id')">
-                                    <i class="fas fa-check"></i> Xác nhận xử lý
-                                </button>
-                                <button type="button" class="btn btn-secondary ms-2" data-bs-dismiss="modal">Hủy
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
         <div class="modal fade" id="incidentModal_@item.Id" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
@@ -1062,7 +1017,7 @@
                                     </span>
                                 </div>
 
-                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.Type</p>
+                                <p class="mb-1"><strong>Loại sự cố:</strong> @report.Type.ToStringForType()</p>
                                 <p class="mb-1"><strong>Mô tả:</strong> @report.Description</p>
 
                                 @if (!string.IsNullOrEmpty(report.ImageUrl))
@@ -1112,7 +1067,7 @@
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            @foreach (var action in report.Actions)
+                                            @foreach (var action in report.Actions.OrderByDescending(x => x.ActionDate))
                                             {
                                                 <tr>
                                                     <td>
@@ -1129,7 +1084,7 @@
                                                     </td>
                                                     <td>@action.Note</td>
                                                     <td>@action.ActionDate.ToString("dd/MM/yyyy HH:mm")</td>
-                                                    <td>@(action.StaffId?.ToString().Substring(0, 8) ?? "-")</td>
+                                                    <td>@(action.Staff?.Role ?? "N/A")</td>
                                                 </tr>
                                             }
                                             </tbody>
@@ -1436,29 +1391,7 @@
         });
 
 
-        async function submitIncidentAction(itemId) {
-            const form = document.getElementById(`handleIncidentForm_${itemId}`);
-            const formData = new FormData(form);
-
-            const response = await fetch('/Stores/Orders/HandleIncident', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                alert(result.message);
-                const modalEl = document.getElementById(`handleIncidentModal_${itemId}`);
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                modal.hide();
-                location.reload();
-            } else {
-                alert(result.message || 'Xảy ra lỗi khi xử lý sự cố.');
-            }
-            
-
-        }
+        
 
         document.addEventListener('DOMContentLoaded', function () {
             const compensateCheckbox = document.querySelector('input[name="IsCompensated"]');

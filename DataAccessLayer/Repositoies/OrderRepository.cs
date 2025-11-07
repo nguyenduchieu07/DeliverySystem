@@ -20,9 +20,10 @@ namespace DataAccessLayer.Repositoies
         {
             var query = _context.Orders.AsNoTracking();
              query = query
+                 
                  .Include(o => o.Customer)
                  .Include(o => o.OrderItems)
-                 .ThenInclude( oi => oi.IncidentReports).ThenInclude(ir => ir.Actions)
+                 .ThenInclude( oi => oi.IncidentReports).ThenInclude(ir => ir.Actions).ThenInclude(a => a.Staff)
                  .Include(o => o.OrderWarehouseSlots).ThenInclude(ows => ows.WarehouseSlot).ThenInclude(ws => ws.Warehouse)
                  .Include(o => o.DropoffAddress)
                  .Include(o => o.PickupAddress)

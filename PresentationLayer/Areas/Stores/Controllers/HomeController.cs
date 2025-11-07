@@ -5,25 +5,40 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
-    [Authorize(Roles = UserRoles.STORE)]
+    [Authorize(Roles = $"{UserRoles.STORE}, {UserRoles.STORESTAFF}")]
     public class HomeController : Controller
     {
         private readonly IDashboardService _dashboardService;
         private readonly DeliverySytemContext _db;
-        public HomeController(IDashboardService dashboardService, DeliverySytemContext db)
+        private readonly UserManager<User> _userManager; 
+        public HomeController(IDashboardService dashboardService, DeliverySytemContext db, UserManager<User> userManager)
         {
             _dashboardService = dashboardService;
             _db = db;
+            _userManager = userManager;
         }
         public async Task<IActionResult> Index()
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var id = Guid.Parse(userId!);
             var store = await _db.Stores.Where(e => e.OwnerUserId == id).FirstOrDefaultAsync();
+           
+            
+            var staffStore = await _db.StoreStaffs.FirstAsync(x => x.UserId == id);
+            if (staffStore != null && store == null)
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (await _userManager.IsInRoleAsync(user, UserRoles.STORESTAFF))
+                {
+                    store = await _db.Stores.Where(e => e.Id == staffStore.StoreId).FirstOrDefaultAsync();
+                }
+            }
+            
             if(store.Status == DataAccessLayer.Enums.StatusValue.Pending)
             {
                 return BadRequest("Store is pending to approved by admin");

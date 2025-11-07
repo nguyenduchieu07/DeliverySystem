@@ -12,7 +12,7 @@ using DataAccessLayer.Enums;
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
-    //[Authorize(Roles = UserRoles.STORE)]
+    [Authorize(Roles = $"{UserRoles.STORE}, {UserRoles.STORESTAFF}")]
     public class WarehouseController : Controller
     {
         private readonly DeliverySytemContext _db;

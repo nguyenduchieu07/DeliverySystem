@@ -1,0 +1,221 @@
+﻿@model List<ItemReport>
+
+@{
+    ViewData["Title"] = "Danh sách báo cáo rủi ro ";
+}
+
+<style>
+    /* ============================================
+   SB Admin 2 Orange Theme - Simple Report Table
+   ============================================ */
+
+    /* Root Variables */
+    :root {
+        --primary-orange: #e5501b;
+        --secondary-orange: #d26c45;
+        --success: #1cc88a;
+        --info: #36b9cc;
+        --text-primary: #5a5c69;
+        --text-muted: #858796;
+        --border-color: #e3e6f0;
+        --bg-light: #f8f9fc;
+        --white: #ffffff;
+        --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        --border-radius: 0.35rem;
+    }
+
+    /* Page Title */
+    h2.mb-4 {
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Table Wrapper */
+    .table-wrapper {
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 1.5rem;
+    }
+
+    /* Table */
+    #reportTable {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 0;
+    }
+
+    /* Table Header */
+    #reportTable thead {
+        background: linear-gradient(180deg, var(--primary-orange) 0%, var(--secondary-orange) 100%);
+    }
+
+    #reportTable thead th {
+        padding: 1rem 1.25rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--white);
+        border: none;
+        text-align: left;
+    }
+
+    #reportTable thead th:first-child {
+        border-top-left-radius: var(--border-radius);
+        text-align: center;
+        width: 60px;
+    }
+
+    #reportTable thead th:last-child {
+        border-top-right-radius: var(--border-radius);
+        text-align: center;
+        width: 120px;
+    }
+
+    /* Table Body */
+    #reportTable tbody tr {
+        background: var(--white);
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.15s ease;
+    }
+
+    #reportTable tbody tr:nth-child(odd) {
+        background-color: rgba(248, 249, 252, 0.5);
+    }
+
+    #reportTable tbody tr:hover {
+        background-color: var(--bg-light);
+        transform: translateY(-1px);
+    }
+
+    #reportTable tbody td {
+        padding: 1rem 1.25rem;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        border-right: 1px solid var(--border-color);
+    }
+
+    #reportTable tbody td:first-child {
+        font-weight: 700;
+        color: var(--text-muted);
+        text-align: center;
+    }
+
+    #reportTable tbody td:last-child {
+        border-right: none;
+        text-align: center;
+    }
+
+    /* Button */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(180deg, var(--primary-orange) 0%, var(--secondary-orange) 100%);
+        color: var(--white);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0.25rem 0.5rem rgba(229, 80, 27, 0.3);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+    .table-wrapper {
+        padding: 1rem;
+        overflow-x: auto;
+    }
+
+    #reportTable thead th,
+    #reportTable tbody td {
+        padding: 0.75rem;
+        font-size: 0.8125rem;
+    }
+    }
+</style>
+
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+<div class="table-wrapper">
+    <table id="reportTable" class="display table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Loại báo cáo</th>
+            <th>Mô tả</th>
+            <th>Thời gian ghi nhận</th>
+            <th>Thao tác</th>
+        </tr>
+        </thead>
+        <tbody>
+        @{
+            var i = 1;
+            foreach (var report in Model)
+            {
+                <tr>
+                    <td>@i</td>
+                    <td>@report.Type.ToStringForType()</td>
+                    <td>@(report.Description ?? "N/A")</td>
+                    <td>@report.ReportedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        <a href="@Url.Action("Detail", "ItemReport", new { id = report.Id })"
+                           class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i> Xem
+                        </a>
+                    </td>
+                </tr>
+                i++;
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#reportTable').DataTable({
+                language: {
+                    lengthMenu: "Hiển thị _MENU_ mục",
+                    info: "Hiển thị _START_ đến _END_ trong tổng _TOTAL_ mục",
+                    infoEmpty: "Hiển thị 0 đến 0 trong tổng 0 mục",
+                    infoFiltered: "(lọc từ _MAX_ mục)",
+                    emptyTable: "Không có dữ liệu",
+                    search: "🔍",
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',
+                        previous: '<i class="fas fa-angle-left"></i>',
+                        next: '<i class="fas fa-angle-right"></i>',
+                        last: '<i class="fas fa-angle-double-right"></i>'
+                    },
+                    zeroRecords: "Không tìm thấy kết quả phù hợp"
+                },
+                pageLength: 10,
+                order: [[3, "desc"]] // Sắp xếp theo thời gian mới nhất
+            });
+        });
+    </script>
+}

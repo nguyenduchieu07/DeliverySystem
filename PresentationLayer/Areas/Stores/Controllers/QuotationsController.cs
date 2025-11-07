@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Abstractions.IServices;
 using System;
+using DataAccessLayer.Constants;
+using Microsoft.AspNetCore.Authorization;
 using PresentationLayer.Models;
 
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
+    [Authorize(Roles = $"{UserRoles.STORE}, {UserRoles.STORESTAFF}")]
     public class QuotationsController : Controller
     {
         private readonly DeliverySytemContext _db;

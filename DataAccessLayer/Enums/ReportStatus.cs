@@ -14,4 +14,17 @@ namespace DataAccessLayer.Enums
         CheckIn,
         CheckOut
     }
+    
+    public static class ReportStatusExtensions
+    {
+        public static string ToStringForReport(this  ReportStatus status)
+        {
+            return status switch
+            {
+                ReportStatus.Pending => "Chờ xử lý",
+                ReportStatus.Done => "Đã xử lý", 
+                _ => status.ToString()
+            };
+        }
+    }
 }

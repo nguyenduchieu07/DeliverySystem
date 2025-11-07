@@ -11,7 +11,7 @@ using System.Security.Claims;
 namespace PresentationLayer.Areas.Stores.Controllers
 {
     [Area("Stores")]
-    [Authorize(Roles = UserRoles.STORE)]
+    [Authorize(Roles = $"{UserRoles.STORE}, {UserRoles.STORESTAFF}")]
     public class ServicesController : Controller
     {
         private readonly DeliverySytemContext _db;
