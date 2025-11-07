@@ -1,0 +1,447 @@
+﻿@using DataAccessLayer.Enums
+@model List<DataAccessLayer.Entities.Warehouse>
+
+
+@{
+    ViewData["Title"] = "Xác nhận vị trí kho chờ duyệt";
+}
+<style>
+    /* ============================================
+   SB Admin 2 Orange Theme - Warehouse Slots CSS
+   ============================================ */
+
+    /* Root Variables */
+    :root {
+        --primary-orange: #e5501b;
+        --secondary-orange: #d26c45;
+        --success: #1cc88a;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --info: #36b9cc;
+        --text-primary: #5a5c69;
+        --text-muted: #858796;
+        --border-color: #e3e6f0;
+        --bg-light: #f8f9fc;
+        --white: #ffffff;
+        --shadow-card: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        --shadow-hover: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+        --border-radius: 0.35rem;
+        --transition: all 0.15s ease-in-out;
+    }
+
+    /* Body & Typography */
+    body {
+        font-family: 'Nunito', -apple-system, system-ui, sans-serif;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        background-color: var(--bg-light);
+    }
+
+    h2 {
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Page Header */
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* DataTable Wrapper */
+    #warehouseSlotsTable_wrapper {
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-card);
+        padding: 1.25rem;
+    }
+
+    /* DataTable Search & Length */
+    .dataTables_filter input {
+        padding: 0.625rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        transition: var(--transition);
+        margin-left: 0.5rem;
+    }
+
+    .dataTables_filter input:focus {
+        border-color: var(--primary-orange);
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
+    }
+
+    .dataTables_length select {
+        padding: 0.5rem 2rem 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        margin: 0 0.5rem;
+        transition: var(--transition);
+    }
+
+    .dataTables_length select:focus {
+        border-color: var(--primary-orange);
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(229, 80, 27, 0.25);
+    }
+
+    /* Table Styling */
+    #warehouseSlotsTable {
+        width: 100% !important;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    #warehouseSlotsTable thead {
+        background: linear-gradient(180deg, var(--primary-orange) 0%, var(--secondary-orange) 100%);
+    }
+
+    #warehouseSlotsTable thead th {
+        padding: 1rem 1.25rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--white);
+        border: none;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    #warehouseSlotsTable thead th:first-child {
+        border-top-left-radius: var(--border-radius);
+    }
+
+    #warehouseSlotsTable thead th:last-child {
+        border-top-right-radius: var(--border-radius);
+    }
+
+    /* Table Body */
+    #warehouseSlotsTable tbody tr {
+        background: var(--white);
+        border-bottom: 1px solid var(--border-color);
+        transition: var(--transition);
+    }
+
+    #warehouseSlotsTable tbody tr:hover {
+        background-color: var(--bg-light);
+        transform: translateY(-1px);
+    }
+
+    #warehouseSlotsTable tbody td {
+        padding: 1rem 1.25rem;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        vertical-align: middle;
+    }
+
+    /* Links in Table */
+    #warehouseSlotsTable tbody td a {
+        color: var(--primary-orange);
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    #warehouseSlotsTable tbody td a:hover {
+        color: var(--secondary-orange);
+        text-decoration: underline;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.875rem;
+        border-radius: 10rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .status-badge.pending {
+        background: linear-gradient(135deg, var(--warning) 0%, #f4b619 100%);
+        color: var(--white);
+    }
+
+    .status-badge.approved {
+        background: linear-gradient(135deg, var(--success) 0%, #17a673 100%);
+        color: var(--white);
+    }
+
+    .status-badge.rejected {
+        background: linear-gradient(135deg, var(--danger) 0%, #d32f2f 100%);
+        color: var(--white);
+    }
+
+    /* DataTable Info & Pagination */
+    .dataTables_info {
+        padding: 1rem 0 0.5rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .dataTables_paginate {
+        padding: 1rem 0 0.5rem;
+    }
+
+    .dataTables_paginate .paginate_button {
+        padding: 0.5rem 1rem;
+        margin: 0 0.125rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background: var(--white);
+        color: var(--text-primary) !important;
+        font-size: 0.875rem;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .dataTables_paginate .paginate_button:hover {
+        background: var(--bg-light);
+        border-color: var(--primary-orange);
+        color: var(--primary-orange) !important;
+    }
+
+    .dataTables_paginate .paginate_button.current {
+        background: linear-gradient(180deg, var(--primary-orange) 0%, var(--secondary-orange) 100%);
+        border-color: var(--primary-orange);
+        color: var(--white) !important;
+        font-weight: 700;
+    }
+
+    .dataTables_paginate .paginate_button.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Cell Border & Stripe */
+    #warehouseSlotsTable.cell-border tbody td {
+        border-right: 1px solid var(--border-color);
+    }
+
+    #warehouseSlotsTable.cell-border tbody td:last-child {
+        border-right: none;
+    }
+
+    #warehouseSlotsTable.stripe tbody tr:nth-child(odd) {
+        background-color: rgba(248, 249, 252, 0.5);
+    }
+
+    #warehouseSlotsTable.stripe tbody tr:nth-child(even) {
+        background-color: var(--white);
+    }
+
+    /* Sorting Icons */
+    .dataTables_wrapper .sorting,
+    .dataTables_wrapper .sorting_asc,
+    .dataTables_wrapper .sorting_desc {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .dataTables_wrapper .sorting:after,
+    .dataTables_wrapper .sorting_asc:after,
+    .dataTables_wrapper .sorting_desc:after {
+        position: absolute;
+        right: 0.5rem;
+        opacity: 0.6;
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+    }
+
+    .dataTables_wrapper .sorting:after {
+        content: '\f0dc';
+    }
+
+    .dataTables_wrapper .sorting_asc:after {
+        content: '\f0de';
+        opacity: 1;
+    }
+
+    .dataTables_wrapper .sorting_desc:after {
+        content: '\f0dd';
+        opacity: 1;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+    #warehouseSlotsTable_wrapper {
+        padding: 0.75rem;
+    }
+
+    #warehouseSlotsTable thead th,
+    #warehouseSlotsTable tbody td {
+        padding: 0.75rem;
+        font-size: 0.8125rem;
+    }
+
+    .dataTables_filter,
+    .dataTables_length {
+        margin-bottom: 1rem;
+    }
+    }
+
+    /* Loading State */
+    .dataTables_processing {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 1rem 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-card);
+        font-size: 0.875rem;
+        color: var(--primary-orange);
+        font-weight: 600;
+    }
+
+    /* Empty State */
+    .dataTables_empty {
+        padding: 3rem !important;
+        text-align: center;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    /* Scrollable Table Container */
+    .dataTables_scroll {
+        overflow-x: auto;
+    }
+
+    .dataTables_scrollBody {
+        overflow-x: auto;
+    }
+
+    /* Action Buttons (if you add them later) */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.375rem 0.75rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: var(--transition);
+        margin: 0 0.125rem;
+    }
+
+    .btn-action.btn-approve {
+        background: var(--success);
+        color: var(--white);
+    }
+
+    .btn-action.btn-approve:hover {
+        background: #17a673;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transform: translateY(-1px);
+    }
+
+    .btn-action.btn-reject {
+        background: var(--danger);
+        color: var(--white);
+    }
+
+    .btn-action.btn-reject:hover {
+        background: #d32f2f;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transform: translateY(-1px);
+    }
+
+    .btn-action.btn-view {
+        background: var(--info);
+        color: var(--white);
+    }
+
+    .btn-action.btn-view:hover {
+        background: #2c9faf;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transform: translateY(-1px);
+    }
+</style>
+<h2 class="mb-4">Danh sách vị trí kho chờ duyệt</h2>
+
+<table id="warehouseSlotsTable" class="display cell-border stripe" style="width:100%">
+    <thead>
+    <tr>
+        <th>Tên kho</th>
+        <th>Cửa hàng</th>
+        <th>Trạng thái</th>
+        <th>Thao tác</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var w in Model)
+    {
+        <tr>
+            <td>@w.Name</td>
+            <td>
+                <a href="@Url.Action("Detail", "Store", new { storeId = w.Store.Id })">
+                    @w.Store.StoreName
+                </a>
+            </td>
+            <td>@w.Status.ToDisplayStringForWarehouse()</td>
+                <td class="text-center">
+                    <form asp-controller="Warehouse" asp-action="ApproveSlot" method="post" style="display:inline;">
+                        <input type="hidden" name="warehouseId" value="@w.Id" />
+                        <button type="submit" class="btn btn-success btn-sm" title="Duyệt">
+                            <i class="fas fa-check">Chấp nhận</i>
+                        </button>
+                    </form>
+
+                    <form asp-controller="Warehouse" asp-action="RejectSlot" method="post" style="display:inline; margin-left:4px;">
+                        <input type="hidden" name="warehouseId" value="@w.Id" />
+                        <button type="submit" class="btn btn-danger btn-sm" title="Từ chối">
+                            <i class="fas fa-times">Từ chối</i>
+                        </button>
+                    </form>
+                </td>
+                
+        </tr>
+    }
+    </tbody>
+</table>
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function () {
+            $('#warehouseSlotsTable').DataTable({
+                pageLength: 10,
+                order: [[0, 'asc']],
+                language: {
+                    lengthMenu: "Hiển thị _MENU_ mục",
+
+                    info: "Hiển thị _START_ đến _END_ trong tổng _TOTAL_ mục",
+                    infoEmpty: "Hiển thị 0 đến 0 trong tổng 0 mục",
+                    infoFiltered: "(lọc từ _MAX_ mục)",
+                    emptyTable: "Không có dữ liệu",
+                    search: "🔍",
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',   // Đầu
+                        previous: '<i class="fas fa-angle-left"></i>',       // Trước
+                        next: '<i class="fas fa-angle-right"></i>',          // Sau
+                        last: '<i class="fas fa-angle-double-right"></i>'    // Cuối
+                    },
+                    zeroRecords: "Không tìm thấy kết quả phù hợp"
+                },
+                responsive: true,
+                columnDefs: [
+                    {orderable: false, targets: [2,3]} 
+                ]
+            });
+        });
+    </script>
+}

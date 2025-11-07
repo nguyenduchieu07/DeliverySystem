@@ -204,4 +204,8 @@ public class StoreController : Controller
 
         return View(warehouse);
     }
+
+    
+    
+   
 }
