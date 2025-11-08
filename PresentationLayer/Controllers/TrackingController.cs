@@ -93,7 +93,8 @@ namespace PresentationLayer.Controllers
                 .ThenInclude(oi => oi.Service)
                 .Include(x => x.OrderItems)
                 .ThenInclude(x => x.IncidentReports)
-                .ThenInclude(x => x.Actions)
+                .ThenInclude(x => x.Actions).ThenInclude(itemReportAction => itemReportAction.Staff)
+                .ThenInclude(storeStaff => storeStaff.User)
                 .Include(o => o.Quotation)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
@@ -154,6 +155,7 @@ namespace PresentationLayer.Controllers
                                 IncidentReportId = ia.ItemReportId,
                                 Note = ia.Note,
                                 StaffId = ia.StaffId,
+                                StaffEmail = ia.Staff?.User?.Email
                             }).ToList()
                         }
                     ).ToList()

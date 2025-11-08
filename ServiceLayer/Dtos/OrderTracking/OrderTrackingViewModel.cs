@@ -115,6 +115,8 @@ namespace ServiceLayer.Dtos.OrderTracking
         public DateTime ActionDate { get; set; } = DateTime.Now;
         public Guid? StaffId { get; set; } // nhân viên kho xử lý
         
+        public string? StaffEmail { get; set; }
+        
     }
 
     public partial class IncidentReportViewModel
