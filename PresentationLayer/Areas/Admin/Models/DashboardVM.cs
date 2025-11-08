@@ -6,5 +6,7 @@
         public int ActiveStores { get; set; }
         public int OrdersToday { get; set; }
         public int LowRatingCount { get; set; }
+        
+       
     }
 }

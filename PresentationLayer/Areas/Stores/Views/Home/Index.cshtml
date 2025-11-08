@@ -1,8 +1,7 @@
-﻿@using PresentationLayer.Areas.Stores.Models
-@model DashboardDto
+﻿@model PresentationLayer.Areas.Stores.Models.DashboardViewModel
 @{
     ViewBag.Title = "Tổng quan cửa hàng";
-
+    
 }
 <div class="breadcrumb">Trang chủ ▸ <span>Dashboard</span></div>
 <div class="page-head">
@@ -15,25 +14,55 @@
 <section class="grid cards">
     <div class="card metric">
         <div class="label">Đơn mới hôm nay</div>
-        <div class="value">@Model.OrderToday.Total</div>
-        <div class="delta up">@Model.OrderToday.GrowthRate% so với hôm qua</div>
+        <div class="value">@Model.DashboardDto.OrderToday.Total</div>
+        <div class="delta up">@Model.DashboardDto.OrderToday.GrowthRate% so với hôm qua</div>
     </div>
     <div class="card metric">
         <div class="label">Đang xử lý</div>
-        <div class="value">@Model.TotalOrderPending</div>
+        <div class="value">@Model.DashboardDto.TotalOrderPending</div>
         <div class="delta">—</div>
     </div>
     <div class="card metric">
         <div class="label">Doanh thu (tháng)</div>
-        <div class="value">₫ @Model.Revenue.Total.ToString("N0")</div>
-        <div class="delta up">@Model.Revenue.SaleGrowthRatio% MoM</div>
+        <div class="value">₫ @Model.DashboardDto.Revenue.Total.ToString("N0")</div>
+        <div class="delta up">@Model.DashboardDto.Revenue.SaleGrowthRatio% MoM</div>
     </div>
     <div class="card metric">
         <div class="label">Điểm đánh giá</div>
-        <div class="value">@Model.AvarageRating.Average ⭐</div>
-        <div class="delta">@Model.AvarageRating.Total lượt</div>
+        <div class="value">@Model.DashboardDto.AvarageRating.Average ⭐</div>
+        <div class="delta">@Model.DashboardDto.AvarageRating.Total lượt</div>
     </div>
 </section>
+
+<section class="section my-4 p-4">
+    @{
+        var period = ViewContext.HttpContext.Request.Query["period"].ToString();
+        var fromValue = ViewContext.HttpContext.Request.Query["from"].ToString();
+        var toValue = ViewContext.HttpContext.Request.Query["to"].ToString();
+    }
+
+    <!-- Filter Form -->
+    <form id="filterForm" method="get" class="mb-4 row g-2 align-items-end">
+        <div class="col-auto">
+            <label for="from" class="form-label">Từ ngày</label>
+            <input type="date" id="from" name="from" class="form-control" value="@fromValue" required />
+        </div>
+        <div class="col-auto">
+            <label for="to" class="form-label">Đến ngày</label>
+            <input type="date" id="to" name="to" class="form-control" value="@toValue" required />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+        </div>
+    </form>
+
+    <!-- Chart Container -->
+    <canvas id="revenueChart" style="min-height: 350px;"></canvas>
+    <div id="noDataMessage" class="text-center text-muted mt-2" style="display:none;">
+        Dữ liệu không đủ để hiển thị
+    </div>
+</section>
+
 <section class="section" style="margin-top:16px">
     <div class="header">
         <div class="title">Đơn đang làm</div>
@@ -55,9 +84,9 @@
                 </tr>
             </thead>
             <tbody>
-                @if(Model.OrderPendings.Count > 0)
+                @if(Model.DashboardDto.OrderPendings.Count > 0)
                 {
-                    @foreach (var order in Model.OrderPendings)
+                    @foreach (var order in Model.DashboardDto.OrderPendings)
                     {
                         <tr>
                             <td>#ORD-@order.CreatedAt.ToString("yyyy-MM-dd")</td>
@@ -82,7 +111,7 @@
     </div>
 </section>
 
-@foreach(var warehouse in Model.WareHouseDashboards)
+@foreach(var warehouse in Model.DashboardDto.WareHouseDashboards)
 {
     <section class="section" style="margin-top:16px">
         <div class="header">
@@ -122,4 +151,68 @@
         </div>
     </section>
 
+}
+
+@section Scripts
+{
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.getElementById('filterForm').addEventListener('submit', function(e){
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+
+            if(!from || !to){
+                alert('Vui lòng chọn cả Từ ngày và Đến ngày.');
+                e.preventDefault();
+                return;
+            }
+
+            const fromDate = new Date(from);
+            const toDate = new Date(to);
+
+            // to phải lớn hơn from ít nhất 1 ngày
+            if(toDate <= fromDate){
+                alert('Ngày "Đến" phải lớn hơn ngày "Từ" ít nhất 1 ngày.');
+                e.preventDefault();
+                return;
+            }
+        });
+
+        const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueLabels));
+        const data = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueData));
+        const ctx = document.getElementById('revenueChart');
+
+        if(!data || data.length < 2){
+            // Ẩn canvas, hiện thông báo
+            ctx.style.display = 'none';
+            document.getElementById('noDataMessage').style.display = 'block';
+        } else {
+            new Chart(ctx, {
+                type: 'line', // hoặc 'bar' tùy logic
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: data,
+                        borderWidth: 2,
+                        borderColor: '#e5501b',
+                        backgroundColor: '#ffffff',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: function(value){ return value.toLocaleString() + "₫"; } } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+    </script>
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Areas.Admin.Models;
 using System;
+using System.Security.Claims;
 
 namespace PresentationLayer.Areas.Admin.Controllers
 {
