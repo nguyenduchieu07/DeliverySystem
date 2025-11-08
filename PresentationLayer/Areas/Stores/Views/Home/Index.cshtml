@@ -1,7 +1,6 @@
 ﻿@model PresentationLayer.Areas.Stores.Models.DashboardViewModel
 @{
     ViewBag.Title = "Tổng quan cửa hàng";
-    
 }
 <div class="breadcrumb">Trang chủ ▸ <span>Dashboard</span></div>
 <div class="page-head">
@@ -35,21 +34,35 @@
 </section>
 
 <section class="section my-4 p-4">
-    @{
-        var period = ViewContext.HttpContext.Request.Query["period"].ToString();
-        var fromValue = ViewContext.HttpContext.Request.Query["from"].ToString();
-        var toValue = ViewContext.HttpContext.Request.Query["to"].ToString();
-    }
+    
+    <section class=" d-flex align-items-center justify-content-between">
+        <h5 class="card-title text-center mb-0 flex-grow-1">Tổng quan doanh thu</h5>
+        @{
+            var fromValue = ViewContext.HttpContext.Request.Query["from"].ToString();
+            var toValue = ViewContext.HttpContext.Request.Query["to"].ToString();
+    
+            // Tạo giá trị mặc định nếu rỗng
+            var defaultFrom = string.IsNullOrEmpty(fromValue) ? DateTime.Now.AddDays(-6).ToString("yyyy-MM-dd") : fromValue;
+            var defaultTo = string.IsNullOrEmpty(toValue) ? DateTime.Now.ToString("yyyy-MM-dd") : toValue;
+        }
+        <a href="@Url.Action("ExportRevenueReport", "Home", new { area = "Stores", from = defaultFrom, to = defaultTo })"
+           class="btn btn-success ms-3" target="_blank">
+            <i class="fa fa-download me-1"></i> Tải báo cáo
+        </a>
+
+    </section>
+    @* <h5 class="card-title text-center mb-3">Tổng quan doanh thu</h5> *@
+ 
 
     <!-- Filter Form -->
     <form id="filterForm" method="get" class="mb-4 row g-2 align-items-end">
         <div class="col-auto">
             <label for="from" class="form-label">Từ ngày</label>
-            <input type="date" id="from" name="from" class="form-control" value="@fromValue" required />
+            <input type="date" id="from" name="from" class="form-control" value="@defaultFrom" required/>
         </div>
         <div class="col-auto">
             <label for="to" class="form-label">Đến ngày</label>
-            <input type="date" id="to" name="to" class="form-control" value="@toValue" required />
+            <input type="date" id="to" name="to" class="form-control" value="@defaultTo" required/>
         </div>
         <div class="col-auto">
             <button type="submit" class="btn btn-primary w-100">Lọc</button>
@@ -63,6 +76,108 @@
     </div>
 </section>
 
+<section class="section my-4 p-4">
+    <h5 class="card-title text-center mb-3">So sánh dữ liệu theo tháng</h5>
+        
+        <div class="card-body p-4">
+            <div class="mb-4">
+                <label class="form-label fw-semibold text-secondary mb-3">
+                    <i class="bi bi-calendar-check me-1"></i>Chọn 2 tháng để so sánh:
+                </label>
+                <div class="d-flex flex-wrap gap-2">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <div class="form-check month-check-item">
+                            <input class="form-check-input month-checkbox" type="checkbox" value="@i" id="monthCheck@i">
+                            <label class="form-check-label" for="monthCheck@i">Tháng @i</label>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <button type="button" class="btn btn-primary mb-4 px-4 py-2 shadow-sm" id="compareBtn" style="background-color: #e5501b; border-color: #e5501b;">
+                <i class="bi bi-graph-up me-2"></i>So sánh ngay
+            </button>
+
+            <div class="chart-container p-3" style="background-color: #f8f9fa; border-radius: 8px;">
+                <canvas id="compareChart" style="min-height: 250px;"></canvas>
+                <div id="compareNoData" class="text-center text-muted mt-2 py-5" style="display:none;">
+                    <i class="bi bi-info-circle fs-1 mb-3 d-block" style="color: #e5501b; opacity: 0.5;"></i>
+                    <p class="mb-0">Dữ liệu không đủ để hiển thị chart</p>
+                </div>
+            </div>
+        </div>
+</section>
+
+<style>
+    .month-check-item {
+        background-color: #fff;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 8px 16px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .month-check-item:hover {
+        border-color: #e5501b;
+        background-color: #fff5f2;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(229, 80, 27, 0.15);
+    }
+    
+    .month-check-item .form-check-input:checked ~ .form-check-label {
+        color: #e5501b;
+        font-weight: 600;
+    }
+    
+    .month-check-item .form-check-input:checked {
+        background-color: #e5501b;
+        border-color: #e5501b;
+    }
+    
+    .month-check-item .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(229, 80, 27, 0.25);
+        border-color: #e5501b;
+    }
+    
+    .month-check-item .form-check-label {
+        cursor: pointer;
+        user-select: none;
+        margin-bottom: 0;
+    }
+    
+    #compareBtn {
+        transition: all 0.3s ease;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    
+    #compareBtn:hover {
+        background-color: #c94516 !important;
+        border-color: #c94516 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(229, 80, 27, 0.3) !important;
+    }
+    
+    #compareBtn:active {
+        transform: translateY(0);
+    }
+    
+    .chart-container {
+        position: relative;
+    }
+    
+    .card {
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    }
+</style>
+
+
 <section class="section" style="margin-top:16px">
     <div class="header">
         <div class="title">Đơn đang làm</div>
@@ -73,45 +188,45 @@
     <div style="overflow:auto">
         <table class="table">
             <thead>
-                <tr>
-                    <th>Order #</th>
-                    <th>Khách hàng</th>
-                    <th>Dịch vụ</th>
-                    <th>Trạng thái</th>
-                    <th>Tạo lúc</th>
-                    <th>Tổng tiền</th>
-                    <th></th>
-                </tr>
+            <tr>
+                <th>Order #</th>
+                <th>Khách hàng</th>
+                <th>Dịch vụ</th>
+                <th>Trạng thái</th>
+                <th>Tạo lúc</th>
+                <th>Tổng tiền</th>
+                <th></th>
+            </tr>
             </thead>
             <tbody>
-                @if(Model.DashboardDto.OrderPendings.Count > 0)
+            @if (Model.DashboardDto.OrderPendings.Count > 0)
+            {
+                @foreach (var order in Model.DashboardDto.OrderPendings)
                 {
-                    @foreach (var order in Model.DashboardDto.OrderPendings)
-                    {
-                        <tr>
-                            <td>#ORD-@order.CreatedAt.ToString("yyyy-MM-dd")</td>
-                            <td>@order.CustomerName</td>
-                            <td>@order.Name</td>
-                            <td><span class="badge warn">@order.Status</span></td>
-                            <td>@order.CreatedAt.ToString("hh-mm dd/MM")</td>
-                            <td>₫ @order.Total.ToString("N0")</td>
-                            <td><a class="badge" href="#">Ký HĐ</a></td>
-                        </tr>
-                    }
+                    <tr>
+                        <td>#ORD-@order.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>@order.CustomerName</td>
+                        <td>@order.Name</td>
+                        <td><span class="badge warn">@order.Status</span></td>
+                        <td>@order.CreatedAt.ToString("hh-mm dd/MM")</td>
+                        <td>₫ @order.Total.ToString("N0")</td>
+                        <td><a class="badge" href="#">Ký HĐ</a></td>
+                    </tr>
                 }
-                else
-                {
-                     <tr>
-        <td colspan="7" class="text-center text-muted">Chưa có đơn hàng</td>
-    </tr>
-                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Chưa có đơn hàng</td>
+                </tr>
+            }
 
             </tbody>
         </table>
     </div>
 </section>
 
-@foreach(var warehouse in Model.DashboardDto.WareHouseDashboards)
+@foreach (var warehouse in Model.DashboardDto.WareHouseDashboards)
 {
     <section class="section" style="margin-top:16px">
         <div class="header">
@@ -121,7 +236,7 @@
             </div>
         </div>
         <div class="grid" style="grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; padding:12px">
-            @foreach(var slot in warehouse.Slots)
+            @foreach (var slot in warehouse.Slots)
             {
                 <div class="card" style="padding:10px; display:grid; gap:6px; align-items:start">
                     <strong>@slot.Code</strong>
@@ -150,18 +265,18 @@
             </div> *@
         </div>
     </section>
-
 }
 
 @section Scripts
 {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script>
-        document.getElementById('filterForm').addEventListener('submit', function(e){
+        document.getElementById('filterForm').addEventListener('submit', function (e) {
             const from = document.getElementById('from').value;
             const to = document.getElementById('to').value;
 
-            if(!from || !to){
+            if (!from || !to) {
                 alert('Vui lòng chọn cả Từ ngày và Đến ngày.');
                 e.preventDefault();
                 return;
@@ -171,7 +286,7 @@
             const toDate = new Date(to);
 
             // to phải lớn hơn from ít nhất 1 ngày
-            if(toDate <= fromDate){
+            if (toDate <= fromDate) {
                 alert('Ngày "Đến" phải lớn hơn ngày "Từ" ít nhất 1 ngày.');
                 e.preventDefault();
                 return;
@@ -182,7 +297,7 @@
         const data = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueData));
         const ctx = document.getElementById('revenueChart');
 
-        if(!data || data.length < 2){
+        if (!data || data.length < 2) {
             // Ẩn canvas, hiện thông báo
             ctx.style.display = 'none';
             document.getElementById('noDataMessage').style.display = 'block';
@@ -204,15 +319,100 @@
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: true, position: 'top' },
-                        tooltip: { mode: 'index', intersect: false }
+                        legend: {display: true, position: 'top'},
+                        tooltip: {mode: 'index', intersect: false}
                     },
                     scales: {
-                        y: { beginAtZero: true, ticks: { callback: function(value){ return value.toLocaleString() + "₫"; } } },
-                        x: { grid: { display: false } }
+                        y: {
+                            beginAtZero: true, ticks: {
+                                callback: function (value) {
+                                    return value.toLocaleString() + "₫";
+                                }
+                            }
+                        },
+                        x: {grid: {display: false}}
                     }
                 }
             });
         }
+    </script>
+
+    <script>
+        let compareChart; // lưu chart ra ngoài
+
+        document.getElementById('compareBtn').addEventListener('click', async function () {
+            const selected = Array.from(document.querySelectorAll('.month-checkbox:checked')).map(c => c.value);
+
+            if (selected.length !== 2) {
+                alert('Vui lòng chọn đúng 2 tháng để so sánh.');
+                return;
+            }
+
+            const month1 = selected[0];
+            const month2 = selected[1];
+
+            const response = await fetch(`/Stores/GetRevenueChangesBy2Months?month1=${month1}&month2=${month2}`);
+            const json = await response.json();
+
+            const revenue1 = json.revenues[0];
+            const percentChange = json.changes[0];
+            const revenue2 = json.revenues[1];
+
+            const ctx = document.getElementById('compareChart');
+
+            // Nếu đã có chart trước đó thì destroy nó
+            if (compareChart) {
+                compareChart.destroy();
+            }
+
+            compareChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    color: '#000',
+                    anchor: 'end', // hoặc 'center'
+                    align: 'end', // 'center' sẽ đặt label ở giữa thanh
+                    labels: [`Tháng ${month1}`, `Tháng ${month2}`],
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: [revenue1, revenue2],
+                        backgroundColor: ['#e5501b', '#28a745']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#000',
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value, context) {
+                                if(revenue1 === revenue2){
+                                    return value.toLocaleString() + '₫';
+                                }
+                                if(context.dataIndex === 1) {
+                                    return value.toLocaleString() + '₫ (' + percentChange + '%)';
+                                }
+                                return value.toLocaleString() + '₫';
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: v => v.toLocaleString() + '₫'
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        });
+    </script>
+    
+    <script>
+        
+
     </script>
 }
