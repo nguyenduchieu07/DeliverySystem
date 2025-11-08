@@ -26,20 +26,27 @@ namespace PresentationLayer.Areas.Stores.Controllers
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var id = Guid.Parse(userId!);
-            var store = await _db.Stores.Where(e => e.OwnerUserId == id).FirstOrDefaultAsync();
-           
-            
-            var staffStore = await _db.StoreStaffs.FirstAsync(x => x.UserId == id);
-            if (staffStore != null && store == null)
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            var isStoreRole = await _userManager.IsInRoleAsync(user, UserRoles.STORE);
+            var isStoreStaffRole = await _userManager.IsInRoleAsync(user, UserRoles.STORESTAFF);
+
+            Store? store = null;
+            if (isStoreRole)
             {
-                var user = await _userManager.FindByIdAsync(userId);
-                if (await _userManager.IsInRoleAsync(user, UserRoles.STORESTAFF))
-                {
-                    store = await _db.Stores.Where(e => e.Id == staffStore.StoreId).FirstOrDefaultAsync();
-                }
+                store = await _db.Stores.Where(e => e.OwnerUserId == id).FirstOrDefaultAsync();
             }
-            
-            if(store.Status == DataAccessLayer.Enums.StatusValue.Pending)
+            else if(isStoreStaffRole){
+                var staffStore = await _db.StoreStaffs.FirstAsync(x => x.UserId == id);
+                store = await _db.Stores.Where(e => e.Id == staffStore.StoreId).FirstOrDefaultAsync();
+            }else
+            {   
+                return RedirectToAction("Login", "Account");
+            }
+
+
+            if (store.Status == DataAccessLayer.Enums.StatusValue.Pending)
             {
                 return BadRequest("Store is pending to approved by admin");
             }
