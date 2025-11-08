@@ -152,20 +152,103 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             return Json(allQuarters);
         }
-        
-        
+
+
         [HttpGet("/Stores/ExportRevenueReport")]
-        public async Task<IActionResult> ExportRevenueReport(DateTime from, DateTime to)
+        public async Task<IActionResult> ExportRevenueReport(DateTime? from = null, DateTime? to = null)
         {
-            // Lấy dữ liệu từ DB
+            var startDate = from ?? DateTime.Now.AddDays(-6);
+            var endDate = to ?? DateTime.Now;
+
+            using var workbook = new XLWorkbook();
+
+            // ===== Sheet 1: Doanh thu theo quý =====
+            var sheetQuarter = workbook.Worksheets.Add("Doanh thu theo quý");
+            int year = DateTime.Now.Year;
+            var ordersYear = await _db.Orders.Where(o => o.CreatedAt.Year == year).ToListAsync();
+
+            var revenueByQuarter = Enumerable.Range(1, 4)
+                .Select(q => new
+                {
+                    Quarter = q,
+                    TotalRevenue = ordersYear
+                        .Where(o => (o.CreatedAt.Month - 1) / 3 + 1 == q)
+                        .Sum(o => o.TotalAmount)
+                })
+                .ToList();
+
+            sheetQuarter.Cell(1, 1).Value = "Quý";
+            sheetQuarter.Cell(1, 2).Value = "Doanh thu (VNĐ)";
+            int rowQ = 2;
+            foreach (var q in revenueByQuarter)
+            {
+                sheetQuarter.Cell(rowQ, 1).Value = $"Quý {q.Quarter}";
+                sheetQuarter.Cell(rowQ, 2).Value = q.TotalRevenue;
+                sheetQuarter.Cell(rowQ, 2).Style.NumberFormat.Format = "#,##0 ₫";
+                rowQ++;
+            }
+
+            sheetQuarter.Columns().AdjustToContents();
+
+            // ===== Sheet 2: So sánh doanh thu theo tháng =====
+            var sheetCompare = workbook.Worksheets.Add("So sánh tháng");
+
+            var paymentsCompare = await _db.Orders
+                .Where(o => o.CreatedAt.Date >= startDate.Date && o.CreatedAt.Date <= endDate.Date)
+                .SelectMany(o => o.Payments
+                    .Where(p => p.Status == StatusValue.Completed)
+                    .Select(p => new { o.CreatedAt, p.Amount }))
+                .ToListAsync();
+
+            // Liệt kê đủ 12 tháng
+            var monthly = Enumerable.Range(1, 12)
+                .Select(m => new
+                {
+                    Month = m,
+                    TotalRevenue = paymentsCompare
+                        .Where(p => p.CreatedAt.Month == m)
+                        .Sum(p => p.Amount)
+                })
+                .ToList();
+
+            decimal? prevRevenueMonth = null;
+            sheetCompare.Cell(1, 1).Value = "Tháng";
+            sheetCompare.Cell(1, 2).Value = "Doanh thu (VNĐ)";
+            sheetCompare.Cell(1, 3).Value = "Tỉ lệ tăng trưởng (%)";
+
+            var headerRangeM = sheetCompare.Range(1, 1, 1, 3);
+            headerRangeM.Style.Font.Bold = true;
+            headerRangeM.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRangeM.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+            int rowM = 2;
+            foreach (var m in monthly)
+            {
+                decimal growth = prevRevenueMonth.HasValue && prevRevenueMonth.Value != 0
+                    ? Math.Round((m.TotalRevenue - prevRevenueMonth.Value) / prevRevenueMonth.Value * 100, 2)
+                    : 0;
+
+                sheetCompare.Cell(rowM, 1).Value = $"Tháng {m.Month}";
+                sheetCompare.Cell(rowM, 2).Value = m.TotalRevenue;
+                sheetCompare.Cell(rowM, 3).Value = growth;
+
+                sheetCompare.Cell(rowM, 2).Style.NumberFormat.Format = "#,##0 ₫";
+                sheetCompare.Cell(rowM, 3).Style.NumberFormat.Format = "0.00";
+
+                prevRevenueMonth = m.TotalRevenue;
+                rowM++;
+            }
+
+            sheetCompare.Columns().AdjustToContents();
+
+            // ===== Sheet 3: Doanh thu chi tiết theo ngày =====
             var payments = await _db.Orders
-                .Where(o => o.CreatedAt >= from && o.CreatedAt <= to)
+                .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .SelectMany(o => o.Payments
                     .Where(p => p.Status == StatusValue.Completed)
                     .Select(p => new { o.CreatedAt, o.Id, p.Amount }))
                 .ToListAsync();
 
-            // Group theo ngày
             var daily = payments
                 .GroupBy(x => x.CreatedAt.Date)
                 .Select(g => new
@@ -177,9 +260,21 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 .OrderBy(x => x.Date)
                 .ToList();
 
-            // Tính thêm các cột
-            var rows = new List<dynamic>();
+            var sheetDaily = workbook.Worksheets.Add("Chi tiết ngày");
+            sheetDaily.Cell(1, 1).Value = "Ngày";
+            sheetDaily.Cell(1, 2).Value = "Số đơn hàng";
+            sheetDaily.Cell(1, 3).Value = "Số đơn hoàn thành";
+            sheetDaily.Cell(1, 4).Value = "Doanh thu (VNĐ)";
+            sheetDaily.Cell(1, 5).Value = "Tỉ lệ tăng trưởng (%)";
+            sheetDaily.Cell(1, 6).Value = "Giá trị trung bình đơn (VNĐ)";
+
+            var headerRange = sheetDaily.Range(1, 1, 1, 6);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
             decimal? prevRevenue = null;
+            int rowD = 2;
             foreach (var d in daily)
             {
                 var avgOrder = d.TotalOrders > 0 ? d.TotalRevenue / d.TotalOrders : 0;
@@ -187,73 +282,38 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     ? Math.Round((d.TotalRevenue - prevRevenue.Value) / prevRevenue.Value * 100, 2)
                     : 0;
 
-                rows.Add(new
-                {
-                    Ngay = d.Date.ToString("dd/MM/yyyy"),
-                    SoDonHang = d.TotalOrders,
-                    SoDonHoanThanh = d.TotalOrders, // nếu cần tách pending thì thay đổi
-                    DoanhThu = d.TotalRevenue,
-                    TyLeTangTruong = growth,
-                    GiaTriTBDon = Math.Round(avgOrder, 0)
-                });
+                sheetDaily.Cell(rowD, 1).Value = d.Date.ToString("dd/MM/yyyy");
+                sheetDaily.Cell(rowD, 2).Value = d.TotalOrders;
+                sheetDaily.Cell(rowD, 3).Value = d.TotalOrders;
+                sheetDaily.Cell(rowD, 4).Value = d.TotalRevenue;
+                sheetDaily.Cell(rowD, 5).Value = growth;
+                sheetDaily.Cell(rowD, 6).Value = Math.Round(avgOrder, 0);
 
                 prevRevenue = d.TotalRevenue;
+                rowD++;
             }
-
-            using var wb = new XLWorkbook();
-            var ws = wb.Worksheets.Add("DoanhThu");
-
-            // Header
-            ws.Cell(1, 1).Value = "Ngày";
-            ws.Cell(1, 2).Value = "Số đơn hàng";
-            ws.Cell(1, 3).Value = "Số đơn hoàn thành";
-            ws.Cell(1, 4).Value = "Doanh thu (VNĐ)";
-            ws.Cell(1, 5).Value = "Tỉ lệ tăng trưởng (%)";
-            ws.Cell(1, 6).Value = "Giá trị trung bình đơn (VNĐ)";
-
-            // Format header
-            var headerRange = ws.Range(1, 1, 1, 6);
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-
-            // Fill data
-            int row = 2;
-            foreach (var r in rows)
-            {
-                ws.Cell(row, 1).Value = r.Ngay;
-                ws.Cell(row, 2).Value = r.SoDonHang;
-                ws.Cell(row, 3).Value = r.SoDonHoanThanh;
-                ws.Cell(row, 4).Value = r.DoanhThu;
-                ws.Cell(row, 5).Value = r.TyLeTangTruong;
-                ws.Cell(row, 6).Value = r.GiaTriTBDon;
-                row++;
-            }
-
-            // Format cột số
-            ws.Column(4).Style.NumberFormat.Format = "#,##0";
-            ws.Column(5).Style.NumberFormat.Format = "0.00";
-            ws.Column(6).Style.NumberFormat.Format = "#,##0";
 
             // Tổng cộng cuối sheet
-            ws.Cell(row, 1).Value = "Tổng cộng";
-            ws.Cell(row, 2).FormulaA1 = $"SUM(B2:B{row - 1})";
-            ws.Cell(row, 3).FormulaA1 = $"SUM(C2:C{row - 1})";
-            ws.Cell(row, 4).FormulaA1 = $"SUM(D2:D{row - 1})";
-            ws.Cell(row, 6).FormulaA1 = $"IF(B{row}>0,D{row}/B{row},0)";
+            sheetDaily.Cell(rowD, 1).Value = "Tổng cộng";
+            sheetDaily.Cell(rowD, 2).FormulaA1 = $"SUM(B2:B{rowD - 1})";
+            sheetDaily.Cell(rowD, 3).FormulaA1 = $"SUM(C2:C{rowD - 1})";
+            sheetDaily.Cell(rowD, 4).FormulaA1 = $"SUM(D2:D{rowD - 1})";
+            sheetDaily.Cell(rowD, 6).FormulaA1 = $"IF(B{rowD}>0,D{rowD}/B{rowD},0)";
 
-            ws.Range(row, 1, row, 6).Style.Font.Bold = true;
-            ws.Range(row, 1, row, 6).Style.Fill.BackgroundColor = XLColor.LightGray;
+            sheetDaily.Range(rowD, 1, rowD, 6).Style.Font.Bold = true;
+            sheetDaily.Range(rowD, 1, rowD, 6).Style.Fill.BackgroundColor = XLColor.LightGray;
 
-            ws.Columns().AdjustToContents();
+            sheetDaily.Columns().AdjustToContents();
 
+            // ===== Trả file =====
             using var stream = new MemoryStream();
-            wb.SaveAs(stream);
+            workbook.SaveAs(stream);
             stream.Position = 0;
 
+            string fileName = $"BaoCaoDoanhThu_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.xlsx";
             return File(stream.ToArray(),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"BaoCaoDoanhThu_{from:yyyyMMdd}_{to:yyyyMMdd}.xlsx");
+                fileName);
         }
     }
 }
