@@ -2,112 +2,6 @@
 @{
     ViewBag.Title = "Tổng quan cửa hàng";
 }
-<div class="breadcrumb">Trang chủ ▸ <span>Dashboard</span></div>
-<div class="page-head">
-    <h1 class="page-title">Tổng quan cửa hàng</h1>
-    <div class="page-actions">
-        <button class="btn">Xuất báo cáo</button>
-        <button class="btn">Bộ lọc</button>
-    </div>
-</div>
-<section class="grid cards">
-    <div class="card metric">
-        <div class="label">Đơn mới hôm nay</div>
-        <div class="value">@Model.DashboardDto.OrderToday.Total</div>
-        <div class="delta up">@Model.DashboardDto.OrderToday.GrowthRate% so với hôm qua</div>
-    </div>
-    <div class="card metric">
-        <div class="label">Đang xử lý</div>
-        <div class="value">@Model.DashboardDto.TotalOrderPending</div>
-        <div class="delta">—</div>
-    </div>
-    <div class="card metric">
-        <div class="label">Doanh thu (tháng)</div>
-        <div class="value">₫ @Model.DashboardDto.Revenue.Total.ToString("N0")</div>
-        <div class="delta up">@Model.DashboardDto.Revenue.SaleGrowthRatio% MoM</div>
-    </div>
-    <div class="card metric">
-        <div class="label">Điểm đánh giá</div>
-        <div class="value">@Model.DashboardDto.AvarageRating.Average ⭐</div>
-        <div class="delta">@Model.DashboardDto.AvarageRating.Total lượt</div>
-    </div>
-</section>
-
-<section class="section my-4 p-4">
-    
-    <section class=" d-flex align-items-center justify-content-between">
-        <h5 class="card-title text-center mb-0 flex-grow-1">Tổng quan doanh thu</h5>
-        @{
-            var fromValue = ViewContext.HttpContext.Request.Query["from"].ToString();
-            var toValue = ViewContext.HttpContext.Request.Query["to"].ToString();
-    
-            // Tạo giá trị mặc định nếu rỗng
-            var defaultFrom = string.IsNullOrEmpty(fromValue) ? DateTime.Now.AddDays(-6).ToString("yyyy-MM-dd") : fromValue;
-            var defaultTo = string.IsNullOrEmpty(toValue) ? DateTime.Now.ToString("yyyy-MM-dd") : toValue;
-        }
-        <a href="@Url.Action("ExportRevenueReport", "Home", new { area = "Stores", from = defaultFrom, to = defaultTo })"
-           class="btn btn-success ms-3" target="_blank">
-            <i class="fa fa-download me-1"></i> Tải báo cáo
-        </a>
-
-    </section>
-    @* <h5 class="card-title text-center mb-3">Tổng quan doanh thu</h5> *@
- 
-
-    <!-- Filter Form -->
-    <form id="filterForm" method="get" class="mb-4 row g-2 align-items-end">
-        <div class="col-auto">
-            <label for="from" class="form-label">Từ ngày</label>
-            <input type="date" id="from" name="from" class="form-control" value="@defaultFrom" required/>
-        </div>
-        <div class="col-auto">
-            <label for="to" class="form-label">Đến ngày</label>
-            <input type="date" id="to" name="to" class="form-control" value="@defaultTo" required/>
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary w-100">Lọc</button>
-        </div>
-    </form>
-
-    <!-- Chart Container -->
-    <canvas id="revenueChart" style="min-height: 350px;"></canvas>
-    <div id="noDataMessage" class="text-center text-muted mt-2" style="display:none;">
-        Dữ liệu không đủ để hiển thị
-    </div>
-</section>
-
-<section class="section my-4 p-4">
-    <h5 class="card-title text-center mb-3">So sánh dữ liệu theo tháng</h5>
-        
-        <div class="card-body p-4">
-            <div class="mb-4">
-                <label class="form-label fw-semibold text-secondary mb-3">
-                    <i class="bi bi-calendar-check me-1"></i>Chọn 2 tháng để so sánh:
-                </label>
-                <div class="d-flex flex-wrap gap-2">
-                    @for (int i = 1; i <= 12; i++)
-                    {
-                        <div class="form-check month-check-item">
-                            <input class="form-check-input month-checkbox" type="checkbox" value="@i" id="monthCheck@i">
-                            <label class="form-check-label" for="monthCheck@i">Tháng @i</label>
-                        </div>
-                    }
-                </div>
-            </div>
-            
-            <button type="button" class="btn btn-primary mb-4 px-4 py-2 shadow-sm" id="compareBtn" style="background-color: #e5501b; border-color: #e5501b;">
-                <i class="bi bi-graph-up me-2"></i>So sánh ngay
-            </button>
-
-            <div class="chart-container p-3" style="background-color: #f8f9fa; border-radius: 8px;">
-                <canvas id="compareChart" style="min-height: 250px;"></canvas>
-                <div id="compareNoData" class="text-center text-muted mt-2 py-5" style="display:none;">
-                    <i class="bi bi-info-circle fs-1 mb-3 d-block" style="color: #e5501b; opacity: 0.5;"></i>
-                    <p class="mb-0">Dữ liệu không đủ để hiển thị chart</p>
-                </div>
-            </div>
-        </div>
-</section>
 
 <style>
     .month-check-item {
@@ -176,6 +70,133 @@
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
     }
 </style>
+
+<div class="breadcrumb">Trang chủ ▸ <span>Dashboard</span></div>
+<div class="page-head">
+    <h1 class="page-title">Tổng quan cửa hàng</h1>
+    <div class="page-actions">
+        <button class="btn">Xuất báo cáo</button>
+        <button class="btn">Bộ lọc</button>
+    </div>
+</div>
+<section class="grid cards">
+    <div class="card metric">
+        <div class="label">Đơn mới hôm nay</div>
+        <div class="value">@Model.DashboardDto.OrderToday.Total</div>
+        <div class="delta up">@Model.DashboardDto.OrderToday.GrowthRate% so với hôm qua</div>
+    </div>
+    <div class="card metric">
+        <div class="label">Đang xử lý</div>
+        <div class="value">@Model.DashboardDto.TotalOrderPending</div>
+        <div class="delta">—</div>
+    </div>
+    <div class="card metric">
+        <div class="label">Doanh thu (tháng)</div>
+        <div class="value">₫ @Model.DashboardDto.Revenue.Total.ToString("N0")</div>
+        <div class="delta up">@Model.DashboardDto.Revenue.SaleGrowthRatio% MoM</div>
+    </div>
+    <div class="card metric">
+        <div class="label">Điểm đánh giá</div>
+        <div class="value">@Model.DashboardDto.AvarageRating.Average ⭐</div>
+        <div class="delta">@Model.DashboardDto.AvarageRating.Total lượt</div>
+    </div>
+</section>
+
+<section class="section my-4 p-4">
+    
+    <section class=" d-flex align-items-center justify-content-between">
+        <h5 class="card-title text-center mb-0 flex-grow-1">Tổng quan doanh thu</h5>
+        @{
+            var fromValue = ViewContext.HttpContext.Request.Query["from"].ToString();
+            var toValue = ViewContext.HttpContext.Request.Query["to"].ToString();
+    
+            // Tạo giá trị mặc định nếu rỗng
+            var defaultFrom = string.IsNullOrEmpty(fromValue) ? DateTime.Now.AddDays(-6).ToString("yyyy-MM-dd") : fromValue;
+            var defaultTo = string.IsNullOrEmpty(toValue) ? DateTime.Now.ToString("yyyy-MM-dd") : toValue;
+        }
+        <a href="@Url.Action("ExportRevenueReport", "Home", new { area = "Stores", from = defaultFrom, to = defaultTo })"
+           class="btn btn-success ms-3" target="_blank">
+            <i class="fa fa-download me-1"></i> Tải báo cáo
+        </a>
+
+    </section>
+    @* <h5 class="card-title text-center mb-3">Tổng quan doanh thu</h5> *@
+ 
+
+    <!-- Filter Form -->
+    <form id="filterForm" method="get" class="mb-4 row g-2 align-items-end">
+        <div class="col-auto">
+            <label for="from" class="form-label">Từ ngày</label>
+            <input type="date" id="from" name="from" class="form-control" value="@defaultFrom" required/>
+        </div>
+        <div class="col-auto">
+            <label for="to" class="form-label">Đến ngày</label>
+            <input type="date" id="to" name="to" class="form-control" value="@defaultTo" required/>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+        </div>
+    </form>
+
+    <!-- Chart Container -->
+    <canvas id="revenueChart" style="height: 170px; max-height: 200px;"></canvas>
+    <div id="noDataMessage" class="text-center text-muted mt-2" style="display:none;">
+        Dữ liệu không đủ để hiển thị
+    </div>
+</section>
+
+<section class="section my-4 p-4">
+    <h5 class="card-title text-center mb-3">So sánh dữ liệu theo tháng</h5>
+        
+        <div class="card-body p-4">
+            <div class="mb-4">
+                <label class="form-label fw-semibold text-secondary mb-3">
+                    <i class="bi bi-calendar-check me-1"></i>Chọn 2 tháng để so sánh:
+                </label>
+                <div class="d-flex flex-wrap gap-2">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <div class="form-check month-check-item">
+                            <input class="form-check-input month-checkbox" type="checkbox" value="@i" id="monthCheck@i">
+                            <label class="form-check-label" for="monthCheck@i">Tháng @i</label>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <button type="button" class="btn btn-primary mb-4 px-4 py-2 shadow-sm" id="compareBtn" style="background-color: #e5501b; border-color: #e5501b;">
+                <i class="bi bi-graph-up me-2"></i>So sánh ngay
+            </button>
+
+            <div class="chart-container p-3" style="background-color: #f8f9fa; border-radius: 8px;">
+                <canvas id="compareChart" style="height: 170px; max-height: 200px;"></canvas>
+                <div id="compareNoData" class="text-center text-muted mt-2 py-5" style="display:none;">
+                    <i class="bi bi-info-circle fs-1 mb-3 d-block" style="color: #e5501b; opacity: 0.5;"></i>
+                    <p class="mb-0">Dữ liệu không đủ để hiển thị chart</p>
+                </div>
+            </div>
+        </div>
+</section>
+
+
+<section class="section my-4 p-4">
+    <h5 class="card-title text-center mb-3">Doanh thu theo quý</h5>
+    
+    <div class="d-flex justify-content-center mb-3">
+        <label for="selectYear" class="me-2">Chọn năm:</label>
+        <select id="selectYear" class="form-select w-auto">
+            @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
+            {
+                <option value="@y">@y</option>
+            }
+        </select>
+    </div>
+
+    <canvas id="quarterRevenueChart" style="height: 170px; max-height: 200px;"></canvas>
+    <div id="quarterNoData" class="text-center text-muted mt-2" style="display:none;">
+        Dữ liệu không đủ để hiển thị
+    </div>
+</section>
 
 
 <section class="section" style="margin-top:16px">
@@ -412,7 +433,59 @@
     </script>
     
     <script>
-        
+        let quarterChart; // lưu chart để destroy nếu đổi năm
+
+        async function loadQuarterRevenue(year) {
+            const res = await fetch(`/Stores/GetRevenueByQuarter?year=${year}`);
+            const data = await res.json();
+
+            const labels = data.map(d => `Quý ${d.quarter}`);
+            const revenues = data.map(d => d.totalRevenue);
+
+            const ctx = document.getElementById('quarterRevenueChart');
+
+            if (!revenues || revenues.length === 0) {
+                ctx.style.display = 'none';
+                document.getElementById('quarterNoData').style.display = 'block';
+                return;
+            } else {
+                ctx.style.display = 'block';
+                document.getElementById('quarterNoData').style.display = 'none';
+            }
+
+            // destroy chart cũ nếu đã tồn tại
+            if (quarterChart) quarterChart.destroy();
+
+            quarterChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh thu theo quý (VNĐ)',
+                        data: revenues,
+                        backgroundColor: '#e5501b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { ticks: { callback: v => v.toLocaleString() + '₫' } }
+                    }
+                }
+            });
+        }
+
+        // Khi chọn năm khác
+        document.getElementById('selectYear').addEventListener('change', function() {
+            loadQuarterRevenue(this.value);
+        });
+
+        // Load năm hiện tại mặc định
+        loadQuarterRevenue(new Date().getFullYear());
+
 
     </script>
 }

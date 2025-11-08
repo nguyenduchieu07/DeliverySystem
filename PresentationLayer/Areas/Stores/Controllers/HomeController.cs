@@ -125,7 +125,35 @@ namespace PresentationLayer.Areas.Stores.Controllers
             });
         }
 
+        [HttpGet("/Stores/GetRevenueByQuarter")]
+        public async Task<IActionResult> GetRevenueByQuarter(int year)
+        {
+            var orders = await _db.Orders
+                .Where(o => o.CreatedAt.Year == year)
+                .ToListAsync();
 
+            var revenueByQuarter = orders
+                .GroupBy(o => (o.CreatedAt.Month - 1) / 3 + 1)
+                .Select(g => new
+                {
+                    Quarter = g.Key,
+                    TotalRevenue = g.Sum(o => o.TotalAmount)
+                })
+                .ToList();
+
+            // Đảm bảo có đủ 4 quý
+            var allQuarters = Enumerable.Range(1, 4)
+                .Select(q => new
+                {
+                    Quarter = q,
+                    TotalRevenue = revenueByQuarter.FirstOrDefault(r => r.Quarter == q)?.TotalRevenue ?? 0
+                })
+                .ToList();
+
+            return Json(allQuarters);
+        }
+        
+        
         [HttpGet("/Stores/ExportRevenueReport")]
         public async Task<IActionResult> ExportRevenueReport(DateTime from, DateTime to)
         {
