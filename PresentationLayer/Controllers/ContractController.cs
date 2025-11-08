@@ -37,7 +37,8 @@ namespace PresentationLayer.Controllers
                 var viewModel = new ContractIndexViewModel
                 {
                     Order = orderById,
-                    Contract = contract
+                    Contract = contract,
+                    Items = orderById.OrderItems.ToList()
                 };
 
                 return View(viewModel);
