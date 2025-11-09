@@ -1,0 +1,67 @@
+﻿@model MaintenanceFormBaseVM
+
+@{
+bool isEdit = Model.Id != null;
+ViewData["Title"] = isEdit ? "Cập nhật lịch bảo trì" : "Tạo lịch bảo trì";
+}
+
+<div class="container mt-4">
+
+    <div class="mb-3">
+        <a href="@Url.Action("Slot", "Maintenance", new { id = Model.SlotId })" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card shadow p-4">
+        <h4 class="mb-3">@ViewData["Title"]</h4>
+
+        <!-- HIỂN THỊ LỖI MODELSTATE -->
+        @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+
+        @using (Html.BeginForm(isEdit ? "Edit" : "Create", "Maintenance", FormMethod.Post, new { @class = "row g-3" }))
+        {
+        @Html.AntiForgeryToken()
+
+        @if (isEdit)
+        {
+        @Html.HiddenFor(m => m.Id)
+        }
+
+        @Html.HiddenFor(m => m.SlotId)
+
+        <div class="col-md-12">
+            <label class="form-label">Loại bảo trì</label>
+            @Html.DropDownListFor(m => m.MaintenanceItemId,
+            new SelectList(Model.Items, "Id", "Name", Model.MaintenanceItemId),
+            "-- Chọn loại bảo trì --",
+            new { @class = "form-select" })
+            @Html.ValidationMessageFor(m => m.MaintenanceItemId, null, new { @class = "text-danger" })
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Thời gian bắt đầu</label>
+            @Html.TextBoxFor(m => m.ScheduledStart, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+            @Html.ValidationMessageFor(m => m.ScheduledStart, null, new { @class = "text-danger" })
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Thời gian kết thúc</label>
+            @Html.TextBoxFor(m => m.ScheduledEnd, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+            @Html.ValidationMessageFor(m => m.ScheduledEnd, null, new { @class = "text-danger" })
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">Ghi chú (tuỳ chọn)</label>
+            @Html.TextAreaFor(m => m.Note, 4, 50, new { @class = "form-control" })
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2">
+            <a href="@Url.Action("Slot", "Maintenance", new { id = Model.SlotId })" class="btn btn-outline-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> @(isEdit ? "Cập nhật" : "Tạo mới")
+            </button>
+        </div>
+        }
+    </div>
+</div>

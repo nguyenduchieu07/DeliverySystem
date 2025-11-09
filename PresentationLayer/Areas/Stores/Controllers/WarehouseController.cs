@@ -19,6 +19,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
         private readonly ICloudinaryService _files;
         private readonly IWarehouseSlotImportService _import;
         private readonly IWarehouseSlotExportService _export;
+
         public WarehouseController(DeliverySytemContext deliverySytemContext,
             ICloudinaryService cloudinaryService,
             IWarehouseSlotImportService import,
@@ -29,11 +30,23 @@ namespace PresentationLayer.Areas.Stores.Controllers
             _import = import;
             _export = export;
         }
-        public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] Guid? addressId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+
+        public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] Guid? addressId,
+            [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
             var id = Guid.Parse(userId!);
-            var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
+            Guid storeId;
+            if (userRole != null && userRole.Trim().ToUpper().Equals(UserRoles.STORESTAFF.ToUpper()))
+            {
+                storeId = await _db.StoreStaffs.Where(e => e.UserId == id).Select(e => e.StoreId).FirstOrDefaultAsync();
+            }
+            else
+            {
+                storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
+            }
+
             // Base query: chỉ lấy kho thuộc store
             var query = _db.Warehouses
                 .AsNoTracking()
@@ -110,7 +123,6 @@ namespace PresentationLayer.Areas.Stores.Controllers
         }
 
 
-
         // GET: /Warehouse/Create
         [HttpGet]
         public IActionResult Create()
@@ -125,7 +137,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
         // POST: /Warehouse/Create
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] Warehouse warehouse, [FromForm] Address? newAddress, [FromForm] List<WarehouseSlot> slots, [FromForm] IFormFile? CoverImage, [FromForm] IFormFile? MapImage)
+        public async Task<IActionResult> Create([FromForm] Warehouse warehouse, [FromForm] Address? newAddress,
+            [FromForm] List<WarehouseSlot> slots, [FromForm] IFormFile? CoverImage, [FromForm] IFormFile? MapImage)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var id = Guid.Parse(userId!);
@@ -143,13 +156,16 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     var coverImage = await _files.UploadImageFileAsync(CoverImage);
                     warehouse.CoverImageUrl = coverImage;
                 }
+
                 if (MapImage != null && MapImage.Length > 0)
                 {
                     var mapImage = await _files.UploadImageFileAsync(MapImage);
                     warehouse.MapImageUrl = mapImage;
                 }
+
                 // Nếu người dùng nhập địa chỉ mới → tạo mới Address
-                if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
+                if (warehouse.AddressRefId == null && newAddress != null &&
+                    !string.IsNullOrEmpty(newAddress.AddressLine))
                 {
                     newAddress.Id = Guid.NewGuid();
                     newAddress.Active = true;
@@ -157,6 +173,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     await _db.SaveChangesAsync();
                     warehouse.AddressRefId = newAddress.Id;
                 }
+
                 warehouse.Id = Guid.NewGuid();
                 warehouse.Status = DataAccessLayer.Enums.StatusValue.Pending;
                 _db.Warehouses.Add(warehouse);
@@ -180,8 +197,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
             {
                 TempData["Error"] = $"Tạo mới kho thất bại {ex.Message}";
             }
-            return RedirectToAction("Index");
 
+            return RedirectToAction("Index");
         }
 
 
@@ -206,7 +223,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
         // POST: /Warehouse/Edit
         [HttpPost]
-        public async Task<IActionResult> Edit(Warehouse warehouse, Address? newAddress, List<WarehouseSlot> slots, IFormFile? CoverImage, IFormFile? MapImage)
+        public async Task<IActionResult> Edit(Warehouse warehouse, Address? newAddress, List<WarehouseSlot> slots,
+            IFormFile? CoverImage, IFormFile? MapImage)
         {
             var existing = await _db.Warehouses
                 .Include(w => w.Slots)
@@ -225,6 +243,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     var coverImage = await _files.UploadImageFileAsync(CoverImage);
                     existing.CoverImageUrl = coverImage;
                 }
+
                 if (MapImage != null && MapImage.Length > 0)
                 {
                     var mapImage = await _files.UploadImageFileAsync(MapImage);
@@ -232,7 +251,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 }
 
                 // Update Address (tự chọn hoặc tạo mới)
-                if (warehouse.AddressRefId == null && newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
+                if (warehouse.AddressRefId == null && newAddress != null &&
+                    !string.IsNullOrEmpty(newAddress.AddressLine))
                 {
                     newAddress.Id = Guid.NewGuid();
                     newAddress.Active = true;
@@ -265,8 +285,8 @@ namespace PresentationLayer.Areas.Stores.Controllers
             {
                 TempData["Error"] = $"Cập nhật kho thất bại! {ex.Message}";
             }
-            return RedirectToAction("Index");
 
+            return RedirectToAction("Index");
         }
 
         // GET: /Warehouse/Delete/{id}
@@ -378,9 +398,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     return "blocked";
 
                 if (s.Status == StatusValue.Maintenance)
-                    return "maintenance"; 
+                    return "maintenance";
 
-                if (s.Status == StatusValue.Available )
+                if (s.Status == StatusValue.Available)
                     return "available"; // chưa có ai thuê
 
                 if (s.Status == StatusValue.InUse)
@@ -428,6 +448,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             //return RedirectToAction("Details", new { id = warehouseId });
             return new JsonResult(new { success = true, message = "Import data thành công", data = result });
         }
+
         public static class WarehouseLayoutOptions
         {
             public const int MaxColsPerRow = 30;
@@ -446,6 +467,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 slots[i].Row = (i / maxCols) + 1;
                 slots[i].Col = (i % maxCols) + 1;
             }
+
             await _db.SaveChangesAsync();
         }
 
