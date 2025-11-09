@@ -976,15 +976,49 @@
                                     </td>
                                 </tr>
 
-                                <tr>
-                                    <td style="padding:8px 10px;">J</td>
-                                    <td style="padding:8px 10px;"><strong>ImageUrl</strong></td>
-                                    <td style="padding:8px 10px;">Text / URL</td>
-                                    <td style="padding:8px 10px;">⛔</td>
-                                    <td style="padding:8px 10px;">
-                                        Tùy chọn. Nếu nhập, không chứa ký tự đặc biệt lạ; nên là URL hợp lệ nếu bạn dùng để hiển thị ảnh.
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td style="padding:8px 10px;">J</td>
+                                <td style="padding:8px 10px;"><strong>ImageUrl</strong></td>
+                                <td style="padding:8px 10px;">Text / URL</td>
+                                <td style="padding:8px 10px;">⛔</td>
+                                <td style="padding:8px 10px;">
+                                    Tùy chọn. Nếu nhập, không chứa ký tự đặc biệt lạ; nên là URL hợp lệ nếu bạn dùng để hiển thị ảnh.
+                                </td>
+                            </tr>
+                           
+                            <tr>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">K</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>LeaseStart</strong></td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Date (yyyy-MM-dd)</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">⚠️</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                    Bắt buộc điền nếu Status = <strong>InUse</strong>. 
+                                    Phải ≤ <code>LeaseEnd</code>. Các Status khác phải để trống.
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">L</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>LeaseEnd</strong></td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Date (yyyy-MM-dd)</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">⚠️</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                    Bắt buộc điền nếu Status = <strong>InUse</strong>. 
+                                    Phải ≥ <code>LeaseStart</code>. Các Status khác phải để trống.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">M</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;"><strong>Status</strong></td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">Text / Dropdown</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">✅</td>
+                                <td style="padding:8px 10px; border-bottom:1px solid #f0f3fb;">
+                                    Phải là một trong: <strong>Available, InUse, Reserved, Maintenance</strong>. 
+                                    Nếu chọn <strong>InUse</strong> mới được điền <code>LeaseStart</code> và <code>LeaseEnd</code>. 
+                                    Các giá trị khác phải để trống.
+                                </td>
+                            </tr>
+
                             </tbody>
                         </table>
                     </div>
