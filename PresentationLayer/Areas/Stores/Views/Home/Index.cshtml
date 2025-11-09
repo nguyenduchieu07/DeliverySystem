@@ -536,6 +536,11 @@
             <div class="delta up">@Model.DashboardDto.Revenue.SaleGrowthRatio% MoM</div>
         </div>
         <div class="card metric">
+            <div class="label">Doanh thu TB / tháng @Model.DashboardDto.AverageRevenueMonth.Month </div>
+            <div class="value">₫ @Model.DashboardDto.AverageRevenueMonth.Average.ToString("N0")</div>
+            <div class="">@($"Cách tính: {Model.DashboardDto.AverageRevenueMonth.Total:N0} / {Model.DashboardDto.AverageRevenueMonth.DayCountInMonth}")</div>
+        </div>
+        <div class="card metric">
             <div class="label">Điểm đánh giá</div>
             <div class="value">@Model.DashboardDto.AvarageRating.Average ⭐</div>
             <div class="delta">@Model.DashboardDto.AvarageRating.Total lượt</div>

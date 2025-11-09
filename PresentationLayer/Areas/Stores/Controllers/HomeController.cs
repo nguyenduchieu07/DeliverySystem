@@ -94,11 +94,35 @@ namespace PresentationLayer.Areas.Stores.Controllers
             labels = daily.Select(x => x.Date.ToString("dd/MM")).ToList();
             data = daily.Select(x => x.Total).ToList();
 
+            var now = DateTime.Now;
+            var currentYear = now.Year;
+            var currentMonth = now.Month;
+
+            // Lấy tổng các payment đã hoàn thành trong tháng hiện tại
+            var totalCompletedPaymentsInMonth = await _db.Orders
+                .Where(o => o.CreatedAt.Year == currentYear && o.CreatedAt.Month == currentMonth)
+                .SelectMany(o => o.Payments
+                    .Where(p => p.Status == StatusValue.Completed)
+                    .Select(p => p.Amount))
+                .ToListAsync();
+            
+            var totalInMonth = (double)totalCompletedPaymentsInMonth.Sum();
+            var dayCountInMonth = DateTime.DaysInMonth(currentYear, currentMonth);
+            var average = dayCountInMonth > 0 ? totalInMonth / dayCountInMonth : 0;
+
+            reports.AverageRevenueMonth = new AverageRevenueMonth
+            {
+                Total = totalInMonth,
+                Average = average,
+                Month = currentMonth,
+                DayCountInMonth = dayCountInMonth
+            };
+            
             var vm = new DashboardViewModel
             {
                 DashboardDto = reports,
                 RevenueLabels = labels,
-                RevenueData = data
+                RevenueData = data,
             };
 
             return View(vm);
