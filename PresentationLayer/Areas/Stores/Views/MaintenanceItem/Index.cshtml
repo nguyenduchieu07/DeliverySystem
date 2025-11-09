@@ -1,0 +1,204 @@
+﻿@model IEnumerable<DataAccessLayer.Entities.MaintenanceItem>
+
+@{
+    ViewData["Title"] = "Danh sách loại bảo trì";
+}
+
+<style>
+/* ==== COPY STYLE TỪ BẢNG BẠN GỬI (không đổi gì) ==== */
+:root {
+    --primary-orange: #e5501b;
+    --secondary-orange: #d26c45;
+    --success: #1cc88a;
+    --info: #36b9cc;
+    --text-primary: #5a5c69;
+    --text-muted: #858796;
+    --border-color: #e3e6f0;
+    --bg-light: #f8f9fc;
+    --white: #ffffff;
+    --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    --border-radius: 0.35rem;
+}
+h2.mb-4 {
+    font-size: 1.75rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+}
+.table-wrapper {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+}
+#itemTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+#itemTable thead {
+    background: linear-gradient(180deg, var(--primary-orange) 0%, var(--secondary-orange) 100%);
+}
+#itemTable thead th {
+    padding: 1rem 1.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--white);
+    border: none;
+    text-align: left;
+}
+#itemTable thead th:first-child {
+    border-top-left-radius: var(--border-radius);
+    text-align: center;
+    width: 60px;
+}
+#itemTable thead th:last-child {
+    border-top-right-radius: var(--border-radius);
+    text-align: center;
+    width: 150px;
+}
+#itemTable tbody tr {
+    background: var(--white);
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.15s ease;
+}
+#itemTable tbody tr:nth-child(odd) {
+    background-color: rgba(248, 249, 252, 0.5);
+}
+#itemTable tbody tr:hover {
+    background-color: var(--bg-light);
+    transform: translateY(-1px);
+}
+#itemTable tbody td {
+    padding: 1rem 1.25rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    border-right: 1px solid var(--border-color);
+}
+#itemTable tbody td:first-child {
+    font-weight: 700;
+    color: var(--text-muted);
+    text-align: center;
+}
+#itemTable tbody td:last-child {
+    border-right: none;
+    text-align: center;
+}
+.btn {
+    padding: 0.45rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.btn-sm {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+}
+.btn-primary {
+    background: linear-gradient(180deg, var(--primary-orange) 0%, var(--secondary-orange) 100%);
+    color: var(--white);
+}
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(229, 80, 27, 0.3);
+}
+.badge {
+    font-size: 0.7rem;
+    padding: 0.4em 0.55em;
+}
+</style>
+
+<h2 class="mb-4">@ViewData["Title"]</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="mb-3 text-end">
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Thêm loại bảo trì
+    </a>
+</div>
+
+<div class="table-wrapper">
+    <table id="itemTable" class="display table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Tên loại bảo trì</th>
+            <th>Thời lượng (phút)</th>
+            <th>Yêu cầu shutdown?</th>
+            <th>Phạm vi</th>
+            <th>Thao tác</th>
+        </tr>
+        </thead>
+        <tbody>
+        @{
+            var i = 1;
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@i</td>
+                    <td>@item.Name</td>
+                    <td>@item.EstimatedDurationMinutes</td>
+                    <td>@(item.RequireShutdown ? "Có" : "Không")</td>
+                    <td>
+                        @if(item.StoreId == null)
+                        {
+                            <span class="badge bg-secondary">GLOBAL</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">LOCAL</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i> Sửa
+                        </a>
+
+                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" 
+                              class="d-inline" onsubmit="return confirm('Xóa loại bảo trì này?');">
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Xóa
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                i++;
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#itemTable').DataTable({
+                language: {
+                    lengthMenu: "Hiển thị _MENU_ mục",
+                    info: "Hiển thị _START_ đến _END_ trong tổng _TOTAL_ mục",
+                    infoEmpty: "Hiển thị 0 đến 0 trong tổng 0 mục",
+                    infoFiltered: "(lọc từ _MAX_ mục)",
+                    emptyTable: "Không có dữ liệu",
+                    search: "🔍",
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',
+                        previous: '<i class="fas fa-angle-left"></i>',
+                        next: '<i class="fas fa-angle-right"></i>',
+                        last: '<i class="fas fa-angle-double-right"></i>'
+                    },
+                    zeroRecords: "Không tìm thấy kết quả phù hợp"
+                },
+                pageLength: 10,
+                order: [[1, "asc"]]
+            });
+        });
+    </script>
+}

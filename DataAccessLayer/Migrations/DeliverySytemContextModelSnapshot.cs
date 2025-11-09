@@ -554,6 +554,9 @@ namespace DataAccessLayer.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("StoreId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -561,6 +564,8 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StoreId");
 
                     b.ToTable("MaintenanceItems");
                 });
@@ -1943,6 +1948,15 @@ namespace DataAccessLayer.Migrations
                         .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("DataAccessLayer.Entities.MaintenanceItem", b =>
+                {
+                    b.HasOne("DataAccessLayer.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId");
 
                     b.Navigation("Store");
                 });
