@@ -66,12 +66,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 reports = new Models.DashboardDto();
             }
 
-            var startDate = from ?? DateTime.Now.AddDays(-6); // default 7 ngày
-            var endDate = to ?? DateTime.Now;
+            var startDate = from?.Date ?? DateTime.Now.AddDays(-6).Date; // bắt đầu từ 00:00:00
+            var endDate = to?.Date.AddDays(1).AddTicks(-1) ?? DateTime.Now; // kết thúc 23:59:59.9999999
 
             // Lấy payments completed
             var payments = await _db.Orders
-                .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+                .Where(o => o.CreatedAt.Date >= startDate && o.CreatedAt.Date <= endDate)
                 .SelectMany(o => o.Payments
                     .Where(p => p.Status == StatusValue.Completed)
                     .Select(p => new { o.CreatedAt, p.Amount }))

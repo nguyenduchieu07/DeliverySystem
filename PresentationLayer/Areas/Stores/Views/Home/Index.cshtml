@@ -651,40 +651,46 @@
     </section>
 
     <!-- Warehouse Slots -->
-    <section class="section">
-        <div class="header">
-            <div class="title">Slot kho – trạng thái nhanh</div>
-            <div class="tools">
-                <span class="badge">Kho Hà Nội</span>
+    @foreach (var warehouse in Model.DashboardDto.WareHouseDashboards)
+    {
+        <section class="section" style="margin-top:16px">
+            <div class="header">
+                <div class="title">Slot kho – trạng thái nhanh</div>
+                <div class="tools">
+                    <span class="badge">@warehouse.Address</span>
+                </div>
             </div>
-        </div>
-        <div class="grid" style="grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; padding:12px 0">
-            <div class="card" style="padding:12px; display:flex; flex-direction:column; gap:8px">
-                <strong>A1-01</strong>
-                <span class="badge">Available</span>
-            </div>
-            <div class="card" style="padding:12px; display:flex; flex-direction:column; gap:8px">
-                <strong>A1-02</strong>
+            <div class="grid" style="grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; padding:12px">
+                @foreach (var slot in warehouse.Slots)
+                {
+                    <div class="card" style="padding:10px; display:grid; gap:6px; align-items:start">
+                        <strong>@slot.Code</strong>
+                        <span class="badge">@slot.Status</span>
+                    </div>
+                }
+                @* <div class="card" style="padding:10px; display:grid; gap:6px">
+                <strong>B2-02</strong>
                 <span class="badge warn">Reserved</span>
             </div>
-            <div class="card" style="padding:12px; display:flex; flex-direction:column; gap:8px">
-                <strong>A1-03</strong>
+            <div class="card" style="padding:10px; display:grid; gap:6px">
+                <strong>B2-03</strong>
                 <span class="badge ok">InUse</span>
             </div>
-            <div class="card" style="padding:12px; display:flex; flex-direction:column; gap:8px">
+            <div class="card" style="padding:10px; display:grid; gap:6px">
                 <strong>B1-01</strong>
                 <span class="badge">Available</span>
             </div>
-            <div class="card" style="padding:12px; display:flex; flex-direction:column; gap:8px">
+            <div class="card" style="padding:10px; display:grid; gap:6px">
                 <strong>B1-02</strong>
                 <span class="badge">Maintenance</span>
             </div>
-            <div class="card" style="padding:12px; display:flex; flex-direction:column; gap:8px">
+            <div class="card" style="padding:10px; display:grid; gap:6px">
                 <strong>B1-03</strong>
                 <span class="badge ok">InUse</span>
+            </div> *@
             </div>
-        </div>
-    </section>
+        </section>
+    }
 </div>
 
 
