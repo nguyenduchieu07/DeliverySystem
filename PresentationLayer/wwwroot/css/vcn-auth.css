@@ -178,7 +178,7 @@
     }
 
 /* Buttons */
-.btn-primary, .login-submit-btn {
+.btn-primary, .login-submit-btn, .register-submit-btn {
     width: 100%;
     background: #f26722;
     color: white;
@@ -190,20 +190,31 @@
     cursor: pointer;
     transition: background-color 0.3s ease;
     margin-top: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .login-submit-btn {
     margin: 20px 0;
 }
 
-    .btn-primary:hover, .login-submit-btn:hover {
+    .btn-primary:hover, .login-submit-btn:hover, .register-submit-btn:hover {
         background: #e55a1b;
     }
 
-    .btn-primary:disabled, .login-submit-btn:disabled {
+    .btn-primary:disabled, .login-submit-btn:disabled, .register-submit-btn:disabled {
         background: #ccc;
         cursor: not-allowed;
     }
+
+/* Fix for buttons in navigation header */
+.btn.btn-outline-primary,
+.btn.btn-primary {
+    white-space: nowrap;
+    min-width: fit-content;
+    padding: 8px 16px;
+}
 
 /* Alerts & Validation */
 .alert {

@@ -12,9 +12,12 @@ using DocumentFormat.OpenXml.Vml;
 using Org.BouncyCastle.Ocsp;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Humanizer;
+using DataAccessLayer.Constants;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PresentationLayer.Controllers
 {
+    [Authorize(Roles = UserRoles.CUSTOMER)]
     public class QuoteController : Controller
     {
         private readonly IQuotationService _svc;

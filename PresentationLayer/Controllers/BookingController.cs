@@ -5,9 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using PresentationLayer.Models;
 using ServiceLayer.Abstractions.IServices;
 using DataAccessLayer.Enums;
+using DataAccessLayer.Constants;
 
 namespace PresentationLayer.Controllers
 {
+    [Authorize(Roles = UserRoles.CUSTOMER)]
     public class BookingController : Controller
     {
         private readonly DeliverySytemContext _db;

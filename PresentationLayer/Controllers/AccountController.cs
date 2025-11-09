@@ -63,7 +63,9 @@ namespace PresentationLayer.Controllers
             var fullPhoneNumber = model.PhoneNumber;
             if (!model.PhoneNumber.StartsWith("+") && !model.PhoneNumber.StartsWith("0"))
             {
-                fullPhoneNumber = model.CountryCode + model.PhoneNumber;
+                // Default to +84 if CountryCode is not provided
+                var countryCode = !string.IsNullOrEmpty(model.CountryCode) ? model.CountryCode : "+84";
+                fullPhoneNumber = countryCode + model.PhoneNumber;
             }
             if (string.IsNullOrEmpty(model.Email))
             {
