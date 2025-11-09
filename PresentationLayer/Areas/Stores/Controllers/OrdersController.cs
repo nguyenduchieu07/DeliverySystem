@@ -133,6 +133,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             }
 
             bool IsValidTransition(StatusValue current, StatusValue next) =>
+                
                 current switch
                 {
                     StatusValue.Draft => next is StatusValue.Pending or StatusValue.Canceled,
@@ -146,7 +147,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             var currentStatus = order.Status;
             var newStatus = data.Status;
-            if (!IsValidTransition(currentStatus, newStatus))
+            if (currentStatus != newStatus && !IsValidTransition(currentStatus, newStatus))
                 return Json(new
                 {
                     success = false,

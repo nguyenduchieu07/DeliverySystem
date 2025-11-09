@@ -14,6 +14,7 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
         : base(options)
     {
     }
+
     public virtual DbSet<Address> Addresses { get; set; }
 
     public virtual DbSet<Category> Categories { get; set; }
@@ -44,24 +45,28 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
     public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
 
-    public virtual DbSet<Warehouse> Warehouses {  get; set; }
+    public virtual DbSet<Warehouse> Warehouses { get; set; }
 
     public virtual DbSet<WarehouseSlot> WarehouseSlots { get; set; }
 
-    public virtual DbSet<SlotReservation> SlotReservations {  get; set; }
+    public virtual DbSet<SlotReservation> SlotReservations { get; set; }
 
-    public virtual DbSet<KycDocument> KycDocuments { get; set; }    
+    public virtual DbSet<KycDocument> KycDocuments { get; set; }
 
-    public virtual DbSet<KycSubmission> KycSubmissions {  get; set; }
+    public virtual DbSet<KycSubmission> KycSubmissions { get; set; }
     public virtual DbSet<ServiceAddon> ServiceAddons { get; set; }
     public virtual DbSet<Contract> Contracts { get; set; }
-    
+
     public virtual DbSet<OrderWarehouseSlot> OrderWarehouseSlots { get; set; }
     public virtual DbSet<ItemReport> IncidentReports { get; set; }
     public virtual DbSet<ItemReportAction> IncidentActions { get; set; }
 
+    public virtual DbSet<MaintenanceItem> MaintenanceItems { get; set; }
 
+    public virtual DbSet<WarehouseSlotMaintenance> WarehouseSlotMaintenances { get; set; }
+    
     public virtual DbSet<ServiceSizeOption> ServiceSizeOptions { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>
@@ -94,9 +99,9 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             b.Property(x => x.ThumbnailUrl).HasMaxLength(500);
 
             b.HasOne(x => x.Parent)
-             .WithMany(x => x.InverseParent)
-             .HasForeignKey(x => x.ParentId)
-             .OnDelete(DeleteBehavior.Restrict); // tránh cascade vòng
+                .WithMany(x => x.InverseParent)
+                .HasForeignKey(x => x.ParentId)
+                .OnDelete(DeleteBehavior.Restrict); // tránh cascade vòng
 
             // Index tối ưu
             b.HasIndex(x => x.ParentId);
@@ -107,8 +112,8 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             b.HasIndex(x => new { x.StoreId, x.Slug }).IsUnique();
 
             // Check: ParentId != Id
-            b.ToTable(t => t.HasCheckConstraint("CK_Category_Parent_Not_Self", "[ParentId] IS NULL OR [ParentId] <> [Id]"));
-
+            b.ToTable(t =>
+                t.HasCheckConstraint("CK_Category_Parent_Not_Self", "[ParentId] IS NULL OR [ParentId] <> [Id]"));
         });
 
         modelBuilder.Entity<Customer>(entity =>
@@ -144,11 +149,11 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                 .HasForeignKey(d => d.FromUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Feedbacks_Users");
-            
+
             entity.HasOne(d => d.Order)
                 .WithMany(p => p.Feedbacks)
                 .HasForeignKey(d => d.OrderId)
-                .IsRequired(false)                       // ← bắt buộc thêm
+                .IsRequired(false) // ← bắt buộc thêm
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Feedbacks_Orders");
 
@@ -199,11 +204,11 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             entity.HasKey(e => e.Id);
 
             entity.Property(e => e.ItemName)
-                  .IsRequired()
-                  .HasMaxLength(100);
+                .IsRequired()
+                .HasMaxLength(100);
 
             entity.Property(e => e.Description)
-                  .HasMaxLength(500);
+                .HasMaxLength(500);
 
             entity.Property(e => e.LengthM).HasPrecision(5, 2);
             entity.Property(e => e.WidthM).HasPrecision(5, 2);
@@ -215,15 +220,15 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
 
             // Quan hệ với Order (1-N)
             entity.HasOne(d => d.Order)
-                  .WithMany(p => p.OrderItems)
-                  .HasForeignKey(d => d.OrderId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                .WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Quan hệ với Service (1-N, có thể null)
             entity.HasOne(d => d.Service)
-                  .WithMany(p => p.OrderItems)
-                  .HasForeignKey(d => d.ServiceId)
-                  .OnDelete(DeleteBehavior.SetNull);
+                .WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.ServiceId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Payment>(entity =>
@@ -304,8 +309,6 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
                 .WithOne(s => s.Service)
                 .HasForeignKey(s => s.ServiceId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-
         });
 
         modelBuilder.Entity<ServicePriceRule>(b =>
@@ -439,24 +442,24 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
         modelBuilder.Entity<Warehouse>(entity =>
         {
             entity.HasMany(e => e.Slots)
-                  .WithOne(e => e.Warehouse)
-                  .HasForeignKey(e => e.WarehouseId)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithOne(e => e.Warehouse)
+                .HasForeignKey(e => e.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(e => e.Store)
-                  .WithMany(e => e.Warehouses)
-                  .HasForeignKey(e => e.StoreId)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(e => e.Warehouses)
+                .HasForeignKey(e => e.StoreId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => new { x.StoreId, x.Name });
 
             entity.HasOne(e => e.Address)
-                  .WithMany()
-                  .HasForeignKey(e => e.AddressRefId);
+                .WithMany()
+                .HasForeignKey(e => e.AddressRefId);
         });
         modelBuilder.Entity<WarehouseSlot>(entity =>
         {
             entity.HasIndex(x => new { x.WarehouseId, x.Code })
-            .IsUnique();
+                .IsUnique();
 
             entity.HasIndex(x => new { x.WarehouseId, x.Status });
         });
@@ -467,15 +470,13 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             b.HasIndex(x => x.OrderId);
 
             b.HasOne(x => x.WarehouseSlot)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(x => x.WarehouseSlotId)
                 .OnDelete(DeleteBehavior.NoAction);
-
-            
         });
         modelBuilder.Entity<KycSubmission>(e =>
         {
-            e.HasIndex(x => new { x.Status, x.SubmittedAt }); 
+            e.HasIndex(x => new { x.Status, x.SubmittedAt });
             e.HasOne(x => x.Store).WithMany().HasForeignKey(x => x.StoreId);
             e.Property(x => x.Status).HasMaxLength(20);
         });
@@ -489,14 +490,12 @@ public partial class DeliverySytemContext : IdentityDbContext<User, IdentityRole
             e.Property(x => x.DocType).HasMaxLength(40);
             e.Property(x => x.FilePath).HasMaxLength(512);
         });
-        modelBuilder.SeedingRoles();
-        modelBuilder.SeedingStoreData();
-        modelBuilder.SeedingCategoryData();
-        modelBuilder.SeedingAdminData();
-        modelBuilder.SeedingDataForStore();
-        modelBuilder.SeedingDashboards();
+        // modelBuilder.SeedingRoles();
+        // modelBuilder.SeedingStoreData();
+        // modelBuilder.SeedingCategoryData();
+        // modelBuilder.SeedingAdminData();
+        // modelBuilder.SeedingDataForStore();
+        // modelBuilder.SeedingDashboards();
         base.OnModelCreating(modelBuilder);
-       
     }
-    
 }

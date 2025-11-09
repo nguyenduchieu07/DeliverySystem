@@ -1,0 +1,198 @@
+﻿@model MaintenanceSlotVM
+@{
+ViewData["Title"] = "Slot: " + Model.Slot.Code;
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+
+<div class="container-fluid">
+
+    <div class="mb-3">
+        <a href="@Url.Action("Warehouse", "Maintenance", new { id = Model.Slot.WarehouseId })" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- ALERT -->
+    <div id="alert-container"></div>
+
+    <!-- SLOT INFO -->
+    <div class="card shadow mb-4 p-3">
+        <h4 class="mb-2">Slot: @Model.Slot.Code</h4>
+        <p><strong>Kho:</strong> @Model.Slot.Warehouse.Name</p>
+        <p><strong>Kích thước (m³):</strong> @Model.Slot.VolumeM3</p>
+        <p><strong>Trạng thái Slot:</strong> @Model.Slot.Status</p>
+
+        <a class="btn btn-primary mt-2"
+           href="@Url.Action("Create", "Maintenance", new { slotId = Model.Slot.Id })">
+            <i class="fas fa-plus"></i> Lên lịch bảo trì mới
+        </a>
+    </div>
+
+    <!-- MAINTENANCE TABLE -->
+    <div class="card shadow mb-5">
+        <div class="card-header"><h5>Lịch bảo trì của Slot</h5></div>
+        <div class="card-body">
+            <table id="slotMaintenanceTable" class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>Loại bảo trì</th>
+                    <th>Thời gian</th>
+                    <th>Trạng thái</th>
+                    <th>Kết quả</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var m in Model.Maintenances)
+                {
+                <tr data-id="@m.Id">
+                    <td>@m.MaintenanceItem.Name</td>
+                    <td>@m.ScheduledStart.ToString("dd/MM HH:mm") → @m.ScheduledEnd.ToString("dd/MM HH:mm")</td>
+                    <td class="status">@m.Status</td>
+                    <td>@m.Result</td>
+                    <td>
+                        @switch (m.Status)
+                        {
+                        case MaintenanceStatus.Scheduled:
+                        case MaintenanceStatus.Overdue:
+                        <button class="btn btn-sm btn-success btn-start" data-id="@m.Id"><i class="fas fa-play"></i></button>
+                        <button class="btn btn-sm btn-secondary btn-cancel" data-id="@m.Id"><i class="fas fa-ban"></i></button>
+                        break;
+
+                        case MaintenanceStatus.InProgress:
+                        <button class="btn btn-sm btn-info btn-complete" data-id="@m.Id"><i class="fas fa-check"></i></button>
+                        break;
+                        }
+
+                        @if (m.Status != MaintenanceStatus.Completed && m.Status != MaintenanceStatus.InProgress)
+                        {
+                        <a class="btn btn-sm btn-warning"
+                           href="@Url.Action("Edit", "Maintenance", new { id = m.Id })">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        }
+
+                        <button class="btn btn-sm btn-danger btn-delete" data-id="@m.Id"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- COMPLETE MODAL -->
+<div class="modal fade" id="completeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="completeForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Hoàn thành bảo trì</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="completeId" />
+                    <div class="mb-3">
+                        <label class="form-label">Kết quả *</label>
+                        <textarea id="completeResult" class="form-control" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú (tuỳ chọn)</label>
+                        <textarea id="completeNote" class="form-control"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success">Xác nhận hoàn thành</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let tableSlot;
+
+    function showAlert(type, message) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show mt-2" role="alert">
+                <i class="fas ${type === "success" ? "fa-check-circle" :
+            type === "danger" ? "fa-exclamation-circle" :
+                "fa-info-circle"}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+        $("#alert-container").html(alertHtml);
+    }
+
+    $(document).ready(function () {
+        tableSlot = $('#slotMaintenanceTable').DataTable();
+
+        // START
+        $(document).on("click", ".btn-start", function () {
+            const id = $(this).data("id");
+            $.post(`/Stores/Maintenance/StartAjax/${id}`, function (res) {
+                if (res.success) {
+                    showAlert("success", res.message);
+                    location.reload();
+                } else showAlert("danger", res.message);
+            });
+        });
+
+        // CANCEL
+        $(document).on("click", ".btn-cancel", function () {
+            if (!confirm("Hủy lịch bảo trì?")) return;
+            const id = $(this).data("id");
+            $.post(`/Stores/Maintenance/CancelAjax/${id}`, function (res) {
+                if (res.success) {
+                    showAlert("info", res.message);
+                    location.reload();
+                } else showAlert("danger", res.message);
+            });
+        });
+
+        // DELETE
+        $(document).on("click", ".btn-delete", function () {
+            if (!confirm("Xóa lịch bảo trì này?")) return;
+            const id = $(this).data("id");
+            $.post(`/Stores/Maintenance/DeleteAjax/${id}`, function (res) {
+                if (res.success) {
+                    showAlert("warning", res.message);
+                    location.reload();
+                } else showAlert("danger", res.message);
+            });
+        });
+
+        // COMPLETE MODAL
+        $(document).on("click", ".btn-complete", function () {
+            $("#completeId").val($(this).data("id"));
+            $("#completeResult").val("");
+            $("#completeNote").val("");
+            $("#completeModal").modal("show");
+        });
+
+        // SUBMIT COMPLETE
+        $("#completeForm").submit(function (e) {
+            e.preventDefault();
+            const id = $("#completeId").val();
+            const result = $("#completeResult").val();
+            const note = $("#completeNote").val();
+
+            $.post(`/Stores/Maintenance/CompleteAjax/${id}`, { result, note }, function (res) {
+                if (res.success) {
+                    $("#completeModal").modal("hide");
+                    showAlert("success", res.message);
+                    location.reload();
+                } else showAlert("danger", res.message);
+            });
+        });
+    });
+</script>

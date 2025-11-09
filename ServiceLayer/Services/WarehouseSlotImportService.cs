@@ -62,7 +62,10 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                         Row = TryInt(r.Cell(7)),
                         Col = TryInt(r.Cell(8)),
                         IsBlocked = TryBool(r.Cell(9)),
-                        ImageUrl = NullIfEmpty(r.Cell(10).GetString())
+                        ImageUrl = NullIfEmpty(r.Cell(10).GetString()),
+                        LeaseStart =  TryDate(r.Cell(11)),
+                        LeaseEnd =  TryDate(r.Cell(12)),
+                        Status = TryStatus(r.Cell(13)),
                     };
                     rows.Add((excelRowIndex, dto));
                 }
@@ -156,6 +159,45 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                 g => g.Key,
                 g => new HashSet<string>(g.Select(x => x.Code), StringComparer.OrdinalIgnoreCase));
 
+        #region Validate bổ sung cho leaseStart, leaseEnd, Status
+        var validStatuses = new[]
+        {
+            nameof(StatusValue.Available), 
+            nameof(StatusValue.InUse), 
+            nameof(StatusValue.Reserved), 
+            nameof(StatusValue.Maintenance), 
+        };
+        foreach (var (excelRow, dto) in rows)
+        {
+            // 1. Validate Status
+            if (!validStatuses.Contains(dto.Status.ToString(), StringComparer.OrdinalIgnoreCase))
+            {
+                errors.Add(new ImportError { RowIndex = excelRow, Field = "Status", Message = $"Giá trị không hợp lệ. Phải là một trong: {string.Join(", ", validStatuses)}." });
+            }
+
+            // 2. Validate LeaseStart/LeaseEnd logic
+            if (dto.LeaseStart.HasValue && dto.LeaseEnd.HasValue && dto.LeaseStart > dto.LeaseEnd)
+            {
+                errors.Add(new ImportError { RowIndex = excelRow, Field = "LeaseStart/LeaseEnd", Message = "LeaseStart phải nhỏ hơn hoặc bằng LeaseEnd." });
+            }
+
+            // 3. Nếu Status khác InUse, không được điền LeaseStart/LeaseEnd
+            if (!string.Equals(dto.Status.ToString(), nameof(StatusValue.InUse), StringComparison.OrdinalIgnoreCase))
+            {
+                if (dto.LeaseStart.HasValue || dto.LeaseEnd.HasValue)
+                {
+                    errors.Add(new ImportError
+                    {
+                        RowIndex = excelRow,
+                        Field = "LeaseStart/LeaseEnd",
+                        Message = $"Chỉ được điền LeaseStart/LeaseEnd khi Status = InUse."
+                    });
+                }
+            }
+        }
+
+        #endregion
+        
         // 6) Insert trong transaction (all-or-nothing). Không động tới Row/Col.
         using var tx = await _db.Database.BeginTransactionAsync(ct);
         try
@@ -176,8 +218,8 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                     Id = Guid.NewGuid(),
                     WarehouseId = whId,
                     Code = dto.Code,
-                    Row = 0, // sẽ được set ở bước reindex
-                    Col = 0, // sẽ được set ở bước reindex
+                    Row = dto.Row, 
+                    Col = dto.Col,
                     HeightM = dto.HeightM,
                     LengthM = dto.LengthM,
                     WidthM = dto.WidthM,
@@ -186,7 +228,7 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                     LeaseEnd = dto.LeaseEnd,
                     IsBlocked = dto.IsBlocked,
                     ImageUrl = dto.ImageUrl,
-                    Status = StatusValue.Available
+                    Status = dto.Status
                 };
 
                 _db.WarehouseSlots.Add(entity);
@@ -197,6 +239,8 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
 
                 result.Success++;
             }
+
+            
 
             if (errors.Any())
             {
@@ -234,6 +278,26 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
     {
         // Cho phép A-Z, a-z, 0-9, dấu cách, gạch ngang và gạch dưới
         return !System.Text.RegularExpressions.Regex.IsMatch(input, @"^[\w\s\-]+$");
+    }
+    private static StatusValue TryStatus(IXLCell cell)
+    {
+        var raw = cell.GetString().Trim();
+
+        if (string.IsNullOrEmpty(raw))
+            throw new Exception("Trạng thái bị trống.");
+
+        // Cho phép parse không phân biệt hoa thường
+        if (Enum.TryParse(typeof(StatusValue), raw, true, out var result))
+            return (StatusValue)result!;
+
+        // Thử parse theo số (nếu cột chứa giá trị 0,1,2,...)
+        if (int.TryParse(raw, out var intVal) &&
+            Enum.IsDefined(typeof(StatusValue), intVal))
+        {
+            return (StatusValue)intVal;
+        }
+
+        throw new Exception($"Giá trị trạng thái '{raw}' không hợp lệ.");
     }
 
 

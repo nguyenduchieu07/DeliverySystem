@@ -1,0 +1,18 @@
+﻿@model MaintenanceItemEditVM
+@{
+    ViewData["Title"] = "Tạo loại bảo trì";
+}
+
+<h2 class="mb-4">Tạo loại bảo trì</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <partial name="_Form" model="Model" />
+
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
