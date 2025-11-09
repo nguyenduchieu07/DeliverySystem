@@ -935,42 +935,66 @@ function updateItemIndexes() {
 
 // ============ IMAGE PREVIEW ============
 async function previewTotalImage(input) {
-    const file = input.files[0];
-    const preview = document.getElementById("productImagePreview");
+    const files = input.files;
+    const previewContainer = document.getElementById("productImagePreviewContainer");
+    const oldPreview = document.getElementById("productImagePreview");
 
-    if (file) {
-        console.log("📷 Image selected:");
-        console.log("  - File name:", file.name);
-        console.log("  - File size:", (file.size / 1024).toFixed(2), "KB");
-        console.log("  - File type:", file.type);
+    // Xóa preview cũ nếu có
+    if (previewContainer) {
+        previewContainer.innerHTML = "";
+        previewContainer.style.display = files.length > 0 ? "flex" : "none";
+    }
+    if (oldPreview) {
+        oldPreview.style.display = "none";
+    }
 
-        if (preview) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                preview.src = e.target.result;
-                preview.style.display = "block";
-                console.log("  ✅ Image preview loaded successfully");
-            };
-            reader.readAsDataURL(file);
-        } else {
-            console.warn("  ⚠️ Preview element not found");
-        }
+    if (files && files.length > 0) {
+        console.log(`📷 ${files.length} image(s) selected:`);
+        
+        // Hiển thị preview cho tất cả các ảnh
+        Array.from(files).forEach((file, index) => {
+            console.log(`  - Image ${index + 1}:`, file.name, `(${(file.size / 1024).toFixed(2)} KB)`);
+            
+            if (previewContainer) {
+                const previewDiv = document.createElement("div");
+                previewDiv.style.cssText = "position: relative; display: inline-block;";
+                
+                const previewImg = document.createElement("img");
+                previewImg.className = "image-preview";
+                previewImg.style.cssText = "width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd; display: block;";
+                
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    console.log(`  ✅ Preview ${index + 1} loaded successfully`);
+                };
+                reader.readAsDataURL(file);
+                
+                previewDiv.appendChild(previewImg);
+                previewContainer.appendChild(previewDiv);
+            }
+        });
 
-        // Gọi AI để phân tích ảnh và tự động điền vào bảng
-        await analyzeImageAndFillItems(file);
+        // Gọi AI để phân tích tất cả ảnh và tự động điền vào bảng
+        await analyzeImageAndFillItems(Array.from(files));
     } else {
-        console.log("📷 No image selected (file input cleared)");
-        if (preview) {
-            preview.style.display = "none";
-        }
+        console.log("📷 No images selected (file input cleared)");
     }
 }
 
 // Hàm gọi AI để phân tích ảnh và tự động điền vào bảng items
-async function analyzeImageAndFillItems(imageFile) {
+async function analyzeImageAndFillItems(imageFiles) {
     const tbody = document.getElementById("itemsTableBody");
     if (!tbody) {
         console.error("Items table body not found");
+        return;
+    }
+
+    // Chuyển đổi FileList hoặc Array thành Array
+    const filesArray = Array.isArray(imageFiles) ? imageFiles : Array.from(imageFiles || []);
+
+    if (filesArray.length === 0) {
+        console.warn("No image files provided");
         return;
     }
 
@@ -978,12 +1002,21 @@ async function analyzeImageAndFillItems(imageFile) {
     const loadingMsg = document.createElement("div");
     loadingMsg.id = "aiLoadingMsg";
     loadingMsg.style.cssText = "padding: 15px; background: #e8f0fe; border-radius: 8px; margin: 10px 0; text-align: center; color: #667eea;";
-    loadingMsg.innerHTML = "🤖 AI đang phân tích ảnh... Vui lòng đợi...";
+    loadingMsg.innerHTML = `🤖 AI đang phân tích ${filesArray.length} ảnh... Vui lòng đợi...`;
     tbody.parentElement.insertBefore(loadingMsg, tbody);
 
     try {
         const formData = new FormData();
-        formData.append("productImage", imageFile);
+        
+        // Nếu chỉ có 1 ảnh, dùng productImage (backward compatible)
+        // Nếu có nhiều ảnh, dùng productImages
+        if (filesArray.length === 1) {
+            formData.append("productImage", filesArray[0]);
+        } else {
+            filesArray.forEach((file, index) => {
+                formData.append("productImages", file);
+            });
+        }
 
         const response = await fetch("/Quote/AnalyzeProductImage", {
             method: "POST",
@@ -1011,17 +1044,25 @@ async function analyzeImageAndFillItems(imageFile) {
             return;
         }
 
-        tbody.innerHTML = "";
+        // Không xóa toàn bộ tbody, chỉ thêm items mới vào (để user có thể thêm thủ công)
+        // Nếu muốn xóa và thay thế, uncomment dòng dưới:
+        // tbody.innerHTML = "";
 
-        // Điền dữ liệu từ AI vào bảng
+        // Điền dữ liệu từ AI vào bảng (thêm vào cuối danh sách hiện có)
+        const existingRows = tbody.querySelectorAll("tr:not(:has(td[colspan]))");
+        let startIndex = existingRows.length;
+        
         result.items.forEach((item, index) => {
-            addItemRowFromAI(item, index);
+            addItemRowFromAI(item, startIndex + index);
         });
+
+        // Cập nhật lại index của tất cả các rows để đảm bảo đúng format
+        updateItemIndexes();
 
         // Hiển thị thông báo thành công
         const successMsg = document.createElement("div");
         successMsg.style.cssText = "padding: 10px; background: #d4edda; border-radius: 8px; margin: 10px 0; color: #155724;";
-        successMsg.innerHTML = `✅ ${result.message || `Đã phát hiện ${result.items.length} loại sản phẩm và tự động điền vào bảng.`}`;
+        successMsg.innerHTML = `✅ ${result.message || `Đã phát hiện ${result.items.length} loại sản phẩm và tự động thêm vào danh sách.`}`;
         tbody.parentElement.insertBefore(successMsg, tbody);
 
         // Tự động xóa thông báo sau 5 giây
@@ -1033,7 +1074,7 @@ async function analyzeImageAndFillItems(imageFile) {
 
         console.log("✅ AI analysis completed:", result.items);
     } catch (error) {
-        console.error("Error analyzing image:", error);
+        console.error("Error analyzing image(s):", error);
         
         // Xóa loading indicator
         const loadingElement = document.getElementById("aiLoadingMsg");

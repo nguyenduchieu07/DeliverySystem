@@ -23,11 +23,18 @@ namespace ServiceLayer.Abstractions.IServices
     public interface IGeminiService
     {
         /// <summary>
-        /// Phân tích ảnh để đọc thông tin và tính toán thể tích và diện tích cần thiết
+        /// Phân tích nhiều ảnh cùng lúc để đọc thông tin và tính toán thể tích và diện tích cần thiết
         /// </summary>
-        /// <param name="imageUrl">URL ảnh sản phẩm</param>
+        /// <param name="imageUrls">Danh sách URL ảnh sản phẩm</param>
+        /// <returns>Kết quả tính toán thể tích và diện tích từ tất cả các ảnh</returns>
+        Task<VolumeCalculationResult> AnalyzeMultipleImagesAndCalculateVolumeAsync(List<string> imageUrls);
+
+        /// <summary>
+        /// Phân tích danh sách đồ dùng (text-based) để tính toán thể tích và diện tích cần thiết
+        /// </summary>
+        /// <param name="items">Danh sách đồ dùng với tên, danh mục và số lượng</param>
         /// <returns>Kết quả tính toán thể tích và diện tích</returns>
-        Task<VolumeCalculationResult> AnalyzeImageAndCalculateVolumeAsync(string imageUrl);
+        Task<VolumeCalculationResult> AnalyzeItemsAndCalculateVolumeAsync(List<ItemInfo> items);
     }
 
     public class ItemInfo
@@ -38,4 +45,3 @@ namespace ServiceLayer.Abstractions.IServices
         public decimal? EstimatedWeightKg { get; set; }
     }
 }
-

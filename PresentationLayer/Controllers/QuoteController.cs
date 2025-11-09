@@ -96,7 +96,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateWarehouseOrder([FromForm] CreateWarehouseOrderViewModel viewModel, IFormFile? productImage)
+        public async Task<IActionResult> CreateWarehouseOrder([FromForm] CreateWarehouseOrderViewModel viewModel, IFormFile? productImage, List<IFormFile>? productImages)
         {
             if (viewModel == null)
             {
@@ -128,32 +128,94 @@ namespace PresentationLayer.Controllers
             {
                 return Unauthorized(new { success = false, message = "Bạn cần đăng nhập để đặt hàng." });
             }
+
             var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
-                // Upload ảnh nếu có
-                string? imageUrl = null;
+                // Ưu tiên: Gửi danh sách items lên AI để tính toán
                 VolumeCalculationResult? volumeResult = null;
                 string? geminiError = null;
-                
-                if (productImage != null && productImage.Length > 0)
+                List<string>? imageUrls = null;
+
+                // Nếu có items, gửi items lên AI (ưu tiên cao nhất)
+                if (viewModel.Items != null && viewModel.Items.Any(i => !string.IsNullOrWhiteSpace(i.Name) && i.Quantity > 0))
                 {
-                    imageUrl = await _cloudinaryService.UploadImageFileAsync(productImage);
-                    
                     try
                     {
-                        volumeResult = await _geminiService.AnalyzeImageAndCalculateVolumeAsync(imageUrl);
-                        
+                        var itemsForAI = viewModel.Items
+                            .Where(i => !string.IsNullOrWhiteSpace(i.Name) && i.Quantity > 0)
+                            .Select(i => new ItemInfo
+                            {
+                                Name = i.Name.Trim(),
+                                Category = i.Category?.Trim(),
+                                Quantity = i.Quantity
+                            })
+                            .ToList();
+
+                        volumeResult = await _geminiService.AnalyzeItemsAndCalculateVolumeAsync(itemsForAI);
+
                         if (volumeResult == null)
                         {
                             geminiError = "Gemini API trả về null result";
                         }
+                        else
+                        {
+                            Console.WriteLine($"✅ AI đã phân tích {itemsForAI.Count} items và tính được: {volumeResult.RequiredVolumeM3:F2} m³, {volumeResult.RequiredAreaM2:F2} m²");
+                        }
                     }
                     catch (Exception geminiEx)
                     {
-                        Console.WriteLine($"Gemini analysis error: {geminiEx.Message}");
+                        Console.WriteLine($"Gemini analysis error (items): {geminiEx.Message}");
                         volumeResult = null;
                         geminiError = geminiEx.Message;
+                    }
+                }
+
+                // Fallback 1: Nếu không có items hoặc AI lỗi, thử dùng nhiều ảnh
+                if (volumeResult == null)
+                {
+                    var filesToProcess = new List<IFormFile>();
+
+                    if (productImage != null && productImage.Length > 0)
+                    {
+                        filesToProcess.Add(productImage);
+                    }
+
+                    if (productImages != null && productImages.Any())
+                    {
+                        filesToProcess.AddRange(productImages.Where(f => f != null && f.Length > 0));
+                    }
+
+                    if (filesToProcess.Any())
+                    {
+                        try
+                        {
+                            // Upload tất cả ảnh lên Cloudinary
+                            imageUrls = new List<string>();
+                            foreach (var file in filesToProcess)
+                            {
+                                var imageUrl = await _cloudinaryService.UploadImageFileAsync(file);
+                                imageUrls.Add(imageUrl);
+                            }
+
+                            // Gọi Gemini để phân tích nhiều ảnh
+                            volumeResult = await _geminiService.AnalyzeMultipleImagesAndCalculateVolumeAsync(imageUrls);
+
+                            if (volumeResult == null)
+                            {
+                                geminiError = "Gemini API trả về null result";
+                            }
+                            else
+                            {
+                                Console.WriteLine($"✅ AI đã phân tích {imageUrls.Count} ảnh và tính được: {volumeResult.RequiredVolumeM3:F2} m³, {volumeResult.RequiredAreaM2:F2} m²");
+                            }
+                        }
+                        catch (Exception geminiEx)
+                        {
+                            Console.WriteLine($"Gemini analysis error (images): {geminiEx.Message}");
+                            volumeResult = null;
+                            geminiError = geminiEx.Message;
+                        }
                     }
                 }
 
@@ -198,8 +260,8 @@ namespace PresentationLayer.Controllers
 
                         var warehouses = await _db.Warehouses
                             .Include(w => w.Address)
-                            .Where(w => w.Address != null && 
-                                       w.Address.Latitude != null && 
+                            .Where(w => w.Address != null &&
+                                       w.Address.Latitude != null &&
                                        w.Address.Longitude != null &&
                                        w.Status == StatusValue.Approved)
                             .ToListAsync();
@@ -277,15 +339,14 @@ namespace PresentationLayer.Controllers
                 // Tính giá cho các dịch vụ đặc biệt
                 var addonPrices = new Dictionary<string, decimal>
                 {
-                    { "🧊 Kho mát", 50000m }, // 50,000 VND/ngày
-                    { "💧 Chống ẩm", 30000m }, // 30,000 VND/ngày
-                    { "🔒 An ninh cao", 40000m }, // 40,000 VND/ngày
-                    { "🛡️ Bảo hiểm hàng hóa", 100000m }, // 100,000 VND (một lần)
-                    { "🏢 Kho có thang máy", 20000m }, // 20,000 VND/ngày
-                    { "📹 Giám sát 24/7", 60000m } // 60,000 VND/ngày
+                    { "🧊 Kho mát", 50000m },
+                    { "💧 Chống ẩm", 30000m },
+                    { "🔒 An ninh cao", 40000m },
+                    { "🛡️ Bảo hiểm hàng hóa", 100000m },
+                    { "🏢 Kho có thang máy", 20000m },
+                    { "📹 Giám sát 24/7", 60000m }
                 };
 
-                // Dịch vụ tính theo ngày
                 var dailyAddons = new HashSet<string> { "🧊 Kho mát", "💧 Chống ẩm", "🔒 An ninh cao", "🏢 Kho có thang máy", "📹 Giám sát 24/7" };
 
                 var totalAddonPrice = 0m;
@@ -317,47 +378,46 @@ namespace PresentationLayer.Controllers
 
                 var totalPrice = baseSlotPrice + totalAddonPrice;
 
-                // Tính toán chi tiết giá (đã tính addons ở trên)
                 var storageDaysForDisplay = Math.Ceiling((viewModel.StorageEndDate - viewModel.StorageStartDate).TotalDays);
-                var subtotal = totalPrice; // Đã bao gồm cả addons
-                var vatAmount = subtotal * 0.1m; // VAT 10%
+                var subtotal = totalPrice;
+                var vatAmount = subtotal * 0.1m;
                 var grandTotal = subtotal + vatAmount;
-                
+
                 // Tạo Quotation trước (chưa có Order)
-                var VALIDITY_FOR_QUOTATION_HOUR = 24; // Báo giá có giá trị trong 24 giờ
+                var VALIDITY_FOR_QUOTATION_HOUR = 24;
                 var validUntil = DateTime.Now.AddHours(VALIDITY_FOR_QUOTATION_HOUR);
                 var quotation = new Quotation
                 {
                     Id = Guid.NewGuid(),
                     StoreId = storeId,
                     CustomerId = userId,
-                    TotalAmount = grandTotal,                  // đã gồm VAT
-                    ValidUntil = validUntil,                    // hết hạn sau 24h
-                    Status = StatusValue.Sent,                 // vừa gửi báo giá
+                    TotalAmount = grandTotal,
+                    ValidUntil = validUntil,
+                    Status = StatusValue.Sent,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
                 _db.Quotations.Add(quotation);
 
-                // Tạo SlotReservation để giữ chỗ trong 24h (chưa có OrderId)
+                // Tạo SlotReservation để giữ chỗ trong 24h
                 var slotReservation = new SlotReservation
                 {
                     Id = Guid.NewGuid(),
-                    OrderId = null, // Chưa có Order, sẽ gán khi xác nhận
+                    OrderId = null,
                     WarehouseSlotId = selectedSlot.Id,
-                    ExpiresAt = validUntil, // Hết hạn sau 24h
+                    ExpiresAt = validUntil,
                     Status = StatusValue.Active,
                     From = viewModel.StorageStartDate,
                     To = viewModel.StorageEndDate
                 };
                 _db.SlotReservations.Add(slotReservation);
 
-                // UPDATE TRẠNG THÁI CỦA WAREHOUSESLOT THÀNH Reserved
                 selectedSlot.Status = StatusValue.Reserved;
                 _db.WarehouseSlots.Update(selectedSlot);
 
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
+
                 // Trả về báo giá chi tiết
                 return Json(new
                 {
@@ -366,36 +426,32 @@ namespace PresentationLayer.Controllers
                     quotationId = quotation.Id,
                     quote = new
                     {
-                        // Thông tin kho
                         warehouseName = warehouseFromDb.Name,
                         warehouseAddress = warehouseFromDb.Address?.AddressLine ?? viewModel.WarehouseArea.AddressLine ?? "N/A",
-                        
-                        // Thông tin slot (chưa gán, đang chờ xác nhận)
-                        slotId = selectedSlot.Id.ToString(), // Thêm slotId để client có thể gán sau khi xác nhận
+
+                        slotId = selectedSlot.Id.ToString(),
                         slotCode = selectedSlot.Code,
-                        slotVolumeM3 = Math.Round(selectedSlot.HeightM * selectedSlot.LengthM * selectedSlot.WidthM, 2), // Tính trực tiếp thay vì dùng VolumeM3 property
+                        slotVolumeM3 = Math.Round(selectedSlot.HeightM * selectedSlot.LengthM * selectedSlot.WidthM, 2),
                         slotAreaM2 = Math.Round(selectedSlot.LengthM * selectedSlot.WidthM, 2),
                         slotDimensions = $"{selectedSlot.LengthM:F2}m × {selectedSlot.WidthM:F2}m × {selectedSlot.HeightM:F2}m",
-                        
-                        // Yêu cầu tính toán từ Gemini - chỉ truyền nếu có kết quả thực từ Gemini
+
                         requiredVolumeM3 = volumeResult != null ? Math.Round(volumeResult.RequiredVolumeM3, 2) : (decimal?)null,
                         requiredAreaM2 = volumeResult != null ? Math.Round(volumeResult.RequiredAreaM2, 2) : (decimal?)null,
                         analysisDetails = volumeResult?.AnalysisDetails,
                         itemEstimates = volumeResult?.ItemEstimates,
-                        geminiAnalysisAvailable = volumeResult != null, // Flag để client biết có kết quả Gemini không
-                        hasProductImage = productImage != null && productImage.Length > 0, // Flag để client biết có upload ảnh không
-                        geminiError = geminiError, // Thông tin lỗi từ Gemini (nếu có)
-                        
-                        // Thông tin thời gian
+                        geminiAnalysisAvailable = volumeResult != null,
+                        hasProductImages = imageUrls != null && imageUrls.Any(),
+                        imageUrls = imageUrls,
+                        geminiError = geminiError,
+
                         storageStartDate = viewModel.StorageStartDate.ToString("dd/MM/yyyy"),
                         storageEndDate = viewModel.StorageEndDate.ToString("dd/MM/yyyy"),
                         storageDurationHours = Math.Round(storageDuration, 1),
                         storageDurationDays = storageDays,
 
-                        // Bảng giá
                         baseSlotPrice = Math.Round(baseSlotPrice, 0),
                         pricePerHour = Math.Round(selectedSlot.BasePricePerHour, 0),
-                        addonDetails = addonDetails, // Chi tiết các dịch vụ đặc biệt
+                        addonDetails = addonDetails,
                         totalAddonPrice = Math.Round(totalAddonPrice, 0),
                         subtotal = Math.Round(subtotal, 0),
                         vatAmount = Math.Round(vatAmount, 0),
@@ -445,14 +501,12 @@ namespace PresentationLayer.Controllers
 
             try
             {
-                // Kiểm tra order có tồn tại không
                 var order = await _orderService.GetByIdAsync(request.OrderId);
                 if (order == null)
                 {
                     return NotFound(new { success = false, message = "Không tìm thấy đơn hàng." });
                 }
 
-                // Kiểm tra slot có tồn tại và còn trống không
                 var slot = await _db.WarehouseSlots
                     .FirstOrDefaultAsync(s => s.Id == request.SlotId);
 
@@ -471,42 +525,36 @@ namespace PresentationLayer.Controllers
                     return BadRequest(new { success = false, message = "Ô kho này đã được gán cho đơn hàng khác." });
                 }
 
-                // Kiểm tra xem đã có bản ghi OrderWarehouseSlot chưa (để tránh trùng lặp)
                 var existingAssignment = await _db.OrderWarehouseSlots
-                    .FirstOrDefaultAsync(ows => ows.OrderId == request.OrderId && 
+                    .FirstOrDefaultAsync(ows => ows.OrderId == request.OrderId &&
                                                  ows.WarehouseSlotId == request.SlotId &&
                                                  ows.DeletedAt == null);
 
                 if (existingAssignment != null)
                 {
-                    // Nếu đã có bản ghi nhưng chưa có ReleasedAt, nghĩa là đang active
                     if (existingAssignment.ReleasedAt == null)
                     {
                         return BadRequest(new { success = false, message = "Ô kho này đã được gán cho đơn hàng này rồi." });
                     }
-                    // Nếu đã có ReleasedAt (đã giải phóng), tạo bản ghi mới
                 }
 
-                // Tạo bản ghi lịch sử trong bảng OrderWarehouseSlot
                 var orderWarehouseSlot = new OrderWarehouseSlot
                 {
                     Id = Guid.NewGuid(),
                     OrderId = request.OrderId,
                     WarehouseSlotId = request.SlotId,
-                    AssignedAt = DateTime.Now, // Thời gian gán slot
-                    ReleasedAt = null, // Chưa giải phóng
+                    AssignedAt = DateTime.Now,
+                    ReleasedAt = null,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
 
                 _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
 
-                // Cập nhật CurrentOrderId trong WarehouseSlot để đảm bảo tính nhất quán
                 slot.CurrentOrderId = request.OrderId;
-                slot.Status = DataAccessLayer.Enums.StatusValue.Reserved; // Đánh dấu slot là Reserved
-                
-                await _db.SaveChangesAsync();
+                slot.Status = DataAccessLayer.Enums.StatusValue.Reserved;
 
+                await _db.SaveChangesAsync();
 
                 return Json(new
                 {
@@ -542,7 +590,6 @@ namespace PresentationLayer.Controllers
             {
                 using var transaction = await _db.Database.BeginTransactionAsync();
 
-                // Kiểm tra quotation
                 var quotation = await _db.Quotations
                     .FirstOrDefaultAsync(q => q.Id == request.QuotationId);
 
@@ -551,10 +598,9 @@ namespace PresentationLayer.Controllers
                     return NotFound(new { success = false, message = "Không tìm thấy báo giá." });
                 }
 
-                // Kiểm tra slot reservation còn hiệu lực không
                 var reservation = await _db.SlotReservations
-                    .FirstOrDefaultAsync(r => r.WarehouseSlotId == request.SlotId 
-                                            && r.OrderId == null 
+                    .FirstOrDefaultAsync(r => r.WarehouseSlotId == request.SlotId
+                                            && r.OrderId == null
                                             && r.Status == StatusValue.Active
                                             && r.ExpiresAt > DateTimeOffset.Now);
 
@@ -563,7 +609,6 @@ namespace PresentationLayer.Controllers
                     return BadRequest(new { success = false, message = "Slot reservation đã hết hạn hoặc không tồn tại." });
                 }
 
-                // Lấy thông tin warehouse từ slot để lấy địa chỉ dropoff (địa chỉ kho hàng)
                 var slot = await _db.WarehouseSlots
                     .Include(s => s.Warehouse)
                         .ThenInclude(w => w.Address)
@@ -574,7 +619,6 @@ namespace PresentationLayer.Controllers
                     return BadRequest(new { success = false, message = "Không tìm thấy thông tin kho hàng." });
                 }
 
-                // Tạo địa chỉ pickup (địa chỉ khách hàng) nếu có trong request
                 Address? pickupAddress = null;
                 Address? dropoffAddress = null;
 
@@ -593,12 +637,9 @@ namespace PresentationLayer.Controllers
                     _db.Addresses.Add(pickupAddress);
                 }
 
-                // Tạo địa chỉ dropoff (địa chỉ kho hàng)
-                // Ưu tiên: lấy từ warehouse nếu có, nếu không thì lấy từ request
                 var warehouseAddress = slot.Warehouse.Address;
                 if (warehouseAddress != null)
                 {
-                    // Sử dụng địa chỉ warehouse làm dropoff address
                     dropoffAddress = new Address
                     {
                         Id = Guid.NewGuid(),
@@ -615,7 +656,6 @@ namespace PresentationLayer.Controllers
                 }
                 else if (request.DropoffAddress != null && !string.IsNullOrWhiteSpace(request.DropoffAddress.AddressLine))
                 {
-                    // Fallback: sử dụng địa chỉ từ request nếu warehouse không có địa chỉ
                     dropoffAddress = new Address
                     {
                         Id = Guid.NewGuid(),
@@ -629,14 +669,11 @@ namespace PresentationLayer.Controllers
                     _db.Addresses.Add(dropoffAddress);
                 }
 
-                // Lưu addresses trước để có ID
                 await _db.SaveChangesAsync();
 
-                // Lấy thời gian từ reservation nếu không có trong request
                 var deliveryDate = request.DeliveryDate ?? reservation.From;
                 var pickupDate = request.PickupDate ?? reservation.To;
 
-                // Tạo Order từ Quotation
                 var order = new Order
                 {
                     Id = Guid.NewGuid(),
@@ -644,11 +681,11 @@ namespace PresentationLayer.Controllers
                     CustomerId = quotation.CustomerId,
                     StoreId = quotation.StoreId ?? Guid.Empty,
                     PickupAddress = pickupAddress,
-                    PickupAddressId = pickupAddress?.Id, // Gán ID để lưu vào DB
+                    PickupAddressId = pickupAddress?.Id,
                     DropoffAddress = dropoffAddress,
-                    DropoffAddressId = dropoffAddress?.Id, // Gán ID để lưu vào DB
-                    DeliveryDate = deliveryDate, // Thời gian gửi vào kho
-                    PickupDate = pickupDate, // Thời gian lấy ra
+                    DropoffAddressId = dropoffAddress?.Id,
+                    DeliveryDate = deliveryDate,
+                    PickupDate = pickupDate,
                     Status = StatusValue.Pending,
                     TotalAmount = quotation.TotalAmount,
                     CreatedAt = DateTime.Now,
@@ -656,7 +693,6 @@ namespace PresentationLayer.Controllers
                     Note = "Order created from quotation confirmation"
                 };
 
-                // Thêm OrderItems nếu có trong request
                 if (request.Items != null && request.Items.Any())
                 {
                     foreach (var itemVm in request.Items)
@@ -684,11 +720,9 @@ namespace PresentationLayer.Controllers
                 _db.Orders.Add(order);
                 await _db.SaveChangesAsync();
 
-                // Cập nhật SlotReservation với OrderId
                 reservation.OrderId = order.Id;
                 _db.SlotReservations.Update(reservation);
 
-                // Tạo OrderWarehouseSlot
                 var orderWarehouseSlot = new OrderWarehouseSlot
                 {
                     Id = Guid.NewGuid(),
@@ -701,7 +735,6 @@ namespace PresentationLayer.Controllers
                 };
                 _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
 
-                // Cập nhật slot status (sử dụng biến slot đã lấy ở trên)
                 if (slot != null)
                 {
                     slot.CurrentOrderId = order.Id;
@@ -709,7 +742,6 @@ namespace PresentationLayer.Controllers
                     _db.WarehouseSlots.Update(slot);
                 }
 
-                // Cập nhật quotation status
                 quotation.Status = StatusValue.Active;
                 _db.Quotations.Update(quotation);
 
@@ -749,37 +781,51 @@ namespace PresentationLayer.Controllers
             public Guid SlotId { get; set; }
             public AddressViewModel? PickupAddress { get; set; }
             public AddressViewModel? DropoffAddress { get; set; }
-            public DateTime? DeliveryDate { get; set; } // Thời gian gửi vào kho
-            public DateTime? PickupDate { get; set; } // Thời gian lấy ra
+            public DateTime? DeliveryDate { get; set; }
+            public DateTime? PickupDate { get; set; }
             public List<OrderItemViewModel>? Items { get; set; }
         }
 
         // API endpoint để AI đọc ảnh và trả về danh sách sản phẩm
         [HttpPost]
-        public async Task<IActionResult> AnalyzeProductImage(IFormFile productImage)
+        public async Task<IActionResult> AnalyzeProductImage(IFormFile? productImage, List<IFormFile>? productImages = null)
         {
-            if (productImage == null || productImage.Length == 0)
+            var filesToProcess = new List<IFormFile>();
+
+            if (productImage != null && productImage.Length > 0)
             {
-                return BadRequest(new { success = false, message = "Vui lòng chọn ảnh để phân tích." });
+                filesToProcess.Add(productImage);
+            }
+
+            if (productImages != null && productImages.Any())
+            {
+                filesToProcess.AddRange(productImages.Where(f => f != null && f.Length > 0));
+            }
+
+            if (filesToProcess.Count == 0)
+            {
+                return BadRequest(new { success = false, message = "Vui lòng chọn ít nhất một ảnh để phân tích." });
             }
 
             try
             {
-                // Upload ảnh lên Cloudinary
-                var imageUrl = await _cloudinaryService.UploadImageFileAsync(productImage);
-                
-                // Gọi Gemini để phân tích ảnh
-                var volumeResult = await _geminiService.AnalyzeImageAndCalculateVolumeAsync(imageUrl);
-                
-                // Chuyển đổi ItemEstimates thành ItemInfo để trả về
+                var imageUrls = new List<string>();
+                foreach (var file in filesToProcess)
+                {
+                    var imageUrl = await _cloudinaryService.UploadImageFileAsync(file);
+                    imageUrls.Add(imageUrl);
+                }
+
+                // Gọi Gemini để phân tích nhiều ảnh
+                var volumeResult = await _geminiService.AnalyzeMultipleImagesAndCalculateVolumeAsync(imageUrls);
+
                 var items = new List<ItemInfo>();
                 if (volumeResult?.ItemEstimates != null && volumeResult.ItemEstimates.Any())
                 {
                     foreach (var itemEstimate in volumeResult.ItemEstimates)
                     {
-                        // Tách category từ name hoặc notes nếu có
                         var category = ExtractCategoryFromName(itemEstimate.Name);
-                        
+
                         items.Add(new ItemInfo
                         {
                             Name = itemEstimate.Name,
@@ -793,15 +839,16 @@ namespace PresentationLayer.Controllers
                 {
                     success = true,
                     items = items,
-                    imageUrl = imageUrl,
-                    message = items.Any() 
-                        ? $"Đã phát hiện {items.Count} loại sản phẩm trong ảnh." 
-                        : "Không phát hiện được sản phẩm trong ảnh. Vui lòng thử lại với ảnh khác."
+                    imageUrls = imageUrls,
+                    imageUrl = imageUrls.FirstOrDefault(),
+                    message = items.Any()
+                        ? $"Đã phát hiện {items.Count} loại sản phẩm từ {imageUrls.Count} ảnh."
+                        : $"Không phát hiện được sản phẩm trong {imageUrls.Count} ảnh. Vui lòng thử lại với ảnh khác."
                 });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error analyzing product image: {ex.Message}");
+                Console.WriteLine($"Error analyzing product image(s): {ex.Message}");
                 return StatusCode(500, new
                 {
                     success = false,
@@ -813,7 +860,6 @@ namespace PresentationLayer.Controllers
 
         private string? ExtractCategoryFromName(string name)
         {
-            // Logic đơn giản để đoán category từ tên sản phẩm
             var lowerName = name.ToLower();
             if (lowerName.Contains("bàn") || lowerName.Contains("ghế") || lowerName.Contains("tủ") || lowerName.Contains("giường"))
                 return "Nội thất";
@@ -875,7 +921,6 @@ namespace PresentationLayer.Controllers
             return Json(results);
         }
 
-        // Bước 3: Tính giá (AJAX) + lưu Quotation ở trạng thái Sent
         [HttpPost]
         public async Task<IActionResult> Calculate([FromBody] QuoteRequestVm req, CancellationToken ct)
         {
@@ -885,7 +930,6 @@ namespace PresentationLayer.Controllers
             return Ok(result);
         }
 
-        // Bước 4A: Giữ chỗ tạm (2h)
         [HttpPost]
         public async Task<IActionResult> HoldTemp([FromBody] HoldTempVm vm, CancellationToken ct)
         {
@@ -893,7 +937,6 @@ namespace PresentationLayer.Controllers
             return ok ? Ok() : BadRequest("Không tạo được giữ chỗ tạm.");
         }
 
-        // Bước 4B: Chấp nhận báo giá → Quotation.Accepted + tạo Reservation Firm
         [HttpPost]
         public async Task<IActionResult> Accept([FromBody] AcceptQuoteVm vm, CancellationToken ct)
         {
@@ -905,8 +948,6 @@ namespace PresentationLayer.Controllers
             return Ok(new { success = true, orderId = result.OrderId, redirectUrl });
         }
 
-
-        // Bước 4C: Yêu cầu chỉnh giá (ghi chú)
         [HttpPost]
         public async Task<IActionResult> RequestRevision([FromBody] RequestRevisionVm vm, CancellationToken ct)
         {
@@ -942,7 +983,5 @@ namespace PresentationLayer.Controllers
             var rs = await _feedbackService.CreateFeedbackAsync(feedback);
             return rs != null ? Ok() : BadRequest("Không gửi được đánh giá");
         }
-
-
     }
 }

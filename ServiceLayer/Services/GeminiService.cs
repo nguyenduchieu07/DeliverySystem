@@ -23,51 +23,72 @@ namespace ServiceLayer.Services
         {
             _httpClient = httpClient;
             _config = config.Value;
-            // Không set BaseAddress để có thể dùng absolute URL hoặc relative URL tùy vào endpoint
             _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
 
-        public async Task<VolumeCalculationResult> AnalyzeImageAndCalculateVolumeAsync(string imageUrl)
+        public async Task<VolumeCalculationResult> AnalyzeMultipleImagesAndCalculateVolumeAsync(List<string> imageUrls)
         {
-            if (string.IsNullOrEmpty(imageUrl))
+            if (imageUrls == null || imageUrls.Count == 0)
             {
-                throw new ArgumentException("Image URL is required", nameof(imageUrl));
+                throw new ArgumentException("At least one image URL is required", nameof(imageUrls));
             }
 
-            // Tạo prompt cho Gemini - chỉ đọc ảnh
-            var prompt = BuildPrompt();
+            var prompt = BuildPromptForMultipleImages(imageUrls.Count);
 
-            // Tải ảnh và convert sang base64 (hoặc dùng image URL trực tiếp nếu Gemini hỗ trợ)
-            var imageBytes = await DownloadImageAsync(imageUrl);
-            var base64Image = Convert.ToBase64String(imageBytes);
+            // Tải tất cả ảnh và convert sang base64
+            var imageParts = new List<object> { new { text = prompt } };
 
-            // Gọi Gemini API
+            foreach (var imageUrl in imageUrls)
+            {
+                if (string.IsNullOrEmpty(imageUrl)) continue;
+
+                var imageBytes = await DownloadImageAsync(imageUrl);
+                var base64Image = Convert.ToBase64String(imageBytes);
+
+                // Xác định MIME type dựa trên extension
+                var mimeType = "image/jpeg";
+                if (imageUrl.Contains(".png", StringComparison.OrdinalIgnoreCase))
+                    mimeType = "image/png";
+                else if (imageUrl.Contains(".webp", StringComparison.OrdinalIgnoreCase))
+                    mimeType = "image/webp";
+
+                imageParts.Add(new
+                {
+                    inline_data = new
+                    {
+                        mime_type = mimeType,
+                        data = base64Image
+                    }
+                });
+            }
+
+            return await CallGeminiApiAsync(imageParts);
+        }
+
+        public async Task<VolumeCalculationResult> AnalyzeItemsAndCalculateVolumeAsync(List<ItemInfo> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                throw new ArgumentException("At least one item is required", nameof(items));
+            }
+
+            var prompt = BuildPromptForItems(items);
+            var parts = new List<object> { new { text = prompt } };
+
+            return await CallGeminiApiAsync(parts);
+        }
+
+        private async Task<VolumeCalculationResult> CallGeminiApiAsync(List<object> parts)
+        {
             var requestBody = new
             {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new object[]
-                        {
-                            new { text = prompt },
-                            new
-                            {
-                                inline_data = new
-                                {
-                                    mime_type = "image/jpeg",
-                                    data = base64Image
-                                }
-                            }
-                        }
-                    }
-                },
+                contents = new[] { new { parts } },
                 generationConfig = new
                 {
                     temperature = 0.4,
                     topK = 20,
                     topP = 1,
-                    maxOutputTokens = 16384, // Tăng giới hạn output token để tránh cắt ngang response
+                    maxOutputTokens = 16384,
                 },
                 safetySettings = new[]
                 {
@@ -78,107 +99,27 @@ namespace ServiceLayer.Services
                 }
             };
 
-            // Tạo full URL endpoint với absolute URL - đảm bảo format đúng
             var baseUrl = _config.BaseUrl.TrimEnd('/');
             var endpoint = $"{baseUrl}/models/{_config.ModelName}:generateContent?key={_config.ApiKey}";
-            
-            // Dùng absolute URL
+
             var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
                 Content = JsonContent.Create(requestBody)
             };
 
             var response = await _httpClient.SendAsync(request);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"❌ Gemini API HTTP Error: {response.StatusCode} {response.ReasonPhrase}");
-                Console.WriteLine($"Request URL: {endpoint}");
-                Console.WriteLine($"Error response: {errorContent}");
-                
-                // Thử parse error response để lấy thông tin chi tiết
-                if (!string.IsNullOrEmpty(errorContent))
-                {
-                    try
-                    {
-                        var errorJson = JsonSerializer.Deserialize<JsonElement>(errorContent);
-                        if (errorJson.TryGetProperty("error", out var error))
-                        {
-                            if (error.TryGetProperty("message", out var message))
-                            {
-                                Console.WriteLine($"Error message: {message.GetString()}");
-                            }
-                            if (error.TryGetProperty("status", out var status))
-                            {
-                                Console.WriteLine($"Error status: {status.GetString()}");
-                            }
-                        }
-                    }
-                    catch { }
-                }
-                
+                LogError("Gemini API HTTP Error", response.StatusCode, response.ReasonPhrase, endpoint, errorContent);
                 throw new HttpRequestException($"Gemini API returned {response.StatusCode}: {response.ReasonPhrase}. Response: {errorContent}");
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            
-            GeminiResponse? geminiResponse;
-            try
-            {
-                geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(responseContent, _jsonOptions);
-            }
-            catch (JsonException jsonEx)
-            {
-                Console.WriteLine($"❌ Failed to deserialize Gemini response as JSON: {jsonEx.Message}");
-                Console.WriteLine($"Response content: {responseContent}");
-                throw new InvalidOperationException($"Failed to deserialize Gemini API response: {jsonEx.Message}", jsonEx);
-            }
+            var geminiResponse = DeserializeGeminiResponse(responseContent);
+            var textResponse = ExtractTextFromResponse(geminiResponse);
 
-            if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0)
-            {
-                Console.WriteLine($"❌ Gemini API did not return valid candidates");
-                Console.WriteLine($"Full response: {responseContent}");
-                throw new InvalidOperationException("Gemini API did not return a valid response");
-            }
-
-            var candidate = geminiResponse.Candidates[0];
-
-            // Kiểm tra xem Content và Parts có tồn tại không
-            if (candidate.Content == null)
-            {
-                Console.WriteLine("❌ Gemini API response: Content is null");
-                Console.WriteLine($"Full Gemini response: {JsonSerializer.Serialize(geminiResponse, new JsonSerializerOptions { WriteIndented = true })}");
-                throw new InvalidOperationException($"Gemini API response: Content is null. Finish reason: {candidate.FinishReason ?? "unknown"}");
-            }
-
-            if (candidate.Content.Parts == null || candidate.Content.Parts.Count == 0)
-            {
-                Console.WriteLine("❌ Gemini API response: Parts is null or empty");
-                Console.WriteLine($"Full Gemini response: {JsonSerializer.Serialize(geminiResponse, new JsonSerializerOptions { WriteIndented = true })}");
-                Console.WriteLine($"Finish reason: {candidate.FinishReason ?? "null"}");
-                
-                // Kiểm tra xem có phải bị block bởi safety filter không
-                var blockedRatings = candidate.SafetyRatings?.Where(r => r.Blocked).ToList();
-                if (blockedRatings != null && blockedRatings.Count > 0)
-                {
-                    var blockedCategories = string.Join(", ", blockedRatings.Select(r => r.Category));
-                    throw new InvalidOperationException($"Gemini API response was blocked by safety filters: {blockedCategories}. Finish reason: {candidate.FinishReason ?? "unknown"}");
-                }
-                
-                throw new InvalidOperationException($"Gemini API response does not contain text. Finish reason: {candidate.FinishReason ?? "unknown"}. This might be a temporary API issue or the response exceeded token limits.");
-            }
-
-            var textResponse = candidate.Content.Parts[0]?.Text;
-            if (string.IsNullOrEmpty(textResponse))
-            {
-                Console.WriteLine("❌ Gemini API response: Text is null or empty in Parts[0]");
-                Console.WriteLine($"Full Gemini response: {JsonSerializer.Serialize(geminiResponse, new JsonSerializerOptions { WriteIndented = true })}");
-                Console.WriteLine($"Finish reason: {candidate.FinishReason ?? "null"}");
-                throw new InvalidOperationException($"Gemini API response does not contain text. Finish reason: {candidate.FinishReason ?? "unknown"}");
-            }
-
-            // Parse response từ Gemini (JSON format)
             try
             {
                 return ParseGeminiResponse(textResponse);
@@ -192,26 +133,83 @@ namespace ServiceLayer.Services
             }
         }
 
-        private string BuildPrompt()
+        private string BuildPromptForMultipleImages(int imageCount)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Bạn là chuyên gia tính toán không gian kho hàng. Hãy phân tích hình ảnh để đọc thông tin và tính toán:");
+            sb.AppendLine("Bạn là chuyên gia tính toán không gian kho hàng. Hãy phân tích TẤT CẢ các hình ảnh được cung cấp để đọc thông tin và tính toán:");
             sb.AppendLine();
-            sb.AppendLine("**Yêu cầu:**");
-            sb.AppendLine("**YÊU CẦU:**\r\n1. Liệt kê TẤT CẢ đồ vật trong ảnh (tên, số lượng) và ƯỚC TÍNH kích thước (DxRxC, mét).\r\n2." +
-                " Tính toán thể tích vật lý chiếm chỗ TỐI ƯU NHẤT (xếp chồng/lồng ghép/tháo rời).\r\n3." +
-                " Tính diện tích sàn TỐI THIỂU cần thiết (m²), bao gồm khoảng trống.\r\n4." +
-                " Tính thể tích ô kho cần thiết (m³) với chiều cao trần đề xuất 2.5m.");
+            sb.AppendLine($"Bạn đang xem {imageCount} ảnh. Hãy phân tích TẤT CẢ các đồ vật trong TẤT CẢ các ảnh này.");
+            sb.AppendLine();
+            sb.AppendLine("**YÊU CẦU:**");
+            sb.AppendLine("1. Liệt kê TẤT CẢ đồ vật trong TẤT CẢ các ảnh (tên, số lượng) và ƯỚC TÍNH kích thước (DxRxC, mét).");
+            sb.AppendLine("2. Tính toán thể tích vật lý chiếm chỗ TỐI ƯU NHẤT (xếp chồng/lồng ghép/tháo rời) cho TẤT CẢ các đồ vật.");
+            sb.AppendLine("3. Tính diện tích sàn TỐI THIỂU cần thiết (m²), bao gồm khoảng trống.");
+            sb.AppendLine("4. Tính thể tích ô kho cần thiết (m³) với chiều cao trần đề xuất 2.5m.");
+            sb.AppendLine();
+            sb.AppendLine("**Lưu ý:** Nếu cùng một loại đồ vật xuất hiện trong nhiều ảnh, hãy cộng dồn số lượng lại.");
             sb.AppendLine();
             sb.AppendLine("**Trả về JSON với format sau (CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC):**");
-           
-            sb.AppendLine("{\r\n  \\\"requiredVolumeM3\\\": <số thực>," +
-                "\r\n  \\\"requiredAreaM2\\\": <số thực>," +
-                "\r\n  \\\"analysisDetails\\\":" +
-                " \\\"<mô tả chi tiết: liệt kê đồ vật, cách xếp gọn nhất, tối đa 100 từ>\\\"," +
-                "\r\n  \\\"itemEstimates\\\": [\r\n    {\r\n      \\\"name\\\": \\\"<tên đồ vật>\\\"," +
-                "\r\n      \\\"quantity\\\": <số lượng>,\r\n      \\\"estimatedVolumeM3\\\": <thể tích ước tính cho món này, m³>," +
-                "\r\n      \\\"notes\\\": \\\"<ghi chú kích thước và cách xếp, tối đa 50 từ>\\\"\r\n    }\r\n  ]\r\n}");
+            sb.AppendLine(@"{
+  ""requiredVolumeM3"": <số thực>,
+  ""requiredAreaM2"": <số thực>,
+  ""analysisDetails"": ""<mô tả chi tiết: liệt kê đồ vật từ TẤT CẢ các ảnh, cách xếp gọn nhất, tối đa 200 từ>"",
+  ""itemEstimates"": [
+    {
+      ""name"": ""<tên đồ vật>"",
+      ""quantity"": <tổng số lượng từ TẤT CẢ các ảnh>,
+      ""estimatedVolumeM3"": <thể tích ước tính cho món này, m³>,
+      ""notes"": ""<ghi chú kích thước và cách xếp, tối đa 50 từ>""
+    }
+  ]
+}");
+            sb.AppendLine("- analysisDetails tối đa 200 từ, notes tối đa 50 từ để response ngắn gọn.");
+
+            return sb.ToString();
+        }
+
+        private string BuildPromptForItems(List<ItemInfo> items)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Bạn là chuyên gia tính toán không gian kho hàng. Hãy phân tích danh sách đồ dùng sau để tính toán thể tích và diện tích cần thiết:");
+            sb.AppendLine();
+            sb.AppendLine("**DANH SÁCH ĐỒ DÙNG:**");
+            sb.AppendLine();
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                var item = items[i];
+                sb.AppendLine($"{i + 1}. **{item.Name}**");
+                if (!string.IsNullOrWhiteSpace(item.Category))
+                    sb.AppendLine($"   - Danh mục: {item.Category}");
+                sb.AppendLine($"   - Số lượng: {item.Quantity}");
+                sb.AppendLine();
+            }
+
+            sb.AppendLine("**YÊU CẦU:**");
+            sb.AppendLine("1. Dựa trên tên đồ vật và danh mục, ƯỚC TÍNH kích thước (Dài x Rộng x Cao, mét) cho từng loại đồ vật.");
+            sb.AppendLine("2. Tính toán thể tích vật lý chiếm chỗ TỐI ƯU NHẤT (xếp chồng/lồng ghép/tháo rời) cho TẤT CẢ các đồ vật.");
+            sb.AppendLine("3. Tính diện tích sàn TỐI THIỂU cần thiết (m²), bao gồm khoảng trống giữa các đồ vật.");
+            sb.AppendLine("4. Tính thể tích ô kho cần thiết (m³) với chiều cao trần đề xuất 2.5m.");
+            sb.AppendLine();
+            sb.AppendLine("**Lưu ý:**");
+            sb.AppendLine("- Nếu cùng một loại đồ vật có số lượng > 1, hãy tính toán cách xếp tối ưu (chồng lên nhau, xếp cạnh nhau, v.v.)");
+            sb.AppendLine("- Ước tính kích thước dựa trên kiến thức thông thường về loại đồ vật đó");
+            sb.AppendLine("- Tính toán bao gồm cả khoảng trống cần thiết để di chuyển và bảo quản");
+            sb.AppendLine();
+            sb.AppendLine("**Trả về JSON với format sau (CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC):**");
+            sb.AppendLine(@"{
+  ""requiredVolumeM3"": <số thực>,
+  ""requiredAreaM2"": <số thực>,
+  ""analysisDetails"": ""<mô tả chi tiết: cách ước tính kích thước, cách xếp gọn nhất, tối đa 200 từ>"",
+  ""itemEstimates"": [
+    {
+      ""name"": ""<tên đồ vật>"",
+      ""quantity"": <số lượng>,
+      ""estimatedVolumeM3"": <thể tích ước tính cho món này, m³>,
+      ""notes"": ""<ghi chú kích thước ước tính và cách xếp, tối đa 50 từ>""
+    }
+  ]
+}");
             sb.AppendLine("- analysisDetails tối đa 200 từ, notes tối đa 50 từ để response ngắn gọn.");
 
             return sb.ToString();
@@ -219,26 +217,83 @@ namespace ServiceLayer.Services
 
         private async Task<byte[]> DownloadImageAsync(string imageUrl)
         {
-            using var httpClient = new HttpClient();
-            return await httpClient.GetByteArrayAsync(imageUrl);
+            return await _httpClient.GetByteArrayAsync(imageUrl);
+        }
+
+        private GeminiResponse DeserializeGeminiResponse(string responseContent)
+        {
+            try
+            {
+                var geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(responseContent, _jsonOptions);
+
+                if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0)
+                {
+                    Console.WriteLine($"❌ Gemini API did not return valid candidates");
+                    Console.WriteLine($"Full response: {responseContent}");
+                    throw new InvalidOperationException("Gemini API did not return a valid response");
+                }
+
+                return geminiResponse;
+            }
+            catch (JsonException jsonEx)
+            {
+                Console.WriteLine($"❌ Failed to deserialize Gemini response as JSON: {jsonEx.Message}");
+                Console.WriteLine($"Response content: {responseContent}");
+                throw new InvalidOperationException($"Failed to deserialize Gemini API response: {jsonEx.Message}", jsonEx);
+            }
+        }
+
+        private string ExtractTextFromResponse(GeminiResponse geminiResponse)
+        {
+            var candidate = geminiResponse.Candidates[0];
+
+            if (candidate.Content == null)
+            {
+                Console.WriteLine("❌ Gemini API response: Content is null");
+                Console.WriteLine($"Full Gemini response: {JsonSerializer.Serialize(geminiResponse, new JsonSerializerOptions { WriteIndented = true })}");
+                throw new InvalidOperationException($"Gemini API response: Content is null. Finish reason: {candidate.FinishReason ?? "unknown"}");
+            }
+
+            if (candidate.Content.Parts == null || candidate.Content.Parts.Count == 0)
+            {
+                Console.WriteLine("❌ Gemini API response: Parts is null or empty");
+                Console.WriteLine($"Full Gemini response: {JsonSerializer.Serialize(geminiResponse, new JsonSerializerOptions { WriteIndented = true })}");
+                Console.WriteLine($"Finish reason: {candidate.FinishReason ?? "null"}");
+
+                var blockedRatings = candidate.SafetyRatings?.Where(r => r.Blocked).ToList();
+                if (blockedRatings != null && blockedRatings.Count > 0)
+                {
+                    var blockedCategories = string.Join(", ", blockedRatings.Select(r => r.Category));
+                    throw new InvalidOperationException($"Gemini API response was blocked by safety filters: {blockedCategories}. Finish reason: {candidate.FinishReason ?? "unknown"}");
+                }
+
+                throw new InvalidOperationException($"Gemini API response does not contain text. Finish reason: {candidate.FinishReason ?? "unknown"}. This might be a temporary API issue or the response exceeded token limits.");
+            }
+
+            var textResponse = candidate.Content.Parts[0]?.Text;
+            if (string.IsNullOrEmpty(textResponse))
+            {
+                Console.WriteLine("❌ Gemini API response: Text is null or empty in Parts[0]");
+                Console.WriteLine($"Full Gemini response: {JsonSerializer.Serialize(geminiResponse, new JsonSerializerOptions { WriteIndented = true })}");
+                Console.WriteLine($"Finish reason: {candidate.FinishReason ?? "null"}");
+                throw new InvalidOperationException($"Gemini API response does not contain text. Finish reason: {candidate.FinishReason ?? "unknown"}");
+            }
+
+            return textResponse;
         }
 
         private VolumeCalculationResult ParseGeminiResponse(string textResponse)
         {
-            // Gemini có thể trả về JSON kèm markdown hoặc chỉ text
-            // Tìm JSON block trong response
             var jsonStart = textResponse.IndexOf('{');
             var jsonEnd = textResponse.LastIndexOf('}');
-            
+
             if (jsonStart == -1 || jsonEnd == -1 || jsonEnd <= jsonStart)
             {
-                // Nếu không tìm thấy JSON, thử parse toàn bộ response
                 throw new InvalidOperationException($"Cannot parse Gemini response as JSON. Response: {textResponse}");
             }
 
             var jsonText = textResponse.Substring(jsonStart, jsonEnd - jsonStart + 1);
-            
-            // Thử parse JSON bình thường trước
+
             try
             {
                 var result = JsonSerializer.Deserialize<VolumeCalculationResult>(jsonText, _jsonOptions);
@@ -246,79 +301,80 @@ namespace ServiceLayer.Services
                 {
                     throw new InvalidOperationException("Failed to deserialize Gemini response");
                 }
-                
-                // Đảm bảo có analysisDetails nếu không có
+
                 if (string.IsNullOrEmpty(result.AnalysisDetails))
                 {
                     result.AnalysisDetails = textResponse;
                 }
-                
+
                 return result;
             }
-            catch (JsonException ex)
+            catch (JsonException)
             {
-                // Fallback: Xử lý JSON bị cắt ngang hoặc không hợp lệ
-                try
+                // Fallback: Xử lý JSON bị cắt ngang
+                var fixedJson = FixTruncatedJson(jsonText);
+                var result = JsonSerializer.Deserialize<VolumeCalculationResult>(fixedJson, _jsonOptions);
+
+                if (result == null)
                 {
-                    // Thử sửa JSON bị cắt ngang bằng cách thêm dấu đóng ngoặc thiếu
-                    var fixedJson = FixTruncatedJson(jsonText);
-                    
-                    var result = JsonSerializer.Deserialize<VolumeCalculationResult>(fixedJson, _jsonOptions);
-                    if (result == null)
-                    {
-                        throw new InvalidOperationException("Failed to deserialize Gemini response after fix");
-                    }
-                    
-                    // Đảm bảo có analysisDetails nếu không có
-                    if (string.IsNullOrEmpty(result.AnalysisDetails))
-                    {
-                        result.AnalysisDetails = textResponse;
-                    }
-                    
-                    return result;
+                    throw new InvalidOperationException("Failed to deserialize Gemini response after fix");
                 }
-                catch (Exception fixEx)
+
+                if (string.IsNullOrEmpty(result.AnalysisDetails))
                 {
-                    Console.WriteLine($"❌ Failed to parse Gemini JSON response: {ex.Message}");
-                    throw new InvalidOperationException($"Failed to parse Gemini JSON response: {ex.Message}. Raw response: {jsonText}", ex);
+                    result.AnalysisDetails = textResponse;
                 }
+
+                return result;
             }
         }
 
         private string FixTruncatedJson(string jsonText)
         {
-            // Thử sửa JSON bị cắt ngang bằng cách:
-            // 1. Đếm số dấu ngoặc mở và đóng
-            // 2. Thêm dấu đóng ngoặc thiếu
-            // 3. Loại bỏ trailing comma
-            // 4. Đóng các string chưa được đóng
-            
             var fixedJson = jsonText;
-            
-            // Đếm ngoặc nhọn
+
             var openBraces = fixedJson.Count(c => c == '{');
             var closeBraces = fixedJson.Count(c => c == '}');
             var missingBraces = openBraces - closeBraces;
-            
-            // Đếm ngoặc vuông
+
             var openBrackets = fixedJson.Count(c => c == '[');
             var closeBrackets = fixedJson.Count(c => c == ']');
             var missingBrackets = openBrackets - closeBrackets;
-            
-            // Loại bỏ trailing comma trước khi đóng
+
+            // Loại bỏ trailing comma
             fixedJson = Regex.Replace(fixedJson, @",\s*([}\]])", "$1");
-            
+
             // Thêm dấu đóng ngoặc thiếu
             for (int i = 0; i < missingBrackets; i++)
-            {
                 fixedJson += "]";
-            }
+
             for (int i = 0; i < missingBraces; i++)
-            {
                 fixedJson += "}";
-            }
-            
+
             return fixedJson;
+        }
+
+        private void LogError(string message, System.Net.HttpStatusCode statusCode, string? reasonPhrase, string endpoint, string errorContent)
+        {
+            Console.WriteLine($"❌ {message}: {statusCode} {reasonPhrase}");
+            Console.WriteLine($"Request URL: {endpoint}");
+            Console.WriteLine($"Error response: {errorContent}");
+
+            if (!string.IsNullOrEmpty(errorContent))
+            {
+                try
+                {
+                    var errorJson = JsonSerializer.Deserialize<JsonElement>(errorContent);
+                    if (errorJson.TryGetProperty("error", out var error))
+                    {
+                        if (error.TryGetProperty("message", out var msg))
+                            Console.WriteLine($"Error message: {msg.GetString()}");
+                        if (error.TryGetProperty("status", out var status))
+                            Console.WriteLine($"Error status: {status.GetString()}");
+                    }
+                }
+                catch { }
+            }
         }
 
         // Gemini API response models
@@ -352,4 +408,3 @@ namespace ServiceLayer.Services
         }
     }
 }
-
