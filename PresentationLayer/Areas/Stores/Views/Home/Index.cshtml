@@ -453,6 +453,38 @@
     .month-item:hover {
         background-color: #e5501b;
     }
+
+    #selectYear {
+        padding: 10px 40px 10px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        border: 1.5px solid #e9ecef;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+        color: #2c3e50;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        min-width: 120px;
+    }
+
+    #selectYear:hover {
+        border-color: #e5501b;
+        background-color: #fff5f2;
+    }
+
+    #selectYear:focus {
+        border-color: #e5501b;
+        box-shadow: 0 0 0 3px rgba(229, 80, 27, 0.1);
+        outline: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23e5501b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    }
 </style>
 
 <div class="dashboard-container">
@@ -588,7 +620,9 @@
         <h5 class="card-title text-center mb-4">Doanh thu theo quý</h5>
 
         <div class="d-flex justify-content-center mb-4">
-            <label for="selectYear" class="me-2 d-flex align-items-center">Chọn năm:</label>
+            <label for="selectYear" class="me-2 d-flex align-items-center mr-2">
+                Chọn năm:
+            </label>
             <select id="selectYear" class="form-select w-auto">
                 @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
                 {
@@ -751,6 +785,7 @@
                     },
                     scales: {
                         y: {
+                            stepSize: 10000000,
                             beginAtZero: true, ticks: {
                                 callback: function (value) {
                                     return value.toLocaleString() + "₫";
@@ -860,6 +895,7 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
+                                stepSize: 10000000,
                                 callback: v => v.toLocaleString() + '₫'
                             }
                         }
@@ -916,6 +952,7 @@
                         legend: {display: false}
                     },
                     scales: {
+                        stepSize: 10000000,
                         y: {ticks: {callback: v => v.toLocaleString() + '₫'}}
                     }
                 }
