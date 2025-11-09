@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DataAccessLayer.Enums;
 
 namespace ServiceLayer.Dtos.Warehouses
 {
@@ -20,5 +21,6 @@ namespace ServiceLayer.Dtos.Warehouses
         public DateTime? LeaseEnd { get; set; }
         public bool IsBlocked { get; set; }
         public string? ImageUrl { get; set; }
+        public StatusValue Status { get; set; }
     }
 }

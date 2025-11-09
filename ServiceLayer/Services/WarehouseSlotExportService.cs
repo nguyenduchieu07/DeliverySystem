@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DataAccessLayer.Enums;
 
 public class WarehouseSlotExportService : IWarehouseSlotExportService
 {
@@ -21,7 +22,7 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
     private static readonly string[] HeaderTemplate = new[]
     {
         "WarehouseName","Code","HeightM","LengthM","WidthM",
-        "BasePricePerHour","Row","Col","IsBlocked","ImageUrl"
+        "BasePricePerHour","Row","Col","IsBlocked","ImageUrl", "LeaseStart","LeaseEnd","Status"
     };
 
     private static readonly string[] HeaderExport = new[]
@@ -33,27 +34,56 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
     public async Task<byte[]> ExportTemplateAsync(string warehouseName, CancellationToken ct = default)
     {
         using var wb = new XLWorkbook();
-        var ws = wb.Worksheets.Add("Slots");
+        var wsSlots = wb.Worksheets.Add("Slots");
 
         // Header
         for (int i = 0; i < HeaderTemplate.Length; i++)
-            ws.Cell(1, i + 1).Value = HeaderTemplate[i];
+            wsSlots.Cell(1, i + 1).Value = HeaderTemplate[i];
 
-        StyleHeader(ws.Range(1, 1, 1, HeaderTemplate.Length));
+        StyleHeader(wsSlots.Range(1, 1, 1, HeaderTemplate.Length));
 
         // Ghi dòng mô tả (optional)
-        ws.Cell(2, 1).Value = $"{warehouseName}";
-        ws.Cell(2, 3).Value = "(m)";
-        ws.Cell(2, 4).Value = "(m)";
-        ws.Cell(2, 5).Value = "(m)";
-        ws.Cell(2, 6).Value = "(VND/giờ)";
-        ws.Cell(2, 7).Value = "(số hàng)";
-        ws.Cell(2, 8).Value = "(số cột)";
-        ws.Cell(2, 9).Value = "(TRUE/FALSE)";
+        wsSlots.Cell(2, 1).Value = $"{warehouseName}";
+        wsSlots.Cell(2, 3).Value = "(m)";
+        wsSlots.Cell(2, 4).Value = "(m)";
+        wsSlots.Cell(2, 5).Value = "(m)";
+        wsSlots.Cell(2, 6).Value = "(VND/giờ)";
+        wsSlots.Cell(2, 7).Value = "(số hàng)";
+        wsSlots.Cell(2, 8).Value = "(số cột)";
+        wsSlots.Cell(2, 9).Value = "(TRUE/FALSE)";
+        wsSlots.Cell(2, 10).Value = "";
+        wsSlots.Cell(2, 11).Value = "(yyyy-MM-dd)";
+        wsSlots.Cell(2, 12).Value = "(yyyy-MM-dd)";
+        wsSlots.Cell(2, 13).Value = "(Available/InUse/Reserved/Maintenance)";
 
-        AutoFit(ws, HeaderTemplate.Length);
-        ws.SheetView.FreezeRows(1);
-        ws.RangeUsed().SetAutoFilter();
+        #region Xử lý data cho dropdown Status
+
+        var statusCol = 13;
+        var lastRow = 100; // ví dụ template hỗ trợ 10 slot
+        var statusValues = new[]
+        {
+            nameof(StatusValue.Available), 
+            nameof(StatusValue.InUse), 
+            nameof(StatusValue.Reserved), 
+            nameof(StatusValue.Maintenance), 
+        };
+        //Add sheet khác chứa data
+        var wsData = wb.Worksheets.Add("Data");
+        for (int i = 0; i < statusValues.Length; i++)
+        {
+            wsData.Cell(i + 1, 1).Value = statusValues[i]; // cột A, dòng 1->n
+        }
+
+        wsData.Hide();
+        #endregion
+
+        wsSlots.Range(3, statusCol, lastRow, statusCol)
+            .SetDataValidation()
+            .List(wsData.Range($"A1:A{statusValues.Length}"), true);
+        
+        AutoFit(wsSlots, HeaderTemplate.Length);
+        wsSlots.SheetView.FreezeRows(1);
+        wsSlots.RangeUsed().SetAutoFilter();
 
         using var stream = new System.IO.MemoryStream();
         wb.SaveAs(stream);
