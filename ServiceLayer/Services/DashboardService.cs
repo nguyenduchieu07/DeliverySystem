@@ -35,6 +35,7 @@ namespace ServiceLayer.Services
 
 
             var agg = await orders
+                .Where(o => o.Payments.Any(p => p.Status == Status.Completed))
                 .GroupBy(_ => 1)
                 .Select(g => new
                 {
