@@ -29,8 +29,14 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     .Select(e => e.StoreId)
                     .FirstOrDefaultAsync();
             }
+            else
+            {
 
-            return null;
+                var guid = Guid.Parse(userId);
+                return await _db.Stores.Where(x => x.OwnerUserId == guid).Select(x => x.Id).FirstOrDefaultAsync();
+            }
+
+
         }
 
         // GET: /Stores/MaintenanceItem
