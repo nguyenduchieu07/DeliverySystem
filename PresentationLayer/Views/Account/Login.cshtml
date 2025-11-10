@@ -51,11 +51,18 @@
             @Html.Hidden("ReturnUrl", ViewData["ReturnUrl"] as string)
             
             <div class="login-form-group">
-                @Html.HiddenFor(m => m.CountryCode)
-                @Html.TextBoxFor(m => m.PhoneOrEmail, new { 
-                    @class = "phone-email-input", 
-                    @placeholder = "Số điện thoại hoặc email"
-                })
+                <div class="country-phone-group">
+                    @Html.DropDownListFor(m => m.CountryCode, new SelectList(new[] {
+                        new { Value = "+84", Text = "Việt Nam (+84)" },
+                        new { Value = "+65", Text = "Singapore (+65)" },
+                        new { Value = "+66", Text = "Thailand (+66)" }
+                    }, "Value", "Text"), new { @class = "country-select" })
+                    
+                    @Html.TextBoxFor(m => m.PhoneOrEmail, new { 
+                        @class = "phone-email-input", 
+                        @placeholder = "Số điện thoại hoặc email"
+                    })
+                </div>
                 @Html.ValidationMessageFor(m => m.PhoneOrEmail, "", new { @class = "field-validation-error" })
             </div>
             

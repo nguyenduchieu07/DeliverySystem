@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -35,6 +36,13 @@ namespace ServiceLayer.Abstractions.IServices
         /// <param name="items">Danh sách đồ dùng với tên, danh mục và số lượng</param>
         /// <returns>Kết quả tính toán thể tích và diện tích</returns>
         Task<VolumeCalculationResult> AnalyzeItemsAndCalculateVolumeAsync(List<ItemInfo> items);
+
+        /// <summary>
+        /// Phân tích ảnh trực tiếp từ file để nhận diện đồ vật và số lượng (tối ưu tốc độ - không upload Cloudinary)
+        /// </summary>
+        /// <param name="imageFiles">Danh sách file ảnh</param>
+        /// <returns>Danh sách đồ vật được phát hiện</returns>
+        Task<List<ItemInfo>> DetectItemsFromImagesAsync(List<IFormFile> imageFiles);
     }
 
     public class ItemInfo

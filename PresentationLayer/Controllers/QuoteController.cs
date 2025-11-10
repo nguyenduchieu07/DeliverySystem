@@ -789,7 +789,7 @@ namespace PresentationLayer.Controllers
             public List<OrderItemViewModel>? Items { get; set; }
         }
 
-        // API endpoint để AI đọc ảnh và trả về danh sách sản phẩm
+        // API endpoint để AI đọc ảnh và trả về danh sách sản phẩm (TỐI ƯU TỐC ĐỘ - không upload Cloudinary)
         [HttpPost]
         public async Task<IActionResult> AnalyzeProductImage(IFormFile? productImage, List<IFormFile>? productImages = null)
         {
@@ -812,41 +812,16 @@ namespace PresentationLayer.Controllers
 
             try
             {
-                var imageUrls = new List<string>();
-                foreach (var file in filesToProcess)
-                {
-                    var imageUrl = await _cloudinaryService.UploadImageFileAsync(file);
-                    imageUrls.Add(imageUrl);
-                }
-
-                // Gọi Gemini để phân tích nhiều ảnh
-                var volumeResult = await _geminiService.AnalyzeMultipleImagesAndCalculateVolumeAsync(imageUrls);
-
-                var items = new List<ItemInfo>();
-                if (volumeResult?.ItemEstimates != null && volumeResult.ItemEstimates.Any())
-                {
-                    foreach (var itemEstimate in volumeResult.ItemEstimates)
-                    {
-                        var category = ExtractCategoryFromName(itemEstimate.Name);
-
-                        items.Add(new ItemInfo
-                        {
-                            Name = itemEstimate.Name,
-                            Category = category,
-                            Quantity = itemEstimate.Quantity
-                        });
-                    }
-                }
+                // ✅ TỐI ƯU: Gọi trực tiếp từ file, KHÔNG upload Cloudinary
+                var items = await _geminiService.DetectItemsFromImagesAsync(filesToProcess);
 
                 return Json(new
                 {
                     success = true,
                     items = items,
-                    imageUrls = imageUrls,
-                    imageUrl = imageUrls.FirstOrDefault(),
                     message = items.Any()
-                        ? $"Đã phát hiện {items.Count} loại sản phẩm từ {imageUrls.Count} ảnh."
-                        : $"Không phát hiện được sản phẩm trong {imageUrls.Count} ảnh. Vui lòng thử lại với ảnh khác."
+                        ? $"Đã phát hiện {items.Count} loại sản phẩm từ {filesToProcess.Count} ảnh."
+                        : $"Không phát hiện được sản phẩm trong {filesToProcess.Count} ảnh. Vui lòng thử lại với ảnh khác."
                 });
             }
             catch (Exception ex)
@@ -961,7 +936,7 @@ namespace PresentationLayer.Controllers
         public class CreateFeedbackDto
         {
             public Guid QuotationId { get; set; }
-            public string Comment { get; set; }
+            public string? Comment { get; set; }
             public int Rating { get; set; }
         }
 

@@ -1,4 +1,4 @@
-﻿﻿ /* VCN Authentication Pages - Common Styles (Reorganized) */
+﻿ /* VCN Authentication Pages - Common Styles (Reorganized) */
 /* === 1. General Page Layouts === */
 .auth-page, .login-page, .change-password-page {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -178,7 +178,7 @@
     }
 
 /* Buttons */
-.btn-primary, .login-submit-btn, .register-submit-btn {
+.btn-primary, .login-submit-btn {
     width: 100%;
     background: #f26722;
     color: white;
@@ -190,31 +190,20 @@
     cursor: pointer;
     transition: background-color 0.3s ease;
     margin-top: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .login-submit-btn {
     margin: 20px 0;
 }
 
-    .btn-primary:hover, .login-submit-btn:hover, .register-submit-btn:hover {
+    .btn-primary:hover, .login-submit-btn:hover {
         background: #e55a1b;
     }
 
-    .btn-primary:disabled, .login-submit-btn:disabled, .register-submit-btn:disabled {
+    .btn-primary:disabled, .login-submit-btn:disabled {
         background: #ccc;
         cursor: not-allowed;
     }
-
-/* Fix for buttons in navigation header */
-.btn.btn-outline-primary,
-.btn.btn-primary {
-    white-space: nowrap;
-    min-width: fit-content;
-    padding: 8px 16px;
-}
 
 /* Alerts & Validation */
 .alert {
@@ -1264,6 +1253,254 @@
     }
 
     .country-select {
+        min-width: 100%;
+    }
+}
+
+/* === 6. Register Page Specific Styles === */
+.register-page {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 40px 20px;
+}
+
+.register-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 100%;
+    max-width: 450px;
+    position: relative;
+    z-index: 10;
+}
+
+.register-logo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.register-logo-text {
+    font-size: 32px;
+    font-weight: bold;
+    color: #f26722;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.register-logo-icon {
+    width: 40px;
+    height: 40px;
+    background: #f26722;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.register-logo-icon::before {
+    content: '⚡';
+    color: white;
+    font-size: 20px;
+}
+
+.register-title {
+    text-align: center;
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.register-form-group {
+    margin-bottom: 20px;
+}
+
+.phone-group {
+    display: flex;
+    gap: 10px;
+}
+
+.country-code-select {
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    min-width: 80px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.country-code-select:focus {
+    border-color: #f26722;
+}
+
+.phone-number-input, .register-input {
+    flex: 1;
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.phone-number-input:focus, .register-input:focus {
+    border-color: #f26722;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.custom-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.custom-checkbox.checked {
+    background: #f26722;
+    border-color: #f26722;
+}
+
+.custom-checkbox.checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+}
+
+.checkbox-label {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.checkbox-label a {
+    color: #f26722;
+    text-decoration: none;
+}
+
+.checkbox-label a:hover {
+    text-decoration: underline;
+}
+
+.terms-info {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+    line-height: 1.3;
+}
+
+.register-submit-btn {
+    width: 100%;
+    background: #f26722;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 20px 0;
+}
+
+.register-submit-btn:hover {
+    background: #e55a1b;
+}
+
+.register-submit-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.social-register-btn {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #333;
+    text-decoration: none;
+}
+
+.social-register-btn:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    color: #333;
+    text-decoration: none;
+}
+
+.login-section {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+.login-section a {
+    color: #f26722;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-section a:hover {
+    text-decoration: underline;
+}
+
+/* Register Page Responsive */
+@media (max-width: 768px) {
+    .register-page {
+        padding: 20px 15px;
+        min-height: calc(100vh - 80px);
+    }
+
+    .register-container {
+        padding: 30px 25px;
+        max-width: 100%;
+    }
+
+    .background-illustration {
+        display: none;
+    }
+
+    .phone-group {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .country-code-select {
         min-width: 100%;
     }
 }
