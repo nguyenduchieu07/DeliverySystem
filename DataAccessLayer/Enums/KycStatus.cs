@@ -19,7 +19,7 @@ namespace DataAccessLayer.Enums
             {
                 KycStatus.Pending => "Chưa giải quyết",
                 KycStatus.NeedChanges => "Cần thay đổi",
-                KycStatus.Approved => "Tán thành",
+                KycStatus.Approved => "Được chấp thuận",
                 KycStatus.Rejected => "Từ chối",
                 _ => status.ToString()
             };
