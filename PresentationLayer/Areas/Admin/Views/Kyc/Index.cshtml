@@ -3,7 +3,7 @@
 @using DataAccessLayer.Enums
 @model KycSubmissionIndexViewModel;
 @{
-    ViewBag.Title = "KYC chờ duyệt";
+    ViewBag.Title = "Chờ duyệt";
 }
 
 <style>
@@ -463,11 +463,11 @@
         <div class="stat-value">@Model.KycSubmissions.Count()</div>
     </div>
     <div class="stat-card" style="border-left-color: var(--success);">
-        <div class="stat-label" style="color: var(--success);">Đã Xác Minh</div>
+        <div class="stat-label" style="color: var(--success);">Được chấp thuận</div>
         <div class="stat-value">@Model.KycSubmissions.Count(s => s.Status == KycStatus.Approved)</div>
     </div>
     <div class="stat-card" style="border-left-color: var(--danger);">
-        <div class="stat-label" style="color: var(--danger);">Chưa Xác Minh</div>
+        <div class="stat-label" style="color: var(--danger);">Từ chối</div>
         <div class="stat-value">@Model.KycSubmissions.Count(s => s.Status == KycStatus.Rejected)</div>
     </div>
 </div>
@@ -495,7 +495,7 @@
 
     <div class="card">
         <div class="card-header">
-            <h3>📝 KYC chờ duyệt</h3>
+            <h3>📝 Xác minh chờ duyệt</h3>
         </div>
         <div class="card-body">
             <table id="kycDatatable" class="kyc-table">

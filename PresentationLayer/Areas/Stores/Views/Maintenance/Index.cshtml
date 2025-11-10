@@ -1,0 +1,227 @@
+﻿@model MaintenanceIndexVM
+@{
+    ViewData["Title"] = "Quản lý bảo trì";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
+
+<div class="container-fluid">
+
+    <!-- ====== DASHBOARD WIDGETS ====== -->
+    <div class="d-flex my-4">
+        <div class="col-md-3">
+            <div class="card shadow p-3 text-center border-left-warning">
+                <h5 class="text-muted">Sắp tới</h5>
+                <h2 class="text-primary">@ViewBag.Upcoming</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow p-3 text-center border-left-info">
+                <h5 class="text-muted">Đang thực hiện</h5>
+                <h2 class="text-info">@ViewBag.InProgress</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow p-3 text-center border-left-danger">
+                <h5 class="text-muted">Quá hạn</h5>
+                <h2 class="text-info">@ViewBag.Overdue</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow p-3 text-center border-left-success">
+                <h5 class="text-muted">Hoàn thành</h5>
+                <h2 class="text-success">@ViewBag.Completed</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== TABLE: UPCOMING ====== -->
+    <!-- ALERT -->
+    <div id="alert-container"></div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="m-0">Lịch bảo trì sắp tới</h5>
+            <select id="statusFilter" class="form-select w-auto">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="InProgress">InProgress</option>
+                <option value="Overdue">Overdue</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+        <div class="card-body">
+            <table id="upcomingTable" class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>Slot</th>
+                    <th>Kho</th>
+                    <th>Loại bảo trì</th>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var m in Model.Upcoming)
+                {
+                    <tr data-id="@m.Id">
+                        <td>@m.WarehouseSlot.Code</td>
+                        <td>@m.WarehouseSlot.Warehouse.Name</td>
+                        <td>@m.MaintenanceItem.Name</td>
+                        <td>@m.ScheduledStart.ToString("dd/MM HH:mm")</td>
+                        <td>@m.ScheduledEnd.ToString("dd/MM HH:mm")</td>
+                        <td class="status">@m.Status.ToString()</td>
+                        <td>
+                            @if (m.Status == MaintenanceStatus.Scheduled || m.Status == MaintenanceStatus.Overdue)
+                            {
+                                <button class="btn btn-sm btn-success btn-start" data-id="@m.Id">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="btn btn-sm btn-secondary btn-cancel" data-id="@m.Id">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            }
+                            <button class="btn btn-sm btn-danger btn-delete" data-id="@m.Id">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ====== TABLE: HISTORY ====== -->
+    <div class="card shadow mb-4">
+        <div class="card-header">
+            <h5>Lịch sử bảo trì gần đây</h5>
+        </div>
+        <div class="card-body">
+            <table id="historyTable" class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>Slot</th>
+                    <th>Kho</th>
+                    <th>Loại bảo trì</th>
+                    <th>Hoàn thành lúc</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var h in Model.History)
+                {
+                    <tr>
+                        <td>@h.WarehouseSlot.Code</td>
+                        <td>@h.WarehouseSlot.Warehouse.Name</td>
+                        <td>@h.MaintenanceItem.Name</td>
+                        <td>@h.ActualEnd?.ToString("dd/MM HH:mm")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ====== TABLE: WAREHOUSES ====== -->
+    <div class="card shadow mb-5">
+        <div class="card-header">
+            <h5>Danh sách kho</h5>
+        </div>
+        <div class="card-body">
+            <table id="warehouseTable" class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>Tên kho</th>
+                    <th>Số slot có lịch bảo trì</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var w in Model.Warehouses)
+                {
+                    <tr>
+                        <td>@w.Name</td>
+                        <td>@w.Slots.Count</td>
+                        <td>
+                            <a class="btn btn-sm btn-primary" href="@Url.Action("Warehouse", "Maintenance", new { id = w.Id })">
+                                <i class="fas fa-box"></i> Xem Slot
+                            </a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script>
+    let tableUpcoming, tableHistory, tableWarehouse;
+
+    function showAlert(type, message) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show mt-2" role="alert">
+                <i class="fas ${type === "success" ? "fa-check-circle" :
+                                type === "danger" ? "fa-exclamation-circle" :
+                                "fa-info-circle"}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+        $("#alert-container").html(alertHtml);
+    }
+
+    $(document).ready(function () {
+        tableUpcoming = $('#upcomingTable').DataTable();
+        tableHistory = $('#historyTable').DataTable();
+        tableWarehouse = $('#warehouseTable').DataTable();
+
+        $('#statusFilter').on("change", function () {
+            tableUpcoming.column(5).search(this.value).draw();
+        });
+
+        // AJAX START
+        $(document).on("click", ".btn-start", function () {
+            const id = $(this).data("id");
+            $.post(`/Stores/Maintenance/StartAjax/${id}`, function (res) {
+                if (res.success) {
+                    showAlert("success", res.message);
+                    location.reload();
+                } else showAlert("danger", res.message);
+            });
+        });
+
+        // AJAX CANCEL
+        $(document).on("click", ".btn-cancel", function () {
+            if (!confirm("Hủy lịch bảo trì?")) return;
+            const id = $(this).data("id");
+            $.post(`/Stores/Maintenance/CancelAjax/${id}`, function (res) {
+                if (res.success) {
+                    showAlert("info", res.message);
+                    location.reload();
+                } else showAlert("danger", res.message);
+            });
+        });
+
+        // AJAX DELETE
+        $(document).on("click", ".btn-delete", function () {
+            if (!confirm("Xóa lịch bảo trì này?")) return;
+            const id = $(this).data("id");
+            $.post(`/Stores/Maintenance/DeleteAjax/${id}`, function (res) {
+                if (res.success) {
+                    showAlert("warning", res.message);
+                    location.reload();
+                } else showAlert("danger", res.message);
+            });
+        });
+    });
+</script>

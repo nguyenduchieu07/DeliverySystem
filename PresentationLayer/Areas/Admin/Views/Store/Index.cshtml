@@ -269,16 +269,16 @@
         <div class="stat-value">@Model.Count</div>
     </div>
     <div class="stat-card" style="border-left-color: var(--success);">
-        <div class="stat-label" style="color: var(--success);">Đã Xác Minh</div>
-        <div class="stat-value">@Model.Count(s => s.IsVerified)</div>
+        <div class="stat-label" style="color: var(--success);">Hoạt động</div>
+        <div class="stat-value">@Model.Count(s => s.Status == StatusValue.Active)</div>
     </div>
     @* <div class="stat-card" style="border-left-color: var(--warning);"> *@
     @*     <div class="stat-label" style="color: var(--warning);">Đánh Giá TB</div> *@
     @*     <div class="stat-value">@(Model.Any() ? Model.Average(s => s.RatingAvg).ToString("F1") : "0.0")</div> *@
     @* </div> *@
     <div class="stat-card" style="border-left-color: var(--danger);">
-        <div class="stat-label" style="color: var(--danger);">Chưa Xác Minh</div>
-        <div class="stat-value">@Model.Count(s => !s.IsVerified)</div>
+        <div class="stat-label" style="color: var(--danger);">Không hoạt động</div>
+        <div class="stat-value">@Model.Count(s => s.Status == StatusValue.InActive)</div>
     </div>
 </div>
 
@@ -295,12 +295,12 @@
                     <th>Tên Cửa Hàng</th>
                     <th>Tên Pháp Lý</th>
                     <th>Trạng Thái</th>
-                    <th>KYC</th>
+                    <th>Phân hạng</th>
                     <th>Đánh Giá</th>
                     <th>Số DT</th>
                     <th>Email</th>
                     <th>Giấy Phép</th>
-                    <th>Xác Minh</th>
+                    @* <th>Xác Minh</th> *@
                 </tr>
             </thead>
             <tbody>
@@ -378,16 +378,16 @@
                                 <span class="text-muted">N/A</span>
                             }
                         </td>
-                        <td style="text-align: center;">
-                            @if (store.IsVerified)
-                            {
-                                <i class="fas fa-check-circle verified-icon verified-yes" title="Đã xác minh"></i>
-                            }
-                            else
-                            {
-                                <i class="fas fa-times-circle verified-icon verified-no" title="Chưa xác minh"></i>
-                            }
-                        </td>
+                        @* <td style="text-align: center;"> *@
+                        @*     @if (store.IsVerified) *@
+                        @*     { *@
+                        @*         <i class="fas fa-check-circle verified-icon verified-yes" title="Đã xác minh"></i> *@
+                        @*     } *@
+                        @*     else *@
+                        @*     { *@
+                        @*         <i class="fas fa-times-circle verified-icon verified-no" title="Chưa xác minh"></i> *@
+                        @*     } *@
+                        @* </td> *@
                     </tr>
                 }
             </tbody>
@@ -419,7 +419,7 @@
                 },
                 responsive: true,
                 columnDefs: [
-                    { orderable: false, targets: [8] } // Disable sorting on verification column
+                    { orderable: false, targets: [7] } // Disable sorting on verification column
                 ]
             });
         });

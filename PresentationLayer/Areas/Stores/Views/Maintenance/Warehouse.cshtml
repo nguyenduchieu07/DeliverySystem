@@ -1,0 +1,66 @@
+﻿@model MaintenanceWarehouseVM
+@{
+    ViewData["Title"] = "Kho: " + Model.Warehouse.Name;
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
+
+<div class="container-fluid">
+
+    <div class="mb-3">
+        <a href="@Url.Action("Index", "Maintenance")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <h3 class="mb-3">Kho: @Model.Warehouse.Name</h3>
+
+    <div class="card shadow mb-4">
+        <div class="card-header">
+            <h5>Danh sách Slot</h5>
+        </div>
+        <div class="card-body">
+            <table id="slotTable" class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>Mã Slot</th>
+                    <th>Hàng</th>
+                    <th>Cột</th>
+                    <th>Kích thước (m³)</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var s in Model.Slots)
+                {
+                    <tr>
+                        <td>@s.Code</td>
+                        <td>@s.Row</td>
+                        <td>@s.Col</td>
+                        <td>@s.VolumeM3</td>
+                        <td>@s.Status</td>
+                        <td>
+                            <a class="btn btn-sm btn-primary"
+                               href="@Url.Action("Slot", "Maintenance", new { id = s.Id })">
+                                <i class="fas fa-tools"></i> Xem bảo trì
+                            </a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#slotTable').DataTable();
+    });
+</script>
