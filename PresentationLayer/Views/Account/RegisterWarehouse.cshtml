@@ -162,18 +162,12 @@
         <label>Tên kho</label>
         <input type="text" asp-for="Name" placeholder="VD: Kho Hà Đông" />
 
-        <label>Chọn địa chỉ có sẵn (tùy chọn)</label>
-        <select asp-for="AddressRefId">
-            <option value="">-- Không chọn (tự thêm) --</option>
-            @foreach (var addr in addresses)
-            {
-                <option value="@addr.Id">@addr.AddressLine (@addr.City)</option>
-            }
-        </select>
+        
+        
 
         <hr class="muted" />
 
-        <h4>Hoặc thêm địa chỉ mới</h4>
+        <h4>Thêm địa chỉ</h4>
         <div class="row-2">
             <div>
                 <label>Địa chỉ chi tiết</label>
@@ -235,9 +229,9 @@
             <input type="number" id="slotW" placeholder="Rộng (m)" min="0" step="0.01" />
             <input type="number" id="slotPrice" placeholder="Giá (đ/giờ)" min="0" step="1000" />
             <select id="slotStatus" title="Trạng thái">
-                <option value="4">Available</option>
-                <option value="17">Occupied</option>
-                <option value="7">Maintenance</option>
+                <option value="4">Trống</option>
+                <option value="17">Đang sử dụng</option>
+                <option value="7">Bảo trì</option>
             </select>
             <button type="button" class="btn primary" id="btnAddSlot">+ Thêm Slot</button>
         </div>
