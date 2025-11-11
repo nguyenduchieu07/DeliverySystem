@@ -493,6 +493,28 @@ namespace PresentationLayer.Areas.Stores.Controllers
         }
         
         [HttpPost]
+        public async Task<IActionResult> CancelAjax(Guid id)
+        {
+            var storeId = await GetCurrentStoreIdAsync();
+            if (storeId is null) return Unauthorized();
+            if (!await MaintenanceBelongsToStore(id, storeId.Value)) return NotFound();
+
+            var m = await _db.WarehouseSlotMaintenances
+                .AsTracking()
+                .FirstOrDefaultAsync(x => x.Id == id);
+            if (m == null) return NotFound();
+
+            if (m.Status == MaintenanceStatus.InProgress || m.Status == MaintenanceStatus.Completed)
+                return Json(new { success = true, message = "Không thể hủy lịch đã bắt đầu hoặc hoàn thành." });
+
+            m.Status = MaintenanceStatus.Cancelled;
+            m.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+            return Json(new { success = true, message = "Đã hủy lịch bảo trì." });
+        }
+        
+        [HttpPost]
         public async Task<IActionResult> DeleteAjax(Guid id)
         {
             var storeId = await GetCurrentStoreIdAsync();
