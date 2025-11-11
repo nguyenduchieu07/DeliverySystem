@@ -74,7 +74,7 @@
                         <td>@m.MaintenanceItem.Name</td>
                         <td>@m.ScheduledStart.ToString("dd/MM HH:mm")</td>
                         <td>@m.ScheduledEnd.ToString("dd/MM HH:mm")</td>
-                        <td class="status">@m.Status.ToString()</td>
+                        <td class="status">@m.Status.ToDisplayStringForMaintenanceStatus()</td>
                         <td>
                             @if (m.Status == MaintenanceStatus.Scheduled || m.Status == MaintenanceStatus.Overdue)
                             {
