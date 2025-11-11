@@ -428,6 +428,9 @@ namespace PresentationLayer.Controllers
             return status switch
             {
                 StatusValue.Pending => "Chờ xử lý",
+                StatusValue.AwaitingPayment => "Chờ thanh toán",
+                StatusValue.AwaitingPickup => "Chờ lấy hàng",
+                StatusValue.Revised => "Chờ chỉnh giá",
                 StatusValue.Approved => "Đã duyệt",
                 StatusValue.InUse => "Đang lưu kho",
                 StatusValue.Reserved => "Đã đặt chỗ",
@@ -443,6 +446,9 @@ namespace PresentationLayer.Controllers
             return status switch
             {
                 StatusValue.Pending => "warning",
+                StatusValue.AwaitingPayment => "info",
+                StatusValue.AwaitingPickup => "info",
+                StatusValue.Revised => "warning",
                 StatusValue.Approved => "info",
                 StatusValue.InUse => "primary",
                 StatusValue.Reserved => "secondary",

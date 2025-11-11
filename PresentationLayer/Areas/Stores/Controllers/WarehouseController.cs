@@ -265,17 +265,54 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     existing.AddressRefId = warehouse.AddressRefId;
                 }
 
-                // Cập nhật Slot (xoá hết và thêm lại)
-                _db.WarehouseSlots.RemoveRange(existing.Slots);
+                // Cập nhật Slot theo kiểu upsert, không xóa hàng loạt để tránh xung đột đặt chỗ/đơn hàng
+                // Map theo Code (duy nhất trong 1 kho)
+                var existingByCode = existing.Slots
+                    .GroupBy(s => (s.Code ?? string.Empty).Trim().ToLower())
+                    .ToDictionary(g => g.Key, g => g.First());
+
                 if (slots != null && slots.Count > 0)
                 {
-                    foreach (var s in slots)
+                    foreach (var incoming in slots)
                     {
-                        s.Id = Guid.NewGuid();
-                        s.WarehouseId = existing.Id;
-                        _db.WarehouseSlots.Add(s);
+                        var codeKey = (incoming.Code ?? string.Empty).Trim().ToLower();
+                        if (string.IsNullOrWhiteSpace(codeKey))
+                            continue;
+
+                        if (existingByCode.TryGetValue(codeKey, out var found))
+                        {
+                            // Update các thuộc tính cho slot đã tồn tại (an toàn, không đụng Id/quan hệ)
+                            found.HeightM = incoming.HeightM;
+                            found.LengthM = incoming.LengthM;
+                            found.WidthM = incoming.WidthM;
+                            found.BasePricePerHour = incoming.BasePricePerHour;
+                            found.Status = incoming.Status;
+                            found.IsBlocked = incoming.IsBlocked;
+                            found.ImageUrl = string.IsNullOrWhiteSpace(incoming.ImageUrl) ? found.ImageUrl : incoming.ImageUrl;
+                            // Row/Col sẽ được reindex sau
+                            _db.WarehouseSlots.Update(found);
+                        }
+                        else
+                        {
+                            // Thêm mới
+                            var entity = new WarehouseSlot
+                            {
+                                Id = Guid.NewGuid(),
+                                WarehouseId = existing.Id,
+                                Code = incoming.Code,
+                                HeightM = incoming.HeightM,
+                                LengthM = incoming.LengthM,
+                                WidthM = incoming.WidthM,
+                                BasePricePerHour = incoming.BasePricePerHour,
+                                Status = incoming.Status,
+                                IsBlocked = incoming.IsBlocked,
+                                ImageUrl = incoming.ImageUrl
+                            };
+                            _db.WarehouseSlots.Add(entity);
+                        }
                     }
                 }
+                // Không xóa các slot không còn trong danh sách gửi lên để tránh lỗi khi slot đang Reserved/InUse/đã liên kết đơn
 
                 await _db.SaveChangesAsync();
                 await ReindexWarehouseSlotsAsync(warehouse.Id);

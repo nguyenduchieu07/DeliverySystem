@@ -235,6 +235,19 @@ namespace ServiceLayer.Services
                 // Đánh dấu status là Revised để store biết có yêu cầu chỉnh giá
                 quotation.Status = StatusValue.Revised;
                 quotation.UpdatedAt = DateTime.Now;
+
+                var relatedOrders = await _db.Orders
+                    .Where(o => o.QuotationId == quotation.Id)
+                    .ToListAsync(ct);
+                if (relatedOrders.Any())
+                {
+                    foreach (var order in relatedOrders)
+                    {
+                        order.Status = StatusValue.Revised;
+                        order.UpdatedAt = DateTime.Now;
+                    }
+                    _db.Orders.UpdateRange(relatedOrders);
+                }
                 
                 // Note có thể được lưu vào UpdatedBy field tạm thời (hoặc tạo migration để thêm field Note)
                 // Tạm thời không lưu note vì entity không có field này
