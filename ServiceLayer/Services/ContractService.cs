@@ -185,62 +185,75 @@ public class ContractService : IContractService
     }
 
 
-    public async Task<string> GenerateContractHtmlAsync(Guid contractId, bool forceGenerate = false)
+    public async Task<string> GenerateContractHtmlAsync(Guid quotationId, bool forceGenerate = false)
+{
+    // Lấy tất cả hợp đồng thuộc báo giá này
+    var contracts = await _contractRepository.GetContractWithAllInfoAsync(quotationId);
+    if (contracts == null || contracts.Count == 0)
+        throw new Exception("Không tìm thấy hợp đồng nào cho báo giá này");
+
+    // dùng contract đầu tiên làm đại diện (vì chung thông tin bên A/B, báo giá, ngày, v.v.)
+    var firstContract = contracts.First();
+
+    // nếu đã có pdf và không ép generate lại -> return
+    if (!forceGenerate && !string.IsNullOrEmpty(firstContract.PdfUrl))
     {
-        var contract = await _contractRepository.GetContractWithAllInfoAsync(contractId);
-
-        if (contract == null) throw new Exception("Contract not found");
-
-        // nếu đã có pdf và không ép generate lại -> return
-        if (!forceGenerate && !string.IsNullOrEmpty(contract.PdfUrl))
-        {
-            var webPath = Path.Combine(_env.WebRootPath, contract.PdfUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            if (File.Exists(webPath))
-                return contract.PdfUrl;
-        }
-
-        // load template
-        var templatePath = Path.Combine(_env.WebRootPath, "templates", "warehouse_contract.html");
-        if (!File.Exists(templatePath)) throw new Exception("Contract template missing");
-
-        var html = await File.ReadAllTextAsync(templatePath);
-
-        // build SlotRows HTML
-        var slotRowsBuilder = new StringBuilder();
-        if (contract.WarehouseSlot != null)
-        {
-            // single slot case
-            slotRowsBuilder.AppendLine(BuildSlotRow(contract.Warehouse, contract.WarehouseSlot, contract.StartDate, contract.EndDate, contract.TotalAmount));
-        }
-
-        // replace tokens
-        // html = html.Replace("{{CompanyLogoUrl}}", contract.Store?.LogoUrl ?? "");
-        html = html.Replace("{{ContractNumber}}", contract.Id.ToString().ToUpper());
-        html = html.Replace("{{ContractDate}}", DateTime.Now.ToString("dd/MM/yyyy"));
-        html = html.Replace("{{ContractStatus}}", contract.Status.ToDisplayString());
-        html = html.Replace("{{StoreName}}", contract.Store?.LegalName ?? "");
-        html = html.Replace("{{StoreAddress}}", contract.Store?.Addresses.FirstOrDefault(a => a.IsDefault)?.AddressLine ?? "");
-        html = html.Replace("{{StoreEmail}}", contract.Store?.ContactEmail ?? "");
-        html = html.Replace("{{StorePhone}}", contract.Store?.ContactPhone ?? "");
-        html = html.Replace("{{CustomerName}}", contract.Quotation?.Customer.FullName ?? "");
-        html = html.Replace("{{CustomerAddress}}", contract.Quotation?.Customer.User?.Addresses?.FirstOrDefault(a => a.IsDefault)?.AddressLine ?? "");
-        html = html.Replace("{{CustomerEmail}}", contract.Quotation?.Customer.Email ?? "");
-        html = html.Replace("{{CustomerPhone}}", contract.Quotation?.Customer.PhoneNumber ?? "");
-        html = html.Replace("{{QuoteCode}}", contract.Quotation != null ? $"QT-{contract.Quotation.CreatedAt:yyyy}-{contract.Quotation.Id.ToString().Substring(0,6).ToUpper()}" : "");
-        html = html.Replace("{{QuotationValidUntil}}", contract.Quotation?.ValidUntil.ToString("dd/MM/yyyy HH:mm") ?? "");
-        html = html.Replace("{{Subtotal}}", $"{contract.TotalAmount:N0}");
-        html = html.Replace("{{TotalAmount}}", $"{contract.TotalAmount:N0}");
-        html = html.Replace("{{VatRate}}", "10");
-        html = html.Replace("{{VatAmount}}", $"{Math.Round(contract.TotalAmount * 0.10m):N0}");
-        html = html.Replace("{{Total}}", $"{contract.TotalAmount:N0}");
-        html = html.Replace("{{StartDate}}", contract.StartDate.ToString("dd/MM/yyyy"));
-        html = html.Replace("{{EndDate}}", contract.EndDate.ToString("dd/MM/yyyy"));
-        html = html.Replace("{{TermsAndConditions}}", contract.TermsAndConditions ?? "Điều khoản tiêu chuẩn áp dụng.");
-
-        html = html.Replace("{{SlotRows}}", slotRowsBuilder.ToString());
-
-        return html;
+        var webPath = Path.Combine(_env.WebRootPath, firstContract.PdfUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        if (File.Exists(webPath))
+            return firstContract.PdfUrl;
     }
+
+    // load template
+    var templatePath = Path.Combine(_env.WebRootPath, "templates", "warehouse_contract.html");
+    if (!File.Exists(templatePath)) throw new Exception("Contract template missing");
+
+    var html = await File.ReadAllTextAsync(templatePath);
+
+    // build SlotRows HTML - gộp tất cả slot của các hợp đồng
+    var slotRowsBuilder = new StringBuilder();
+    decimal subtotal = 0;
+
+    foreach (var c in contracts)
+    {
+        if (c.WarehouseSlot != null)
+        {
+            slotRowsBuilder.AppendLine(BuildSlotRow(c.Warehouse, c.WarehouseSlot, c.StartDate, c.EndDate, c.TotalAmount));
+            subtotal += c.TotalAmount;
+        }
+    }
+
+    decimal vat = Math.Round(subtotal * 0.10m);
+    decimal total = subtotal + vat;
+
+    var startDate = contracts.OrderBy(c => c.StartDate).First();
+    var endDate = contracts.OrderByDescending(c => c.EndDate).First();
+    // replace tokens
+    html = html.Replace("{{ContractNumber}}", firstContract.Id.ToString().ToUpper());
+    html = html.Replace("{{ContractDate}}", DateTime.Now.ToString("dd/MM/yyyy"));
+    html = html.Replace("{{ContractStatus}}", firstContract.Status.ToDisplayString());
+    html = html.Replace("{{StoreName}}", firstContract.Store?.LegalName ?? "");
+    html = html.Replace("{{StoreAddress}}", firstContract.Store?.Addresses.FirstOrDefault(a => a.IsDefault)?.AddressLine ?? "");
+    html = html.Replace("{{StoreEmail}}", firstContract.Store?.ContactEmail ?? "");
+    html = html.Replace("{{StorePhone}}", firstContract.Store?.ContactPhone ?? "");
+    html = html.Replace("{{CustomerName}}", firstContract.Quotation?.Customer.FullName ?? "");
+    html = html.Replace("{{CustomerAddress}}", firstContract.Quotation?.Customer.User?.Addresses?.FirstOrDefault(a => a.IsDefault)?.AddressLine ?? "");
+    html = html.Replace("{{CustomerEmail}}", firstContract.Quotation?.Customer.Email ?? "");
+    html = html.Replace("{{CustomerPhone}}", firstContract.Quotation?.Customer.PhoneNumber ?? "");
+    html = html.Replace("{{QuoteCode}}", firstContract.Quotation != null ? $"QT-{firstContract.Quotation.CreatedAt:yyyy}-{firstContract.Quotation.Id.ToString().Substring(0,6).ToUpper()}" : "");
+    html = html.Replace("{{QuotationValidUntil}}", firstContract.Quotation?.ValidUntil.ToString("dd/MM/yyyy HH:mm") ?? "");
+    html = html.Replace("{{Subtotal}}", $"{subtotal:N0}");
+    html = html.Replace("{{TotalAmount}}", $"{subtotal:N0}");
+    html = html.Replace("{{VatRate}}", "10");
+    html = html.Replace("{{VatAmount}}", $"{vat:N0}");
+    html = html.Replace("{{Total}}", $"{total:N0}");
+    html = html.Replace("{{StartDate}}", startDate.StartDate.ToString("dd/MM/yyyy"));
+    html = html.Replace("{{EndDate}}", endDate.EndDate.ToString("dd/MM/yyyy"));
+    html = html.Replace("{{TermsAndConditions}}", firstContract.TermsAndConditions ?? "Điều khoản tiêu chuẩn áp dụng.");
+    html = html.Replace("{{SlotRows}}", slotRowsBuilder.ToString());
+
+    return html;
+}
+
 
     private string BuildSlotRow(Warehouse? wh, WarehouseSlot slot, DateTime start, DateTime end, decimal fee)
     {
@@ -364,4 +377,6 @@ public class ContractService : IContractService
         }
         
     }
+    
+    
 }

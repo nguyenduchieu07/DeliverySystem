@@ -10,7 +10,7 @@ public class ContractRepository : BaseRepository<Contract, Guid>, IContractRepos
     {
     }
 
-    public async Task<Contract> GetContractWithAllInfoAsync(Guid id)
+    public async Task<List<Contract>> GetContractWithAllInfoAsync(Guid id) //id: quotationId
     {
         var contracts = await _context.Contracts
             .Include(c => c.Quotation)
@@ -18,7 +18,7 @@ public class ContractRepository : BaseRepository<Contract, Guid>, IContractRepos
             .Include(c => c.Warehouse)
             .Include(c => c.WarehouseSlot)
             .Include(c => c.Store)
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .Where(c => c.QuotationId == id).ToListAsync();
         return contracts;
     }
 }

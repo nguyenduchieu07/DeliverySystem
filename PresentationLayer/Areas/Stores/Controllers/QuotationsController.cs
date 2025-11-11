@@ -52,7 +52,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                 .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
                 .ToListAsync();
 
-            ViewBag.Tab = tab ?? "waiting";
+            ViewBag.Tab = tab ?? "draft";
             return View();
         }
 
@@ -161,7 +161,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
             return Ok(contracts);
         }
         
-        [HttpGet("/Stores/Quotations/Contracts/{id}")]
+        [HttpGet("/Stores/Quotations/{id}/Contracts")]
         public async Task<IActionResult> ViewContract(Guid id)
         {
             try

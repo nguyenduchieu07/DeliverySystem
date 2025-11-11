@@ -333,10 +333,10 @@
             <div class="stat-value">@ViewBag.Draft.Count</div>
             <div class="stat-label">📝 Đề xuất</div>
         </div>
-        <div class="stat-card warning">
-            <div class="stat-value">@ViewBag.Waiting.Count</div>
-            <div class="stat-label">⏳ Chờ xử lý</div>
-        </div>
+        @* <div class="stat-card warning"> *@
+        @*     <div class="stat-value">@ViewBag.Waiting.Count</div> *@
+        @*     <div class="stat-label">⏳ Chờ xử lý</div> *@
+        @* </div> *@
         <div class="stat-card info">
             <div class="stat-value">@ViewBag.Revised.Count</div>
             <div class="stat-label">✏️ Đã chỉnh sửa</div>
@@ -356,13 +356,13 @@
                     <span class="tab-badge">@ViewBag.Waiting.Count</span>
                 }
             </button>
-            <button class="tab-button @(ViewBag.Tab == "waiting" ? "active" : "")" data-tab="waiting">
-                ⏳ Chờ xử lý
-                @if (ViewBag.Waiting.Count > 0)
-                {
-                    <span class="tab-badge">@ViewBag.Waiting.Count</span>
-                }
-            </button>
+            @* <button class="tab-button @(ViewBag.Tab == "waiting" ? "active" : "")" data-tab="waiting"> *@
+            @*     ⏳ Chờ xử lý *@
+            @*     @if (ViewBag.Waiting.Count > 0) *@
+            @*     { *@
+            @*         <span class="tab-badge">@ViewBag.Waiting.Count</span> *@
+            @*     } *@
+            @* </button> *@
             <button class="tab-button @(ViewBag.Tab == "revised" ? "active" : "")" data-tab="revised">
                 ✏️ Đã chỉnh sửa
                 @if (ViewBag.Revised.Count > 0)

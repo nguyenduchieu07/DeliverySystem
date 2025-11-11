@@ -232,8 +232,8 @@ namespace ServiceLayer.Services
                 var quotation = await _db.Quotations.FindAsync(new object[] { vm.QuotationId }, ct);
                 if (quotation == null) return false;
                 
-                // Đánh dấu status là Revised để store biết có yêu cầu chỉnh giá
-                quotation.Status = StatusValue.Revised;
+                //Chỉnh thành draft để đề xuất
+                quotation.Status = StatusValue.Draft;
                 quotation.UpdatedAt = DateTime.Now;
 
                 var relatedOrders = await _db.Orders

@@ -531,17 +531,10 @@
 			</div>
 
 			<div class="info-card">
-				<h3>📑 Danh sách hợp đồng</h3>
+				<h3>📑 Hợp đồng</h3>
 
 				<!-- Vùng hiển thị danh sách hợp đồng -->
 				<div id="contractsContainer">
-					@foreach (var contract in Model.Contracts)
-					{
-						<div class="info-row">
-							<span class="info-value">@contract.WarehouseSlot.Code</span>
-						</div>
-					}
-
 				</div>
 			</div>
 		</div>
@@ -1084,23 +1077,32 @@
 				}
 
 				const contracts = await response.json();
+				//const container = document.getElementById('contractsContainer');
+			// 	container.innerHTML = '';
+			//
+			// 	if (!contracts || contracts.length === 0) {
+			// 		container.innerHTML = '<p>Không có hợp đồng nào được tạo.</p>';
+			// 		return;
+			// 	}
+			//
+			// 	contracts.forEach(c => {
+			// 		const div = document.createElement('div');
+			// 		div.classList.add('info-row');
+			// 		div.innerHTML = `
+			// 	<span class="info-value">${c.warehouseSlot?.code || 'Chưa có mã kho'}</span>
+			// 	<button class="view-link" onclick="viewContract('${quotationId}')">Xem hợp đồng</button>
+			// `;
+			// 		container.appendChild(div);
+			// 	});
+				// Không cần đọc JSON nữa, vì chỉ có 1 hợp đồng
 				const container = document.getElementById('contractsContainer');
-				container.innerHTML = '';
-
-				if (!contracts || contracts.length === 0) {
-					container.innerHTML = '<p>Không có hợp đồng nào được tạo.</p>';
-					return;
-				}
-
-				contracts.forEach(c => {
-					const div = document.createElement('div');
-					div.classList.add('info-row');
-					div.innerHTML = `
-				<span class="info-value">${c.warehouseSlot?.code || 'Chưa có mã kho'}</span>
-				<button class="view-link" onclick="viewContract('${c.id}')">Xem hợp đồng</button>
-			`;
-					container.appendChild(div);
-				});
+				container.innerHTML = `
+			<div class="info-row">
+				<button class="view-link" onclick="viewContract('${quotationId}')">
+					Xem hợp đồng
+				</button>
+			</div>
+		`;
 
 				alert('✅ Đã tạo hợp đồng thành công!');
 			} catch (error) {
@@ -1109,8 +1111,8 @@
 			}
 		}
 		
-		async function viewContract(contractId) {
-			window.open(`/Stores/Quotations/Contracts/${contractId}`, '_blank');
+		async function viewContract(quotationId) {
+			window.open(`/Stores/Quotations/${quotationId}/Contracts`, '_blank');
 		}
 
 	</script>
