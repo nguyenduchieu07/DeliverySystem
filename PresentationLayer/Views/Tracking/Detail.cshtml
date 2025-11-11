@@ -138,10 +138,7 @@
                             <tr>
                                 <th>Tên hàng</th>
                                 <th>Mô tả</th>
-                                <th>SL</th>
-                                <th>Khối lượng</th>
-                                <th>Thể tích</th>
-                                <th>Thành tiền</th>
+                                <th>SL</th>                         
                                 <th>Báo cáo</th>
                             </tr>
                             </thead>
@@ -152,9 +149,7 @@
                                     <td>@item.ItemName</td>
                                     <td>@item.Description</td>
                                     <td>@item.Quantity</td>
-                                    <td>@(item.WeightKg?.ToString("F2") ?? "-") kg</td>
-                                    <td>@(item.VolumeM3?.ToString("F3") ?? "-") m³</td>
-                                    <td>@(item.Subtotal?.ToString("N0") ?? "-") VNĐ</td>
+                                    
                                     <td>
                                         @if (item.IncidentReports.Count > 0)
                                         {

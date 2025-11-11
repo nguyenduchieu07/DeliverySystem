@@ -685,10 +685,7 @@
                     <thead>
                     <tr>
                         <th>Tên hàng</th>
-                        <th style="text-align: center;">Số lượng</th>
-                        <th>Kích thước (m)</th>
-                        <th>Trọng lượng (kg)</th>
-                        <th style="text-align: right;">Thành tiền</th>
+                        <th style="text-align: center;">Số lượng</th>                  
                         <th style="text-align: right;">Thao tác</th>
                     </tr>
                     </thead>
@@ -699,12 +696,7 @@
                         {
                             <tr>
                                 <td class="item-name">@item.ItemName</td>
-                                <td class="item-quantity">@item.Quantity</td>
-                                <td class="item-dimensions">
-                                    @item.LengthM × @item.WidthM × @item.HeightM
-                                </td>
-                                <td>@item.WeightKg kg</td>
-                                <td class="item-subtotal">@(item.Subtotal?.ToString("N0") ?? "0") ₫</td>
+                                <td class="item-quantity">@item.Quantity</td>            
                                 <td>
                                     @{
                                         var hasPending = item.IncidentReports.Any(r => r.Status == ReportStatus.Pending);
