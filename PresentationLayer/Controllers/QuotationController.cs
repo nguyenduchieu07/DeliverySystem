@@ -152,34 +152,21 @@ namespace PresentationLayer.Controllers
             quotation.Status = StatusValue.Approved;
             quotation.UpdatedAt = DateTime.Now;
 
-            // Tạo/cập nhật đơn hàng ở trạng thái chờ thanh toán
-            var order = await _context.Orders
-                .FirstOrDefaultAsync(o => o.QuotationId == quotation.Id);
+            // Tạo đơn hàng ở trạng thái chờ thanh toán
+            var order = new Order
+            {
+                Id = Guid.NewGuid(),
+                CustomerId = customerId,
+                StoreId = quotation.StoreId ?? Guid.Empty,
+                QuotationId = quotation.Id,
+                TotalAmount = quotation.TotalAmount,
+                Status = StatusValue.AwaitingPayment, // 👈 quan trọng để qua Payment
+                Note = note,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
 
-            if (order == null)
-            {
-                order = new Order
-                {
-                    Id = Guid.NewGuid(),
-                    CustomerId = customerId,
-                    StoreId = quotation.StoreId ?? Guid.Empty,
-                    QuotationId = quotation.Id,
-                    TotalAmount = quotation.TotalAmount,
-                    Status = StatusValue.AwaitingPayment,
-                    Note = note,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
-                };
-                _context.Orders.Add(order);
-            }
-            else
-            {
-                order.Status = StatusValue.AwaitingPayment;
-                order.TotalAmount = quotation.TotalAmount;
-                order.Note = note;
-                order.UpdatedAt = DateTime.Now;
-                _context.Orders.Update(order);
-            }
+            _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
             var redirectUrl = Url.Action("Index", "Payment", new { orderId = order.Id });
@@ -221,19 +208,6 @@ namespace PresentationLayer.Controllers
 
             quotation.Status = StatusValue.Rejected;
             quotation.UpdatedAt = DateTime.Now;
-
-            var relatedOrders = await _context.Orders
-                .Where(o => o.QuotationId == quotation.Id)
-                .ToListAsync();
-            if (relatedOrders.Any())
-            {
-                foreach (var order in relatedOrders)
-                {
-                    order.Status = StatusValue.Canceled;
-                    order.UpdatedAt = DateTime.Now;
-                }
-                _context.Orders.UpdateRange(relatedOrders);
-            }
 
             await _context.SaveChangesAsync();
 

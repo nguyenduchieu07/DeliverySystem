@@ -56,14 +56,6 @@ public class ContractService : IContractService
 
         try
         {
-            // Idempotent: nếu đã có hợp đồng cho quotation này, trả về luôn để tránh tạo trùng
-            var existed = await _contractRepository
-                .FindAll(c => c.QuotationId == quotationId, includeProperties: o => o.WarehouseSlot)
-                .ToListAsync();
-            if (existed.Any())
-            {
-                return existed.OrderByDescending(x => x.CreatedAt).ToList();
-            }
             var quotation = await _quotationRepository.GetQuotationInfo(quotationId);
 
             if (quotation == null)

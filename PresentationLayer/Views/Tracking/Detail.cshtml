@@ -19,29 +19,8 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <h3>Chi tiết đơn hàng <code>@Model.OrderCode</code></h3>
-                <div class="d-flex align-items-center gap-2">
+                <div>
                     <span class="badge bg-@Model.StatusColor fs-6">@Model.StatusDisplay</span>
-                    @if (Model.ContractInfo?.QuotationId != null)
-                    {
-                        <a class="btn btn-sm btn-outline-primary"
-                           href="@Url.Action("Detail", "Quotation", new { id = Model.ContractInfo.QuotationId })">
-                            Xem báo giá
-                        </a>
-                    }
-                    @if (Model.Status is StatusValue.Pending or StatusValue.Revised)
-                    {
-                        <a class="btn btn-sm btn-warning"
-                           href="@Url.Action("Detail", "Quotation", new { id = Model.ContractInfo?.QuotationId ?? Guid.Empty })">
-                            Tiếp tục xác nhận
-                        </a>
-                    }
-                    @if (Model.Status == StatusValue.AwaitingPayment)
-                    {
-                        <a class="btn btn-sm btn-success"
-                           href="@Url.Action("Index", "Payment", new { orderId = Model.Id })">
-                            Thanh toán ngay
-                        </a>
-                    }
                 </div>
             </div>
         </div>

@@ -402,111 +402,11 @@ namespace PresentationLayer.Controllers
                 };
                 _db.Quotations.Add(quotation);
 
-                // Tạo địa chỉ nhận hàng (pickup) cho đơn hàng (nếu người dùng cung cấp)
-                Address? pickupAddress = null;
-                if (viewModel.PickupAddress != null && !string.IsNullOrWhiteSpace(viewModel.PickupAddress.AddressLine))
-                {
-                    pickupAddress = new Address
-                    {
-                        Id = Guid.NewGuid(),
-                        AddressLine = viewModel.PickupAddress.AddressLine,
-                        Latitude = viewModel.PickupAddress.Latitude,
-                        Longitude = viewModel.PickupAddress.Longitude,
-                        City = viewModel.PickupAddress.City,
-                        District = viewModel.PickupAddress.District,
-                        Ward = viewModel.PickupAddress.Ward,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    _db.Addresses.Add(pickupAddress);
-                }
-
-                // Địa chỉ kho (drop-off) lấy từ warehouse; fallback từ request
-                Address? dropoffAddress = null;
-                if (warehouseFromDb.Address != null)
-                {
-                    dropoffAddress = new Address
-                    {
-                        Id = Guid.NewGuid(),
-                        AddressLine = warehouseFromDb.Address.AddressLine,
-                        Latitude = warehouseFromDb.Address.Latitude,
-                        Longitude = warehouseFromDb.Address.Longitude,
-                        City = warehouseFromDb.Address.City,
-                        District = warehouseFromDb.Address.District,
-                        Ward = warehouseFromDb.Address.Ward,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    _db.Addresses.Add(dropoffAddress);
-                }
-                else if (viewModel.WarehouseArea != null && !string.IsNullOrWhiteSpace(viewModel.WarehouseArea.AddressLine))
-                {
-                    dropoffAddress = new Address
-                    {
-                        Id = Guid.NewGuid(),
-                        AddressLine = viewModel.WarehouseArea.AddressLine,
-                        Latitude = viewModel.WarehouseArea.Latitude,
-                        Longitude = viewModel.WarehouseArea.Longitude,
-                        City = viewModel.WarehouseArea.City,
-                        District = viewModel.WarehouseArea.District,
-                        Ward = viewModel.WarehouseArea.Ward,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    _db.Addresses.Add(dropoffAddress);
-                }
-
-                // Tạo đơn hàng ở trạng thái chờ xác nhận để hiển thị trên màn hình theo dõi
-                var provisionalOrder = new Order
-                {
-                    Id = Guid.NewGuid(),
-                    QuotationId = quotation.Id,
-                    CustomerId = quotation.CustomerId,
-                    StoreId = storeId,
-                    PickupAddress = pickupAddress,
-                    PickupAddressId = pickupAddress?.Id,
-                    DropoffAddress = dropoffAddress,
-                    DropoffAddressId = dropoffAddress?.Id,
-                    DeliveryDate = viewModel.StorageStartDate,
-                    PickupDate = viewModel.StorageEndDate,
-                    Status = StatusValue.Pending,
-                    TotalAmount = quotation.TotalAmount,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    Note = "Đơn hàng chờ xác nhận báo giá"
-                };
-
-                if (viewModel.Items != null && viewModel.Items.Any())
-                {
-                    foreach (var itemVm in viewModel.Items)
-                    {
-                        if (string.IsNullOrWhiteSpace(itemVm.Name) || itemVm.Quantity <= 0)
-                        {
-                            continue;
-                        }
-
-                        provisionalOrder.OrderItems.Add(new OrderItem
-                        {
-                            Id = Guid.NewGuid(),
-                            OrderId = provisionalOrder.Id,
-                            ItemName = itemVm.Name.Trim(),
-                            Description = itemVm.Category,
-                            Quantity = itemVm.Quantity,
-                            UnitPrice = 0m,
-                            Subtotal = 0m,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        });
-                    }
-                }
-
-                _db.Orders.Add(provisionalOrder);
-
                 // Tạo SlotReservation để giữ chỗ trong 24h
                 var slotReservation = new SlotReservation
                 {
                     Id = Guid.NewGuid(),
-                    OrderId = provisionalOrder.Id,
+                    OrderId = null,
                     WarehouseSlotId = selectedSlot.Id,
                     ExpiresAt = validUntil,
                     Status = StatusValue.Active,
@@ -516,7 +416,6 @@ namespace PresentationLayer.Controllers
                 _db.SlotReservations.Add(slotReservation);
 
                 selectedSlot.Status = StatusValue.Reserved;
-                selectedSlot.CurrentOrderId = provisionalOrder.Id;
                 _db.WarehouseSlots.Update(selectedSlot);
 
                 await _db.SaveChangesAsync();
@@ -695,7 +594,6 @@ namespace PresentationLayer.Controllers
                 using var transaction = await _db.Database.BeginTransactionAsync();
 
                 var quotation = await _db.Quotations
-                    .Include(q => q.Orders)
                     .FirstOrDefaultAsync(q => q.Id == request.QuotationId);
 
                 if (quotation == null)
@@ -703,35 +601,11 @@ namespace PresentationLayer.Controllers
                     return NotFound(new { success = false, message = "Không tìm thấy báo giá." });
                 }
 
-                var order = await _db.Orders
-                    .Include(o => o.OrderItems)
-                    .Include(o => o.PickupAddress)
-                    .Include(o => o.DropoffAddress)
-                    .FirstOrDefaultAsync(o => o.QuotationId == quotation.Id);
-
-                if (order == null)
-                {
-                    order = new Order
-                    {
-                        Id = Guid.NewGuid(),
-                        QuotationId = quotation.Id,
-                        CustomerId = quotation.CustomerId,
-                        StoreId = quotation.StoreId ?? Guid.Empty,
-                        Status = StatusValue.Pending,
-                        TotalAmount = quotation.TotalAmount,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
-                        Note = "Order auto-created from quotation confirmation"
-                    };
-                    _db.Orders.Add(order);
-                    await _db.SaveChangesAsync();
-                }
-
                 var reservation = await _db.SlotReservations
                     .FirstOrDefaultAsync(r => r.WarehouseSlotId == request.SlotId
+                                            && r.OrderId == null
                                             && r.Status == StatusValue.Active
-                                            && r.ExpiresAt > DateTimeOffset.Now
-                                            && (r.OrderId == null || r.OrderId == order.Id));
+                                            && r.ExpiresAt > DateTimeOffset.Now);
 
                 if (reservation == null)
                 {
@@ -748,123 +622,82 @@ namespace PresentationLayer.Controllers
                     return BadRequest(new { success = false, message = "Không tìm thấy thông tin kho hàng." });
                 }
 
-                // Cập nhật địa chỉ lấy hàng
+                Address? pickupAddress = null;
+                Address? dropoffAddress = null;
+
                 if (request.PickupAddress != null && !string.IsNullOrWhiteSpace(request.PickupAddress.AddressLine))
                 {
-                    if (order.PickupAddress == null)
+                    pickupAddress = new Address
                     {
-                        var pickupAddress = new Address
-                        {
-                            Id = Guid.NewGuid(),
-                            AddressLine = request.PickupAddress.AddressLine,
-                            Latitude = request.PickupAddress.Latitude,
-                            Longitude = request.PickupAddress.Longitude,
-                            City = request.PickupAddress.City ?? "Hà Nội",
-                            District = request.PickupAddress.District,
-                            Ward = request.PickupAddress.Ward,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        };
-                        order.PickupAddress = pickupAddress;
-                        order.PickupAddressId = pickupAddress.Id;
-                        _db.Addresses.Add(pickupAddress);
-                    }
-                    else
-                    {
-                        order.PickupAddress.AddressLine = request.PickupAddress.AddressLine;
-                        order.PickupAddress.Latitude = request.PickupAddress.Latitude;
-                        order.PickupAddress.Longitude = request.PickupAddress.Longitude;
-                        order.PickupAddress.City = request.PickupAddress.City ?? order.PickupAddress.City;
-                        order.PickupAddress.District = request.PickupAddress.District ?? order.PickupAddress.District;
-                        order.PickupAddress.Ward = request.PickupAddress.Ward ?? order.PickupAddress.Ward;
-                        order.PickupAddress.UpdatedAt = DateTime.UtcNow;
-                        _db.Addresses.Update(order.PickupAddress);
-                    }
+                        Id = Guid.NewGuid(),
+                        AddressLine = request.PickupAddress.AddressLine,
+                        Latitude = request.PickupAddress.Latitude,
+                        Longitude = request.PickupAddress.Longitude,
+                        City = "Hà Nội",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _db.Addresses.Add(pickupAddress);
                 }
 
                 var warehouseAddress = slot.Warehouse.Address;
                 if (warehouseAddress != null)
                 {
-                    if (order.DropoffAddress == null)
+                    dropoffAddress = new Address
                     {
-                        var dropoffAddress = new Address
-                        {
-                            Id = Guid.NewGuid(),
-                            AddressLine = warehouseAddress.AddressLine,
-                            Latitude = warehouseAddress.Latitude,
-                            Longitude = warehouseAddress.Longitude,
-                            Ward = warehouseAddress.Ward,
-                            District = warehouseAddress.District,
-                            City = warehouseAddress.City ?? "Hà Nội",
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        };
-                        order.DropoffAddress = dropoffAddress;
-                        order.DropoffAddressId = dropoffAddress.Id;
-                        _db.Addresses.Add(dropoffAddress);
-                    }
-                    else
-                    {
-                        order.DropoffAddress.AddressLine = warehouseAddress.AddressLine;
-                        order.DropoffAddress.Latitude = warehouseAddress.Latitude;
-                        order.DropoffAddress.Longitude = warehouseAddress.Longitude;
-                        order.DropoffAddress.Ward = warehouseAddress.Ward;
-                        order.DropoffAddress.District = warehouseAddress.District;
-                        order.DropoffAddress.City = warehouseAddress.City ?? order.DropoffAddress.City;
-                        order.DropoffAddress.UpdatedAt = DateTime.UtcNow;
-                        _db.Addresses.Update(order.DropoffAddress);
-                    }
+                        Id = Guid.NewGuid(),
+                        AddressLine = warehouseAddress.AddressLine,
+                        Latitude = warehouseAddress.Latitude,
+                        Longitude = warehouseAddress.Longitude,
+                        Ward = warehouseAddress.Ward,
+                        District = warehouseAddress.District,
+                        City = warehouseAddress.City ?? "Hà Nội",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _db.Addresses.Add(dropoffAddress);
                 }
                 else if (request.DropoffAddress != null && !string.IsNullOrWhiteSpace(request.DropoffAddress.AddressLine))
                 {
-                    if (order.DropoffAddress == null)
+                    dropoffAddress = new Address
                     {
-                        var dropoffAddress = new Address
-                        {
-                            Id = Guid.NewGuid(),
-                            AddressLine = request.DropoffAddress.AddressLine,
-                            Latitude = request.DropoffAddress.Latitude,
-                            Longitude = request.DropoffAddress.Longitude,
-                            City = request.DropoffAddress.City ?? "Hà Nội",
-                            District = request.DropoffAddress.District,
-                            Ward = request.DropoffAddress.Ward,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        };
-                        order.DropoffAddress = dropoffAddress;
-                        order.DropoffAddressId = dropoffAddress.Id;
-                        _db.Addresses.Add(dropoffAddress);
-                    }
-                    else
-                    {
-                        order.DropoffAddress.AddressLine = request.DropoffAddress.AddressLine;
-                        order.DropoffAddress.Latitude = request.DropoffAddress.Latitude;
-                        order.DropoffAddress.Longitude = request.DropoffAddress.Longitude;
-                        order.DropoffAddress.City = request.DropoffAddress.City ?? order.DropoffAddress.City;
-                        order.DropoffAddress.District = request.DropoffAddress.District ?? order.DropoffAddress.District;
-                        order.DropoffAddress.Ward = request.DropoffAddress.Ward ?? order.DropoffAddress.Ward;
-                        order.DropoffAddress.UpdatedAt = DateTime.UtcNow;
-                        _db.Addresses.Update(order.DropoffAddress);
-                    }
+                        Id = Guid.NewGuid(),
+                        AddressLine = request.DropoffAddress.AddressLine,
+                        Latitude = request.DropoffAddress.Latitude,
+                        Longitude = request.DropoffAddress.Longitude,
+                        City = "Hà Nội",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _db.Addresses.Add(dropoffAddress);
                 }
+
+                await _db.SaveChangesAsync();
 
                 var deliveryDate = request.DeliveryDate ?? reservation.From;
                 var pickupDate = request.PickupDate ?? reservation.To;
 
-                order.DeliveryDate = deliveryDate;
-                order.PickupDate = pickupDate;
-                order.Status = StatusValue.AwaitingPayment;
-                order.TotalAmount = quotation.TotalAmount;
-                order.UpdatedAt = DateTime.Now;
+                var order = new Order
+                {
+                    Id = Guid.NewGuid(),
+                    QuotationId = quotation.Id,
+                    CustomerId = quotation.CustomerId,
+                    StoreId = quotation.StoreId ?? Guid.Empty,
+                    PickupAddress = pickupAddress,
+                    PickupAddressId = pickupAddress?.Id,
+                    DropoffAddress = dropoffAddress,
+                    DropoffAddressId = dropoffAddress?.Id,
+                    DeliveryDate = deliveryDate,
+                    PickupDate = pickupDate,
+                    Status = StatusValue.Pending,
+                    TotalAmount = quotation.TotalAmount,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    Note = "Order created from quotation confirmation"
+                };
 
                 if (request.Items != null && request.Items.Any())
                 {
-                    var existingItems = order.OrderItems.ToList();
-                    if (existingItems.Any())
-                    {
-                        _db.OrderItems.RemoveRange(existingItems);
-                    }
-
                     foreach (var itemVm in request.Items)
                     {
                         if (string.IsNullOrWhiteSpace(itemVm.Name) || itemVm.Quantity <= 0)
@@ -887,40 +720,32 @@ namespace PresentationLayer.Controllers
                     }
                 }
 
+                _db.Orders.Add(order);
+                await _db.SaveChangesAsync();
+
                 reservation.OrderId = order.Id;
                 _db.SlotReservations.Update(reservation);
 
-                var orderWarehouseSlot = await _db.OrderWarehouseSlots
-                    .FirstOrDefaultAsync(ows => ows.OrderId == order.Id && ows.WarehouseSlotId == request.SlotId && ows.DeletedAt == null);
-
-                if (orderWarehouseSlot == null)
+                var orderWarehouseSlot = new OrderWarehouseSlot
                 {
-                    orderWarehouseSlot = new OrderWarehouseSlot
-                    {
-                        Id = Guid.NewGuid(),
-                        OrderId = order.Id,
-                        WarehouseSlotId = request.SlotId,
-                        AssignedAt = DateTime.Now,
-                        ReleasedAt = null,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
-                    };
-                    _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
-                }
-                else
-                {
-                    orderWarehouseSlot.AssignedAt = DateTime.Now;
-                    orderWarehouseSlot.ReleasedAt = null;
-                    orderWarehouseSlot.UpdatedAt = DateTime.Now;
-                    _db.OrderWarehouseSlots.Update(orderWarehouseSlot);
-                }
+                    Id = Guid.NewGuid(),
+                    OrderId = order.Id,
+                    WarehouseSlotId = request.SlotId,
+                    AssignedAt = DateTime.Now,
+                    ReleasedAt = null,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+                _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
 
-                slot.CurrentOrderId = order.Id;
-                slot.Status = StatusValue.Reserved;
-                _db.WarehouseSlots.Update(slot);
+                if (slot != null)
+                {
+                    slot.CurrentOrderId = order.Id;
+                    slot.Status = StatusValue.Reserved;
+                    _db.WarehouseSlots.Update(slot);
+                }
 
                 quotation.Status = StatusValue.Active;
-                quotation.UpdatedAt = DateTime.Now;
                 _db.Quotations.Update(quotation);
 
                 await _db.SaveChangesAsync();
