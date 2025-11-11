@@ -45,7 +45,7 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
             }
 
             // A:WarehouseName(1), B:Code(2), C:HeightM(3), D:LengthM(4), E:WidthM(5),
-            // F:BasePricePerHour(6), G:Row(7), H:Col(8), I:IsBlocked(9), J:ImageUrl(10)
+            // F:BasePricePerHour(6), G:Row(7), H:Col(8), I:IsBlocked(9), 
             foreach (var r in used.RowsUsed().Skip(1))
             {
                 var excelRowIndex = r.RowNumber();
@@ -62,10 +62,10 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                         Row = TryInt(r.Cell(7)),
                         Col = TryInt(r.Cell(8)),
                         IsBlocked = TryBool(r.Cell(9)),
-                        ImageUrl = NullIfEmpty(r.Cell(10).GetString()),
-                        LeaseStart =  TryDate(r.Cell(11)),
-                        LeaseEnd =  TryDate(r.Cell(12)),
-                        Status = TryStatus(r.Cell(13)),
+                        // ImageUrl = NullIfEmpty(r.Cell(10).GetString()),
+                        LeaseStart =  TryDate(r.Cell(10)),
+                        LeaseEnd =  TryDate(r.Cell(11)),
+                        Status = TryStatus(r.Cell(12)),
                     };
                     rows.Add((excelRowIndex, dto));
                 }
@@ -91,8 +91,8 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
             else if (HasSpecialChars(dto.Code))
                 errors.Add(new ImportError { RowIndex = excelRow, Field = "Code", Message = "Không được chứa ký tự đặc biệt." });
 
-            if (!string.IsNullOrWhiteSpace(dto.ImageUrl) && HasSpecialChars(dto.ImageUrl))
-                errors.Add(new ImportError { RowIndex = excelRow, Field = "ImageUrl", Message = "URL không hợp lệ hoặc chứa ký tự đặc biệt." });
+            // if (!string.IsNullOrWhiteSpace(dto.ImageUrl) && HasSpecialChars(dto.ImageUrl))
+            //     errors.Add(new ImportError { RowIndex = excelRow, Field = "ImageUrl", Message = "URL không hợp lệ hoặc chứa ký tự đặc biệt." });
             if (!dto.IsBlocked)
             {
                 if (dto.HeightM <= 0) errors.Add(new ImportError { RowIndex = excelRow, Field = "HeightM", Message = "Phải > 0 khi IsBlocked = FALSE." });
@@ -227,7 +227,7 @@ public class WarehouseSlotImportService : IWarehouseSlotImportService
                     LeaseStart = dto.LeaseStart,
                     LeaseEnd = dto.LeaseEnd,
                     IsBlocked = dto.IsBlocked,
-                    ImageUrl = dto.ImageUrl,
+                    //ImageUrl = dto.ImageUrl,
                     Status = dto.Status
                 };
 

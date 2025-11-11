@@ -18,11 +18,11 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
 
     // Cấu trúc cột theo thiết kế import MỚI (Có Row/Col)
     // A:WarehouseName, B:Code, C:HeightM, D:LengthM, E:WidthM,
-    // F:BasePricePerHour, G:Row, H:Col, I:IsBlocked, J:ImageUrl
+    // F:BasePricePerHour, G:Row, H:Col, I:IsBlocked,
     private static readonly string[] HeaderTemplate = new[]
     {
         "WarehouseName","Code","HeightM","LengthM","WidthM",
-        "BasePricePerHour","Row","Col","IsBlocked","ImageUrl", "LeaseStart","LeaseEnd","Status"
+        "BasePricePerHour","Row","Col","IsBlocked", "LeaseStart","LeaseEnd","Status"
     };
 
     private static readonly string[] HeaderExport = new[]
@@ -51,14 +51,14 @@ public class WarehouseSlotExportService : IWarehouseSlotExportService
         wsSlots.Cell(2, 7).Value = "(số hàng)";
         wsSlots.Cell(2, 8).Value = "(số cột)";
         wsSlots.Cell(2, 9).Value = "(TRUE/FALSE)";
-        wsSlots.Cell(2, 10).Value = "";
+        // wsSlots.Cell(2, 10).Value = "";
+        wsSlots.Cell(2, 10).Value = "(yyyy-MM-dd)";
         wsSlots.Cell(2, 11).Value = "(yyyy-MM-dd)";
-        wsSlots.Cell(2, 12).Value = "(yyyy-MM-dd)";
-        wsSlots.Cell(2, 13).Value = "(Available/InUse/Reserved/Maintenance)";
+        wsSlots.Cell(2, 12).Value = "(Available/InUse/Reserved/Maintenance)";
 
         #region Xử lý data cho dropdown Status
 
-        var statusCol = 13;
+        var statusCol = 12;
         var lastRow = 100; // ví dụ template hỗ trợ 10 slot
         var statusValues = new[]
         {
