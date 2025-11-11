@@ -1592,7 +1592,7 @@ function showQuoteBreakdown(quote, quotationId) {
         )} giờ</td>
                             </tr>
                             <tr style="border-bottom: 2px solid #4caf50;">
-                                <td style="padding: 8px 0; font-weight: 600;">Phí slot:</td>
+                                <td style="padding: 8px 0; font-weight: 600;">Phí slot: <span style="color: #667eea; font-size: 16px;">(1)</span></td>
                                 <td style="text-align: right; padding: 8px 0; font-weight: 600;">${formatCurrency(
             quote.baseSlotPrice || quote.subtotal || 0
         )}</td>
@@ -1628,34 +1628,33 @@ function showQuoteBreakdown(quote, quotationId) {
                             `
                 )
                 .join("")}
+                            `
+            : ""
+        }
                             <tr style="border-bottom: 2px solid #4caf50;">
-                                <td style="padding: 8px 0; font-weight: 600;">Tổng phí dịch vụ:</td>
+                                <td style="padding: 8px 0; font-weight: 600;">Tổng phí dịch vụ: <span style="color: #667eea; font-size: 16px;">(2)</span></td>
                                 <td style="text-align: right; padding: 8px 0; font-weight: 600;">${formatCurrency(
                     quote.totalAddonPrice || 0
                 )}</td>
                             </tr>
-                            `
-            : ""
-        }
-                            <tr style="border-bottom: 2px solid #4caf50; background: white; padding: 12px 0;">
-                                <td style="padding: 12px 0; font-weight: 600;">Tạm tính (chưa VAT):</td>
-                                <td style="text-align: right; padding: 12px 0; font-weight: 600; font-size: 18px;">${formatCurrency(
-            quote.subtotal || 0
-        )}</td>
-                            </tr>
                             <tr style="border-bottom: 1px solid #ddd;">
                                 <td style="padding: 8px 0;">VAT (${quote.vatRate || 10
-        }%):</td>
+        }%): <span style="color: #667eea; font-size: 16px;">(3)</span></td>
                                 <td style="text-align: right; padding: 8px 0;">${formatCurrency(
             quote.vatAmount || 0
         )}</td>
                             </tr>
                         </table>
-                        <div style="margin-top: 16px; padding: 16px; background: #4caf50; color: white; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 20px; font-weight: 700;">THÀNH TIỀN:</span>
-                            <span style="font-size: 24px; font-weight: 700;">${formatCurrency(
+                        <div style="margin-top: 16px; padding: 16px; background: #4caf50; color: white; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 20px; font-weight: 700;">THÀNH TIỀN:</span>
+                                <span style="font-size: 24px; font-weight: 700;">${formatCurrency(
             quote.totalAmount || 0
         )}</span>
+                            </div>
+                            <div style="text-align: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 16px; opacity: 0.9;">
+                                <span>(1) + (2) + (3) = ${formatCurrency(quote.totalAmount || 0)}</span>
+                            </div>
                         </div>
                     </div>
                     

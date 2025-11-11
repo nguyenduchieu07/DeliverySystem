@@ -169,6 +169,30 @@
 
                         <!-- Tổng tiền -->
                         <div class="alert alert-info mb-4">
+                            @{
+                                var amounts = Model.OrderSummary.OrderItems
+                                    .Where(item => item.Subtotal.HasValue)
+                                    .Select(item => item.Subtotal.Value)
+                                    .ToList();
+                                
+                                var amountStrings = amounts.Select(a => a.ToString("N0")).ToList();
+                                var formula = string.Join("+", amountStrings);
+                                var calculatedTotal = amounts.Sum();
+                            }
+                            
+                            @if (amounts.Any())
+                            {
+                                <div class="mb-2">
+                                    <small class="text-muted d-block mb-1">Chi tiết:</small>
+                                    <div class="text-center">
+                                        <span class="h5 mb-0 text-dark">
+                                            @formula = <span class="text-primary">@calculatedTotal.ToString("N0")</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <hr class="my-2">
+                            }
+                            
                             <div class="d-flex justify-content-between align-items-center">
                                 <span><strong>Tổng tiền:</strong></span>
                                 <span class="h4 mb-0 text-primary">
