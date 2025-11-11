@@ -49,7 +49,7 @@ ViewData["Title"] = "Slot: " + Model.Slot.Code;
                 <tr data-id="@m.Id">
                     <td>@m.MaintenanceItem.Name</td>
                     <td>@m.ScheduledStart.ToString("dd/MM HH:mm") → @m.ScheduledEnd.ToString("dd/MM HH:mm")</td>
-                    <td class="status">@m.Status</td>
+                    <td class="status">@m.Status.ToDisplayStringForMaintenanceStatus()</td>
                     <td>@m.Result</td>
                     <td>
                         @switch (m.Status)
