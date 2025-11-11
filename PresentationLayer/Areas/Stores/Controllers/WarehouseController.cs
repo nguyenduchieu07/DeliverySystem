@@ -223,8 +223,13 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
         // POST: /Warehouse/Edit
         [HttpPost]
-        public async Task<IActionResult> Edit(Warehouse warehouse, Address? newAddress, List<WarehouseSlot> slots,
-            IFormFile? CoverImage, IFormFile? MapImage)
+        public async Task<IActionResult> Edit(
+            Warehouse warehouse,
+            Address? newAddress,
+            List<WarehouseSlot> slots,
+            IFormFile? CoverImage,
+            IFormFile? MapImage,
+            [FromForm] List<string>? DeletedCodes) // <-- nhận danh sách mã slot đã xoá
         {
             var existing = await _db.Warehouses
                 .Include(w => w.Slots)
@@ -233,11 +238,12 @@ namespace PresentationLayer.Areas.Stores.Controllers
             if (existing == null)
                 return NotFound();
 
+            // cập nhật trường cơ bản
             existing.Name = warehouse.Name;
 
             try
             {
-                // update cover/map image if re-uploaded
+                // Ảnh bìa / Map
                 if (CoverImage != null && CoverImage.Length > 0)
                 {
                     var coverImage = await _files.UploadImageFileAsync(CoverImage);
@@ -250,7 +256,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     existing.MapImageUrl = mapImage;
                 }
 
-                // Update Address (tự chọn hoặc tạo mới)
+                // Địa chỉ: chọn sẵn hoặc tạo mới
                 if (warehouse.AddressRefId == null && newAddress != null &&
                     !string.IsNullOrEmpty(newAddress.AddressLine))
                 {
@@ -265,8 +271,32 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     existing.AddressRefId = warehouse.AddressRefId;
                 }
 
-                // Cập nhật Slot theo kiểu upsert, không xóa hàng loạt để tránh xung đột đặt chỗ/đơn hàng
-                // Map theo Code (duy nhất trong 1 kho)
+                // =======================
+                // XÓA SLOT THEO DeletedCodes[]
+                // =======================
+                if (DeletedCodes != null && DeletedCodes.Count > 0)
+                {
+                    var keysToDelete = DeletedCodes
+                        .Where(c => !string.IsNullOrWhiteSpace(c))
+                        .Select(c => c.Trim().ToLower())
+                        .Distinct()
+                        .ToList();
+
+                    var slotsToDelete = existing.Slots
+                        .Where(s => keysToDelete.Contains((s.Code ?? string.Empty).Trim().ToLower()))
+                        .ToList();
+
+                    foreach (var s in slotsToDelete)
+                    {
+                        // Xoá khỏi navigation + DbSet (xóa cứng).
+                        existing.Slots.Remove(s);
+                        _db.WarehouseSlots.Remove(s);
+                    }
+                }
+
+                // =======================
+                // UPSERT CÁC SLOT CÒN LẠI
+                // =======================
                 var existingByCode = existing.Slots
                     .GroupBy(s => (s.Code ?? string.Empty).Trim().ToLower())
                     .ToDictionary(g => g.Key, g => g.First());
@@ -281,20 +311,22 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
                         if (existingByCode.TryGetValue(codeKey, out var found))
                         {
-                            // Update các thuộc tính cho slot đã tồn tại (an toàn, không đụng Id/quan hệ)
+                            // UPDATE
                             found.HeightM = incoming.HeightM;
                             found.LengthM = incoming.LengthM;
                             found.WidthM = incoming.WidthM;
                             found.BasePricePerHour = incoming.BasePricePerHour;
                             found.Status = incoming.Status;
                             found.IsBlocked = incoming.IsBlocked;
-                            found.ImageUrl = string.IsNullOrWhiteSpace(incoming.ImageUrl) ? found.ImageUrl : incoming.ImageUrl;
+                            if (!string.IsNullOrWhiteSpace(incoming.ImageUrl))
+                                found.ImageUrl = incoming.ImageUrl;
+
                             // Row/Col sẽ được reindex sau
                             _db.WarehouseSlots.Update(found);
                         }
                         else
                         {
-                            // Thêm mới
+                            // CREATE
                             var entity = new WarehouseSlot
                             {
                                 Id = Guid.NewGuid(),
@@ -312,7 +344,6 @@ namespace PresentationLayer.Areas.Stores.Controllers
                         }
                     }
                 }
-                // Không xóa các slot không còn trong danh sách gửi lên để tránh lỗi khi slot đang Reserved/InUse/đã liên kết đơn
 
                 await _db.SaveChangesAsync();
                 await ReindexWarehouseSlotsAsync(warehouse.Id);
@@ -325,6 +356,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             return RedirectToAction("Index");
         }
+
 
         // GET: /Warehouse/Delete/{id}
         [HttpGet]
