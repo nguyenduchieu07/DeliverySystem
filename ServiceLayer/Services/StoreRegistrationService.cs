@@ -159,7 +159,7 @@ namespace ServiceLayer.Services
                     StoreName = store.StoreName,
                     Status = store.Status,
                     KycStatus = (StatusValue)kycSubmission.Status,
-                    Message = "Store registered successfully. Please submit KYC documents for verification."
+                    Message = "Cửa hàng đã được đăng ký thành công. Vui lòng nộp các tài liệu để xác minh."
                 };
             }
             catch (Exception ex)
@@ -181,7 +181,7 @@ namespace ServiceLayer.Services
             var kycSubmission = await _context.KycSubmissions
                         .Where(k => k.StoreId == request.StoreId && k.Status == KycStatus.Pending)
                         .FirstOrDefaultAsync();
-
+            
 
             if (kycSubmission == null)
             {
