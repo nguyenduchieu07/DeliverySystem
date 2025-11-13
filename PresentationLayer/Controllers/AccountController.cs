@@ -710,8 +710,18 @@ namespace PresentationLayer.Controllers
                 request.StoreId = store.Id;
                 var data = await _storeService.SubmitKycDocumentsAsync(request);
                     
-              
-                return RedirectToAction(nameof(Index), "Home");
+                TempData["Success"] = "Tài liệu đã được gửi thành công!";
+                return View("KycSubmissions", new KycViewModel
+                {
+                    Response = new RegisterStoreResponse
+                    {
+                        StoreId = store.Id,
+                        StoreName = store.StoreName,
+                        Status = store.Status,
+                    },
+                    KycRequest = request,
+                });
+
             }
             catch (Exception ex)
             {

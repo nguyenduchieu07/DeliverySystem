@@ -217,8 +217,18 @@
     </div>
 </div>
 
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial"/>
+   
+    @if (TempData["Success"] != null)
+    {
+        <script>
+            alert('Tài liệu được gửi thành công');
+            window.location.href = '@Url.Action("Index", "Home")';
+        </script>
+    }
+    
     <script>
         // Giới hạn upload
         const MAX_SIZE = 10 * 1024 * 1024; // 10MB
