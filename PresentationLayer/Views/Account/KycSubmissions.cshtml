@@ -4,6 +4,7 @@
 @model KycViewModel
 @{
     ViewData["Title"] = "Xác minh thông tin";
+
     string KycBadgeClass(StatusValue? status)
     {
         return status switch
@@ -29,7 +30,7 @@
             border: none;
             border-radius: 12px;
             background: #fff;
-            box-shadow: 0 6px 14px rgba(0,0,0,.06);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, .06);
         }
 
         .kyc-section-title {
@@ -124,7 +125,8 @@
 
                     <div class="col-md-6">
                         <div class="fw-semibold">Trạng thái cửa hàng</div>
-                        <span class="@(KycBadgeClass(Model.Response?.Status))">@Model.Response?.Status.ToDisplayStringForStore()</span>
+                        <span
+                            class="@(KycBadgeClass(Model.Response?.Status))">@Model.Response?.Status.ToDisplayStringForStore()</span>
                     </div>
                     @* <div class="col-md-6"> *@
                     @*     <div class="fw-semibold">Trạng thái phê duyệt</div> *@
@@ -151,12 +153,13 @@
                 </h5>
             </div>
 
-            <form asp-action="SubmitKyc" asp-controller="Account" method="post" enctype="multipart/form-data" id="kycForm">
+            <form asp-action="SubmitKyc" asp-controller="Account" method="post" enctype="multipart/form-data"
+                  id="kycForm">
                 <div class="card-body">
                     @* <div asp-validation-summary="All" class="text-danger mb-3"></div> *@
 
                     <!-- StoreId -->
-                    <input type="hidden" name="StoreId" value="@Model.Response!.StoreId" />
+                    <input type="hidden" name="StoreId" value="@Model.Response!.StoreId"/>
 
                     <div class="doc-hint mb-3">
                         Định dạng chấp nhận: PDF/JPG/PNG. Tối đa 10MB/tệp. Bạn cần nộp ít nhất 1 tài liệu.
@@ -170,7 +173,7 @@
                             {
                                 <div class="kyc-item" data-index="@i">
                                     <div class="row g-3 align-items-center">
-                                        <input type="hidden" name="Documents[@i].DocType" value="@defaults[i].Key" />
+                                        <input type="hidden" name="Documents[@i].DocType" value="@defaults[i].Key"/>
                                         <div class="col-md-4">
                                             <label class="form-label mb-1">@defaults[i].Label</label>
                                             <div class="text-muted small">JPG/PNG — tối đa 10MB</div>
@@ -179,14 +182,15 @@
                                             <input type="file"
                                                    class="form-control kyc-file"
                                                    name="Documents[@i].File"
-                                                   accept=".jpg,.jpeg,.png" />
+                                                   accept=".jpg,.jpeg,.png"/>
                                             <div class="preview mt-2"></div>
                                         </div>
-                                        <div class="col-md-1 d-flex align-items-end justify-content-end">
-                                            <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Xóa dòng" disabled>
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
+                                        @* <div class="col-md-1 d-flex align-items-end justify-content-end"> *@
+                                        @*     <button type="button" class="btn btn-outline-danger btn-sm remove-row" *@
+                                        @*             title="Xóa dòng" disabled> *@
+                                        @*         <i class="fas fa-trash"></i> *@
+                                        @*     </button> *@
+                                        @* </div> *@
                                     </div>
                                 </div>
                             }
@@ -214,7 +218,7 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <partial name="_ValidationScriptsPartial"/>
     <script>
         // Giới hạn upload
         const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -222,6 +226,79 @@
 
         const rowsContainer = document.getElementById('kyc-rows');
         const btnAddRow = document.getElementById('btnAddRow');
+
+        rowsContainer.addEventListener('change', (e) => {
+            const input = e.target;
+            if (!input.classList.contains('kyc-file')) return;
+
+            const preview = input.closest('.kyc-item').querySelector('.preview');
+            preview.innerHTML = '';
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            // Validate size & type
+            if (file.size > MAX_SIZE) {
+                input.value = '';
+                preview.innerHTML = `<div class="text-danger small">Tệp vượt quá 10MB.</div>`;
+                return;
+            }
+            if (!ACCEPT.includes(file.type)) {
+                input.value = '';
+                preview.innerHTML = `<div class="text-danger small">Định dạng không hợp lệ. Chỉ PDF/JPG/PNG.</div>`;
+                return;
+            }
+
+            // Preview
+            if (file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                preview.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+                <img src="${url}" alt="preview" />
+                <button type="button" class="btn btn-sm btn-outline-danger remove-file">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+            } else if (file.type === 'application/pdf') {
+                preview.innerHTML = `
+            <div class="pdf-box d-flex align-items-center justify-content-between w-100">
+                <div>
+                    <i class="fas fa-file-pdf text-danger me-2"></i>
+                    <span>${file.name}</span>
+                    <span class="text-muted">(${(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-file">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+            } else {
+                preview.textContent = file.name;
+            }
+            
+
+        });
+
+    
+        rowsContainer.addEventListener('click', (e) => {
+            const removeFileBtn = e.target.closest('.remove-file');
+            if (removeFileBtn) {
+                const item = removeFileBtn.closest('.kyc-item');
+                const input = item.querySelector('.kyc-file');
+                const preview = item.querySelector('.preview');
+                input.value = '';       // reset file input
+                preview.innerHTML = ''; // xoá preview
+                return;
+            }
+
+            // Giữ nguyên xử lý xoá dòng cũ
+            if (e.target.closest('.remove-row')) {
+                const item = e.target.closest('.kyc-item');
+                item.remove();
+                renumberRows();
+            }
+            
+
+        });
+
 
         function createRowTemplate(index) {
             return `
@@ -255,7 +332,9 @@
         function nextIndex() {
             const items = rowsContainer.querySelectorAll('.kyc-item');
             let max = -1;
-            items.forEach(it => { max = Math.max(max, parseInt(it.getAttribute('data-index')) || 0); });
+            items.forEach(it => {
+                max = Math.max(max, parseInt(it.getAttribute('data-index')) || 0);
+            });
             return max + 1;
         }
 
@@ -345,4 +424,6 @@
             }
         });
     </script>
+
+
 }
