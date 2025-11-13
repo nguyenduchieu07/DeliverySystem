@@ -48,4 +48,23 @@ public partial class EnumExtensions
             _ => status.ToString()
         };
     }
+    
+    public static string ToDisplayStringForStore(this StatusValue status)
+    {
+        return status switch
+        {
+            StatusValue.Pending => "Chờ duyệt",
+            StatusValue.PendingKyc => "Chờ duyệt thông tin",
+            _ => status.ToString()
+        };
+    }
+    
+    public static string ToDisplayStringForKyc(this StatusValue status)
+    {
+        return status switch
+        {
+            StatusValue.PendingKyc => "Chờ duyệt thông tin",
+            _ => status.ToString()
+        };
+    }
 }
