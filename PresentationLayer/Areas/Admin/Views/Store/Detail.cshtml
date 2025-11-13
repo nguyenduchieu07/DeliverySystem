@@ -1376,13 +1376,13 @@
 
 <!-- Modal xem tài liệu -->
 <div class="modal fade" id="kycDocModal" tabindex="-1" aria-labelledby="kycDocModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw;">
+	<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 95vw;">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title" id="kycDocModalLabel">Xem tài liệu KYC</h5>
+				<h5 class="modal-title" id="kycDocModalLabel">Xem tài liệu xác minh</h5>
 			</div>
 			<div class="modal-body text-center">
-				<iframe id="kycDocFrame" src="" width="100%" height="500px" frameborder="0"></iframe>
+				<img id="kycDocPreview" class="img-fluid rounded" alt="KYC Document Preview" />
 			</div>
 		</div>
 	</div>
@@ -1390,18 +1390,18 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = new bootstrap.Modal(document.getElementById('kycDocModal'));
-        const frame = document.getElementById('kycDocFrame');
-        
-        document.querySelectorAll('.view-doc').forEach(link => {
-            link.addEventListener('click', function() {
-                const path = this.dataset.filepath;
-                frame.src = path;
-                modal.show();
-            });
-        });
-    });
+	document.addEventListener('DOMContentLoaded', function() {
+		const modal = new bootstrap.Modal(document.getElementById('kycDocModal'));
+		const doc = document.getElementById('kycDocPreview');
+
+		document.querySelectorAll('.view-doc').forEach(link => {
+			link.addEventListener('click', function() {
+				const path = this.dataset.filepath;
+				doc.src = path;
+				modal.show();
+			});
+		});
+	});
 </script>
 
 
@@ -1449,7 +1449,7 @@
 			const res = await response.json();
 
 			if (res.success) {
-				alert("✅ Cập nhật thành công!");
+				alert("Cập nhật thành công!");
 				location.reload();
 			} else if (res.errors) {
 				for (const [key, messages] of Object.entries(res.errors)) {
