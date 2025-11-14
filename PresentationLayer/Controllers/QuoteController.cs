@@ -14,6 +14,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using Humanizer;
 using DataAccessLayer.Constants;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace PresentationLayer.Controllers
 {
@@ -681,7 +682,6 @@ namespace PresentationLayer.Controllers
             }
         }
 
-        // API để xác nhận quotation và tạo Order
         [HttpPost]
         public async Task<IActionResult> ConfirmQuotation([FromBody] ConfirmQuotationRequest request)
         {
@@ -690,18 +690,18 @@ namespace PresentationLayer.Controllers
                 return BadRequest(new { success = false, message = "QuotationId và SlotId là bắt buộc." });
             }
 
+            IDbContextTransaction? transaction = null;
             try
             {
-                using var transaction = await _db.Database.BeginTransactionAsync();
+                transaction = await _db.Database.BeginTransactionAsync();
 
+                // ===== LOAD DATA =====
                 var quotation = await _db.Quotations
                     .Include(q => q.Orders)
                     .FirstOrDefaultAsync(q => q.Id == request.QuotationId);
 
                 if (quotation == null)
-                {
                     return NotFound(new { success = false, message = "Không tìm thấy báo giá." });
-                }
 
                 var order = await _db.Orders
                     .Include(o => o.OrderItems)
@@ -724,19 +724,17 @@ namespace PresentationLayer.Controllers
                         Note = "Order auto-created from quotation confirmation"
                     };
                     _db.Orders.Add(order);
-                    await _db.SaveChangesAsync();
+                    await _db.SaveChangesAsync(); // Save ID
                 }
 
                 var reservation = await _db.SlotReservations
                     .FirstOrDefaultAsync(r => r.WarehouseSlotId == request.SlotId
-                                            && r.Status == StatusValue.Active
-                                            && r.ExpiresAt > DateTimeOffset.Now
-                                            && (r.OrderId == null || r.OrderId == order.Id));
+                                           && r.Status == StatusValue.Active
+                                           && r.ExpiresAt > DateTimeOffset.Now
+                                           && (r.OrderId == null || r.OrderId == order.Id));
 
                 if (reservation == null)
-                {
                     return BadRequest(new { success = false, message = "Slot reservation đã hết hạn hoặc không tồn tại." });
-                }
 
                 var slot = await _db.WarehouseSlots
                     .Include(s => s.Warehouse)
@@ -744,16 +742,14 @@ namespace PresentationLayer.Controllers
                     .FirstOrDefaultAsync(s => s.Id == request.SlotId);
 
                 if (slot == null || slot.Warehouse == null)
-                {
                     return BadRequest(new { success = false, message = "Không tìm thấy thông tin kho hàng." });
-                }
 
-                // Cập nhật địa chỉ lấy hàng
+                // ===== UPDATE PICKUP ADDRESS =====
                 if (request.PickupAddress != null && !string.IsNullOrWhiteSpace(request.PickupAddress.AddressLine))
                 {
                     if (order.PickupAddress == null)
                     {
-                        var pickupAddress = new Address
+                        var newPickup = new Address
                         {
                             Id = Guid.NewGuid(),
                             AddressLine = request.PickupAddress.AddressLine,
@@ -765,9 +761,8 @@ namespace PresentationLayer.Controllers
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow
                         };
-                        order.PickupAddress = pickupAddress;
-                        order.PickupAddressId = pickupAddress.Id;
-                        _db.Addresses.Add(pickupAddress);
+                        _db.Addresses.Add(newPickup);
+                        order.PickupAddressId = newPickup.Id;
                     }
                     else
                     {
@@ -782,95 +777,55 @@ namespace PresentationLayer.Controllers
                     }
                 }
 
+                // ===== UPDATE DROPOFF ADDRESS =====
                 var warehouseAddress = slot.Warehouse.Address;
                 if (warehouseAddress != null)
                 {
                     if (order.DropoffAddress == null)
                     {
-                        var dropoffAddress = new Address
+                        var newDrop = new Address
                         {
                             Id = Guid.NewGuid(),
                             AddressLine = warehouseAddress.AddressLine,
                             Latitude = warehouseAddress.Latitude,
                             Longitude = warehouseAddress.Longitude,
-                            Ward = warehouseAddress.Ward,
-                            District = warehouseAddress.District,
                             City = warehouseAddress.City ?? "Hà Nội",
+                            District = warehouseAddress.District,
+                            Ward = warehouseAddress.Ward,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow
                         };
-                        order.DropoffAddress = dropoffAddress;
-                        order.DropoffAddressId = dropoffAddress.Id;
-                        _db.Addresses.Add(dropoffAddress);
+                        _db.Addresses.Add(newDrop);
+                        order.DropoffAddressId = newDrop.Id;
                     }
                     else
                     {
                         order.DropoffAddress.AddressLine = warehouseAddress.AddressLine;
                         order.DropoffAddress.Latitude = warehouseAddress.Latitude;
                         order.DropoffAddress.Longitude = warehouseAddress.Longitude;
-                        order.DropoffAddress.Ward = warehouseAddress.Ward;
-                        order.DropoffAddress.District = warehouseAddress.District;
                         order.DropoffAddress.City = warehouseAddress.City ?? order.DropoffAddress.City;
-                        order.DropoffAddress.UpdatedAt = DateTime.UtcNow;
-                        _db.Addresses.Update(order.DropoffAddress);
-                    }
-                }
-                else if (request.DropoffAddress != null && !string.IsNullOrWhiteSpace(request.DropoffAddress.AddressLine))
-                {
-                    if (order.DropoffAddress == null)
-                    {
-                        var dropoffAddress = new Address
-                        {
-                            Id = Guid.NewGuid(),
-                            AddressLine = request.DropoffAddress.AddressLine,
-                            Latitude = request.DropoffAddress.Latitude,
-                            Longitude = request.DropoffAddress.Longitude,
-                            City = request.DropoffAddress.City ?? "Hà Nội",
-                            District = request.DropoffAddress.District,
-                            Ward = request.DropoffAddress.Ward,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        };
-                        order.DropoffAddress = dropoffAddress;
-                        order.DropoffAddressId = dropoffAddress.Id;
-                        _db.Addresses.Add(dropoffAddress);
-                    }
-                    else
-                    {
-                        order.DropoffAddress.AddressLine = request.DropoffAddress.AddressLine;
-                        order.DropoffAddress.Latitude = request.DropoffAddress.Latitude;
-                        order.DropoffAddress.Longitude = request.DropoffAddress.Longitude;
-                        order.DropoffAddress.City = request.DropoffAddress.City ?? order.DropoffAddress.City;
-                        order.DropoffAddress.District = request.DropoffAddress.District ?? order.DropoffAddress.District;
-                        order.DropoffAddress.Ward = request.DropoffAddress.Ward ?? order.DropoffAddress.Ward;
+                        order.DropoffAddress.District = warehouseAddress.District ?? order.DropoffAddress.District;
+                        order.DropoffAddress.Ward = warehouseAddress.Ward ?? order.DropoffAddress.Ward;
                         order.DropoffAddress.UpdatedAt = DateTime.UtcNow;
                         _db.Addresses.Update(order.DropoffAddress);
                     }
                 }
 
-                var deliveryDate = request.DeliveryDate ?? reservation.From;
-                var pickupDate = request.PickupDate ?? reservation.To;
-
-                order.DeliveryDate = deliveryDate;
-                order.PickupDate = pickupDate;
+                // ===== UPDATE ORDER FIELDS =====
+                order.DeliveryDate = request.DeliveryDate ?? reservation.From;
+                order.PickupDate = request.PickupDate ?? reservation.To;
                 order.Status = StatusValue.AwaitingPayment;
                 order.TotalAmount = quotation.TotalAmount;
                 order.UpdatedAt = DateTime.Now;
 
-                if (request.Items != null && request.Items.Any())
+                // ===== UPDATE ORDER ITEMS =====
+                if (request.Items != null)
                 {
-                    var existingItems = order.OrderItems.ToList();
-                    if (existingItems.Any())
-                    {
-                        _db.OrderItems.RemoveRange(existingItems);
-                    }
+                    _db.OrderItems.RemoveRange(order.OrderItems);
 
                     foreach (var itemVm in request.Items)
                     {
-                        if (string.IsNullOrWhiteSpace(itemVm.Name) || itemVm.Quantity <= 0)
-                        {
-                            continue;
-                        }
+                        if (string.IsNullOrWhiteSpace(itemVm.Name) || itemVm.Quantity <= 0) continue;
 
                         order.OrderItems.Add(new OrderItem
                         {
@@ -887,42 +842,44 @@ namespace PresentationLayer.Controllers
                     }
                 }
 
+                // ===== CLEAR TRACKING TO AVOID CONFLICT =====
+                _db.ChangeTracker.Clear();
+
+                // ----- UPDATE RESERVATION SAFELY -----
                 reservation.OrderId = order.Id;
-                _db.SlotReservations.Update(reservation);
+                reservation.UpdatedAt = DateTime.Now;
 
-                var orderWarehouseSlot = await _db.OrderWarehouseSlots
-                    .FirstOrDefaultAsync(ows => ows.OrderId == order.Id && ows.WarehouseSlotId == request.SlotId && ows.DeletedAt == null);
+                _db.SlotReservations.Attach(reservation);
+                _db.Entry(reservation).Property(r => r.OrderId).IsModified = true;
+                _db.Entry(reservation).Property(r => r.UpdatedAt).IsModified = true;
 
-                if (orderWarehouseSlot == null)
-                {
-                    orderWarehouseSlot = new OrderWarehouseSlot
-                    {
-                        Id = Guid.NewGuid(),
-                        OrderId = order.Id,
-                        WarehouseSlotId = request.SlotId,
-                        AssignedAt = DateTime.Now,
-                        ReleasedAt = null,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
-                    };
-                    _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
-                }
-                else
-                {
-                    orderWarehouseSlot.AssignedAt = DateTime.Now;
-                    orderWarehouseSlot.ReleasedAt = null;
-                    orderWarehouseSlot.UpdatedAt = DateTime.Now;
-                    _db.OrderWarehouseSlots.Update(orderWarehouseSlot);
-                }
-
+                // ----- UPDATE SLOT SAFELY -----
                 slot.CurrentOrderId = order.Id;
                 slot.Status = StatusValue.Reserved;
-                _db.WarehouseSlots.Update(slot);
+                slot.UpdatedAt = DateTime.Now;
 
+                _db.WarehouseSlots.Attach(slot);
+                _db.Entry(slot).Property(s => s.CurrentOrderId).IsModified = true;
+                _db.Entry(slot).Property(s => s.Status).IsModified = true;
+                _db.Entry(slot).Property(s => s.UpdatedAt).IsModified = true;
+
+                // ----- UPDATE QUOTATION SAFELY -----
                 quotation.Status = StatusValue.Active;
                 quotation.UpdatedAt = DateTime.Now;
-                _db.Quotations.Update(quotation);
 
+                _db.Quotations.Attach(quotation);
+                _db.Entry(quotation).Property(q => q.Status).IsModified = true;
+                _db.Entry(quotation).Property(q => q.UpdatedAt).IsModified = true;
+
+                // ----- UPDATE ORDER (AFTER CLEAR TRACKING) -----
+                _db.Orders.Attach(order);
+                _db.Entry(order).Property(o => o.Status).IsModified = true;
+                _db.Entry(order).Property(o => o.DeliveryDate).IsModified = true;
+                _db.Entry(order).Property(o => o.PickupDate).IsModified = true;
+                _db.Entry(order).Property(o => o.TotalAmount).IsModified = true;
+                _db.Entry(order).Property(o => o.UpdatedAt).IsModified = true;
+
+                // ===== SAVE ALL =====
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -931,13 +888,31 @@ namespace PresentationLayer.Controllers
                     success = true,
                     message = "Đã xác nhận báo giá và tạo đơn hàng thành công!",
                     orderId = order.Id,
-                    slotCode = slot?.Code
+                    slotCode = slot.Code
                 });
             }
             catch (Exception ex)
             {
+                // Rollback transaction nếu có
+                if (transaction != null)
+                {
+                    try
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        Console.WriteLine("Error rolling back transaction: " + rollbackEx.Message);
+                    }
+                    finally
+                    {
+                        await transaction.DisposeAsync();
+                    }
+                }
+
                 Console.WriteLine("Error in ConfirmQuotation: " + ex.Message);
                 Console.WriteLine("Stack trace: " + ex.StackTrace);
+
                 return StatusCode(500, new
                 {
                     success = false,
