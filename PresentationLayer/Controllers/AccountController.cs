@@ -665,24 +665,75 @@ namespace PresentationLayer.Controllers
             await _db.SaveChangesAsync();
             return View("KycSubmissions",dto);
         }
+        
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> SubmitKyc()
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var id = Guid.Parse(userId!);
+
+            var store = await _db.Stores
+                .Where(e => e.OwnerUserId == id)
+                .Select(e => new {
+                    e.Id,
+                    e.StoreName,
+                    e.Status,
+                })
+                .FirstOrDefaultAsync();
+            
+            var model = new KycViewModel
+            {
+                Response = new RegisterStoreResponse
+                {
+                    StoreId = store.Id,
+                    StoreName = store.StoreName,
+                    Status = store.Status,
+                    
+                }
+            };
+
+            return View("KycSubmissions", model);
+        }
+
+        
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> SubmitKyc(SubmitKycRequest request)
         {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var id = Guid.Parse(userId!);
+            var store = await _db.Stores.Where(e => e.OwnerUserId == id).FirstAsync();
             try
             {
-                var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var id = Guid.Parse(userId!);
-                var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync();
-                request.StoreId = storeId;
+                
+                request.StoreId = store.Id;
                 var data = await _storeService.SubmitKycDocumentsAsync(request);
-                return Ok("Gửi thành công.");
+                    
+                TempData["Success"] = "Tài liệu đã được gửi thành công!";
+                return View("KycSubmissions", new KycViewModel
+                {
+                    Response = new RegisterStoreResponse
+                    {
+                        StoreId = store.Id,
+                        StoreName = store.StoreName,
+                        Status = store.Status,
+                    },
+                    KycRequest = request,
+                });
+
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
                 return View("KycSubmissions", new KycViewModel
                 {
+                    Response = new RegisterStoreResponse
+                    {
+                        StoreId = store.Id,
+                        StoreName = store.StoreName,
+                        Status = store.Status,
+                    },
                     KycRequest = request,
                 });
             }

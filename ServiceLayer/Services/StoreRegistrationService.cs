@@ -107,47 +107,47 @@ namespace ServiceLayer.Services
                 };
                 await _context.KycSubmissions.AddAsync(kycSubmission);
 
-                List<KycDocument> documents = [];
+                //List<KycDocument> documents = [];
                 //add document
-                if (!string.IsNullOrEmpty(request.LicenseNumber))
-                {
-                    var licenseDocument = new KycDocument
-                    {
-                        Id = Guid.NewGuid(),
-                        KycSubmissionId = kycSubmission.Id,
-                        DocType = KycDocumentConstant.LicenseNumberKey,
-                        FilePath = string.Empty,
-                        Hash = Hashor.ToBase64(request.LicenseNumber)
-                    };
-                    documents.Add(licenseDocument);
-                }
-                if (!string.IsNullOrEmpty(request.TaxNumber))
-                {
-                    var taxDocument = new KycDocument
-                    {
-                        Id = Guid.NewGuid(),
-                        KycSubmissionId = kycSubmission.Id,
-                        DocType = KycDocumentConstant.TaxNumberKey,
-                        FilePath = string.Empty,
-                        Hash = Hashor.ToBase64(request.TaxNumber)
-                    };
-                    documents.Add(taxDocument);
-                }
+                // if (!string.IsNullOrEmpty(request.LicenseNumber))
+                // {
+                //     var licenseDocument = new KycDocument
+                //     {
+                //         Id = Guid.NewGuid(),
+                //         KycSubmissionId = kycSubmission.Id,
+                //         DocType = KycDocumentConstant.LicenseNumberKey,
+                //         FilePath = string.Empty,
+                //         Hash = Hashor.ToBase64(request.LicenseNumber)
+                //     };
+                //     documents.Add(licenseDocument);
+                // }
+                // if (!string.IsNullOrEmpty(request.TaxNumber))
+                // {
+                //     var taxDocument = new KycDocument
+                //     {
+                //         Id = Guid.NewGuid(),
+                //         KycSubmissionId = kycSubmission.Id,
+                //         DocType = KycDocumentConstant.TaxNumberKey,
+                //         FilePath = string.Empty,
+                //         Hash = Hashor.ToBase64(request.TaxNumber)
+                //     };
+                //     documents.Add(taxDocument);
+                // }
+                //
+                // if (!string.IsNullOrEmpty(request.ID))
+                // {
+                //     var idDocument = new KycDocument
+                //     {
+                //         Id = Guid.NewGuid(),
+                //         KycSubmissionId = kycSubmission.Id,
+                //         DocType = KycDocumentConstant.IDKey,
+                //         FilePath = string.Empty,
+                //         Hash = Hashor.ToBase64(request.ID)
+                //     };
+                //     documents.Add(idDocument);
+                // }
 
-                if (!string.IsNullOrEmpty(request.ID))
-                {
-                    var idDocument = new KycDocument
-                    {
-                        Id = Guid.NewGuid(),
-                        KycSubmissionId = kycSubmission.Id,
-                        DocType = KycDocumentConstant.IDKey,
-                        FilePath = string.Empty,
-                        Hash = Hashor.ToBase64(request.ID)
-                    };
-                    documents.Add(idDocument);
-                }
-
-                await _context.KycDocuments.AddRangeAsync(documents);
+                //await _context.KycDocuments.AddRangeAsync(documents);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -159,7 +159,7 @@ namespace ServiceLayer.Services
                     StoreName = store.StoreName,
                     Status = store.Status,
                     KycStatus = (StatusValue)kycSubmission.Status,
-                    Message = "Store registered successfully. Please submit KYC documents for verification."
+                    Message = "Cửa hàng đã được đăng ký thành công. Vui lòng nộp các tài liệu để xác minh."
                 };
             }
             catch (Exception ex)
@@ -181,7 +181,7 @@ namespace ServiceLayer.Services
             var kycSubmission = await _context.KycSubmissions
                         .Where(k => k.StoreId == request.StoreId && k.Status == KycStatus.Pending)
                         .FirstOrDefaultAsync();
-
+            
 
             if (kycSubmission == null)
             {

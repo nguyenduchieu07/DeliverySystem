@@ -1080,6 +1080,20 @@
 
 </style>
 
+<style>
+    #kycDocModal .modal-dialog {
+        max-width: 95vw;
+        width: 95vw;
+    }
+    #kycDocModal .modal-body {
+        height: 85vh;
+    }
+    #kycDocFrame {
+        height: 100%;
+    }
+</style>
+
+
 <div class="card mt-4">
 	<div class="card-header"><i class="fas fa-id-card"></i> Danh sách kho</div>
 	<div class="card-body">
@@ -1267,62 +1281,88 @@
 			<!-- Document List -->
 			<h6><i class="fas fa-file-alt"></i> Danh Sách Thông Tin Xác Minh </h6>
 			<div class="doc-checklist mt-3">
+				@* @foreach (var doc in KycDocumentConstant.Types) *@
+				@* { *@
+				@* 	var hasFile = Model.KycSubmission.Documents.Any(d => d.DocType == doc.Key); *@
+				@* 	<div class="doc-item"> *@
+				@* 		<input type="checkbox" disabled @(hasFile ? "checked" : "") /> *@
+				@* 		<label>@doc.Key</label> *@
+				@* 		<span class="desc">(@doc.Value.Description)</span> *@
+				@* *@
+				@* 		@if (hasFile) *@
+				@* 		{ *@
+				@* 			var file = Model.KycSubmission.Documents.First(d => d.DocType == doc.Key); *@
+				@* 			<a href="@Url.Content(file.FilePath)" target="_blank" class="view-link"> *@
+				@* 				<i class="fas fa-eye"></i> Xem tài liệu *@
+				@* 			</a> *@
+				@* 		} *@
+				@* 	</div> *@
+				@* } *@
 				@foreach (var doc in KycDocumentConstant.Types)
 				{
 					var hasFile = Model.KycSubmission.Documents.Any(d => d.DocType == doc.Key);
 					<div class="doc-item">
 						<input type="checkbox" disabled @(hasFile ? "checked" : "") />
-						<label>@doc.Key</label>
+						<label>@(KycDocumentConstant.TypesWithLabelDict[doc.Key])</label>
 						<span class="desc">(@doc.Value.Description)</span>
 
 						@if (hasFile)
 						{
 							var file = Model.KycSubmission.Documents.First(d => d.DocType == doc.Key);
-							<a href="@Url.Content(file.FilePath)" target="_blank" class="view-link">
+							@* <a href="@Url.Content(file.FilePath)" target="_blank" class="view-link"> *@
+							@* 	<i class="fas fa-eye"></i> Xem tài liệu *@
+							@* </a> *@
+							
+							
+							<a href="javascript:void(0);" 
+							   class="view-doc btn btn-outline-primary btn-sm view-doc-btn" 
+							   data-filepath="@file.FilePath" 
+							   title="Xem tài liệu">
 								<i class="fas fa-eye"></i> Xem tài liệu
 							</a>
 						}
 					</div>
 				}
+
 			</div>
 
 			<!-- Action Buttons -->
-			<div class="action-buttons-group">
-				@if (Model.KycSubmission.Status == DataAccessLayer.Enums.KycStatus.Pending)
-				{
-					<button type="button" class="btn btn-success">
-						<i class="fas fa-check"></i> Phê duyệt hồ sơ
-					</button>
-					<button type="button" class="btn btn-danger">
-						<i class="fas fa-times"></i> Từ chối hồ sơ
-					</button>
-					@* <button type="button" class="btn btn-warning"> *@
-					@*     <i class="fas fa-edit"></i> Yêu cầu chỉnh sửa *@
-					@* </button> *@
-				}
-				else if (Model.KycSubmission.Status == DataAccessLayer.Enums.KycStatus.Approved)
-				{
-					@if (Model.Store.IsVerified)
-					{
-						<button type="button" class="btn btn-danger">
-							<i class="fas fa-ban"></i> Hủy xác minh cửa hàng
-						</button>
-					}
-					else
-					{
-						<button type="button" class="btn btn-success">
-							<i class="fas fa-check-circle"></i> Xác minh cửa hàng
-						</button>
-					}
-				}
-
-				@* <button type="button" class="btn btn-outline"> *@
-				@*     <i class="fas fa-download"></i> Tải xuống hồ sơ *@
-				@* </button> *@
-				@* <button type="button" class="btn btn-outline"> *@
-				@*     <i class="fas fa-history"></i> Xem lịch sử thay đổi *@
-				@* </button> *@
-			</div>
+			@* <div class="action-buttons-group"> *@
+			@* 	@if (Model.KycSubmission.Status == DataAccessLayer.Enums.KycStatus.Pending) *@
+			@* 	{ *@
+			@* 		<button type="button" class="btn btn-success"> *@
+			@* 			<i class="fas fa-check"></i> Phê duyệt hồ sơ *@
+			@* 		</button> *@
+			@* 		<button type="button" class="btn btn-danger"> *@
+			@* 			<i class="fas fa-times"></i> Từ chối hồ sơ *@
+			@* 		</button> *@
+			@* 		$1$ <button type="button" class="btn btn-warning"> #1# *@
+			@* 		$1$     <i class="fas fa-edit"></i> Yêu cầu chỉnh sửa #1# *@
+			@* 		$1$ </button> #1# *@
+			@* 	} *@
+			@* 	else if (Model.KycSubmission.Status == DataAccessLayer.Enums.KycStatus.Approved) *@
+			@* 	{ *@
+			@* 		@if (Model.Store.IsVerified) *@
+			@* 		{ *@
+			@* 			<button type="button" class="btn btn-danger"> *@
+			@* 				<i class="fas fa-ban"></i> Hủy xác minh cửa hàng *@
+			@* 			</button> *@
+			@* 		} *@
+			@* 		else *@
+			@* 		{ *@
+			@* 			<button type="button" class="btn btn-success"> *@
+			@* 				<i class="fas fa-check-circle"></i> Xác minh cửa hàng *@
+			@* 			</button> *@
+			@* 		} *@
+			@* 	} *@
+			@* *@
+			@* 	<button type="button" class="btn btn-outline"> *@
+			@* 	    <i class="fas fa-download"></i> Tải xuống hồ sơ *@
+			@* 	</button> *@
+			@* 	<button type="button" class="btn btn-outline"> *@
+			@* 	    <i class="fas fa-history"></i> Xem lịch sử thay đổi *@
+			@* 	</button> *@
+			@* </div> *@
 		}
 	</div>
 </div>
@@ -1333,6 +1373,37 @@
 		</div>
 	</div>
 </div>
+
+<!-- Modal xem tài liệu -->
+<div class="modal fade" id="kycDocModal" tabindex="-1" aria-labelledby="kycDocModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 95vw;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="kycDocModalLabel">Xem tài liệu xác minh</h5>
+			</div>
+			<div class="modal-body text-center">
+				<img id="kycDocPreview" class="img-fluid rounded" alt="KYC Document Preview" />
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		const modal = new bootstrap.Modal(document.getElementById('kycDocModal'));
+		const doc = document.getElementById('kycDocPreview');
+
+		document.querySelectorAll('.view-doc').forEach(link => {
+			link.addEventListener('click', function() {
+				const path = this.dataset.filepath;
+				doc.src = path;
+				modal.show();
+			});
+		});
+	});
+</script>
+
 
 <script>
 	document.getElementById("btnEditStore").addEventListener("click", function () {
@@ -1378,7 +1449,7 @@
 			const res = await response.json();
 
 			if (res.success) {
-				alert("✅ Cập nhật thành công!");
+				alert("Cập nhật thành công!");
 				location.reload();
 			} else if (res.errors) {
 				for (const [key, messages] of Object.entries(res.errors)) {
