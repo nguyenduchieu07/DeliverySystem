@@ -13,6 +13,10 @@ function getCsrf() {
     );
 }
 
+// Flag để tránh load warehouses nhiều lần
+let warehousesLoading = false;
+let warehousesLoaded = false;
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOMContentLoaded - Initializing booking page...");
@@ -27,28 +31,61 @@ document.addEventListener("DOMContentLoaded", function () {
     // Thử lấy vị trí hiện tại, nếu không được thì dùng vị trí mặc định (Hà Nội)
     function loadWarehousesAfterMapReady() {
         if (!map) {
-            console.log("Waiting for map to be ready...");
-            setTimeout(loadWarehousesAfterMapReady, 100);
+            console.log("⏳ Waiting for map to be ready...");
+            setTimeout(loadWarehousesAfterMapReady, 200);
             return;
         }
 
-        console.log("Map is ready, loading warehouses...");
+        // Tránh load nhiều lần
+        if (warehousesLoading || warehousesLoaded) {
+            console.log("⏭️ Warehouses already loading or loaded, skipping...");
+            return;
+        }
+
+        console.log("✅ Map object exists, waiting for tiles to load...");
+
+        // Đợi map hoàn toàn sẵn sàng (tiles đã load)
+        // Leaflet không có property 'loaded', nên luôn dùng whenReady
+        map.whenReady(function() {
+            console.log("✅ Map is fully ready (tiles loaded), loading warehouses...");
+            // Đợi thêm một chút để đảm bảo tiles đã render
+            setTimeout(function() {
+                loadWarehousesWithLocation();
+            }, 300);
+        });
+    }
+
+    function loadWarehousesWithLocation() {
+        // Tránh load nhiều lần (chỉ check, không set flag ở đây)
+        if (warehousesLoading) {
+            console.log("⏭️ Warehouses already loading, skipping...");
+            return;
+        }
+
+        console.log("🔄 Starting to load warehouses...");
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    console.log("Got current position:", lat, lng);
-                    setWarehouseLocation(lat, lng);
+                    console.log("📍 Got current position:", lat, lng);
+                    setWarehouseLocation(lat, lng, null, false); // false = không gọi loadNearbyWarehouses ở đây
+                    // Reset flags để đảm bảo load được
+                    warehousesLoaded = false;
+                    warehousesLoading = false;
                     loadNearbyWarehouses(lat, lng);
                 },
                 (error) => {
-                    console.log("Geolocation error:", error.message);
+                    console.log("⚠️ Geolocation error:", error.message);
                     // Nếu không lấy được vị trí, dùng vị trí mặc định (Hà Nội)
                     const defaultLat = 21.028511;
                     const defaultLng = 105.804817;
-                    console.log("Using default location:", defaultLat, defaultLng);
+                    console.log("📍 Using default location:", defaultLat, defaultLng);
+                    setWarehouseLocation(defaultLat, defaultLng, null, false); // false = không gọi loadNearbyWarehouses ở đây
+                    // Reset flags để đảm bảo load được
+                    warehousesLoaded = false;
+                    warehousesLoading = false;
                     loadNearbyWarehouses(defaultLat, defaultLng);
                 },
                 { timeout: 5000, enableHighAccuracy: false }
@@ -58,16 +95,20 @@ document.addEventListener("DOMContentLoaded", function () {
             const defaultLat = 21.028511;
             const defaultLng = 105.804817;
             console.log(
-                "Geolocation not supported, using default location:",
+                "📍 Geolocation not supported, using default location:",
                 defaultLat,
                 defaultLng
             );
+            setWarehouseLocation(defaultLat, defaultLng, null, false); // false = không gọi loadNearbyWarehouses ở đây
+            // Reset flags để đảm bảo load được
+            warehousesLoaded = false;
+            warehousesLoading = false;
             loadNearbyWarehouses(defaultLat, defaultLng);
         }
     }
 
     // Đợi một chút để đảm bảo map đã khởi tạo
-    setTimeout(loadWarehousesAfterMapReady, 500);
+    setTimeout(loadWarehousesAfterMapReady, 800);
 });
 
 // ============ MAP FUNCTIONS ============
@@ -89,7 +130,7 @@ function initMap() {
     }
 
     try {
-        console.log("Initializing map...");
+        console.log("🗺️ Initializing map...");
         map = L.map("map").setView([21.028511, 105.804817], 13);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -97,10 +138,8 @@ function initMap() {
             maxZoom: 19,
         }).addTo(map);
 
-        // Đợi map load xong
-        map.whenReady(function () {
-            console.log("✅ Map initialized and ready");
-        });
+        // Thêm labels cho quần đảo Hoàng Sa và Trường Sa
+        addVietnameseIslandLabels(map);
 
         // Geocoder control - chỉ thêm nếu có
         if (typeof L.Control !== "undefined" && L.Control.geocoder) {
@@ -108,10 +147,24 @@ function initMap() {
                 defaultMarkGeocode: false,
                 placeholder: "Tìm kiếm địa điểm...",
                 errorMessage: "Không tìm thấy",
+                geocoder: L.Control.Geocoder.nominatim({
+                    geocodingQueryParams: {
+                        addressdetails: 1,
+                        'accept-language': 'vi', // Ngôn ngữ tiếng Việt
+                        countrycodes: 'vn' // Chỉ tìm trong Việt Nam
+                    },
+                    reverseQueryParams: {
+                        addressdetails: 1,
+                        'accept-language': 'vi' // Ngôn ngữ tiếng Việt
+                    }
+                })
             })
                 .on("markgeocode", function (e) {
                     const latlng = e.geocode.center;
-                    setWarehouseLocation(latlng.lat, latlng.lng);
+                    // Reset flags để đảm bảo load được
+                    warehousesLoaded = false;
+                    warehousesLoading = false;
+                    setWarehouseLocation(latlng.lat, latlng.lng, null, true);
                 })
                 .addTo(map);
         } else {
@@ -123,6 +176,72 @@ function initMap() {
         console.error("Error initializing map:", error);
         return false;
     }
+}
+
+// Thêm labels tiếng Việt cho quần đảo Hoàng Sa và Trường Sa (che phủ chữ Trung Quốc)
+function addVietnameseIslandLabels(mapInstance) {
+    if (!mapInstance || typeof L === "undefined") return;
+    
+    // Thêm CSS để đảm bảo labels hiển thị trên cùng và che phủ tốt
+    if (!document.getElementById('vietnamese-island-styles')) {
+        const style = document.createElement('style');
+        style.id = 'vietnamese-island-styles';
+        style.textContent = `
+            .vietnamese-island-label {
+                z-index: 10000 !important;
+            }
+            .vietnamese-island-label div {
+                pointer-events: none;
+                background: rgba(255,255,255,0.98) !important;
+            }
+            .leaflet-marker-icon.vietnamese-island-label {
+                z-index: 10000 !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Quần đảo Hoàng Sa (Paracel Islands) - khoảng 16.5°N, 112.0°E
+    // Tạo overlay lớn với background mở rộng để che phủ chữ Trung Quốc từ tile server
+    const hoangSaOverlay = L.marker([16.5, 112.0], {
+        icon: L.divIcon({
+            className: 'vietnamese-island-label hoang-sa-label',
+            html: '<div style="background: rgba(255,255,255,0.98); padding: 10px 16px; border-radius: 8px; border: 3px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 15px; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.4); text-align: center; min-width: 200px;">🏝️ Quần đảo Hoàng Sa</div>',
+            iconSize: [220, 50],
+            iconAnchor: [110, 25]
+        }),
+        zIndexOffset: 10000
+    }).addTo(mapInstance);
+    
+    // Quần đảo Trường Sa (Spratly Islands) - khoảng 10.0°N, 114.0°E
+    const truongSaOverlay = L.marker([10.0, 114.0], {
+        icon: L.divIcon({
+            className: 'vietnamese-island-label truong-sa-label',
+            html: '<div style="background: rgba(255,255,255,0.98); padding: 10px 16px; border-radius: 8px; border: 3px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 15px; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.4); text-align: center; min-width: 200px;">🏝️ Quần đảo Trường Sa</div>',
+            iconSize: [220, 50],
+            iconAnchor: [110, 25]
+        }),
+        zIndexOffset: 10000
+    }).addTo(mapInstance);
+    
+    // Đảm bảo labels luôn hiển thị trên cùng khi map zoom/pan
+    mapInstance.on('zoomend moveend', function() {
+        // Kiểm tra marker tồn tại và có method bringToFront trước khi gọi
+        if (hoangSaOverlay && typeof hoangSaOverlay.bringToFront === 'function') {
+            try {
+                hoangSaOverlay.bringToFront();
+            } catch (e) {
+                console.warn("Error bringing Hoang Sa overlay to front:", e);
+            }
+        }
+        if (truongSaOverlay && typeof truongSaOverlay.bringToFront === 'function') {
+            try {
+                truongSaOverlay.bringToFront();
+            } catch (e) {
+                console.warn("Error bringing Truong Sa overlay to front:", e);
+            }
+        }
+    });
 }
 
 // ============ DATE FUNCTIONS ============
@@ -210,9 +329,13 @@ function initAddressAutocomplete() {
                         const lng = parseFloat(it.lon);
                         const addressText = it.display_name || "";
 
+                        // Reset flags để đảm bảo load được
+                        warehousesLoaded = false;
+                        warehousesLoading = false;
+
                         // Cập nhật địa chỉ vào input và warehouseData
                         input.value = addressText;
-                        setWarehouseLocation(lat, lng, addressText);
+                        setWarehouseLocation(lat, lng, addressText, true);
                         results.classList.remove("show");
                         results.innerHTML = "";
                     });
@@ -245,11 +368,16 @@ function getCurrentLocation() {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
 
+            // Reset flags để đảm bảo load được
+            warehousesLoaded = false;
+            warehousesLoading = false;
+
             // Lấy địa chỉ từ reverse geocode trước rồi mới set location
             reverseGeocode(lat, lng).then((address) => {
                 const input = document.getElementById("warehouseAreaInput");
                 if (input) input.value = address;
-                setWarehouseLocation(lat, lng, address);
+                // Gọi với shouldLoadWarehouses = true để load warehouses ngay
+                setWarehouseLocation(lat, lng, address, true);
             });
         },
         (error) => {
@@ -266,7 +394,20 @@ function searchLocation() {
 }
 
 // ============ WAREHOUSE LOCATION ============
-function setWarehouseLocation(lat, lng, addressLine = null) {
+function setWarehouseLocation(lat, lng, addressLine = null, shouldLoadWarehouses = true) {
+    console.log("📍 setWarehouseLocation called:", lat, lng, addressLine, "shouldLoadWarehouses:", shouldLoadWarehouses);
+    
+    // Kiểm tra xem có phải là thay đổi vị trí mới không (TRƯỚC KHI cập nhật warehouseData)
+    const isLocationChanged = warehouseData && 
+        (Math.abs(warehouseData.lat - lat) > 0.0001 || Math.abs(warehouseData.lng - lng) > 0.0001);
+    
+    // Nếu là thay đổi vị trí mới (user chọn địa chỉ khác), reset flag để cho phép load lại
+    if (isLocationChanged && shouldLoadWarehouses) {
+        console.log("🔄 Location changed, resetting flags to allow reload...");
+        warehousesLoaded = false;
+        warehousesLoading = false; // Reset để cho phép load lại
+    }
+    
     // Lưu địa chỉ nhận hàng (PickupAddress) - đây là địa chỉ từ input hoặc vị trí hiện tại
     warehouseData = { lat: lat, lng: lng, address: addressLine || "" };
 
@@ -276,10 +417,20 @@ function setWarehouseLocation(lat, lng, addressLine = null) {
         input.value = addressLine;
     }
 
-    if (map) {
+    if (!map) {
+        console.warn("⚠️ Map is not initialized in setWarehouseLocation!");
+        // Chỉ gọi loadNearbyWarehouses nếu được yêu cầu và map chưa sẵn sàng
+        if (shouldLoadWarehouses) {
+            loadNearbyWarehouses(lat, lng);
+        }
+        return;
+    }
+
         if (warehouseMarker) {
             warehouseMarker.setLatLng([lat, lng]);
+        console.log("📍 Updated existing warehouse marker");
         } else {
+        console.log("📍 Creating new warehouse marker");
             warehouseMarker = L.marker([lat, lng], {
                 draggable: true,
                 icon: L.divIcon({
@@ -301,13 +452,21 @@ function setWarehouseLocation(lat, lng, addressLine = null) {
                 // Cập nhật input với địa chỉ mới
                 const input = document.getElementById("warehouseAreaInput");
                 if (input) input.value = newAddress;
+            console.log("📍 Marker dragged to:", newPos.lat, newPos.lng);
+            // Khi drag, luôn load lại warehouses
+            warehousesLoaded = false;
+            warehousesLoading = false; // Reset để cho phép load lại
                 loadNearbyWarehouses(newPos.lat, newPos.lng);
             });
         }
         map.setView([lat, lng], 15);
-    }
+    console.log("📍 Map view set to:", lat, lng);
 
+    // Chỉ gọi loadNearbyWarehouses nếu được yêu cầu
+    if (shouldLoadWarehouses) {
+        console.log("🔄 Calling loadNearbyWarehouses from setWarehouseLocation...");
     loadNearbyWarehouses(lat, lng);
+    }
 }
 
 async function reverseGeocode(lat, lng) {
@@ -323,51 +482,304 @@ async function reverseGeocode(lat, lng) {
     }
 }
 
-// ============ LOAD NEARBY WAREHOUSES ============
+// ============ LOAD NEARBY WAREHOUSES - CHỈ LẤY 3 KHO GẦN NHẤT ============
 async function loadNearbyWarehouses(lat, lng) {
-    if (!lat || !lng) {
-        console.error("loadNearbyWarehouses: Invalid coordinates", lat, lng);
+    if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+        console.error("❌ loadNearbyWarehouses: Invalid coordinates", lat, lng);
+        warehousesLoading = false;
         return;
     }
 
-    console.log("Loading nearby warehouses for:", lat, lng);
+    // Tránh load nhiều lần cùng lúc (chỉ nếu đang load cùng một vị trí)
+    // Nhưng cho phép load lại nếu vị trí đã thay đổi
+    if (warehousesLoading) {
+        // Kiểm tra xem có phải là vị trí mới không
+        const isNewLocation = !warehouseData || 
+            Math.abs(warehouseData.lat - lat) > 0.0001 || 
+            Math.abs(warehouseData.lng - lng) > 0.0001;
+        
+        if (!isNewLocation) {
+            console.log("⏭️ Already loading warehouses for same location, skipping duplicate call...");
+            return;
+        } else {
+            console.log("🔄 New location detected, will load after current request completes...");
+            // Đợi một chút rồi retry
+            setTimeout(() => loadNearbyWarehouses(lat, lng), 500);
+            return;
+        }
+    }
+
+    warehousesLoading = true;
+    console.log("🔍 Loading 3 nearest warehouses for:", lat, lng);
+
+    // Hiển thị loading trong danh sách kho
+    const listContainer = document.getElementById("warehouseList");
+    if (listContainer) {
+        listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #667eea;">🔄 Đang tìm 3 kho gần nhất...</div>';
+    }
 
     try {
-        const url = `/Quote/NearbyWarehouses?lat=${lat}&lng=${lng}&take=10`;
-        console.log("Fetching:", url);
+        // CHỈ LẤY 3 KHO GẦN NHẤT
+        const url = `/Quote/NearbyWarehouses?lat=${lat}&lng=${lng}&take=3`;
+        console.log("🌐 Fetching URL:", url);
 
         const response = await fetch(url);
+        console.log("📡 Response status:", response.status, response.statusText);
 
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error("❌ API Error Response:", errorText);
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const warehouses = await response.json();
-        console.log("Received warehouses:", warehouses);
+        console.log("📦 Received warehouses from API:", warehouses);
+        console.log("📦 Total warehouses:", warehouses?.length);
 
         if (!warehouses || !Array.isArray(warehouses)) {
-            console.error("Invalid warehouses data:", warehouses);
+            console.error("❌ Invalid warehouses data:", warehouses);
+            if (listContainer) {
+                listContainer.innerHTML = '<div style="padding: 15px; text-align: center; color: #e74c3c;">❌ Dữ liệu kho không hợp lệ.</div>';
+            }
+            warehousesLoading = false;
+            return;
+        }
+
+        if (warehouses.length === 0) {
+            console.log("⚠️ No warehouses found nearby");
+            if (listContainer) {
+                listContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #666;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📍</div>
+                        <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">Không tìm thấy kho nào gần đây</div>
+                        <div style="font-size: 14px; color: #999;">Vui lòng thử tìm kiếm vị trí khác</div>
+                    </div>
+                `;
+            }
+            warehousesLoading = false;
             return;
         }
 
         nearbyWarehouses = warehouses;
+        warehousesLoaded = true;
+        warehousesLoading = false;
+
+        console.log(`✅ Loaded ${warehouses.length} warehouse(s), rendering...`);
+
+        // Render danh sách kho NGAY LẬP TỨC
         renderWarehouseList(warehouses);
+
+        // Hiển thị kho trên bản đồ
+        if (map) {
         displayWarehousesOnMap(warehouses);
+        } else {
+            console.warn("⚠️ Map not ready yet, will retry...");
+            // Retry với timeout
+            let attempts = 0;
+            const retryInterval = setInterval(() => {
+                attempts++;
+                if (map && map._loaded) {
+                    console.log("✅ Map ready, displaying warehouses...");
+                    displayWarehousesOnMap(warehouses);
+                    clearInterval(retryInterval);
+                } else if (attempts >= 10) {
+                    console.error("❌ Map still not ready after 10 attempts");
+                    clearInterval(retryInterval);
+                }
+            }, 300);
+        }
     } catch (error) {
-        console.error("Error loading warehouses:", error);
-        alert("Không thể tải danh sách kho. Vui lòng thử lại sau.");
+        warehousesLoading = false;
+        console.error("❌ Error loading warehouses:", error);
+        if (listContainer) {
+            listContainer.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: #e74c3c;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">⚠️</div>
+                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">Không thể tải danh sách kho</div>
+                    <div style="font-size: 14px; margin-bottom: 10px;">${error.message}</div>
+                    <button onclick="loadNearbyWarehouses(${lat}, ${lng})" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">🔄 Thử lại</button>
+                </div>
+            `;
+        }
     }
 }
 
-function displayWarehousesOnMap(warehouses) {
-    console.log("displayWarehousesOnMap called with:", warehouses);
+function renderWarehouseList(warehouses) {
+    console.log("📋 renderWarehouseList called with:", warehouses?.length, "warehouse(s)");
 
-    if (!map) {
-        console.error("Map is not initialized!");
+    const listContainer = document.getElementById("warehouseList");
+    if (!listContainer) {
+        console.error("❌ warehouseList element not found!");
         return;
     }
 
-    // Remove old warehouse markers (keep warehouseMarker if exists)
+    console.log("✅ warehouseList element found, rendering...");
+    listContainer.innerHTML = "";
+
+    if (!warehouses || warehouses.length === 0) {
+        console.warn("⚠️ No warehouses to render");
+        listContainer.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #666;">
+                <div style="font-size: 48px; margin-bottom: 10px;">📦</div>
+                <div style="font-size: 16px; font-weight: 600;">Không tìm thấy kho nào gần đây</div>
+            </div>
+        `;
+        return;
+    }
+
+    console.log(`📋 Rendering ${warehouses.length} warehouse(s) to list...`);
+
+    // Thêm tiêu đề cho danh sách
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px 12px 0 0; margin-bottom: 10px;";
+    headerDiv.innerHTML = `
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 5px;">🏪 ${warehouses.length} Kho Gần Nhất</div>
+        <div style="font-size: 13px; opacity: 0.9;">Nhấn vào kho để xem chi tiết và chọn</div>
+    `;
+    listContainer.appendChild(headerDiv);
+
+    warehouses.forEach((warehouse, index) => {
+        // ASP.NET Core mặc định serialize theo PascalCase
+        const warehouseId = warehouse.Id ?? warehouse.id;
+        const warehouseName = warehouse.Name ?? warehouse.name ?? "Kho";
+        const distanceKm = warehouse.distanceKm ?? warehouse.DistanceKm ?? 0;
+        const address = warehouse.full ?? warehouse.Full ?? warehouse.addressLine ?? warehouse.AddressLine ?? "";
+        const storeName = warehouse.StoreName ?? warehouse.storeName ?? "";
+
+        console.log(`📋 Rendering warehouse ${index + 1}:`, {
+            id: warehouseId,
+            name: warehouseName,
+            distance: distanceKm.toFixed(2) + " km",
+            address: address
+        });
+
+        const item = document.createElement("div");
+        item.className = "warehouse-item";
+        item.dataset.warehouseId = warehouseId;
+
+        // Thêm badge cho thứ hạng (Top 1, 2, 3)
+        const rankBadge = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+
+        // Check if this is the selected warehouse
+        if (selectedWarehouse) {
+            const selectedId = selectedWarehouse.Id ?? selectedWarehouse.id;
+            if (selectedId === warehouseId) {
+                item.classList.add("selected");
+            }
+        }
+
+        item.innerHTML = `
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="font-size: 32px; line-height: 1;">${rankBadge}</div>
+                <div style="flex: 1;">
+                    <div class="warehouse-name" style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">${warehouseName}</div>
+                    <div class="warehouse-address" style="font-size: 13px; color: #666; margin-bottom: 8px;">${address}</div>
+                    <div class="warehouse-info" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 13px; color: #667eea;">📦 ${storeName}</div>
+                        <div class="warehouse-distance" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700;">📍 ${distanceKm.toFixed(2)} km</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        item.addEventListener("click", function () {
+            selectWarehouse(warehouse);
+        });
+
+        listContainer.appendChild(item);
+    });
+
+    // Thêm footer với gợi ý
+    const footerDiv = document.createElement("div");
+    footerDiv.style.cssText = "padding: 12px; background: #f8f9fa; border-radius: 0 0 12px 12px; text-align: center; color: #666; font-size: 13px; margin-top: 10px;";
+    footerDiv.innerHTML = `💡 <strong>Gợi ý:</strong> Kho gần nhất sẽ giúp tiết kiệm chi phí vận chuyển`;
+    listContainer.appendChild(footerDiv);
+}
+
+// ============ SET WAREHOUSE LOCATION - TỰ ĐỘNG LOAD 3 KHO GẦN NHẤT ============
+function setWarehouseLocation(lat, lng, addressLine = null, shouldLoadWarehouses = true) {
+    console.log("📍 setWarehouseLocation called:", lat, lng, addressLine, "shouldLoadWarehouses:", shouldLoadWarehouses);
+
+    // Lưu địa chỉ nhận hàng (PickupAddress)
+    warehouseData = { lat: lat, lng: lng, address: addressLine || "" };
+
+    // Cập nhật input với địa chỉ
+    const input = document.getElementById("warehouseAreaInput");
+    if (input && addressLine) {
+        input.value = addressLine;
+    }
+
+    if (!map) {
+        console.warn("⚠️ Map is not initialized in setWarehouseLocation!");
+        // Vẫn load warehouses ngay cả khi map chưa sẵn sàng
+        if (shouldLoadWarehouses) {
+            // Reset flag để cho phép load lại
+            warehousesLoaded = false;
+            warehousesLoading = false;
+            loadNearbyWarehouses(lat, lng);
+        }
+        return;
+    }
+
+    if (warehouseMarker) {
+        warehouseMarker.setLatLng([lat, lng]);
+        console.log("📍 Updated existing warehouse marker");
+    } else {
+        console.log("📍 Creating new warehouse marker");
+        warehouseMarker = L.marker([lat, lng], {
+            draggable: true,
+            icon: L.divIcon({
+                className: "custom-marker",
+                html: '<div style="background:#f26722;width:36px;height:36px;border-radius:50%;border:4px solid white;box-shadow:0 4px 16px rgba(242,103,34,0.7);display:flex;align-items:center;justify-content:center;font-size:20px;">📍</div>',
+                iconSize: [36, 36],
+                iconAnchor: [18, 18],
+            }),
+        })
+            .addTo(map)
+            .bindPopup("📍 Địa chỉ nhận hàng<br><small>(Kéo để di chuyển)</small>");
+
+        warehouseMarker.on("dragend", async function (e) {
+            const newPos = e.target.getLatLng();
+            warehouseData.lat = newPos.lat;
+            warehouseData.lng = newPos.lng;
+            const newAddress = await reverseGeocode(newPos.lat, newPos.lng);
+            warehouseData.address = newAddress;
+            const input = document.getElementById("warehouseAreaInput");
+            if (input) input.value = newAddress;
+            console.log("📍 Marker dragged to:", newPos.lat, newPos.lng);
+
+            // Khi drag, reset và load lại 3 kho gần nhất
+            warehousesLoaded = false;
+            warehousesLoading = false;
+            selectedWarehouse = null; // Reset kho đã chọn
+            loadNearbyWarehouses(newPos.lat, newPos.lng);
+        });
+    }
+
+    map.setView([lat, lng], 14); // Zoom level 14 để nhìn rõ hơn
+    console.log("📍 Map view set to:", lat, lng);
+
+    // Load 3 kho gần nhất nếu được yêu cầu
+    if (shouldLoadWarehouses) {
+        // Reset flags để load lại
+        warehousesLoaded = false;
+        warehousesLoading = false;
+        loadNearbyWarehouses(lat, lng);
+    }
+}
+
+// ============ DISPLAY WAREHOUSES ON MAP - CHỈ 3 KHO ============
+function displayWarehousesOnMap(warehouses) {
+    console.log("🗺️ displayWarehousesOnMap called with:", warehouses?.length, "warehouse(s)");
+
+    if (!map) {
+        console.error("❌ Map is not initialized! Cannot display warehouses.");
+        return;
+    }
+
+    console.log("✅ Map is ready, proceeding to display warehouses...");
+
+    // Remove old warehouse markers (keep warehouseMarker)
     const markersToRemove = [];
     map.eachLayer((layer) => {
         if (layer instanceof L.Marker && layer !== warehouseMarker) {
@@ -381,35 +793,17 @@ function displayWarehousesOnMap(warehouses) {
         return;
     }
 
-    console.log(`Displaying ${warehouses.length} warehouses on map`);
+    console.log(`Displaying ${warehouses.length} warehouse(s) on map`);
 
-    // Tạo bounds để fit tất cả kho vào view
     const bounds = [];
     let markersAdded = 0;
 
     warehouses.forEach((warehouse, index) => {
-        // ASP.NET Core mặc định serialize JSON thành camelCase
-        // Nên property sẽ là "latitude" và "longitude", không phải "Latitude" và "Longitude"
-        let lat =
-            warehouse.latitude ||
-            warehouse.Latitude ||
-            warehouse.lat ||
-            warehouse.Lat;
-        let lng =
-            warehouse.longitude ||
-            warehouse.Longitude ||
-            warehouse.lng ||
-            warehouse.Lng;
+        let lat = warehouse.Latitude ?? warehouse.latitude ?? warehouse.lat ?? warehouse.Lat;
+        let lng = warehouse.Longitude ?? warehouse.longitude ?? warehouse.lng ?? warehouse.Lng;
 
-        // Kiểm tra và convert
-        if (lat == null || lng == null || lat === undefined || lng === undefined) {
-            console.warn(`Warehouse ${index} missing coordinates`);
-            console.warn("Full object:", warehouse);
-            console.warn("Available fields:", Object.keys(warehouse));
-            // Log từng field để debug
-            Object.keys(warehouse).forEach((key) => {
-                console.warn(`  ${key}:`, warehouse[key], typeof warehouse[key]);
-            });
+        if (lat == null || lng == null) {
+            console.warn(`⚠️ Warehouse ${index} missing coordinates`);
             return;
         }
 
@@ -421,65 +815,56 @@ function displayWarehousesOnMap(warehouses) {
             return;
         }
 
-        console.log(
-            `Adding marker for warehouse ${index}:`,
-            warehouse.name || warehouse.Name,
-            "at",
-            latNum,
-            lngNum
-        );
+        const warehouseName = warehouse.Name ?? warehouse.name ?? "Kho";
+        const warehouseId = warehouse.Id ?? warehouse.id;
+        const distanceKm = warehouse.distanceKm ?? warehouse.DistanceKm ?? 0;
+        const address = warehouse.full ?? warehouse.Full ?? warehouse.addressLine ?? warehouse.AddressLine ?? "";
+        const storeName = warehouse.StoreName ?? warehouse.storeName ?? "";
+
+        // Badge cho thứ hạng
+        const rankBadge = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+
+        console.log(`📍 Adding marker ${index + 1}:`, warehouseName, "at", latNum, lngNum);
 
         bounds.push([latNum, lngNum]);
 
-        // ASP.NET Core serialize thành camelCase
-        const warehouseName = warehouse.name || warehouse.Name || "Kho";
-        const warehouseId = warehouse.id || warehouse.Id;
-        const distanceKm = warehouse.distanceKm || 0;
-        const address =
-            warehouse.full || warehouse.addressLine || warehouse.AddressLine || "";
-        const storeName = warehouse.storeName || warehouse.StoreName || "";
-
         try {
-            // Tạo marker với icon đẹp hơn
             const marker = L.marker([latNum, lngNum], {
                 icon: L.divIcon({
                     className: "warehouse-marker",
-                    html: `<div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:8px 12px;border-radius:20px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(102,126,234,0.5);white-space:nowrap;border:2px solid white;">
-                            🏪 ${warehouseName}
+                    html: `<div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:10px 14px;border-radius:20px;font-size:14px;font-weight:700;box-shadow:0 4px 16px rgba(102,126,234,0.6);white-space:nowrap;border:3px solid white;">
+                            ${rankBadge} ${warehouseName}
                           </div>`,
-                    iconSize: [150, 40],
-                    iconAnchor: [75, 20],
+                    iconSize: [180, 45],
+                    iconAnchor: [90, 22],
                 }),
             }).addTo(map);
 
             markersAdded++;
 
-            // Bind popup với thông tin chi tiết
             const popupContent = `
-                <div style="min-width:200px;">
-                    <h4 style="margin:0 0 8px 0;color:#667eea;">${warehouseName}</h4>
-                    <p style="margin:4px 0;font-size:13px;color:#666;">${storeName ? "📦 " + storeName : ""
-                }</p>
+                <div style="min-width:220px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 24px;">${rankBadge}</span>
+                        <h4 style="margin:0;color:#667eea;">${warehouseName}</h4>
+                    </div>
+                    ${storeName ? `<p style="margin:4px 0;font-size:13px;color:#666;">📦 ${storeName}</p>` : ""}
                     <p style="margin:4px 0;font-size:12px;color:#888;">${address}</p>
-                    <p style="margin:8px 0 0 0;font-size:12px;">
-                        <strong style="color:#27ae60;">📍 ${distanceKm.toFixed(
-                    2
-                )} km</strong>
+                    <p style="margin:8px 0 0 0;font-size:13px;">
+                        <strong style="color:#27ae60;">📍 ${distanceKm.toFixed(2)} km</strong>
                     </p>
-                    <button onclick="selectWarehouseFromMap('${warehouseId}')" style="margin-top:8px;padding:6px 12px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;width:100%;">
-                        Chọn kho này
+                    <button onclick="selectWarehouseFromMap('${warehouseId}')" style="margin-top:10px;padding:8px 14px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;width:100%;font-weight:600;">
+                        ✅ Chọn kho này
                     </button>
                 </div>
             `;
             marker.bindPopup(popupContent);
 
-            // Lưu warehouseId vào marker options để có thể highlight khi chọn
             marker.options.warehouseId = warehouseId?.toString();
-            marker.options.warehouse = warehouse; // Lưu cả object warehouse
+            marker.options.warehouse = warehouse;
 
             marker.on("click", function () {
                 selectWarehouse(warehouse);
-                // Mở popup khi click
                 marker.openPopup();
             });
         } catch (error) {
@@ -487,81 +872,113 @@ function displayWarehousesOnMap(warehouses) {
         }
     });
 
-    console.log(`Added ${markersAdded} markers to map`);
+    console.log(`✅ Added ${markersAdded} marker(s) to map`);
 
-    // Fit map view để hiển thị tất cả kho
+    // Fit map view
     if (bounds.length > 0) {
-        // Nếu có warehouseMarker, thêm vào bounds
         if (warehouseMarker) {
             const markerLatLng = warehouseMarker.getLatLng();
             bounds.push([markerLatLng.lat, markerLatLng.lng]);
         }
 
         try {
-            console.log("Fitting bounds for", bounds.length, "locations");
+            console.log(`🗺️ Fitting bounds for ${bounds.length} locations`);
             map.fitBounds(bounds, {
-                padding: [50, 50],
-                maxZoom: 15, // Giới hạn zoom tối đa
+                padding: [60, 60],
+                maxZoom: 14,
             });
+            console.log("✅ Map bounds fitted successfully");
         } catch (e) {
-            console.error("Error fitting bounds:", e);
+            console.error("❌ Error fitting bounds:", e);
         }
-    } else {
-        console.warn("No bounds to fit");
     }
 }
+
+// Export functions for debugging
+window.bookingDebug = {
+    map: () => map,
+    nearbyWarehouses: () => nearbyWarehouses,
+    selectedWarehouse: () => selectedWarehouse,
+    warehouseData: () => warehouseData,
+    loadNearbyWarehouses: loadNearbyWarehouses,
+    reloadWarehouses: () => {
+        if (warehouseData && warehouseData.lat && warehouseData.lng) {
+            warehousesLoaded = false;
+            warehousesLoading = false;
+            loadNearbyWarehouses(warehouseData.lat, warehouseData.lng);
+    } else {
+            console.warn("No location set yet");
+    }
+}
+};
 
 // Helper function để chọn kho từ map popup
 function selectWarehouseFromMap(warehouseId) {
     const warehouse = nearbyWarehouses.find((w) => {
-        const wId = w.id || w.Id;
+        const wId = w.Id ?? w.id;  // ASP.NET Core mặc định PascalCase
         return wId && wId.toString() === warehouseId.toString();
     });
     if (warehouse) {
         selectWarehouse(warehouse);
+    } else {
+        console.warn("⚠️ Warehouse not found with ID:", warehouseId);
     }
 }
 
 function renderWarehouseList(warehouses) {
+    console.log("📋 renderWarehouseList called with:", warehouses?.length, "warehouses");
+    
     const listContainer = document.getElementById("warehouseList");
-    if (!listContainer) return;
+    if (!listContainer) {
+        console.error("❌ warehouseList element not found!");
+        return;
+    }
 
+    console.log("✅ warehouseList element found, rendering...");
     listContainer.innerHTML = "";
 
     if (!warehouses || warehouses.length === 0) {
+        console.warn("⚠️ No warehouses to render");
         listContainer.innerHTML =
             '<div style="padding: 15px; text-align: center; color: #666;">Không tìm thấy kho nào gần đây.</div>';
         return;
     }
 
-    warehouses.forEach((warehouse) => {
-        // ASP.NET Core serialize thành camelCase
-        const warehouseId = warehouse.id || warehouse.Id;
+    console.log(`📋 Rendering ${warehouses.length} warehouses to list...`);
+
+    warehouses.forEach((warehouse, index) => {
+        // ASP.NET Core mặc định serialize theo PascalCase
+        const warehouseId = warehouse.Id ?? warehouse.id;
+        const warehouseName = warehouse.Name ?? warehouse.name ?? "Kho";
+        const distanceKm = warehouse.distanceKm ?? warehouse.DistanceKm ?? 0;
+        const address = warehouse.full ?? warehouse.Full ?? warehouse.addressLine ?? warehouse.AddressLine ?? "";
+        const storeName = warehouse.StoreName ?? warehouse.storeName ?? "";
+        
+        console.log(`📋 Rendering warehouse ${index + 1}:`, {
+            id: warehouseId,
+            name: warehouseName,
+            distance: distanceKm,
+            address: address
+        });
+        
         const item = document.createElement("div");
         item.className = "warehouse-item";
         item.dataset.warehouseId = warehouseId;
 
         // Check if this is the selected warehouse
         if (selectedWarehouse) {
-            const selectedId = selectedWarehouse.id || selectedWarehouse.Id;
+            const selectedId = selectedWarehouse.Id ?? selectedWarehouse.id;  // ASP.NET Core mặc định PascalCase
             if (selectedId === warehouseId) {
                 item.classList.add("selected");
             }
         }
 
         item.innerHTML = `
-            <div class="warehouse-name">${warehouse.name || warehouse.Name || "Kho"
-            }</div>
-            <div class="warehouse-address">${warehouse.full ||
-            warehouse.addressLine ||
-            warehouse.AddressLine ||
-            ""
-            }</div>
+            <div class="warehouse-name">${warehouseName}</div>
+            <div class="warehouse-address">${address}</div>
             <div class="warehouse-info">
-                <div>📦 ${warehouse.storeName || warehouse.StoreName || ""
-            }</div>
-                <div class="warehouse-distance">${warehouse.distanceKm || 0
-            } km</div>
+                <div>📦 ${storeName}</div>
+                <div class="warehouse-distance">${distanceKm.toFixed(2)} km</div>
             </div>
         `;
 
@@ -579,13 +996,14 @@ function selectWarehouse(warehouse) {
     const warehouseIdInput = document.getElementById("warehouseIdInput");
     const warehouseNameDisplay = document.getElementById("warehouseNameDisplay");
 
-    // ASP.NET Core serialize thành camelCase
-    const warehouseId = warehouse.id || warehouse.Id;
+    // ASP.NET Core mặc định serialize theo PascalCase
+    const warehouseId = warehouse.Id ?? warehouse.id;
+    const warehouseName = warehouse.Name ?? warehouse.name ?? "";
     if (warehouseIdInput && warehouseId) {
         warehouseIdInput.value = warehouseId.toString();
     }
     if (warehouseNameDisplay) {
-        warehouseNameDisplay.value = warehouse.name || warehouse.Name || "";
+        warehouseNameDisplay.value = warehouseName;
     }
 
     // Update UI - highlight selected warehouse
@@ -800,8 +1218,8 @@ function showWarehouseSlots() {
     let warehouseName = "";
 
     if (selectedWarehouse) {
-        warehouseId = selectedWarehouse.Id || selectedWarehouse.id;
-        warehouseName = selectedWarehouse.Name || selectedWarehouse.name || "";
+        warehouseId = selectedWarehouse.Id ?? selectedWarehouse.id;  // ASP.NET Core mặc định PascalCase
+        warehouseName = selectedWarehouse.Name ?? selectedWarehouse.name ?? "";
     }
 
     // Nếu không có, lấy từ input hidden
@@ -1223,7 +1641,7 @@ async function submitWarehouseOrder() {
         selectedWarehouse.Lng;
 
     // Gửi WarehouseId (ưu tiên) để tìm warehouse chính xác
-    const warehouseId = selectedWarehouse.id || selectedWarehouse.Id;
+    const warehouseId = selectedWarehouse.Id ?? selectedWarehouse.id;  // ASP.NET Core mặc định PascalCase
     if (warehouseId) {
         formData.append("WarehouseId", warehouseId.toString());
     }
@@ -1863,6 +2281,9 @@ async function requestPriceRevision(quotationId, slotId, buttonElement) {
             if (popup) {
                 popup.remove();
             }
+
+            // Redirect đến màn hình Quản lý Báo giá - tab "Đã chỉnh sửa"
+            window.location.href = "/Quotation/Index?status=revised";
         } else {
             const result = await response.json().catch(() => ({}));
             const errorMessage =
@@ -2014,12 +2435,12 @@ function initEstimationCard() {
 function updateEstimationCard() {
     // Giá dịch vụ (theo ngày hoặc một lần)
     const addonPrices = {
-        "🧊 Kho mát": 50000, // VND/ngày
-        "💧 Chống ẩm": 30000, // VND/ngày
-        "🔒 An ninh cao": 40000, // VND/ngày
-        "🛡️ Bảo hiểm hàng hóa": 100000, // VND (một lần)
-        "🏢 Kho có thang máy": 20000, // VND/ngày
-        "📹 Giám sát 24/7": 60000, // VND/ngày
+        "🧊 Kho mát": 5000, // VND/ngày
+        "💧 Chống ẩm": 3000, // VND/ngày
+        "🔒 An ninh cao": 4000, // VND/ngày
+        "🛡️ Bảo hiểm hàng hóa": 10000, // VND (một lần)
+        "🏢 Kho có thang máy": 2000, // VND/ngày
+        "📹 Giám sát 24/7": 6000, // VND/ngày
     };
 
     // Dịch vụ tính theo ngày

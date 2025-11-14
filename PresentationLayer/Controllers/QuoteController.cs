@@ -156,7 +156,7 @@ namespace PresentationLayer.Controllers
                             })
                             .ToList();
 
-                        volumeResult = await _geminiService.AnalyzeItemsAndCalculateVolumeAsync(itemsForAI);
+                        volumeResult = await _geminiService.CalculateStorageRequirementsAsync(itemsForAI);
 
                         if (volumeResult == null)
                         {
@@ -355,6 +355,7 @@ namespace PresentationLayer.Controllers
 
                 var totalAddonPrice = 0m;
                 var addonDetails = new List<object>();
+                var serviceNotes = new List<string>();
 
                 if (viewModel.SpecialRequirements != null && viewModel.SpecialRequirements.Any())
                 {
@@ -376,6 +377,19 @@ namespace PresentationLayer.Controllers
                                 quantity = dailyAddons.Contains(requirement) ? (int)storageDays : 1,
                                 total = serviceTotal
                             });
+
+                            // Tạo chuỗi mô tả dịch vụ kèm giá
+                            var quantity = dailyAddons.Contains(requirement) ? (int)storageDays : 1;
+                            var unitPriceStr = addonPrice.ToString("N0");
+                            var totalStr = serviceTotal.ToString("N0");
+                            if (dailyAddons.Contains(requirement))
+                            {
+                                serviceNotes.Add($"{requirement}: {unitPriceStr}₫/ngày × {quantity} ngày = {totalStr}₫");
+                            }
+                            else
+                            {
+                                serviceNotes.Add($"{requirement}: {totalStr}₫");
+                            }
                         }
                     }
                 }
@@ -457,7 +471,24 @@ namespace PresentationLayer.Controllers
                     _db.Addresses.Add(dropoffAddress);
                 }
 
-                // Tạo đơn hàng ở trạng thái chờ xác nhận để hiển thị trên màn hình theo dõi
+                // Tạo nội dung Note cho Order
+                var orderNoteParts = new List<string> { "Đơn hàng chờ xác nhận báo giá" };
+                
+                if (serviceNotes.Any())
+                {
+                    orderNoteParts.Add("");
+                    orderNoteParts.Add("Dịch vụ đã chọn:");
+                    orderNoteParts.AddRange(serviceNotes);
+                    orderNoteParts.Add($"Tổng dịch vụ: {totalAddonPrice:N0}₫");
+                }
+
+                if (!string.IsNullOrWhiteSpace(viewModel.Note))
+                {
+                    orderNoteParts.Add("");
+                    orderNoteParts.Add($"Ghi chú: {viewModel.Note}");
+                }
+
+                // Tạo đơn hàng ở trạng thái Tạm lưu (sau khi yêu cầu báo giá nhưng chưa xác nhận hợp đồng)
                 var provisionalOrder = new Order
                 {
                     Id = Guid.NewGuid(),
@@ -470,11 +501,11 @@ namespace PresentationLayer.Controllers
                     DropoffAddressId = dropoffAddress?.Id,
                     DeliveryDate = viewModel.StorageStartDate,
                     PickupDate = viewModel.StorageEndDate,
-                    Status = StatusValue.Pending,
+                    Status = StatusValue.Draft, // Tạm lưu: sau khi yêu cầu báo giá nhưng chưa xác nhận hợp đồng
                     TotalAmount = quotation.TotalAmount,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
-                    Note = "Đơn hàng chờ xác nhận báo giá"
+                    Note = string.Join("\n", orderNoteParts)
                 };
 
                 if (viewModel.Items != null && viewModel.Items.Any())
@@ -814,7 +845,7 @@ namespace PresentationLayer.Controllers
                 // ===== UPDATE ORDER FIELDS =====
                 order.DeliveryDate = request.DeliveryDate ?? reservation.From;
                 order.PickupDate = request.PickupDate ?? reservation.To;
-                order.Status = StatusValue.AwaitingPayment;
+                order.Status = StatusValue.Pending; // Chờ xử lý: sau khi xác nhận hợp đồng nhưng chưa thanh toán
                 order.TotalAmount = quotation.TotalAmount;
                 order.UpdatedAt = DateTime.Now;
 
@@ -1006,7 +1037,12 @@ namespace PresentationLayer.Controllers
             var warehouses = await _db.Warehouses
                 .Include(w => w.Address)
                 .Include(w => w.Store)
-                .Where(w => w.Address != null && w.Address.Latitude != null && w.Address.Longitude != null)
+                .Where(w => w.Address != null && 
+                           w.Address.Latitude != null && 
+                           w.Address.Longitude != null &&
+                           w.Status == StatusValue.Approved &&
+                           w.Store != null &&
+                           w.Store.Status == StatusValue.Active)
                 .Select(w => new
                 {
                     w.Id,

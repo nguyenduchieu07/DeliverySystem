@@ -186,7 +186,9 @@
                     <label asp-for="LicenseNumber" class="form-label">
                         Số giấy phép kinh doanh
                     </label>
-                    <input asp-for="LicenseNumber" class="form-control" placeholder="Số GPKD" />
+                    <input type="text" asp-for="LicenseNumber" class="form-control" placeholder="Số GPKD (10 chữ số)" 
+                           pattern="^\d{10}$" maxlength="10" 
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                     <span asp-validation-for="LicenseNumber" class="text-danger field-validation-error"></span>
                 </div>
 
@@ -194,14 +196,18 @@
                     <label asp-for="TaxNumber" class="form-label">
                         Mã số thuế
                     </label>
-                    <input asp-for="TaxNumber" class="form-control" placeholder="MST" />
+                    <input type="text" asp-for="TaxNumber" class="form-control" placeholder="MST (10 hoặc 13 chữ số)" 
+                           pattern="^\d{10}$|^\d{13}$" maxlength="13" 
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                     <span asp-validation-for="TaxNumber" class="text-danger field-validation-error"></span>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="ID" class="form-label">
                         Căn cước công dân
                     </label>
-                    <input asp-for="ID" class="form-control" placeholder="CCCD" />
+                    <input type="text" asp-for="ID" class="form-control" placeholder="CCCD (12 chữ số)" 
+                           pattern="^\d{12}$" maxlength="12" 
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                     <span asp-validation-for="ID" class="text-danger field-validation-error"></span>
                 </div>
             </div>
@@ -309,6 +315,9 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
+            // Thêm labels cho quần đảo Hoàng Sa và Trường Sa
+            addVietnameseIslandLabels(map);
+
             // Marker kéo thả
             marker = L.marker(defaultLatLng, { draggable: true }).addTo(map);
             updateLatLng(defaultLatLng[0], defaultLatLng[1]);
@@ -414,6 +423,87 @@
             return null;
         }
 
+        // Validation functions
+        function validateLicenseNumber(value) {
+            const regex = /^\d{10}$/;
+            return regex.test(value);
+        }
+
+        function validateTaxNumber(value) {
+            const regex = /^(\d{10}|\d{13})$/;
+            return regex.test(value);
+        }
+
+        function validateIDCard(value) {
+            const regex = /^\d{12}$/;
+            return regex.test(value);
+        }
+
+        // Add validation to form fields
+        const licenseNumberField = document.getElementById('LicenseNumber');
+        const taxNumberField = document.getElementById('TaxNumber');
+        const idCardField = document.getElementById('ID');
+
+        if (licenseNumberField) {
+            licenseNumberField.addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value && !validateLicenseNumber(value)) {
+                    this.classList.add('is-invalid');
+                    let errorSpan = this.parentElement.querySelector('.field-validation-error');
+                    if (!errorSpan) {
+                        errorSpan = document.createElement('span');
+                        errorSpan.className = 'text-danger field-validation-error';
+                        this.parentElement.appendChild(errorSpan);
+                    }
+                    errorSpan.textContent = 'Số giấy phép kinh doanh phải có đúng 10 chữ số';
+                } else {
+                    this.classList.remove('is-invalid');
+                    const errorSpan = this.parentElement.querySelector('.field-validation-error');
+                    if (errorSpan) errorSpan.textContent = '';
+                }
+            });
+        }
+
+        if (taxNumberField) {
+            taxNumberField.addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value && !validateTaxNumber(value)) {
+                    this.classList.add('is-invalid');
+                    let errorSpan = this.parentElement.querySelector('.field-validation-error');
+                    if (!errorSpan) {
+                        errorSpan = document.createElement('span');
+                        errorSpan.className = 'text-danger field-validation-error';
+                        this.parentElement.appendChild(errorSpan);
+                    }
+                    errorSpan.textContent = 'Mã số thuế phải có 10 hoặc 13 chữ số';
+                } else {
+                    this.classList.remove('is-invalid');
+                    const errorSpan = this.parentElement.querySelector('.field-validation-error');
+                    if (errorSpan) errorSpan.textContent = '';
+                }
+            });
+        }
+
+        if (idCardField) {
+            idCardField.addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value && !validateIDCard(value)) {
+                    this.classList.add('is-invalid');
+                    let errorSpan = this.parentElement.querySelector('.field-validation-error');
+                    if (!errorSpan) {
+                        errorSpan = document.createElement('span');
+                        errorSpan.className = 'text-danger field-validation-error';
+                        this.parentElement.appendChild(errorSpan);
+                    }
+                    errorSpan.textContent = 'Căn cước công dân phải có đúng 12 chữ số';
+                } else {
+                    this.classList.remove('is-invalid');
+                    const errorSpan = this.parentElement.querySelector('.field-validation-error');
+                    if (errorSpan) errorSpan.textContent = '';
+                }
+            });
+        }
+
         // Form validation feedback
         document.querySelector('form').addEventListener('submit', function (e) {
             const requiredFields = this.querySelectorAll('[required]');
@@ -428,12 +518,65 @@
                 }
             });
 
+            // Validate LicenseNumber
+            if (licenseNumberField && licenseNumberField.value.trim()) {
+                if (!validateLicenseNumber(licenseNumberField.value.trim())) {
+                    licenseNumberField.classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
+
+            // Validate TaxNumber
+            if (taxNumberField && taxNumberField.value.trim()) {
+                if (!validateTaxNumber(taxNumberField.value.trim())) {
+                    taxNumberField.classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
+
+            // Validate ID Card
+            if (idCardField && idCardField.value.trim()) {
+                if (!validateIDCard(idCardField.value.trim())) {
+                    idCardField.classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
+
             if (!isValid) {
                 e.preventDefault();
-                document.querySelector('.validation-summary').scrollIntoView({
-                    behavior: 'smooth'
-                });
+                const firstInvalid = this.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
             }
         });
+
+        // Thêm labels tiếng Việt cho quần đảo Hoàng Sa và Trường Sa
+        function addVietnameseIslandLabels(mapInstance) {
+            if (!mapInstance || typeof L === "undefined") return;
+            
+            // Quần đảo Hoàng Sa (Paracel Islands) - khoảng 16.5°N, 112.0°E
+            const hoangSaLabel = L.marker([16.5, 112.0], {
+                icon: L.divIcon({
+                    className: 'vietnamese-island-label',
+                    html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Hoàng Sa</div>',
+                    iconSize: [150, 30],
+                    iconAnchor: [75, 15]
+                })
+            }).addTo(mapInstance);
+            
+            // Quần đảo Trường Sa (Spratly Islands) - khoảng 10.0°N, 114.0°E
+            const truongSaLabel = L.marker([10.0, 114.0], {
+                icon: L.divIcon({
+                    className: 'vietnamese-island-label',
+                    html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Trường Sa</div>',
+                    iconSize: [150, 30],
+                    iconAnchor: [75, 15]
+                })
+            }).addTo(mapInstance);
+        }
     </script>
 }

@@ -240,6 +240,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
 
             // cập nhật trường cơ bản
             existing.Name = warehouse.Name;
+            existing.HeightM = warehouse.HeightM;
+            existing.LengthM = warehouse.LengthM;
+            existing.WidthM = warehouse.WidthM;
 
             try
             {
@@ -256,20 +259,51 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     existing.MapImageUrl = mapImage;
                 }
 
-                // Địa chỉ: chọn sẵn hoặc tạo mới
-                if (warehouse.AddressRefId == null && newAddress != null &&
-                    !string.IsNullOrEmpty(newAddress.AddressLine))
+                // Địa chỉ: chọn sẵn hoặc tạo mới hoặc cập nhật
+                if (newAddress != null && !string.IsNullOrEmpty(newAddress.AddressLine))
                 {
-                    newAddress.Id = Guid.NewGuid();
-                    newAddress.Active = true;
-                    _db.Addresses.Add(newAddress);
-                    await _db.SaveChangesAsync();
-                    existing.AddressRefId = newAddress.Id;
+                    // Nếu user nhập địa chỉ mới (sửa trên map hoặc input)
+                    if (warehouse.AddressRefId == null)
+                    {
+                        // Tạo địa chỉ mới
+                        newAddress.Id = Guid.NewGuid();
+                        newAddress.Active = true;
+                        _db.Addresses.Add(newAddress);
+                        await _db.SaveChangesAsync();
+                        existing.AddressRefId = newAddress.Id;
+                    }
+                    else
+                    {
+                        // Cập nhật địa chỉ hiện tại nếu user sửa địa chỉ
+                        var currentAddress = await _db.Addresses.FindAsync(existing.AddressRefId);
+                        if (currentAddress != null)
+                        {
+                            // Cập nhật thông tin địa chỉ hiện tại
+                            currentAddress.AddressLine = newAddress.AddressLine;
+                            currentAddress.City = newAddress.City;
+                            currentAddress.District = newAddress.District;
+                            currentAddress.Ward = newAddress.Ward;
+                            currentAddress.Latitude = newAddress.Latitude;
+                            currentAddress.Longitude = newAddress.Longitude;
+                            _db.Addresses.Update(currentAddress);
+                        }
+                        else
+                        {
+                            // Nếu địa chỉ hiện tại không tồn tại, tạo mới
+                            newAddress.Id = Guid.NewGuid();
+                            newAddress.Active = true;
+                            _db.Addresses.Add(newAddress);
+                            await _db.SaveChangesAsync();
+                            existing.AddressRefId = newAddress.Id;
+                        }
+                    }
                 }
-                else
+                else if (warehouse.AddressRefId.HasValue)
                 {
+                    // Chọn địa chỉ có sẵn (không sửa địa chỉ)
                     existing.AddressRefId = warehouse.AddressRefId;
                 }
+                // Nếu không chọn và không tạo mới, giữ nguyên địa chỉ hiện tại
 
                 // =======================
                 // XÓA SLOT THEO DeletedCodes[]
@@ -285,6 +319,22 @@ namespace PresentationLayer.Areas.Stores.Controllers
                     var slotsToDelete = existing.Slots
                         .Where(s => keysToDelete.Contains((s.Code ?? string.Empty).Trim().ToLower()))
                         .ToList();
+
+                    // Kiểm tra các slot không được phép xóa
+                    var restrictedSlots = slotsToDelete
+                        .Where(s => s.Status == StatusValue.Reserved || 
+                                   s.Status == StatusValue.InUse || 
+                                   s.Status == StatusValue.Maintenance)
+                        .ToList();
+
+                    if (restrictedSlots.Any())
+                    {
+                        var slotCodes = string.Join(", ", restrictedSlots.Select(s => s.Code));
+                        var statusTexts = restrictedSlots.Select(s => s.Status.ToDisplayStringForWarehouseSlot()).Distinct();
+                        var statusText = string.Join(", ", statusTexts);
+                        TempData["Error"] = $"Không thể xóa các slot: {slotCodes}. Các slot này đang ở trạng thái: {statusText}";
+                        return RedirectToAction("Edit", new { id = warehouse.Id });
+                    }
 
                     foreach (var s in slotsToDelete)
                     {

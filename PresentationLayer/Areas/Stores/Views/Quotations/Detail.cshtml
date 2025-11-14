@@ -449,9 +449,9 @@
 						case DataAccessLayer.Enums.StatusValue.Sent:
 							<span>⏳ Chờ xử lý</span>
 							break;
-						case DataAccessLayer.Enums.StatusValue.Revised:
-							<span>✏️ Đã chỉnh sửa</span>
-							break;
+					case DataAccessLayer.Enums.StatusValue.Revised:
+						<span>✏️ Chờ phê duyệt</span>
+						break;
 						case DataAccessLayer.Enums.StatusValue.Active:
 							<span>✅ Đã chấp nhận</span>
 							break;
@@ -505,6 +505,36 @@
 								</div>
 							}
 						</div>
+						
+						@if (!string.IsNullOrWhiteSpace(order.Note))
+						{
+							@* Kiểm tra xem có lý do chỉnh giá không *@
+							var note = order.Note;
+							var revisionMatch = System.Text.RegularExpressions.Regex.Match(note, @"=== LÝ DO CHỈNH GIÁ \(([^)]+)\) ===\s*(.+)", System.Text.RegularExpressions.RegexOptions.Singleline);
+							
+							if (revisionMatch.Success)
+							{
+								@* Chỉ hiển thị lý do chỉnh giá, không hiển thị note thông thường *@
+								var revisionDate = revisionMatch.Groups[1].Value;
+								var revisionReason = revisionMatch.Groups[2].Value.Trim();
+								
+								<div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">
+									<h6 style="margin-bottom: 10px; color: #ff9800; font-weight: 600;">💰 LÝ DO:</h6>
+									<div style="margin-bottom: 8px; color: #666; font-size: 0.85rem;">
+										<strong>Thời gian:</strong> @revisionDate
+									</div>
+									<pre style="white-space: pre-wrap; font-family: inherit; margin: 0; background: transparent; border: none; padding: 0; color: #333; font-size: 0.9rem;">@revisionReason</pre>
+								</div>
+							}
+							else
+							{
+								@* Không có lý do chỉnh giá, hiển thị note thông thường (dịch vụ, ghi chú) *@
+								<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+									<h6 style="margin-bottom: 10px; color: #667eea; font-weight: 600;">📝 Ghi chú & Dịch vụ đã chọn:</h6>
+									<pre style="white-space: pre-wrap; font-family: inherit; margin: 0; background: transparent; border: none; padding: 0; color: #333; font-size: 0.9rem;">@note</pre>
+								</div>
+							}
+						}
 					}
 				}
 				else
@@ -530,17 +560,51 @@
 				</div>
 			</div>
 
-			<div class="info-card">
-				<h3>📑 Hợp đồng</h3>
+			@* Chỉ hiển thị hợp đồng khi status = Active (Đã chấp nhận) và có contract đã được confirm *@
+			@if (quotation.Status == DataAccessLayer.Enums.StatusValue.Active)
+			{
+				var activeContracts = Model.Contracts?.Where(c => c.Status == DataAccessLayer.Enums.ContractStatus.Active).ToList();
+				@if (activeContracts != null && activeContracts.Any())
+				{
+					<div class="info-card">
+						<h3>📑 Hợp đồng</h3>
 
-				<!-- Vùng hiển thị danh sách hợp đồng -->
-				<div id="contractsContainer">
-				</div>
-			</div>
+						<!-- Vùng hiển thị danh sách hợp đồng -->
+						<div id="contractsContainer">
+						</div>
+					</div>
+				}
+			}
 		</div>
 
 		<!-- Right Column - Actions -->
 		<div>
+			@* Hiển thị lý do chỉnh giá nếu status = Revised - ở phần action panel để nổi bật *@
+			@if (quotation.Status == DataAccessLayer.Enums.StatusValue.Revised && quotation.Orders != null && quotation.Orders.Any())
+			{
+				var orderWithRevision = quotation.Orders.FirstOrDefault();
+				if (orderWithRevision != null && !string.IsNullOrWhiteSpace(orderWithRevision.Note))
+				{
+					var note = orderWithRevision.Note;
+					var revisionMatch = System.Text.RegularExpressions.Regex.Match(note, @"=== LÝ DO CHỈNH GIÁ \(([^)]+)\) ===\s*(.+)", System.Text.RegularExpressions.RegexOptions.Singleline);
+					if (revisionMatch.Success)
+					{
+						var revisionDate = revisionMatch.Groups[1].Value;
+						var revisionReason = revisionMatch.Groups[2].Value.Trim();
+						
+						<div class="action-panel" style="margin-bottom: 30px; border: 2px solid #ff9800; background: #fff3e0;">
+							<h3 style="color: #ff9800; margin-bottom: 15px;">💰 Lý do yêu cầu chỉnh giá</h3>
+							<div style="padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #ff9800;">
+								<div style="margin-bottom: 10px; color: #666; font-size: 0.9rem;">
+									<strong>Thời gian yêu cầu:</strong> @revisionDate
+								</div>
+								<div style="color: #333; font-size: 1rem; line-height: 1.6; white-space: pre-wrap;">@revisionReason</div>
+							</div>
+						</div>
+					}
+				}
+			}
+
 			<div class="action-panel">
 				<h3>⚡ Thao tác nhanh</h3>
 
@@ -1057,7 +1121,11 @@
 			}
 		}
 		document.addEventListener('DOMContentLoaded', async () => {
-			await generateContracts('@Model.Quotation.Id');
+			@* Chỉ load hợp đồng nếu status = Active và có contract đã confirm *@
+			var quotationStatus = '@Model.Quotation.Status';
+			if (quotationStatus === 'Active') {
+				await generateContracts('@Model.Quotation.Id');
+			}
 		});
 		async function generateContracts(quotationId) {
 			if (!quotationId) {
@@ -1096,7 +1164,8 @@
 			// 	});
 				// Không cần đọc JSON nữa, vì chỉ có 1 hợp đồng
 				const container = document.getElementById('contractsContainer');
-				container.innerHTML = `
+				if (container) {
+					container.innerHTML = `
 			<div class="info-row">
 				<button class="view-link" onclick="viewContract('${quotationId}')">
 					Xem hợp đồng
@@ -1104,7 +1173,8 @@
 			</div>
 		`;
 
-				alert('✅ Đã tạo hợp đồng thành công!');
+					alert('✅ Đã tạo hợp đồng thành công!');
+				}
 			} catch (error) {
 				console.error('Error:', error);
 				alert('Có lỗi xảy ra khi tạo hợp đồng!');

@@ -7,7 +7,9 @@ map = new google.maps.Map(document.getElementById("map"), {
             center: defaultLatLng,
             zoom: 13,
             mapTypeControl: false,
-            streetViewControl: false
+            streetViewControl: false,
+            region: 'VN', // Đảm bảo hiển thị quần đảo Hoàng Sa và Trường Sa là của Việt Nam
+            language: 'vi' // Ngôn ngữ tiếng Việt
         });
 
 marker = new google.maps.Marker({
@@ -95,7 +97,11 @@ setVal("Ward", ward);
 
     function reverseGeocode(lat, lng)
 {
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+    geocoder.geocode({ 
+        location: { lat, lng },
+        region: 'VN', // Đảm bảo kết quả geocode theo region Việt Nam
+        language: 'vi' // Ngôn ngữ tiếng Việt
+    }, (results, status) => {
         if (status === "OK" && results && results.length)
         {
             const r = results[0];
@@ -106,5 +112,3 @@ setVal("Ward", ward);
 }
 
 function setVal(id, val) { document.getElementById(id).value = val || ""; }
-</ script >
-< script src = "https://maps.googleapis.com/maps/api/js?key=@(Context.RequestServices.GetService<IConfiguration>()?["GoogleMaps: ApiKey"])&libraries=places&callback=initMap" async defer></script>

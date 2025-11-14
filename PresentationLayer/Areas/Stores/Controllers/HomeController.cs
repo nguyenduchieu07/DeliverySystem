@@ -69,9 +69,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
             var startDate = from?.Date ?? DateTime.Now.AddDays(-6).Date; // bắt đầu từ 00:00:00
             var endDate = to?.Date.AddDays(1).AddTicks(-1) ?? DateTime.Now; // kết thúc 23:59:59.9999999
 
-            // Lấy payments completed
+            // Lấy payments completed - CHỈ của store này
             var payments = await _db.Orders
-                .Where(o => o.CreatedAt.Date >= startDate && o.CreatedAt.Date <= endDate)
+                .Where(o => o.StoreId == store.Id && o.CreatedAt.Date >= startDate && o.CreatedAt.Date <= endDate)
                 .SelectMany(o => o.Payments
                     .Where(p => p.Status == StatusValue.Completed)
                     .Select(p => new { o.CreatedAt, p.Amount }))
@@ -98,9 +98,9 @@ namespace PresentationLayer.Areas.Stores.Controllers
             var currentYear = now.Year;
             var currentMonth = now.Month;
 
-            // Lấy tổng các payment đã hoàn thành trong tháng hiện tại
+            // Lấy tổng các payment đã hoàn thành trong tháng hiện tại - CHỈ của store này
             var totalCompletedPaymentsInMonth = await _db.Orders
-                .Where(o => o.CreatedAt.Year == currentYear && o.CreatedAt.Month == currentMonth)
+                .Where(o => o.StoreId == store.Id && o.CreatedAt.Year == currentYear && o.CreatedAt.Month == currentMonth)
                 .SelectMany(o => o.Payments
                     .Where(p => p.Status == StatusValue.Completed)
                     .Select(p => p.Amount))

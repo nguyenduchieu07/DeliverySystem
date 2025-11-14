@@ -34,33 +34,47 @@ namespace ServiceLayer.Services
                 .Where(o => o.StoreId == storeId);
 
 
-            var agg = await orders
-                .Where(o => o.Payments.Any(p => p.Status == Status.Completed))
+            // Tính đơn hôm nay và hôm qua (tất cả orders, không cần payment completed)
+            var orderCounts = await orders
                 .GroupBy(_ => 1)
                 .Select(g => new
                 {
                     PendingCount = g.Sum(o => o.Status == Status.Pending ? 1 : 0),
-
                     TodayCount = g.Sum(o =>
                         (o.CreatedAt >= todayStart && o.CreatedAt < tomorrowStart) ? 1 : 0),
-
                     YesterdayCount = g.Sum(o =>
-                        (o.CreatedAt >= yesterdayStart && o.CreatedAt < todayStart) ? 1 : 0),
-
-                    RevenueThisMonth = g.Sum(o =>
-                        (o.CreatedAt >= monthStart && o.CreatedAt < nextMonthStart) ? o.TotalAmount : 0m),
-
-                    RevenueLastMonth = g.Sum(o =>
-                        (o.CreatedAt >= prevMonthStart && o.CreatedAt < monthStart) ? o.TotalAmount : 0m)
+                        (o.CreatedAt >= yesterdayStart && o.CreatedAt < todayStart) ? 1 : 0)
                 })
                 .FirstOrDefaultAsync() ?? new
                 {
                     PendingCount = 0,
                     TodayCount = 0,
-                    YesterdayCount = 0,
-                    RevenueThisMonth = 0m,
-                    RevenueLastMonth = 0m
+                    YesterdayCount = 0
                 };
+
+            // Tính doanh thu từ payments completed (chính xác hơn)
+            var revenueThisMonth = await orders
+                .Where(o => o.CreatedAt >= monthStart && o.CreatedAt < nextMonthStart)
+                .SelectMany(o => o.Payments
+                    .Where(p => p.Status == Status.Completed)
+                    .Select(p => p.Amount))
+                .SumAsync();
+
+            var revenueLastMonth = await orders
+                .Where(o => o.CreatedAt >= prevMonthStart && o.CreatedAt < monthStart)
+                .SelectMany(o => o.Payments
+                    .Where(p => p.Status == Status.Completed)
+                    .Select(p => p.Amount))
+                .SumAsync();
+
+            var agg = new
+            {
+                PendingCount = orderCounts.PendingCount,
+                TodayCount = orderCounts.TodayCount,
+                YesterdayCount = orderCounts.YesterdayCount,
+                RevenueThisMonth = revenueThisMonth,
+                RevenueLastMonth = revenueLastMonth
+            };
 
             var ratingAgg = await _context.Feedbacks
                 .AsNoTracking()

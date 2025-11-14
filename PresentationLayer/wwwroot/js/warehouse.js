@@ -7,8 +7,14 @@
     // ====== INIT MAP ======
     const map = L.map('map').setView([21.0278, 105.8342], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: '&copy; OpenStreetMap contributors',
+        // Sử dụng tile layer với language support
+        tileSize: 256,
+        zoomOffset: 0
   }).addTo(map);
+
+    // Thêm labels cho quần đảo Hoàng Sa và Trường Sa
+    addVietnameseIslandLabels(map);
 
     // ====== MARKER ======
     let marker;
@@ -41,10 +47,19 @@
 
     // Fallback provider nếu thiếu nominatim()
     if (!L.Control.Geocoder.nominatim) {
-        L.Control.Geocoder.nominatim = function () {
+        L.Control.Geocoder.nominatim = function (options) {
+            const queryParams = options?.geocodingQueryParams || {};
+            const reverseParams = options?.reverseQueryParams || {};
             return {
                 geocode: function (query, cb) {
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                    const params = new URLSearchParams({
+                        format: 'json',
+                        q: query,
+                        'accept-language': 'vi', // Ngôn ngữ tiếng Việt
+                        countrycodes: 'vn', // Chỉ tìm trong Việt Nam
+                        ...queryParams
+                    });
+                    fetch(`https://nominatim.openstreetmap.org/search?${params}`)
                         .then(r => r.json())
                         .then(d => cb(d.map(i => {
                             // boundingbox: [south, north, west, east]
@@ -60,7 +75,14 @@
                         })));
                 },
                 reverse: function (loc, _scale, cb) {
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.lat}&lon=${loc.lng}`)
+                    const params = new URLSearchParams({
+                        format: 'json',
+                        lat: loc.lat,
+                        lon: loc.lng,
+                        'accept-language': 'vi', // Ngôn ngữ tiếng Việt
+                        ...reverseParams
+                    });
+                    fetch(`https://nominatim.openstreetmap.org/reverse?${params}`)
                         .then(r => r.json())
                         .then(d => cb([{
                             name: d.display_name,
@@ -72,7 +94,17 @@
     }
 
     L.Control.geocoder({
-        geocoder: L.Control.Geocoder.nominatim(),
+        geocoder: L.Control.Geocoder.nominatim({
+            geocodingQueryParams: {
+                addressdetails: 1,
+                'accept-language': 'vi', // Ngôn ngữ tiếng Việt
+                countrycodes: 'vn' // Chỉ tìm trong Việt Nam
+            },
+            reverseQueryParams: {
+                addressdetails: 1,
+                'accept-language': 'vi' // Ngôn ngữ tiếng Việt
+            }
+        }),
     placeholder: '🔍 Tìm kiếm địa chỉ...',
     defaultMarkGeocode: false
     })
@@ -94,7 +126,8 @@
 
     // ====== REVERSE GEOCODE ======
     function fetchReverseGeocode(lat, lng, writeAddressLine) {
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+        // Đảm bảo sử dụng language='vi' và region='VN' để hiển thị đúng quần đảo Hoàng Sa và Trường Sa
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=vi`)
             .then(res => res.json())
             .then(data => {
                 const addr = data.address || {};
@@ -118,6 +151,31 @@
             })
             .catch(() => console.log("Không lấy được thông tin địa chỉ"));
   }
+
+    // Thêm labels tiếng Việt cho quần đảo Hoàng Sa và Trường Sa
+    function addVietnameseIslandLabels(mapInstance) {
+        if (!mapInstance || typeof L === "undefined") return;
+        
+        // Quần đảo Hoàng Sa (Paracel Islands) - khoảng 16.5°N, 112.0°E
+        const hoangSaLabel = L.marker([16.5, 112.0], {
+            icon: L.divIcon({
+                className: 'vietnamese-island-label',
+                html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Hoàng Sa</div>',
+                iconSize: [150, 30],
+                iconAnchor: [75, 15]
+            })
+        }).addTo(mapInstance);
+        
+        // Quần đảo Trường Sa (Spratly Islands) - khoảng 10.0°N, 114.0°E
+        const truongSaLabel = L.marker([10.0, 114.0], {
+            icon: L.divIcon({
+                className: 'vietnamese-island-label',
+                html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Trường Sa</div>',
+                iconSize: [150, 30],
+                iconAnchor: [75, 15]
+            })
+        }).addTo(mapInstance);
+    }
 
     // ====== SLOT TABLE (3D + giá + lease + blocked) ======
     const slotTableBody = document.querySelector("#slotTable tbody");

@@ -30,27 +30,66 @@ namespace PresentationLayer.Areas.Stores.Controllers
         {
             var id = Guid.Parse(_context.GetUserId()!);
             var storeId = await _db.Stores.Where(e => e.OwnerUserId == id).Select(e => e.Id).FirstOrDefaultAsync(); 
-            var q = _db.Quotations.AsNoTracking().Where(x => x.StoreId == storeId);
 
-            ViewBag.Draft = await _db.Quotations.Where(x => x.Status == StatusValue.Draft && x.ValidUntil < DateTime.Now)
-               .OrderBy(x => x.ValidUntil)
-               .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
-               .ToListAsync();
-
-            ViewBag.Waiting = await q.Where(x => x.Status == StatusValue.Sent && x.ValidUntil >= DateTime.Now)
+            var draftQuotations = await _db.Quotations
+                .Include(x => x.Orders)
+                .Include(x => x.Customer)
+                .Where(x => x.Status == StatusValue.Draft && x.ValidUntil < DateTime.Now && x.StoreId == storeId)
                 .OrderBy(x => x.ValidUntil)
-                .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
                 .ToListAsync();
+            ViewBag.Draft = draftQuotations.Select(x => new { 
+                x.Id, 
+                x.TotalAmount, 
+                x.ValidUntil, 
+                x.Status, 
+                Customer = x.Customer.FullName,
+                Note = x.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefault()?.Note ?? ""
+            }).ToList();
 
-            ViewBag.Revised = await q.Where(x => x.Status == StatusValue.Revised)
-                .OrderByDescending(x => x.CreatedAt)
-                .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
+            var waitingQuotations = await _db.Quotations
+                .Include(x => x.Orders)
+                .Include(x => x.Customer)
+                .Where(x => x.Status == StatusValue.Sent && x.ValidUntil >= DateTime.Now && x.StoreId == storeId)
+                .OrderBy(x => x.ValidUntil)
                 .ToListAsync();
+            ViewBag.Waiting = waitingQuotations.Select(x => new { 
+                x.Id, 
+                x.TotalAmount, 
+                x.ValidUntil, 
+                x.Status, 
+                Customer = x.Customer.FullName,
+                Note = x.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefault()?.Note ?? ""
+            }).ToList();
 
-            ViewBag.Accepted = await q.Where(x => x.Status == StatusValue.Active)
+            var revisedQuotations = await _db.Quotations
+                .Include(x => x.Orders)
+                .Include(x => x.Customer)
+                .Where(x => x.Status == StatusValue.Revised && x.StoreId == storeId)
                 .OrderByDescending(x => x.CreatedAt)
-                .Select(x => new { x.Id, x.TotalAmount, x.ValidUntil, x.Status, Customer = x.Customer.FullName })
                 .ToListAsync();
+            ViewBag.Revised = revisedQuotations.Select(x => new { 
+                x.Id, 
+                x.TotalAmount, 
+                x.ValidUntil, 
+                x.Status, 
+                Customer = x.Customer.FullName,
+                Note = x.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefault()?.Note ?? ""
+            }).ToList();
+
+            var acceptedQuotations = await _db.Quotations
+                .Include(x => x.Orders)
+                .Include(x => x.Customer)
+                .Where(x => x.Status == StatusValue.Active && x.StoreId == storeId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+            ViewBag.Accepted = acceptedQuotations.Select(x => new { 
+                x.Id, 
+                x.TotalAmount, 
+                x.ValidUntil, 
+                x.Status, 
+                Customer = x.Customer.FullName,
+                Note = x.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefault()?.Note ?? ""
+            }).ToList();
 
             ViewBag.Tab = tab ?? "draft";
             return View();
@@ -84,12 +123,49 @@ namespace PresentationLayer.Areas.Stores.Controllers
             var storeId = await _db.Stores
                     .Where(e => e.OwnerUserId == idUser)
                     .Select(e => e.Id).FirstOrDefaultAsync();
-            var qt = await _db.Quotations.FirstOrDefaultAsync(x => x.Id == id && x.StoreId == storeId);
+            var qt = await _db.Quotations
+                .Include(q => q.Orders)
+                .FirstOrDefaultAsync(x => x.Id == id && x.StoreId == storeId);
             if (qt == null) return NotFound();
             if (qt.Status is not (StatusValue.Sent or StatusValue.Revised))
                 return BadRequest("Sai trạng thái.");
-            qt.Status = StatusValue.Active;    // coi như 'Approved'
+            
+            // Cập nhật trạng thái báo giá thành Active (Đã chấp thuận)
+            qt.Status = StatusValue.Active;
             qt.UpdatedAt = DateTime.Now;
+            
+            // Cập nhật trạng thái các đơn hàng liên quan thành Pending (Chờ xử lý) để có thể thanh toán
+            if (qt.Orders != null && qt.Orders.Any())
+            {
+                foreach (var order in qt.Orders)
+                {
+                    if (order.Status == StatusValue.Revised || order.Status == StatusValue.Draft)
+                    {
+                        order.Status = StatusValue.Pending; // Chờ xử lý: sau khi store chấp thuận, chờ thanh toán
+                        order.TotalAmount = qt.TotalAmount; // Cập nhật giá mới từ quotation
+                        order.UpdatedAt = DateTime.Now;
+                    }
+                }
+                _db.Orders.UpdateRange(qt.Orders);
+            }
+            
+            // Cập nhật giá trong hợp đồng nếu đã có hợp đồng (khi đã chấp thuận chỉnh giá)
+            var existingContracts = await _db.Contracts
+                .Where(c => c.QuotationId == qt.Id)
+                .ToListAsync();
+            
+            if (existingContracts.Any())
+            {
+                foreach (var contract in existingContracts)
+                {
+                    contract.TotalAmount = qt.TotalAmount; // Cập nhật giá mới từ quotation
+                    contract.UpdatedAt = DateTime.Now;
+                    // Xóa PdfUrl để buộc regenerate PDF với giá mới
+                    contract.PdfUrl = null;
+                }
+                _db.Contracts.UpdateRange(existingContracts);
+            }
+            
             await _db.SaveChangesAsync();
             return Ok();
         }

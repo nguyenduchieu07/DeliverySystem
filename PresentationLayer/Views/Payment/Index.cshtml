@@ -107,10 +107,7 @@
                                     <tr>
                                         <th>Tên hàng</th>
                                         <th>Mô tả</th>
-                                        <th>Số lượng</th>
-                                        <th>Kích thước</th>
-                                        <th>Cân nặng</th>
-                                        <th class="text-end">Thành tiền</th>
+                                        <th>Số lượng</th>                                      
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -125,23 +122,7 @@
                                             </td>
                                             <td>
                                                 <span class="badge bg-secondary">@item.Quantity</span>
-                                            </td>
-                                            <td>
-                                                @item.DisplaySize
-                                            </td>
-                                            <td>
-                                                @(item.WeightKg?.ToString("F1") + " kg" ?? "-")
-                                            </td>
-                                            <td class="text-end">
-                                                @if (item.Subtotal.HasValue)
-                                                {
-                                                    <strong>@item.Subtotal.Value.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</strong>
-                                                }
-                                                else
-                                                {
-                                                    <em>Chưa tính</em>
-                                                }
-                                            </td>
+                                            </td>                                           
                                         </tr>
                                     }
                                 </tbody>
@@ -170,34 +151,75 @@
                         <!-- Tổng tiền -->
                         <div class="alert alert-info mb-4">
                             @{
-                                var amounts = Model.OrderSummary.OrderItems
-                                    .Where(item => item.Subtotal.HasValue)
-                                    .Select(item => item.Subtotal.Value)
-                                    .ToList();
+                                // Tính toán breakdown như báo giá
+                                var totalAmount = Model.TotalAmount;
+                                var subtotal = totalAmount / 1.1m; // Tạm tính chưa VAT
+                                var vatAmount = totalAmount - subtotal; // VAT 10%
                                 
-                                var amountStrings = amounts.Select(a => a.ToString("N0")).ToList();
-                                var formula = string.Join("+", amountStrings);
-                                var calculatedTotal = amounts.Sum();
+                                // Parse Note để lấy tổng dịch vụ
+                                var note = Model.OrderSummary.Note ?? "";
+                                decimal totalAddonPrice = 0m;
+                                var hasServiceInfo = false;
+                                
+                                if (!string.IsNullOrWhiteSpace(note) && note.Contains("Tổng dịch vụ:"))
+                                {
+                                    // Tìm dòng "Tổng dịch vụ: X₫" hoặc "Tổng dịch vụ: X đ"
+                                    var lines = note.Split('\n');
+                                    foreach (var line in lines)
+                                    {
+                                        if (line.Contains("Tổng dịch vụ:"))
+                                        {
+                                            // Extract số từ dòng "Tổng dịch vụ: 2,500,000₫"
+                                            var match = System.Text.RegularExpressions.Regex.Match(line, @"Tổng dịch vụ:\s*([\d,\.]+)");
+                                            if (match.Success)
+                                            {
+                                                var valueStr = match.Groups[1].Value.Replace(",", "").Replace(".", "");
+                                                if (decimal.TryParse(valueStr, out var parsedValue))
+                                                {
+                                                    totalAddonPrice = parsedValue;
+                                                    hasServiceInfo = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Tính tổng tiền thuê kho
+                                var baseSlotPrice = subtotal - totalAddonPrice;
                             }
                             
-                            @if (amounts.Any())
-                            {
-                                <div class="mb-2">
-                                    <small class="text-muted d-block mb-1">Chi tiết:</small>
-                                    <div class="text-center">
-                                        <span class="h5 mb-0 text-dark">
-                                            @formula = <span class="text-primary">@calculatedTotal.ToString("N0")</span>
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-2"><strong>Chi tiết giá:</strong></small>
+                                <div style="background: white; padding: 12px; border-radius: 5px; font-size: 0.95rem;">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>📦 Tổng tiền thuê kho (chưa VAT):</span>
+                                        <strong>@baseSlotPrice.ToString("N0") ₫</strong>
+                                    </div>
+                                    @if (hasServiceInfo && totalAddonPrice > 0)
+                                    {
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>✨ Tổng dịch vụ (chưa VAT):</span>
+                                            <strong>@totalAddonPrice.ToString("N0") ₫</strong>
+                                        </div>
+                                    }
+                                    <hr class="my-2">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Tạm tính (chưa VAT):</span>
+                                        <strong>@subtotal.ToString("N0") ₫</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>VAT (10%):</span>
+                                        <strong>@vatAmount.ToString("N0") ₫</strong>
+                                    </div>
+                                    <hr class="my-2" style="border-top: 2px solid #667eea;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="h5 mb-0"><strong>TỔNG CỘNG:</strong></span>
+                                        <span class="h4 mb-0 text-primary">
+                                            <strong>@totalAmount.ToString("N0") ₫</strong>
                                         </span>
                                     </div>
                                 </div>
-                                <hr class="my-2">
-                            }
-                            
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span><strong>Tổng tiền:</strong></span>
-                                <span class="h4 mb-0 text-primary">
-                                    @Model.TotalAmount.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))
-                                </span>
                             </div>
                         </div>
 

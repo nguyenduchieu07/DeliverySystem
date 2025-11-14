@@ -36,6 +36,7 @@ namespace PresentationLayer.Controllers
                 "pending" => query.Where(q => q.Status == StatusValue.Pending),
                 "approved" => query.Where(q => q.Status == StatusValue.Approved),
                 "rejected" => query.Where(q => q.Status == StatusValue.Rejected),
+                "revised" => query.Where(q => q.Status == StatusValue.Revised),
                 "expired" => query.Where(q => q.Status == StatusValue.Expired || q.ValidUntil < DateTime.Now),
                 _ => query
             };

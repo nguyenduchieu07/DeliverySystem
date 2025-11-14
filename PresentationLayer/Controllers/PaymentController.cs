@@ -40,8 +40,8 @@ namespace PresentationLayer.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // Kiểm tra trạng thái đơn hàng
-            if (order.Status != StatusValue.AwaitingPayment)
+            // Kiểm tra trạng thái đơn hàng: Chấp nhận cả Pending (sau khi xác nhận hợp đồng) và AwaitingPayment
+            if (order.Status != StatusValue.Pending && order.Status != StatusValue.AwaitingPayment)
             {
                 TempData["Error"] = "Đơn hàng chưa được báo giá hoặc đã được xử lý";
                 return RedirectToAction("Details", "Order", new { id = orderId });
@@ -143,10 +143,10 @@ namespace PresentationLayer.Controllers
                 {
                     _context.Payments.Add(payment);
 
-                    // Cập nhật trạng thái đơn hàng
+                    // Cập nhật trạng thái đơn hàng: Đã duyệt sau khi thanh toán thành công
                     order.Status = payment.Status == StatusValue.Completed
-                        ? StatusValue.AwaitingPickup
-                        : StatusValue.AwaitingPayment;
+                        ? StatusValue.Approved // Đã duyệt: sau khi thanh toán
+                        : StatusValue.Pending; // Vẫn chờ xử lý nếu thanh toán chưa hoàn tất
                     order.UpdatedAt = DateTime.Now;
 
                     await _context.SaveChangesAsync();

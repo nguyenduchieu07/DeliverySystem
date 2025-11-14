@@ -71,6 +71,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @(currentFilter == "revised" ? "active" : "")"
+                       asp-action="Index" asp-route-status="revised">
+                        ✏️ Đã chỉnh sửa
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @(currentFilter == "approved" ? "active" : "")"
                        asp-action="Index" asp-route-status="approved">
                         Đã chấp nhận

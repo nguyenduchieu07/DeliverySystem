@@ -232,8 +232,8 @@ namespace ServiceLayer.Services
                 var quotation = await _db.Quotations.FindAsync(new object[] { vm.QuotationId }, ct);
                 if (quotation == null) return false;
                 
-                //Chỉnh thành draft để đề xuất
-                quotation.Status = StatusValue.Draft;
+                //Chỉnh thành Revised (Đã chỉnh sửa) để store xem xét
+                quotation.Status = StatusValue.Revised;
                 quotation.UpdatedAt = DateTime.Now;
 
                 var relatedOrders = await _db.Orders
@@ -245,13 +245,24 @@ namespace ServiceLayer.Services
                     {
                         order.Status = StatusValue.Revised;
                         order.UpdatedAt = DateTime.Now;
+                        
+                        // Lưu lý do chỉnh giá vào Order.Note
+                        if (!string.IsNullOrWhiteSpace(vm.Note))
+                        {
+                            var revisionDate = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+                            var revisionNote = $"\n\n=== LÝ DO CHỈNH GIÁ ({revisionDate}) ===\n{vm.Note}";
+                            if (string.IsNullOrWhiteSpace(order.Note))
+                            {
+                                order.Note = revisionNote.TrimStart();
+                            }
+                            else
+                            {
+                                order.Note += revisionNote;
+                            }
+                        }
                     }
                     _db.Orders.UpdateRange(relatedOrders);
                 }
-                
-                // Note có thể được lưu vào UpdatedBy field tạm thời (hoặc tạo migration để thêm field Note)
-                // Tạm thời không lưu note vì entity không có field này
-                // Có thể log note vào console hoặc lưu vào bảng khác nếu cần
                 
                 await _db.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);

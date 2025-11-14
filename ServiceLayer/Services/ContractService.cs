@@ -47,7 +47,10 @@ public class ContractService : IContractService
             return [];
         }
         
-        var contracts = await _contractRepository.FindAll(x => x.QuotationId == quotationId, [ o=> o.WarehouseSlot]).ToListAsync();
+        // Chỉ trả về contracts đã được confirm (Status = Active)
+        var contracts = await _contractRepository.FindAll(
+            x => x.QuotationId == quotationId && x.Status == ContractStatus.Active, 
+            [ o=> o.WarehouseSlot]).ToListAsync();
         return contracts;
     }
     
@@ -56,19 +59,32 @@ public class ContractService : IContractService
 
         try
         {
-            // Idempotent: nếu đã có hợp đồng cho quotation này, trả về luôn để tránh tạo trùng
-            var existed = await _contractRepository
-                .FindAll(c => c.QuotationId == quotationId, includeProperties: o => o.WarehouseSlot)
-                .ToListAsync();
-            if (existed.Any())
-            {
-                return existed.OrderByDescending(x => x.CreatedAt).ToList();
-            }
             var quotation = await _quotationRepository.GetQuotationInfo(quotationId);
 
             if (quotation == null)
                 throw new Exception("Quotation not found");
 
+            // Idempotent: nếu đã có hợp đồng cho quotation này, cập nhật giá và trả về
+            var existed = await _contractRepository
+                .FindAll(c => c.QuotationId == quotationId, includeProperties: o => o.WarehouseSlot)
+                .ToListAsync();
+            if (existed.Any())
+            {
+                // Cập nhật giá trong hợp đồng nếu giá quotation đã thay đổi (sau khi chỉnh giá)
+                foreach (var contract in existed)
+                {
+                    if (contract.TotalAmount != quotation.TotalAmount)
+                    {
+                        contract.TotalAmount = quotation.TotalAmount;
+                        contract.UpdatedAt = DateTime.Now;
+                        // Xóa PdfUrl để buộc regenerate PDF với giá mới
+                        contract.PdfUrl = null;
+                        _contractRepository.Update(contract);
+                    }
+                }
+                return existed.OrderByDescending(x => x.CreatedAt).ToList();
+            }
+            
             var newestOrder = quotation.Orders.OrderByDescending(x => x.CreatedAt).First();
             if (newestOrder == null)
                 throw new Exception("No orders found for quotation");
@@ -211,19 +227,23 @@ public class ContractService : IContractService
 
     // build SlotRows HTML - gộp tất cả slot của các hợp đồng
     var slotRowsBuilder = new StringBuilder();
-    decimal subtotal = 0;
+    decimal totalAmount = 0; // Tổng đã bao gồm VAT
 
     foreach (var c in contracts)
     {
         if (c.WarehouseSlot != null)
         {
-            slotRowsBuilder.AppendLine(BuildSlotRow(c.Warehouse, c.WarehouseSlot, c.StartDate, c.EndDate, c.TotalAmount));
-            subtotal += c.TotalAmount;
+            // TotalAmount đã bao gồm VAT, cần tách ra để hiển thị
+            var slotSubtotal = c.TotalAmount / 1.1m; // Tạm tính chưa VAT
+            slotRowsBuilder.AppendLine(BuildSlotRow(c.Warehouse, c.WarehouseSlot, c.StartDate, c.EndDate, slotSubtotal));
+            totalAmount += c.TotalAmount;
         }
     }
 
-    decimal vat = Math.Round(subtotal * 0.10m);
-    decimal total = subtotal + vat;
+    // Tách VAT từ tổng đã bao VAT
+    decimal subtotal = totalAmount / 1.1m; // Tạm tính chưa VAT
+    decimal vat = totalAmount - subtotal; // VAT 10%
+    decimal total = totalAmount; // Tổng đã bao VAT
 
     var startDate = contracts.OrderBy(c => c.StartDate).First();
     var endDate = contracts.OrderByDescending(c => c.EndDate).First();
@@ -241,11 +261,11 @@ public class ContractService : IContractService
     html = html.Replace("{{CustomerPhone}}", firstContract.Quotation?.Customer.PhoneNumber ?? "");
     html = html.Replace("{{QuoteCode}}", firstContract.Quotation != null ? $"QT-{firstContract.Quotation.CreatedAt:yyyy}-{firstContract.Quotation.Id.ToString().Substring(0,6).ToUpper()}" : "");
     html = html.Replace("{{QuotationValidUntil}}", firstContract.Quotation?.ValidUntil.ToString("dd/MM/yyyy HH:mm") ?? "");
-    html = html.Replace("{{Subtotal}}", $"{subtotal:N0}");
-    html = html.Replace("{{TotalAmount}}", $"{subtotal:N0}");
+    html = html.Replace("{{Subtotal}}", $"{subtotal:N0}"); // Tạm tính chưa VAT
+    html = html.Replace("{{TotalAmount}}", $"{subtotal:N0}"); // Tạm tính chưa VAT (giữ nguyên để tương thích)
     html = html.Replace("{{VatRate}}", "10");
-    html = html.Replace("{{VatAmount}}", $"{vat:N0}");
-    html = html.Replace("{{Total}}", $"{total:N0}");
+    html = html.Replace("{{VatAmount}}", $"{vat:N0}"); // VAT 10%
+    html = html.Replace("{{Total}}", $"{total:N0}"); // Tổng đã bao VAT
     html = html.Replace("{{StartDate}}", startDate.StartDate.ToString("dd/MM/yyyy"));
     html = html.Replace("{{EndDate}}", endDate.EndDate.ToString("dd/MM/yyyy"));
     html = html.Replace("{{TermsAndConditions}}", firstContract.TermsAndConditions ?? "Điều khoản tiêu chuẩn áp dụng.");
@@ -288,14 +308,14 @@ public class ContractService : IContractService
             contract.Status = ContractStatus.Active;
             _db.Contracts.Update(contract);
 
-            // Cập nhật trạng thái đơn hàng thành AwaitingPayment để có thể thanh toán
+            // Cập nhật trạng thái đơn hàng thành Pending (Chờ xử lý) sau khi xác nhận hợp đồng
             var order = await _db.Orders
                 .AsTracking()
                 .FirstOrDefaultAsync(o => o.Id == orderId);
             
             if (order != null)
             {
-                order.Status = StatusValue.AwaitingPayment;
+                order.Status = StatusValue.Pending; // Chờ xử lý: sau khi xác nhận hợp đồng nhưng chưa thanh toán
                 order.UpdatedAt = DateTime.UtcNow;
                 _db.Orders.Update(order);
             }

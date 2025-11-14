@@ -339,7 +339,7 @@
         @* </div> *@
         <div class="stat-card info">
             <div class="stat-value">@ViewBag.Revised.Count</div>
-            <div class="stat-label">✏️ Đã chỉnh sửa</div>
+            <div class="stat-label">✏️ Yêu cầu chỉnh giá </div>
         </div>
         <div class="stat-card success">
             <div class="stat-value">@ViewBag.Accepted.Count</div>
@@ -364,7 +364,7 @@
             @*     } *@
             @* </button> *@
             <button class="tab-button @(ViewBag.Tab == "revised" ? "active" : "")" data-tab="revised">
-                ✏️ Đã chỉnh sửa
+                ✏️ Yêu cầu chỉnh giá 
                 @if (ViewBag.Revised.Count > 0)
                 {
                     <span class="tab-badge">@ViewBag.Revised.Count</span>
@@ -391,6 +391,7 @@
                             <th>Tổng tiền</th>
                             <th>Hết hạn</th>
                             <th>Trạng thái</th>
+                            <th>Ghi chú</th>
                             <th>Thao tác</th>
                         </tr>
                     </thead>
@@ -399,6 +400,26 @@
                         {
                             var timeLeft = (item.ValidUntil - DateTime.Now).TotalHours;
                             var isUrgent = timeLeft <= 24;
+                            var note = item.Note ?? "";
+                            
+                            // Kiểm tra xem có lý do chỉnh giá không
+                            var revisionMatch = System.Text.RegularExpressions.Regex.Match(note, @"=== LÝ DO CHỈNH GIÁ \(([^)]+)\) ===\s*(.+)", System.Text.RegularExpressions.RegexOptions.Singleline);
+                            string displayNote;
+                            string displayTitle;
+                            
+                            if (revisionMatch.Success)
+                            {
+                                // Có lý do chỉnh giá, chỉ hiển thị lý do
+                                var revisionReason = revisionMatch.Groups[2].Value.Trim();
+                                displayNote = !string.IsNullOrWhiteSpace(revisionReason) ? (revisionReason.Length > 50 ? revisionReason.Substring(0, 50) + "..." : revisionReason) : "—";
+                                displayTitle = note;
+                            }
+                            else
+                            {
+                                // Không có lý do, hiển thị note thông thường
+                                displayNote = !string.IsNullOrWhiteSpace(note) ? (note.Length > 50 ? note.Substring(0, 50) + "..." : note) : "—";
+                                displayTitle = note;
+                            }
 
                             <tr class="quotation-row" onclick="window.location.href='@Url.Action("Detail", new { id = item.Id })'">
                                 <td>
@@ -427,7 +448,12 @@
                                     <span class="status-badge status-sent">Đề xuất giá</span>
                                 </td>
                                 <td>
-                                    <div class="action-buttons">
+                                    <div class="note-text" title="@displayTitle" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        @displayNote
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons" onclick="event.stopPropagation();">
                                         <a href="@Url.Action("Detail", new { id = item.Id })" class="btn-action btn-view">
                                             👁️ Xem chi tiết
                                         </a>
@@ -460,6 +486,7 @@
                             <th>Tổng tiền</th>
                             <th>Hết hạn</th>
                             <th>Trạng thái</th>
+                            <th>Ghi chú</th>
                             <th>Thao tác</th>
                         </tr>
                     </thead>
@@ -468,6 +495,26 @@
                         {
                             var timeLeft = (item.ValidUntil - DateTime.Now).TotalHours;
                             var isUrgent = timeLeft <= 24;
+                            var note = item.Note ?? "";
+                            
+                            // Kiểm tra xem có lý do chỉnh giá không
+                            var revisionMatch = System.Text.RegularExpressions.Regex.Match(note, @"=== LÝ DO CHỈNH GIÁ \(([^)]+)\) ===\s*(.+)", System.Text.RegularExpressions.RegexOptions.Singleline);
+                            string displayNote;
+                            string displayTitle;
+                            
+                            if (revisionMatch.Success)
+                            {
+                                // Có lý do chỉnh giá, chỉ hiển thị lý do
+                                var revisionReason = revisionMatch.Groups[2].Value.Trim();
+                                displayNote = !string.IsNullOrWhiteSpace(revisionReason) ? (revisionReason.Length > 50 ? revisionReason.Substring(0, 50) + "..." : revisionReason) : "—";
+                                displayTitle = note;
+                            }
+                            else
+                            {
+                                // Không có lý do, hiển thị note thông thường
+                                displayNote = !string.IsNullOrWhiteSpace(note) ? (note.Length > 50 ? note.Substring(0, 50) + "..." : note) : "—";
+                                displayTitle = note;
+                            }
 
                             <tr class="quotation-row" onclick="window.location.href='@Url.Action("Detail", new { id = item.Id })'">
                                 <td>
@@ -496,7 +543,12 @@
                                     <span class="status-badge status-sent">Chờ xử lý</span>
                                 </td>
                                 <td>
-                                    <div class="action-buttons">
+                                    <div class="note-text" title="@displayTitle" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        @displayNote
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons" onclick="event.stopPropagation();">
                                         <a href="@Url.Action("Detail", new { id = item.Id })" class="btn-action btn-view">
                                             👁️ Xem chi tiết
                                         </a>
@@ -529,12 +581,34 @@
                             <th>Tổng tiền</th>
                             <th>Hết hạn</th>
                             <th>Trạng thái</th>
+                            <th>Ghi chú</th>
                             <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in ViewBag.Revised)
                         {
+                            var note = item.Note ?? "";
+                            
+                            // Kiểm tra xem có lý do chỉnh giá không
+                            var revisionMatch = System.Text.RegularExpressions.Regex.Match(note, @"=== LÝ DO CHỈNH GIÁ \(([^)]+)\) ===\s*(.+)", System.Text.RegularExpressions.RegexOptions.Singleline);
+                            string displayNote;
+                            string displayTitle;
+                            
+                            if (revisionMatch.Success)
+                            {
+                                // Có lý do chỉnh giá, chỉ hiển thị lý do
+                                var revisionReason = revisionMatch.Groups[2].Value.Trim();
+                                displayNote = !string.IsNullOrWhiteSpace(revisionReason) ? (revisionReason.Length > 50 ? revisionReason.Substring(0, 50) + "..." : revisionReason) : "—";
+                                displayTitle = note;
+                            }
+                            else
+                            {
+                                // Không có lý do, hiển thị note thông thường
+                                displayNote = !string.IsNullOrWhiteSpace(note) ? (note.Length > 50 ? note.Substring(0, 50) + "..." : note) : "—";
+                                displayTitle = note;
+                            }
+
                             <tr class="quotation-row" onclick="window.location.href='@Url.Action("Detail", new { id = item.Id })'">
                                 <td>
                                     <div class="quote-id">#@item.Id.ToString().Substring(0, 8).ToUpper()</div>
@@ -552,10 +626,15 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="status-badge status-revised">Đã chỉnh sửa</span>
+                                    <span class="status-badge status-revised">Chờ phê duyệt</span>
                                 </td>
                                 <td>
-                                    <div class="action-buttons">
+                                    <div class="note-text" title="@displayTitle" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        @displayNote
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons" onclick="event.stopPropagation();">
                                         <a href="@Url.Action("Detail", new { id = item.Id })" class="btn-action btn-view">
                                             👁️ Xem chi tiết
                                         </a>
@@ -588,12 +667,34 @@
                             <th>Tổng tiền</th>
                             <th>Hết hạn</th>
                             <th>Trạng thái</th>
+                            <th>Ghi chú</th>
                             <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in ViewBag.Accepted)
                         {
+                            var note = item.Note ?? "";
+                            
+                            // Kiểm tra xem có lý do chỉnh giá không
+                            var revisionMatch = System.Text.RegularExpressions.Regex.Match(note, @"=== LÝ DO CHỈNH GIÁ \(([^)]+)\) ===\s*(.+)", System.Text.RegularExpressions.RegexOptions.Singleline);
+                            string displayNote;
+                            string displayTitle;
+                            
+                            if (revisionMatch.Success)
+                            {
+                                // Có lý do chỉnh giá, chỉ hiển thị lý do
+                                var revisionReason = revisionMatch.Groups[2].Value.Trim();
+                                displayNote = !string.IsNullOrWhiteSpace(revisionReason) ? (revisionReason.Length > 50 ? revisionReason.Substring(0, 50) + "..." : revisionReason) : "—";
+                                displayTitle = note;
+                            }
+                            else
+                            {
+                                // Không có lý do, hiển thị note thông thường
+                                displayNote = !string.IsNullOrWhiteSpace(note) ? (note.Length > 50 ? note.Substring(0, 50) + "..." : note) : "—";
+                                displayTitle = note;
+                            }
+
                             <tr class="quotation-row" onclick="window.location.href='@Url.Action("Detail", new { id = item.Id })'">
                                 <td>
                                     <div class="quote-id">#@item.Id.ToString().Substring(0, 8).ToUpper()</div>
@@ -614,7 +715,12 @@
                                     <span class="status-badge status-accepted">Đã chấp nhận</span>
                                 </td>
                                 <td>
-                                    <div class="action-buttons">
+                                    <div class="note-text" title="@displayTitle" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        @displayNote
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons" onclick="event.stopPropagation();">
                                         <a href="@Url.Action("Detail", new { id = item.Id })" class="btn-action btn-view">
                                             👁️ Xem chi tiết
                                         </a>

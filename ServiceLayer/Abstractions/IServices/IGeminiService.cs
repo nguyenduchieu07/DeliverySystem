@@ -31,11 +31,11 @@ namespace ServiceLayer.Abstractions.IServices
         Task<VolumeCalculationResult> AnalyzeMultipleImagesAndCalculateVolumeAsync(List<string> imageUrls);
 
         /// <summary>
-        /// Phân tích danh sách đồ dùng (text-based) để tính toán thể tích và diện tích cần thiết
+        /// Tính toán thể tích và diện tích kho cần thiết từ danh sách đồ vật
         /// </summary>
-        /// <param name="items">Danh sách đồ dùng với tên, danh mục và số lượng</param>
-        /// <returns>Kết quả tính toán thể tích và diện tích</returns>
-        Task<VolumeCalculationResult> AnalyzeItemsAndCalculateVolumeAsync(List<ItemInfo> items);
+        /// <param name="items">Danh sách đồ vật với tên, danh mục và số lượng</param>
+        /// <returns>Kết quả tính toán thể tích (m³) và diện tích (m²) tối ưu</returns>
+        Task<VolumeCalculationResult> CalculateStorageRequirementsAsync(List<ItemInfo> items);
 
         /// <summary>
         /// Phân tích ảnh trực tiếp từ file để nhận diện đồ vật và số lượng (tối ưu tốc độ - không upload Cloudinary)

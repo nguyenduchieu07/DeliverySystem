@@ -19,15 +19,54 @@ function initMap() {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
+        // Thêm labels cho quần đảo Hoàng Sa và Trường Sa
+        addVietnameseIslandLabels(map);
+
     L.Control.geocoder({
         defaultMarkGeocode: false,
         placeholder: 'Tìm kiếm địa điểm...',
-        errorMessage: 'Không tìm thấy'
+        errorMessage: 'Không tìm thấy',
+        geocoder: L.Control.Geocoder.nominatim({
+            geocodingQueryParams: {
+                addressdetails: 1,
+                'accept-language': 'vi', // Ngôn ngữ tiếng Việt
+                countrycodes: 'vn' // Chỉ tìm trong Việt Nam
+            },
+            reverseQueryParams: {
+                addressdetails: 1,
+                'accept-language': 'vi' // Ngôn ngữ tiếng Việt
+            }
+        })
     }).on('markgeocode', function (e) {
         const latlng = e.geocode.center;
         setWarehouseLocation(latlng.lat, latlng.lng);
     }).addTo(map);
 }
+}
+
+// Thêm labels tiếng Việt cho quần đảo Hoàng Sa và Trường Sa
+function addVietnameseIslandLabels(mapInstance) {
+    if (!mapInstance || typeof L === "undefined") return;
+    
+    // Quần đảo Hoàng Sa (Paracel Islands) - khoảng 16.5°N, 112.0°E
+    const hoangSaLabel = L.marker([16.5, 112.0], {
+        icon: L.divIcon({
+            className: 'vietnamese-island-label',
+            html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Hoàng Sa</div>',
+            iconSize: [150, 30],
+            iconAnchor: [75, 15]
+        })
+    }).addTo(mapInstance);
+    
+    // Quần đảo Trường Sa (Spratly Islands) - khoảng 10.0°N, 114.0°E
+    const truongSaLabel = L.marker([10.0, 114.0], {
+        icon: L.divIcon({
+            className: 'vietnamese-island-label',
+            html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Trường Sa</div>',
+            iconSize: [150, 30],
+            iconAnchor: [75, 15]
+        })
+    }).addTo(mapInstance);
 }
 
 // ============ DATE FUNCTIONS ============

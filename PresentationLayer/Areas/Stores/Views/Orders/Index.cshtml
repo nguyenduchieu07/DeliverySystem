@@ -354,10 +354,6 @@
             <div class="stat-value">@Model.TotalElements</div>
         </div>
         <div class="stat-card" style="border-left-color: var(--warning);">
-            <div class="stat-label" style="color: var(--warning);">Tạm Lưu</div>
-            <div class="stat-value">@Model.Orders.Count(o => o.Status == StatusValue.Draft)</div>
-        </div>
-        <div class="stat-card" style="border-left-color: var(--warning);">
             <div class="stat-label" style="color: var(--warning);">Chờ Xử Lý</div>
             <div class="stat-value">@Model.Orders.Count(o => o.Status == StatusValue.Pending)</div>
         </div>
@@ -368,10 +364,6 @@
         <div class="stat-card" style="border-left-color: var(--primary);">
             <div class="stat-label" style="color: var(--primary);">Hoàn Thành</div>
             <div class="stat-value">@Model.Orders.Count(o => o.Status == StatusValue.Completed)</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Đã Hủy</div>
-            <div class="stat-value">@Model.Orders.Count(o => o.Status == StatusValue.Canceled)</div>
         </div>
     </div>
 }
@@ -391,8 +383,8 @@
                     <tr>
                         <th>Mã Đơn</th>
                         <th>Khách Hàng</th>
-                        <th>Ngày Gửi</th>
-                        <th>Ngày Giao DK</th>
+                        <th>Ngày Lấy Hàng</th>
+                        <th>Ngày Nhận Hàng </th>
                         <th>Tổng Tiền</th>
                         <th>Trạng Thái</th>
                         <th>Thao Tác</th>
@@ -408,16 +400,17 @@
                             <td>
                                 <span class="customer-name">@(order.Customer?.FullName ?? "N/A")</span>
                             </td>
-                            <td>
-                                <span class="date-display">
-                                    <i class="far fa-calendar"></i>
-                                    @(order.PickupDate?.ToString("dd/MM/yyyy") ?? "—")
-                                </span>
-                            </td>
+                            
                             <td>
                                 <span class="date-display">
                                     <i class="far fa-calendar-check"></i>
                                     @(order.DeliveryDate?.ToString("dd/MM/yyyy") ?? "—")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="date-display">
+                                    <i class="far fa-calendar"></i>
+                                    @(order.PickupDate?.ToString("dd/MM/yyyy") ?? "—")
                                 </span>
                             </td>
                             <td>
@@ -488,11 +481,9 @@
                         var column = this;
                         var select = $('<select class="form-select form-select-sm" style="width:150px;">' +
                             '<option value="">Tất cả</option>' +
-                            '<option value="@(StatusValue.Draft.ToDisplayStringForOrder())">Tạm lưu</option>' +
                             '<option value="@(StatusValue.Pending.ToDisplayStringForOrder())">Chờ xử lý</option>' +
                             '<option value="@(StatusValue.Approved.ToDisplayStringForOrder())">Đã duyệt</option>' +
                             '<option value="@(StatusValue.Completed.ToDisplayStringForOrder())">Hoàn thành</option>' +
-                            '<option value="@(StatusValue.Canceled.ToDisplayStringForOrder())">Đã hủy</option>' +
                             '</select>')
                             .appendTo($(column.header()).empty())
                             .on('change', function () {

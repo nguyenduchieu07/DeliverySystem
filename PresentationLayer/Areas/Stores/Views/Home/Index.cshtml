@@ -527,7 +527,7 @@
         </div>
         <div class="card metric">
             <div class="label">Đang xử lý</div>
-            <div class="value">@Model.DashboardDto.OrderToday.Total</div>
+            <div class="value">@Model.DashboardDto.TotalOrderPending</div>
             <div class="delta">—</div>
         </div>
         <div class="card metric">
@@ -643,51 +643,6 @@
         </div>
     </section>
 
-    <!-- Orders Table -->
-    <section class="section">
-        <div class="header">
-            <div class="title">Đơn đang làm</div>
-            <div class="tools">
-                <span class="badge ok">InProgress</span>
-            </div>
-        </div>
-        <div style="overflow:auto">
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>Order #</th>
-                    <th>Khách hàng</th>
-                    <th>Dịch vụ</th>
-                    <th>Trạng thái</th>
-                    <th>Tạo lúc</th>
-                    <th>Tổng tiền</th>
-                    <th></th>
-                </tr>
-                </thead>
-                @if (Model.DashboardDto.OrderPendings.Count > 0)
-                {
-                    @foreach (var order in Model.DashboardDto.OrderPendings)
-                    {
-                        <tr>
-                            <td>#ORD-@order.CreatedAt.ToString("yyyy-MM-dd")</td>
-                            <td>@order.CustomerName</td>
-                            <td>@order.Name</td>
-                            <td><span class="badge warn">@order.Status</span></td>
-                            <td>@order.CreatedAt.ToString("hh-mm dd/MM")</td>
-                            <td>₫ @order.Total.ToString("N0")</td>
-                            <td><a class="badge" href="#">Ký HĐ</a></td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="7" class="text-center text-muted">Chưa có đơn hàng</td>
-                    </tr>
-                }
-            </table>
-        </div>
-    </section>
 
     <!-- Warehouse Slots -->
     @foreach (var warehouse in Model.DashboardDto.WareHouseDashboards)

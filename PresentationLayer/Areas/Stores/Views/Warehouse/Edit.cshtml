@@ -104,6 +104,16 @@
                 display: block;
             }
 
+            .tab-content.active input:not([readonly]):not([disabled]),
+            .tab-content.active select:not([readonly]):not([disabled]),
+            .tab-content.active textarea:not([readonly]):not([disabled]) {
+                pointer-events: auto !important;
+                user-select: text !important;
+                -webkit-user-select: text !important;
+                -moz-user-select: text !important;
+                -ms-user-select: text !important;
+            }
+
         /* Card Styles */
         .card {
             background: var(--panel);
@@ -160,6 +170,17 @@
                 font-size: 14px;
                 color: var(--text);
                 transition: all .2s;
+                pointer-events: auto !important;
+                user-select: text !important;
+            }
+
+            .form-group input[readonly] {
+                background: #f3f4f6;
+                cursor: not-allowed;
+            }
+
+            .form-group input:not([readonly]):not([disabled]) {
+                cursor: text;
             }
 
                 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
@@ -718,15 +739,15 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Chiều cao (m)</label>
-                        <input type="number" asp-for="HeightM" min="0" step="0.01" placeholder="0.00" />
+                        <input type="number" asp-for="HeightM" min="0" step="0.01" placeholder="0.00" required />
                     </div>
                     <div class="form-group">
                         <label>Chiều dài (m)</label>
-                        <input type="number" asp-for="LengthM" min="0" step="0.01" placeholder="0.00" />
+                        <input type="number" asp-for="LengthM" min="0" step="0.01" placeholder="0.00" required />
                     </div>
                     <div class="form-group">
                         <label>Chiều rộng (m)</label>
-                        <input type="number" asp-for="WidthM" min="0" step="0.01" placeholder="0.00" />
+                        <input type="number" asp-for="WidthM" min="0" step="0.01" placeholder="0.00" required />
                     </div>
                 </div>
 
@@ -1077,6 +1098,32 @@
             </div>
         </div>
     </div>
+
+    <!-- Error Modal for Slot Deletion -->
+    <div id="slotDeleteErrorModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: #dc2626; color: white;">
+                <h3>⚠️ Không thể xóa</h3>
+                <button type="button" class="modal-close" onclick="closeSlotDeleteErrorModal()" style="color: white;">×</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div style="display: flex; align-items: start; gap: 16px; margin-bottom: 16px;">
+                    <div style="font-size: 48px; line-height: 1;">⚠️</div>
+                    <div style="flex: 1;">
+                        <p id="slotDeleteErrorMessage" style="margin: 0; font-size: 16px; line-height: 1.6; color: #333;"></p>
+                    </div>
+                </div>
+                <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px; border-radius: 4px; margin-top: 16px;">
+                    <p style="margin: 0; font-size: 14px; color: #991b1b;">
+                        <strong>Lưu ý:</strong> Không thể xóa slot đang được sử dụng, giữ chỗ hoặc đang bảo trì.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-actions" style="padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-primary" onclick="closeSlotDeleteErrorModal()" style="min-width: 100px;">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -1117,6 +1164,10 @@
             const lng = @((addr?.Longitude ?? 105.8342).ToString(System.Globalization.CultureInfo.InvariantCulture));
             window.__leaflet = L.map('map').setView([lat, lng], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(window.__leaflet);
+            
+            // Thêm labels cho quần đảo Hoàng Sa và Trường Sa
+            addVietnameseIslandLabels(window.__leaflet);
+            
             let marker = L.marker([lat, lng], { draggable: true }).addTo(window.__leaflet);
             marker.on('dragend', function (e) {
                 const latlng = e.target.getLatLng();
@@ -1134,6 +1185,31 @@
                     reverseGeocode(latlng.lat, latlng.lng);
                 })
                 .addTo(window.__leaflet);
+        }
+
+        // Thêm labels tiếng Việt cho quần đảo Hoàng Sa và Trường Sa
+        function addVietnameseIslandLabels(mapInstance) {
+            if (!mapInstance || typeof L === "undefined") return;
+            
+            // Quần đảo Hoàng Sa (Paracel Islands) - khoảng 16.5°N, 112.0°E
+            const hoangSaLabel = L.marker([16.5, 112.0], {
+                icon: L.divIcon({
+                    className: 'vietnamese-island-label',
+                    html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Hoàng Sa</div>',
+                    iconSize: [150, 30],
+                    iconAnchor: [75, 15]
+                })
+            }).addTo(mapInstance);
+            
+            // Quần đảo Trường Sa (Spratly Islands) - khoảng 10.0°N, 114.0°E
+            const truongSaLabel = L.marker([10.0, 114.0], {
+                icon: L.divIcon({
+                    className: 'vietnamese-island-label',
+                    html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Trường Sa</div>',
+                    iconSize: [150, 30],
+                    iconAnchor: [75, 15]
+                })
+            }).addTo(mapInstance);
         }
 
         function reverseGeocode(lat, lng) {
@@ -1273,15 +1349,26 @@
         }
 
         function removeSlotByCode(code) {
-            if (!confirm('Xác nhận xóa slot này?')) return;
             const idx = allSlots.findIndex(s => (s.code || '').toLowerCase() === (code || '').toLowerCase());
-            if (idx >= 0) {
-                allSlots.splice(idx, 1);
-                const filteredCount = currentFiltered().length;
-                const maxPage = Math.max(1, Math.ceil(filteredCount / pageSize));
-                if (currentPage > maxPage) currentPage = maxPage;
-                renderSlots();
+            if (idx < 0) return;
+            
+            const slot = allSlots[idx];
+            const status = slot.status;
+            
+            // Kiểm tra status: Reserved (5), InUse (6), Maintenance (7) không được xóa
+            if (status === 5 || status === 6 || status === 7) {
+                const statusText = getStatusText(status);
+                showSlotDeleteErrorModal(slot.code || '', statusText);
+                return;
             }
+            
+            if (!confirm('Xác nhận xóa slot này?')) return;
+            
+            allSlots.splice(idx, 1);
+            const filteredCount = currentFiltered().length;
+            const maxPage = Math.max(1, Math.ceil(filteredCount / pageSize));
+            if (currentPage > maxPage) currentPage = maxPage;
+            renderSlots();
         }
 
         function filterSlots() { currentPage = 1; renderSlots(); }
@@ -1442,7 +1529,32 @@
             closeMultiWarehouseModal();
         }
         window.addEventListener('click', function (e) {
-            if (e.target.classList.contains('modal')) { e.target.style.display = 'none'; }
+            if (e.target.classList.contains('modal')) { 
+                if (e.target.id === 'slotDeleteErrorModal') {
+                    closeSlotDeleteErrorModal();
+                } else {
+                    e.target.style.display = 'none'; 
+                }
+            }
         });
+
+        // Error Modal Functions
+        function showSlotDeleteErrorModal(slotCode, statusText) {
+            const modal = document.getElementById('slotDeleteErrorModal');
+            const messageEl = document.getElementById('slotDeleteErrorMessage');
+            if (messageEl) {
+                messageEl.textContent = `Không thể xóa slot "${slotCode}" vì đang ở trạng thái "${statusText}".`;
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeSlotDeleteErrorModal() {
+            const modal = document.getElementById('slotDeleteErrorModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
     </script>
 }

@@ -67,7 +67,7 @@ namespace ServiceLayer.Services
             return await CallGeminiApiAsync(imageParts);
         }
 
-        public async Task<VolumeCalculationResult> AnalyzeItemsAndCalculateVolumeAsync(List<ItemInfo> items)
+        public async Task<VolumeCalculationResult> CalculateStorageRequirementsAsync(List<ItemInfo> items)
         {
             if (items == null || items.Count == 0)
             {
@@ -137,10 +137,10 @@ namespace ServiceLayer.Services
                 contents = new[] { new { parts } },
                 generationConfig = new
                 {
-                    temperature = 0.2, // Tăng từ 0.1 lên 0.2 để cân bằng giữa tốc độ và độ chính xác
-                    topK = 20, // Tăng từ 10 lên 20 để có nhiều lựa chọn hơn, chính xác hơn
-                    topP = 0.9, // Tăng từ 0.8 lên 0.9 để có độ đa dạng tốt hơn
-                    maxOutputTokens = 4096, // Giữ 4096 để đủ cho nhiều items
+                    temperature = 0.1, // Thấp để nhanh và chính xác
+                    topK = 10, // Giảm để nhanh hơn
+                    topP = 0.8, // Giảm để nhanh hơn
+                    maxOutputTokens = 2048, // Giảm để nhanh hơn, đủ cho JSON response
                 },
                 safetySettings = new[]
                 {
@@ -187,34 +187,11 @@ namespace ServiceLayer.Services
         private string BuildPromptForItemDetection(int imageCount)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Bạn là chuyên gia nhận diện đồ vật. Phân tích hình ảnh và liệt kê CHỈ các ĐỒ DÙNG có thể di chuyển được.");
-            sb.AppendLine();
-            sb.AppendLine("❌ KHÔNG liệt kê (bỏ qua hoàn toàn):");
-            sb.AppendLine("- Tường, cửa, khung cửa, cửa sổ, cửa kính");
-            sb.AppendLine("- Gạch lát nền, trần nhà, ốp tường, vách ngăn, cột");
-            sb.AppendLine("- Đèn trần, ổ cắm điện, công tắc, ống nước, đường ống");
-            sb.AppendLine("- Bất kỳ phần nào cố định của căn phòng");
-            sb.AppendLine();
+            sb.AppendLine("Phân tích ảnh, liệt kê CHỈ đồ vật di chuyển được. Bỏ qua: tường, cửa, nền, trần, đèn, ổ cắm, ống nước.");
             if (imageCount > 1)
-            {
-                sb.AppendLine($"Bạn đang xem {imageCount} ảnh. Phân tích TẤT CẢ các ảnh. Nếu cùng một loại đồ vật xuất hiện trong nhiều ảnh, CỘNG DỒN số lượng lại.");
-                sb.AppendLine();
-            }
-            sb.AppendLine("**YÊU CẦU:**");
-            sb.AppendLine("1. Ghi rõ tên từng đồ vật (ví dụ: bàn, ghế, tủ lạnh, thùng carton, quạt, máy lạnh, tivi, máy tính, tủ, giường, kệ, bàn làm việc, nồi, chảo, bát đĩa, cây cảnh, chậu hoa, vali, túi xách, v.v.)");
-            sb.AppendLine("2. Với mỗi đồ vật, hãy ghi số lượng chính xác (ví dụ: 2 ghế, 1 bàn, 3 thùng carton, 1 tủ lạnh, 1 quạt)");
-            sb.AppendLine("3. Nếu có đồ vật trùng loại (ví dụ nhiều thùng hoặc ghế), hãy gộp chung thành 1 hàng và cộng dồn số lượng");
-            sb.AppendLine("4. Không cần mô tả màu sắc hoặc chất liệu, chỉ cần tên và số lượng");
-            sb.AppendLine("5. Phân loại vào danh mục: Nội thất, Điện tử, Quần áo, Thực phẩm, Khác");
-            sb.AppendLine();
-            sb.AppendLine("**Trình bày kết quả dưới dạng bảng:**");
-            sb.AppendLine("Tên đồ vật | Số lượng");
-            sb.AppendLine();
-            sb.AppendLine("**Trả về JSON (CHỈ JSON, KHÔNG TEXT KHÁC):**");
-            sb.AppendLine(@"{""items"":[{""name"":""<tên đồ vật>"",""quantity"":<số lượng>,""category"":""<danh mục>""}]}");
-            sb.AppendLine();
-            sb.AppendLine(@"Ví dụ: {""items"":[{""name"":""Bàn"",""quantity"":1,""category"":""Nội thất""},{""name"":""Ghế"",""quantity"":2,""category"":""Nội thất""},{""name"":""Thùng carton"",""quantity"":3,""category"":""Khác""},{""name"":""Tủ lạnh"",""quantity"":1,""category"":""Điện tử""}]}");
-
+                sb.AppendLine($"Có {imageCount} ảnh. Cộng dồn số lượng nếu cùng loại.");
+            sb.AppendLine("Yêu cầu: Tên + số lượng. Gộp trùng loại. Danh mục: Nội thất/Điện tử/Quần áo/Thực phẩm/Khác.");
+            sb.AppendLine(@"Trả về JSON: {""items"":[{""name"":""..."",""quantity"":N,""category"":""...""}]}");
             return sb.ToString();
         }
 
@@ -307,7 +284,7 @@ namespace ServiceLayer.Services
                         item.Name = nameElement.GetString() ?? "";
 
                     if (itemElement.TryGetProperty("quantity", out var quantityElement))
-                        item.Quantity = quantityElement.GetInt32();
+                        item.Quantity = ParseQuantity(quantityElement);
 
                     if (itemElement.TryGetProperty("category", out var categoryElement))
                         item.Category = categoryElement.GetString();
@@ -322,6 +299,22 @@ namespace ServiceLayer.Services
             return items;
         }
 
+        private int ParseQuantity(JsonElement quantityElement)
+        {
+            if (quantityElement.ValueKind == JsonValueKind.Number)
+            {
+                if (quantityElement.TryGetInt32(out var q)) return Math.Max(1, q);
+                if (quantityElement.TryGetDouble(out var d)) return Math.Max(1, (int)Math.Round(d));
+            }
+            else if (quantityElement.ValueKind == JsonValueKind.String)
+            {
+                var str = quantityElement.GetString();
+                if (int.TryParse(str, out var parsed)) return Math.Max(1, parsed);
+                if (double.TryParse(str, out var parsedDouble)) return Math.Max(1, (int)Math.Round(parsedDouble));
+            }
+            return 1;
+        }
+
         private async Task<VolumeCalculationResult> CallGeminiApiAsync(List<object> parts)
         {
             var requestBody = new
@@ -329,10 +322,10 @@ namespace ServiceLayer.Services
                 contents = new[] { new { parts } },
                 generationConfig = new
                 {
-                    temperature = 0.4,
-                    topK = 20,
-                    topP = 1,
-                    maxOutputTokens = 16384,
+                    temperature = 0.2, // Thấp để nhanh và chính xác
+                    topK = 10, // Giảm để nhanh hơn
+                    topP = 0.85, // Giảm để nhanh hơn
+                    maxOutputTokens = 3072, // Giảm từ 16384 xuống 3072 để nhanh hơn, vẫn đủ cho JSON
                 },
                 safetySettings = new[]
                 {
@@ -380,82 +373,23 @@ namespace ServiceLayer.Services
         private string BuildPromptForMultipleImages(int imageCount)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Bạn là chuyên gia tính toán không gian kho hàng. Hãy phân tích TẤT CẢ các hình ảnh được cung cấp để đọc thông tin và tính toán:");
-            sb.AppendLine();
-            sb.AppendLine($"Bạn đang xem {imageCount} ảnh. Hãy phân tích TẤT CẢ các đồ vật trong TẤT CẢ các ảnh này.");
-            sb.AppendLine();
-            sb.AppendLine("**YÊU CẦU:**");
-            sb.AppendLine("1. Liệt kê TẤT CẢ đồ vật trong TẤT CẢ các ảnh (tên, số lượng) và ƯỚC TÍNH kích thước (DxRxC, mét).");
-            sb.AppendLine("2. Tính toán thể tích vật lý chiếm chỗ TỐI ƯU NHẤT (xếp chồng/lồng ghép/tháo rời) cho TẤT CẢ các đồ vật.");
-            sb.AppendLine("3. Tính diện tích sàn TỐI THIỂU cần thiết (m²), bao gồm khoảng trống.");
-            sb.AppendLine("4. Tính thể tích ô kho cần thiết (m³) với chiều cao trần đề xuất 2.5m.");
-            sb.AppendLine();
-            sb.AppendLine("**Lưu ý:** Nếu cùng một loại đồ vật xuất hiện trong nhiều ảnh, hãy cộng dồn số lượng lại.");
-            sb.AppendLine();
-            sb.AppendLine("**Trả về JSON với format sau (CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC):**");
-            sb.AppendLine(@"{
-  ""requiredVolumeM3"": <số thực>,
-  ""requiredAreaM2"": <số thực>,
-  ""analysisDetails"": ""<mô tả chi tiết: liệt kê đồ vật từ TẤT CẢ các ảnh, cách xếp gọn nhất, tối đa 200 từ>"",
-  ""itemEstimates"": [
-    {
-      ""name"": ""<tên đồ vật>"",
-      ""quantity"": <tổng số lượng từ TẤT CẢ các ảnh>,
-      ""estimatedVolumeM3"": <thể tích ước tính cho món này, m³>,
-      ""notes"": ""<ghi chú kích thước và cách xếp, tối đa 50 từ>""
-    }
-  ]
-}");
-            sb.AppendLine("- analysisDetails tối đa 200 từ, notes tối đa 50 từ để response ngắn gọn.");
-
+            sb.AppendLine($"Phân tích {imageCount} ảnh, tính thể tích & diện tích kho tối ưu.");
+            sb.AppendLine("Yêu cầu: Liệt kê đồ vật (tên, số lượng). Ước tính kích thước (DxRxC mét). Tính thể tích tối ưu (xếp chồng/lồng ghép). Diện tích sàn tối thiểu (m²). Thể tích kho (m³, trần 2.5m).");
+            sb.AppendLine("Cộng dồn số lượng nếu cùng loại trong nhiều ảnh.");
+            sb.AppendLine(@"Trả về JSON: {""requiredVolumeM3"":N,""requiredAreaM2"":N,""analysisDetails"":""..."",""itemEstimates"":[{""name"":""..."",""quantity"":N,""estimatedVolumeM3"":N,""notes"":""...""}]}");
             return sb.ToString();
         }
 
         private string BuildPromptForItems(List<ItemInfo> items)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Bạn là chuyên gia tính toán không gian kho hàng. Hãy phân tích danh sách đồ dùng sau để tính toán thể tích và diện tích cần thiết:");
-            sb.AppendLine();
-            sb.AppendLine("**DANH SÁCH ĐỒ DÙNG:**");
-            sb.AppendLine();
-
-            for (int i = 0; i < items.Count; i++)
+            sb.AppendLine("Tính thể tích & diện tích kho tối ưu cho:");
+            foreach (var item in items)
             {
-                var item = items[i];
-                sb.AppendLine($"{i + 1}. **{item.Name}**");
-                if (!string.IsNullOrWhiteSpace(item.Category))
-                    sb.AppendLine($"   - Danh mục: {item.Category}");
-                sb.AppendLine($"   - Số lượng: {item.Quantity}");
-                sb.AppendLine();
+                sb.AppendLine($"- {item.Name} x{item.Quantity}" + (!string.IsNullOrWhiteSpace(item.Category) ? $" ({item.Category})" : ""));
             }
-
-            sb.AppendLine("**YÊU CẦU:**");
-            sb.AppendLine("1. Dựa trên tên đồ vật và danh mục, ƯỚC TÍNH kích thước (Dài x Rộng x Cao, mét) cho từng loại đồ vật.");
-            sb.AppendLine("2. Tính toán thể tích vật lý chiếm chỗ TỐI ƯU NHẤT (xếp chồng/lồng ghép/tháo rời) cho TẤT CẢ các đồ vật.");
-            sb.AppendLine("3. Tính diện tích sàn TỐI THIỂU cần thiết (m²), bao gồm khoảng trống giữa các đồ vật.");
-            sb.AppendLine("4. Tính thể tích ô kho cần thiết (m³) với chiều cao trần đề xuất 2.5m.");
-            sb.AppendLine();
-            sb.AppendLine("**Lưu ý:**");
-            sb.AppendLine("- Nếu cùng một loại đồ vật có số lượng > 1, hãy tính toán cách xếp tối ưu (chồng lên nhau, xếp cạnh nhau, v.v.)");
-            sb.AppendLine("- Ước tính kích thước dựa trên kiến thức thông thường về loại đồ vật đó");
-            sb.AppendLine("- Tính toán bao gồm cả khoảng trống cần thiết để di chuyển và bảo quản");
-            sb.AppendLine();
-            sb.AppendLine("**Trả về JSON với format sau (CHỈ TRẢ VỀ JSON, KHÔNG CÓ TEXT KHÁC):**");
-            sb.AppendLine(@"{
-  ""requiredVolumeM3"": <số thực>,
-  ""requiredAreaM2"": <số thực>,
-  ""analysisDetails"": ""<mô tả chi tiết: cách ước tính kích thước, cách xếp gọn nhất, tối đa 200 từ>"",
-  ""itemEstimates"": [
-    {
-      ""name"": ""<tên đồ vật>"",
-      ""quantity"": <số lượng>,
-      ""estimatedVolumeM3"": <thể tích ước tính cho món này, m³>,
-      ""notes"": ""<ghi chú kích thước ước tính và cách xếp, tối đa 50 từ>""
-    }
-  ]
-}");
-            sb.AppendLine("- analysisDetails tối đa 200 từ, notes tối đa 50 từ để response ngắn gọn.");
-
+            sb.AppendLine("Yêu cầu: Ước tính kích thước (DxRxC mét). Tính thể tích tối ưu (xếp chồng/lồng ghép). Diện tích sàn tối thiểu (m²). Thể tích kho (m³, trần 2.5m).");
+            sb.AppendLine(@"Trả về JSON: {""requiredVolumeM3"":N,""requiredAreaM2"":N,""analysisDetails"":""..."",""itemEstimates"":[{""name"":""..."",""quantity"":N,""estimatedVolumeM3"":N,""notes"":""...""}]}");
             return sb.ToString();
         }
 
