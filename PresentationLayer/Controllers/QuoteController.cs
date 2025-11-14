@@ -107,24 +107,16 @@ namespace PresentationLayer.Controllers
                 return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ." });
             }
 
-            if (viewModel.PickupAddress == null || viewModel.WarehouseArea == null)
+            // Sử dụng ModelState validation từ Data Annotations và IValidatableObject
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { success = false, message = "Địa chỉ nhận hàng và khu vực tìm kho là bắt buộc." });
-            }
-
-            if (string.IsNullOrWhiteSpace(viewModel.PickupAddress.AddressLine))
-            {
-                return BadRequest(new { success = false, message = "Địa chỉ nhận hàng không được để trống. Vui lòng nhập địa chỉ hoặc chọn vị trí hiện tại." });
-            }
-
-            if (string.IsNullOrWhiteSpace(viewModel.WarehouseArea.AddressLine))
-            {
-                return BadRequest(new { success = false, message = "Khu vực tìm kho không được để trống. Vui lòng chọn kho từ danh sách." });
-            }
-
-            if (viewModel.StorageEndDate <= viewModel.StorageStartDate)
-            {
-                return BadRequest(new { success = false, message = "Ngày xuất kho phải sau ngày nhập kho." });
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .SelectMany(x => x.Value!.Errors.Select(e => new { Field = x.Key, Message = e.ErrorMessage }))
+                    .ToList();
+                
+                var errorMessages = errors.Select(e => e.Message).ToList();
+                return BadRequest(new { success = false, message = string.Join(" ", errorMessages), errors = errors });
             }
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

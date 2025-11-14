@@ -1189,27 +1189,78 @@
 
         // Thêm labels tiếng Việt cho quần đảo Hoàng Sa và Trường Sa
         function addVietnameseIslandLabels(mapInstance) {
-            if (!mapInstance || typeof L === "undefined") return;
+            if (!mapInstance || typeof L === "undefined") {
+                console.warn("Cannot add island labels: mapInstance or L is undefined");
+                return;
+            }
+            
+            console.log("🏝️ Adding Vietnamese island labels to map...");
+            
+            // Thêm CSS nếu chưa có
+            if (!document.getElementById('vietnamese-island-styles')) {
+                const style = document.createElement('style');
+                style.id = 'vietnamese-island-styles';
+                style.textContent = `
+                    .vietnamese-island-label {
+                        z-index: 10000 !important;
+                    }
+                    .vietnamese-island-label div {
+                        pointer-events: none !important;
+                        background: rgba(255,255,255,0.98) !important;
+                    }
+                    .leaflet-marker-icon.vietnamese-island-label {
+                        z-index: 10000 !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
             
             // Quần đảo Hoàng Sa (Paracel Islands) - khoảng 16.5°N, 112.0°E
             const hoangSaLabel = L.marker([16.5, 112.0], {
                 icon: L.divIcon({
-                    className: 'vietnamese-island-label',
-                    html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Hoàng Sa</div>',
-                    iconSize: [150, 30],
-                    iconAnchor: [75, 15]
-                })
+                    className: 'vietnamese-island-label hoang-sa-label',
+                    html: '<div style="background: rgba(255,255,255,0.98); padding: 10px 16px; border-radius: 8px; border: 3px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 15px; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.4); text-align: center; min-width: 200px;">🏝️ Quần đảo Hoàng Sa</div>',
+                    iconSize: [220, 50],
+                    iconAnchor: [110, 25]
+                }),
+                zIndexOffset: 10000,
+                interactive: false,
+                keyboard: false
             }).addTo(mapInstance);
             
             // Quần đảo Trường Sa (Spratly Islands) - khoảng 10.0°N, 114.0°E
             const truongSaLabel = L.marker([10.0, 114.0], {
                 icon: L.divIcon({
-                    className: 'vietnamese-island-label',
-                    html: '<div style="background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; border: 2px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏝️ Quần đảo Trường Sa</div>',
-                    iconSize: [150, 30],
-                    iconAnchor: [75, 15]
-                })
+                    className: 'vietnamese-island-label truong-sa-label',
+                    html: '<div style="background: rgba(255,255,255,0.98); padding: 10px 16px; border-radius: 8px; border: 3px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 15px; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.4); text-align: center; min-width: 200px;">🏝️ Quần đảo Trường Sa</div>',
+                    iconSize: [220, 50],
+                    iconAnchor: [110, 25]
+                }),
+                zIndexOffset: 10000,
+                interactive: false,
+                keyboard: false
             }).addTo(mapInstance);
+            
+            console.log("✅ Island labels added to map");
+            
+            // Đảm bảo labels luôn hiển thị trên cùng
+            const ensureLabelsOnTop = function() {
+                try {
+                    if (hoangSaLabel && typeof hoangSaLabel.bringToFront === 'function') {
+                        hoangSaLabel.bringToFront();
+                    }
+                    if (truongSaLabel && typeof truongSaLabel.bringToFront === 'function') {
+                        truongSaLabel.bringToFront();
+                    }
+                } catch (e) {
+                    console.warn("Error bringing island labels to front:", e);
+                }
+            };
+            
+            mapInstance.on('zoomend moveend viewreset', ensureLabelsOnTop);
+            mapInstance.whenReady(function() {
+                setTimeout(ensureLabelsOnTop, 100);
+            });
         }
 
         function reverseGeocode(lat, lng) {

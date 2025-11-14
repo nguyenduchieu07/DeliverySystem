@@ -14,6 +14,12 @@ namespace DataAccessLayer.Configs
         
         // ✅ Dùng v1 (không phải v1beta)
         public string BaseUrl { get; set; } = "https://generativelanguage.googleapis.com/v1";
+        
+        // Retry settings để xử lý lỗi 503 và các lỗi tạm thời
+        public int MaxRetryAttempts { get; set; } = 3;
+        public int InitialRetryDelayMs { get; set; } = 1000; // 1 giây
+        public int MaxRetryDelayMs { get; set; } = 10000; // 10 giây
+        public int RequestTimeoutSeconds { get; set; } = 60; // 60 giây
     }
 }
 

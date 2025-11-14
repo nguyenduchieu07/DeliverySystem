@@ -12,6 +12,9 @@ map = new google.maps.Map(document.getElementById("map"), {
             language: 'vi' // Ngôn ngữ tiếng Việt
         });
 
+    // Thêm labels cho quần đảo Hoàng Sa và Trường Sa
+    addVietnameseIslandLabelsForGoogleMaps(map);
+
 marker = new google.maps.Marker({
             map,
             position: defaultLatLng,
@@ -112,3 +115,66 @@ setVal("Ward", ward);
 }
 
 function setVal(id, val) { document.getElementById(id).value = val || ""; }
+
+// Thêm labels tiếng Việt cho quần đảo Hoàng Sa và Trường Sa (Google Maps)
+function addVietnameseIslandLabelsForGoogleMaps(mapInstance) {
+    if (!mapInstance || typeof google === "undefined" || !google.maps) return;
+    
+    // Quần đảo Hoàng Sa (Paracel Islands) - khoảng 16.5°N, 112.0°E
+    const hoangSaMarker = new google.maps.Marker({
+        position: { lat: 16.5, lng: 112.0 },
+        map: mapInstance,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 0, // Ẩn marker icon
+            fillOpacity: 0,
+            strokeOpacity: 0
+        },
+        label: {
+            text: '🏝️ Quần đảo Hoàng Sa',
+            className: 'vietnamese-island-label-google',
+            color: '#d32f2f',
+            fontSize: '14px',
+            fontWeight: 'bold'
+        },
+        zIndex: 10000
+    });
+    
+    // Quần đảo Trường Sa (Spratly Islands) - khoảng 10.0°N, 114.0°E
+    const truongSaMarker = new google.maps.Marker({
+        position: { lat: 10.0, lng: 114.0 },
+        map: mapInstance,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 0, // Ẩn marker icon
+            fillOpacity: 0,
+            strokeOpacity: 0
+        },
+        label: {
+            text: '🏝️ Quần đảo Trường Sa',
+            className: 'vietnamese-island-label-google',
+            color: '#d32f2f',
+            fontSize: '14px',
+            fontWeight: 'bold'
+        },
+        zIndex: 10000
+    });
+    
+    // Thêm CSS để style labels
+    if (!document.getElementById('vietnamese-island-styles-google')) {
+        const style = document.createElement('style');
+        style.id = 'vietnamese-island-styles-google';
+        style.textContent = `
+            .vietnamese-island-label-google {
+                background: rgba(255,255,255,0.98) !important;
+                padding: 8px 12px !important;
+                border-radius: 6px !important;
+                border: 3px solid #d32f2f !important;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
+                white-space: nowrap !important;
+                z-index: 10000 !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}

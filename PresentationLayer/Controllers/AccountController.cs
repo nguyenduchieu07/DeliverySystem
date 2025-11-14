@@ -112,8 +112,24 @@ namespace PresentationLayer.Controllers
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+            
+            // Kiểm tra validation
             if (!ModelState.IsValid)
                 return View(model);
+            
+            // Kiểm tra thêm nếu PhoneOrEmail hoặc Password rỗng sau khi trim
+            if (string.IsNullOrWhiteSpace(model.PhoneOrEmail))
+            {
+                ModelState.AddModelError(nameof(model.PhoneOrEmail), "Vui lòng nhập số điện thoại hoặc email");
+                return View(model);
+            }
+            
+            if (string.IsNullOrWhiteSpace(model.Password))
+            {
+                ModelState.AddModelError(nameof(model.Password), "Vui lòng nhập mật khẩu");
+                return View(model);
+            }
+            
             var phoneOrEmail = model.PhoneOrEmail.Trim();
             var (success, message) = await _customerService.LoginAsync(
                 phoneOrEmail: phoneOrEmail,

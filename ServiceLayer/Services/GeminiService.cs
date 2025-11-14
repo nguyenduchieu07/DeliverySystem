@@ -6,11 +6,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ServiceLayer.Services
@@ -140,7 +142,7 @@ namespace ServiceLayer.Services
                     temperature = 0.1, // Thấp để nhanh và chính xác
                     topK = 10, // Giảm để nhanh hơn
                     topP = 0.8, // Giảm để nhanh hơn
-                    maxOutputTokens = 2048, // Giảm để nhanh hơn, đủ cho JSON response
+                    maxOutputTokens = 8192, // Tăng từ 2048 lên 8192 để xử lý nhiều items hơn
                 },
                 safetySettings = new[]
                 {
@@ -154,34 +156,43 @@ namespace ServiceLayer.Services
             var baseUrl = _config.BaseUrl.TrimEnd('/');
             var endpoint = $"{baseUrl}/models/{_config.ModelName}:generateContent?key={_config.ApiKey}";
 
-            var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+            // Sử dụng retry mechanism
+            return await RetryWithExponentialBackoffAsync(async () =>
             {
-                Content = JsonContent.Create(requestBody)
-            };
+                var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                {
+                    Content = JsonContent.Create(requestBody)
+                };
 
-            var response = await _httpClient.SendAsync(request);
+                var response = await _httpClient.SendAsync(request);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                LogError("Gemini API HTTP Error", response.StatusCode, response.ReasonPhrase, endpoint, errorContent);
-                throw new HttpRequestException($"Gemini API returned {response.StatusCode}: {response.ReasonPhrase}. Response: {errorContent}");
-            }
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    LogError("Gemini API HTTP Error", response.StatusCode, response.ReasonPhrase, endpoint, errorContent);
+                    
+                    // Ném exception với status code để retry logic có thể xử lý
+                    throw new HttpRequestException($"Gemini API returned {response.StatusCode}: {response.ReasonPhrase}. Response: {errorContent}")
+                    {
+                        Data = { ["StatusCode"] = response.StatusCode }
+                    };
+                }
 
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var geminiResponse = DeserializeGeminiResponse(responseContent);
-            var textResponse = ExtractTextFromResponse(geminiResponse);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var geminiResponse = DeserializeGeminiResponse(responseContent);
+                var textResponse = ExtractTextFromResponse(geminiResponse);
 
-            try
-            {
-                return ParseItemDetectionResponse(textResponse);
-            }
-            catch (Exception parseEx)
-            {
-                Console.WriteLine($"❌ Failed to parse Gemini item detection response: {parseEx.Message}");
-                Console.WriteLine($"Full response: {textResponse}");
-                throw;
-            }
+                try
+                {
+                    return ParseItemDetectionResponse(textResponse);
+                }
+                catch (Exception parseEx)
+                {
+                    Console.WriteLine($"❌ Failed to parse Gemini item detection response: {parseEx.Message}");
+                    Console.WriteLine($"Full response: {textResponse}");
+                    throw;
+                }
+            });
         }
 
         private string BuildPromptForItemDetection(int imageCount)
@@ -227,20 +238,24 @@ namespace ServiceLayer.Services
                 throw new InvalidOperationException($"Cannot find JSON object in response. Response: {textResponse}");
             }
 
-            // Nếu không tìm thấy dấu đóng }, có thể JSON bị cắt ngang
+            // Nếu không tìm thấy dấu đóng }, có thể JSON bị cắt ngang (MAX_TOKENS)
             if (jsonObjectEnd == -1 || jsonObjectEnd <= jsonObjectStart)
             {
+                Console.WriteLine("⚠️ Warning: JSON response appears to be truncated (missing closing brace). Attempting to fix...");
                 // Thử sửa JSON bị cắt ngang
                 var truncatedJson = cleanedResponse.Substring(jsonObjectStart);
                 var fixedJson = FixTruncatedJson(truncatedJson);
                 
                 try
                 {
-                    return ParseItemDetectionJson(fixedJson);
+                    var items = ParseItemDetectionJson(fixedJson);
+                    Console.WriteLine($"✅ Successfully parsed truncated JSON. Found {items.Count} items.");
+                    return items;
                 }
-                catch
+                catch (Exception fixEx)
                 {
-                    throw new InvalidOperationException($"Cannot parse Gemini response as JSON (possibly truncated). Response: {textResponse}");
+                    Console.WriteLine($"❌ Failed to parse truncated JSON even after fix: {fixEx.Message}");
+                    throw new InvalidOperationException($"Cannot parse Gemini response as JSON (possibly truncated by MAX_TOKENS). Response: {textResponse.Substring(0, Math.Min(500, textResponse.Length))}...");
                 }
             }
 
@@ -252,17 +267,20 @@ namespace ServiceLayer.Services
             }
             catch (JsonException ex)
             {
-                // Thử sửa JSON bị cắt ngang
+                // Thử sửa JSON bị cắt ngang (có thể do MAX_TOKENS)
+                Console.WriteLine($"⚠️ Warning: JSON parsing failed, attempting to fix truncated JSON: {ex.Message}");
                 try
                 {
                     var fixedJson = FixTruncatedJson(jsonContent);
-                    return ParseItemDetectionJson(fixedJson);
+                    var items = ParseItemDetectionJson(fixedJson);
+                    Console.WriteLine($"✅ Successfully parsed JSON after fix. Found {items.Count} items.");
+                    return items;
                 }
-                catch
+                catch (Exception fixEx)
                 {
-                    Console.WriteLine($"❌ Failed to parse item detection JSON: {ex.Message}");
-                    Console.WriteLine($"JSON text: {jsonContent}");
-                    throw new InvalidOperationException($"Failed to parse item detection response: {ex.Message}", ex);
+                    Console.WriteLine($"❌ Failed to parse item detection JSON even after fix: {fixEx.Message}");
+                    Console.WriteLine($"JSON text (first 500 chars): {jsonContent.Substring(0, Math.Min(500, jsonContent.Length))}...");
+                    throw new InvalidOperationException($"Failed to parse item detection response (possibly truncated by MAX_TOKENS): {ex.Message}", ex);
                 }
             }
         }
@@ -339,35 +357,44 @@ namespace ServiceLayer.Services
             var baseUrl = _config.BaseUrl.TrimEnd('/');
             var endpoint = $"{baseUrl}/models/{_config.ModelName}:generateContent?key={_config.ApiKey}";
 
-            var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+            // Sử dụng retry mechanism
+            return await RetryWithExponentialBackoffAsync(async () =>
             {
-                Content = JsonContent.Create(requestBody)
-            };
+                var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                {
+                    Content = JsonContent.Create(requestBody)
+                };
 
-            var response = await _httpClient.SendAsync(request);
+                var response = await _httpClient.SendAsync(request);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                LogError("Gemini API HTTP Error", response.StatusCode, response.ReasonPhrase, endpoint, errorContent);
-                throw new HttpRequestException($"Gemini API returned {response.StatusCode}: {response.ReasonPhrase}. Response: {errorContent}");
-            }
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    LogError("Gemini API HTTP Error", response.StatusCode, response.ReasonPhrase, endpoint, errorContent);
+                    
+                    // Ném exception với status code để retry logic có thể xử lý
+                    throw new HttpRequestException($"Gemini API returned {response.StatusCode}: {response.ReasonPhrase}. Response: {errorContent}")
+                    {
+                        Data = { ["StatusCode"] = response.StatusCode }
+                    };
+                }
 
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var geminiResponse = DeserializeGeminiResponse(responseContent);
-            var textResponse = ExtractTextFromResponse(geminiResponse);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var geminiResponse = DeserializeGeminiResponse(responseContent);
+                var textResponse = ExtractTextFromResponse(geminiResponse);
 
-            try
-            {
-                return ParseGeminiResponse(textResponse);
-            }
-            catch (Exception parseEx)
-            {
-                Console.WriteLine($"❌ Failed to parse Gemini response: {parseEx.Message}");
-                Console.WriteLine($"Full response length: {textResponse.Length} chars");
-                Console.WriteLine($"Full response: {textResponse}");
-                throw;
-            }
+                try
+                {
+                    return ParseGeminiResponse(textResponse);
+                }
+                catch (Exception parseEx)
+                {
+                    Console.WriteLine($"❌ Failed to parse Gemini response: {parseEx.Message}");
+                    Console.WriteLine($"Full response length: {textResponse.Length} chars");
+                    Console.WriteLine($"Full response: {textResponse}");
+                    throw;
+                }
+            });
         }
 
         private string BuildPromptForMultipleImages(int imageCount)
@@ -437,6 +464,7 @@ namespace ServiceLayer.Services
                 throw new InvalidOperationException($"Gemini API response: Content is null. Finish reason: {candidate.FinishReason ?? "unknown"}");
             }
 
+            // Kiểm tra Parts trước
             if (candidate.Content.Parts == null || candidate.Content.Parts.Count == 0)
             {
                 Console.WriteLine("❌ Gemini API response: Parts is null or empty");
@@ -450,16 +478,24 @@ namespace ServiceLayer.Services
                     throw new InvalidOperationException($"Gemini API response was blocked by safety filters: {blockedCategories}. Finish reason: {candidate.FinishReason ?? "unknown"}");
                 }
 
-                // Nếu là MAX_TOKENS, vẫn có thể có text trong response (cần check lại)
+                // Nếu là MAX_TOKENS và không có Parts, không thể parse được
                 if (candidate.FinishReason == "MAX_TOKENS")
                 {
-                    throw new InvalidOperationException($"Gemini API response exceeded token limit (MAX_TOKENS). Response may be truncated. Consider reducing the number of items or increasing maxOutputTokens.");
+                    throw new InvalidOperationException($"Gemini API response exceeded token limit (MAX_TOKENS) and no content was returned. Consider reducing the number of items or increasing maxOutputTokens.");
                 }
 
                 throw new InvalidOperationException($"Gemini API response does not contain text. Finish reason: {candidate.FinishReason ?? "unknown"}. This might be a temporary API issue or the response exceeded token limits.");
             }
 
             var textResponse = candidate.Content.Parts[0]?.Text;
+            
+            // Nếu finish reason là MAX_TOKENS nhưng vẫn có text, log warning và tiếp tục parse
+            if (candidate.FinishReason == "MAX_TOKENS" && !string.IsNullOrEmpty(textResponse))
+            {
+                Console.WriteLine($"⚠️ Warning: Response was truncated (MAX_TOKENS), but attempting to parse available content. Text length: {textResponse.Length} chars");
+                // Tiếp tục parse phần đã có, không throw exception
+            }
+            
             if (string.IsNullOrEmpty(textResponse))
             {
                 Console.WriteLine("❌ Gemini API response: Text is null or empty in Parts[0]");
@@ -473,12 +509,6 @@ namespace ServiceLayer.Services
                 }
                 
                 throw new InvalidOperationException($"Gemini API response does not contain text. Finish reason: {candidate.FinishReason ?? "unknown"}");
-            }
-
-            // Nếu finish reason là MAX_TOKENS, log warning nhưng vẫn cố parse phần đã có
-            if (candidate.FinishReason == "MAX_TOKENS")
-            {
-                Console.WriteLine($"⚠️ Warning: Response was truncated (MAX_TOKENS), but attempting to parse available content. Text length: {textResponse.Length}");
             }
 
             return textResponse;
@@ -571,6 +601,114 @@ namespace ServiceLayer.Services
                 fixedJson += "}";
 
             return fixedJson;
+        }
+
+        /// <summary>
+        /// Retry mechanism với exponential backoff để xử lý các lỗi tạm thời từ Gemini API
+        /// </summary>
+        private async Task<T> RetryWithExponentialBackoffAsync<T>(Func<Task<T>> operation)
+        {
+            int attempt = 0;
+            Exception? lastException = null;
+
+            while (attempt < _config.MaxRetryAttempts)
+            {
+                try
+                {
+                    return await operation();
+                }
+                catch (HttpRequestException ex) when (IsRetryableError(ex))
+                {
+                    lastException = ex;
+                    attempt++;
+
+                    if (attempt >= _config.MaxRetryAttempts)
+                    {
+                        Console.WriteLine($"❌ Max retry attempts ({_config.MaxRetryAttempts}) reached. Giving up.");
+                        throw;
+                    }
+
+                    // Tính toán delay với exponential backoff
+                    var delayMs = Math.Min(
+                        _config.InitialRetryDelayMs * (int)Math.Pow(2, attempt - 1),
+                        _config.MaxRetryDelayMs
+                    );
+
+                    // Thêm jitter (random delay) để tránh thundering herd
+                    var jitter = new Random().Next(0, delayMs / 4);
+                    var totalDelay = delayMs + jitter;
+
+                    Console.WriteLine($"⚠️ Gemini API error (attempt {attempt}/{_config.MaxRetryAttempts}): {ex.Message}");
+                    Console.WriteLine($"⏳ Retrying in {totalDelay}ms...");
+
+                    await Task.Delay(totalDelay);
+                }
+                catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+                {
+                    lastException = ex;
+                    attempt++;
+
+                    if (attempt >= _config.MaxRetryAttempts)
+                    {
+                        Console.WriteLine($"❌ Max retry attempts ({_config.MaxRetryAttempts}) reached after timeout. Giving up.");
+                        throw new HttpRequestException("Request to Gemini API timed out after multiple retries.", ex);
+                    }
+
+                    var delayMs = Math.Min(
+                        _config.InitialRetryDelayMs * (int)Math.Pow(2, attempt - 1),
+                        _config.MaxRetryDelayMs
+                    );
+                    var jitter = new Random().Next(0, delayMs / 4);
+                    var totalDelay = delayMs + jitter;
+
+                    Console.WriteLine($"⚠️ Gemini API timeout (attempt {attempt}/{_config.MaxRetryAttempts})");
+                    Console.WriteLine($"⏳ Retrying in {totalDelay}ms...");
+
+                    await Task.Delay(totalDelay);
+                }
+                catch (Exception ex)
+                {
+                    // Không retry cho các lỗi không phải lỗi tạm thời
+                    Console.WriteLine($"❌ Non-retryable error: {ex.Message}");
+                    throw;
+                }
+            }
+
+            // Nếu đến đây, có nghĩa là đã hết retry attempts
+            throw lastException ?? new InvalidOperationException("Unexpected error in retry mechanism");
+        }
+
+        /// <summary>
+        /// Kiểm tra xem lỗi có thể retry được không
+        /// </summary>
+        private bool IsRetryableError(HttpRequestException ex)
+        {
+            // Kiểm tra status code từ exception data
+            if (ex.Data.Contains("StatusCode") && ex.Data["StatusCode"] is HttpStatusCode statusCode)
+            {
+                // Retry cho các lỗi tạm thời:
+                // 429: Too Many Requests (rate limit)
+                // 500: Internal Server Error
+                // 502: Bad Gateway
+                // 503: Service Unavailable (overloaded)
+                // 504: Gateway Timeout
+                return statusCode == HttpStatusCode.TooManyRequests ||
+                       statusCode == HttpStatusCode.InternalServerError ||
+                       statusCode == HttpStatusCode.BadGateway ||
+                       statusCode == HttpStatusCode.ServiceUnavailable ||
+                       statusCode == HttpStatusCode.GatewayTimeout;
+            }
+
+            // Nếu không có status code, kiểm tra message
+            var message = ex.Message.ToLower();
+            return message.Contains("503") ||
+                   message.Contains("429") ||
+                   message.Contains("500") ||
+                   message.Contains("502") ||
+                   message.Contains("504") ||
+                   message.Contains("overloaded") ||
+                   message.Contains("unavailable") ||
+                   message.Contains("timeout");
         }
 
         private void LogError(string message, System.Net.HttpStatusCode statusCode, string? reasonPhrase, string endpoint, string errorContent)

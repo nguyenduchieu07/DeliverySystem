@@ -138,8 +138,23 @@ function initMap() {
             maxZoom: 19,
         }).addTo(map);
 
-        // Thêm labels cho quần đảo Hoàng Sa và Trường Sa
-        addVietnameseIslandLabels(map);
+        // Đợi map sẵn sàng rồi mới thêm labels cho quần đảo Hoàng Sa và Trường Sa
+        map.whenReady(function() {
+            console.log("✅ Map is ready, adding island labels...");
+            // Đợi thêm một chút để đảm bảo tiles đã load
+            setTimeout(function() {
+                addVietnameseIslandLabels(map);
+            }, 500);
+        });
+        
+        // Đảm bảo labels được thêm lại nếu map được khởi tạo lại
+        map.on('load', function() {
+            setTimeout(function() {
+                if (map && typeof addVietnameseIslandLabels === 'function') {
+                    addVietnameseIslandLabels(map);
+                }
+            }, 300);
+        });
 
         // Geocoder control - chỉ thêm nếu có
         if (typeof L.Control !== "undefined" && L.Control.geocoder) {
@@ -180,7 +195,12 @@ function initMap() {
 
 // Thêm labels tiếng Việt cho quần đảo Hoàng Sa và Trường Sa (che phủ chữ Trung Quốc)
 function addVietnameseIslandLabels(mapInstance) {
-    if (!mapInstance || typeof L === "undefined") return;
+    if (!mapInstance || typeof L === "undefined") {
+        console.warn("Cannot add island labels: mapInstance or L is undefined");
+        return;
+    }
+    
+    console.log("🏝️ Adding Vietnamese island labels to map...");
     
     // Thêm CSS để đảm bảo labels hiển thị trên cùng và che phủ tốt
     if (!document.getElementById('vietnamese-island-styles')) {
@@ -191,10 +211,14 @@ function addVietnameseIslandLabels(mapInstance) {
                 z-index: 10000 !important;
             }
             .vietnamese-island-label div {
-                pointer-events: none;
+                pointer-events: none !important;
                 background: rgba(255,255,255,0.98) !important;
+                cursor: default !important;
             }
             .leaflet-marker-icon.vietnamese-island-label {
+                z-index: 10000 !important;
+            }
+            .hoang-sa-label, .truong-sa-label {
                 z-index: 10000 !important;
             }
         `;
@@ -202,46 +226,110 @@ function addVietnameseIslandLabels(mapInstance) {
     }
     
     // Quần đảo Hoàng Sa (Paracel Islands) - khoảng 16.5°N, 112.0°E
-    // Tạo overlay lớn với background mở rộng để che phủ chữ Trung Quốc từ tile server
     const hoangSaOverlay = L.marker([16.5, 112.0], {
         icon: L.divIcon({
             className: 'vietnamese-island-label hoang-sa-label',
-            html: '<div style="background: rgba(255,255,255,0.98); padding: 10px 16px; border-radius: 8px; border: 3px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 15px; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.4); text-align: center; min-width: 200px;">🏝️ Quần đảo Hoàng Sa</div>',
+            html: '<div style="background: rgba(255,255,255,0.98); padding: 10px 16px; border-radius: 8px; border: 3px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 15px; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.4); text-align: center; min-width: 300px; z-index: 10000;">🏝️ Quần đảo Hoàng Sa, Việt Nam</div>',
             iconSize: [220, 50],
             iconAnchor: [110, 25]
         }),
-        zIndexOffset: 10000
-    }).addTo(mapInstance);
+        zIndexOffset: 10000,
+        interactive: false,
+        keyboard: false
+    });
     
     // Quần đảo Trường Sa (Spratly Islands) - khoảng 10.0°N, 114.0°E
     const truongSaOverlay = L.marker([10.0, 114.0], {
         icon: L.divIcon({
             className: 'vietnamese-island-label truong-sa-label',
-            html: '<div style="background: rgba(255,255,255,0.98); padding: 10px 16px; border-radius: 8px; border: 3px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 15px; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.4); text-align: center; min-width: 200px;">🏝️ Quần đảo Trường Sa</div>',
+            html: '<div style="background: rgba(255,255,255,0.98); padding: 10px 16px; border-radius: 8px; border: 3px solid #d32f2f; font-weight: bold; color: #d32f2f; font-size: 15px; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.4); text-align: center; min-width: 300px; z-index: 10000;">🏝️ Quần đảo Trường Sa, Việt Nam</div>',
             iconSize: [220, 50],
             iconAnchor: [110, 25]
         }),
-        zIndexOffset: 10000
-    }).addTo(mapInstance);
-    
-    // Đảm bảo labels luôn hiển thị trên cùng khi map zoom/pan
-    mapInstance.on('zoomend moveend', function() {
-        // Kiểm tra marker tồn tại và có method bringToFront trước khi gọi
-        if (hoangSaOverlay && typeof hoangSaOverlay.bringToFront === 'function') {
-            try {
-                hoangSaOverlay.bringToFront();
-            } catch (e) {
-                console.warn("Error bringing Hoang Sa overlay to front:", e);
-            }
-        }
-        if (truongSaOverlay && typeof truongSaOverlay.bringToFront === 'function') {
-            try {
-                truongSaOverlay.bringToFront();
-            } catch (e) {
-                console.warn("Error bringing Truong Sa overlay to front:", e);
-            }
-        }
+        zIndexOffset: 10000,
+        interactive: false,
+        keyboard: false
     });
+    
+    // Thêm vào map
+    try {
+        hoangSaOverlay.addTo(mapInstance);
+        truongSaOverlay.addTo(mapInstance);
+        console.log("✅ Island labels added to map successfully");
+        console.log("   - Hoàng Sa marker:", hoangSaOverlay.getLatLng());
+        console.log("   - Trường Sa marker:", truongSaOverlay.getLatLng());
+    } catch (e) {
+        console.error("❌ Error adding island labels to map:", e);
+        return;
+    }
+    
+    // Đảm bảo labels luôn hiển thị trên cùng khi map zoom/pan/move
+    const ensureLabelsOnTop = function() {
+        try {
+            // Kiểm tra xem markers có trong map không, nếu không thì thêm lại
+            if (mapInstance.hasLayer) {
+                if (!mapInstance.hasLayer(hoangSaOverlay)) {
+                    console.warn("⚠️ Hoàng Sa marker not in map, re-adding...");
+                    hoangSaOverlay.addTo(mapInstance);
+                }
+                if (!mapInstance.hasLayer(truongSaOverlay)) {
+                    console.warn("⚠️ Trường Sa marker not in map, re-adding...");
+                    truongSaOverlay.addTo(mapInstance);
+                }
+            }
+            
+            // Đảm bảo labels luôn ở trên cùng
+            if (hoangSaOverlay && typeof hoangSaOverlay.bringToFront === 'function') {
+                hoangSaOverlay.bringToFront();
+            }
+            if (truongSaOverlay && typeof truongSaOverlay.bringToFront === 'function') {
+                truongSaOverlay.bringToFront();
+            }
+            
+            // Debug: Kiểm tra xem markers có visible không
+            const bounds = mapInstance.getBounds();
+            if (bounds) {
+                const hoangSaInBounds = bounds.contains([16.5, 112.0]);
+                const truongSaInBounds = bounds.contains([10.0, 114.0]);
+                console.log("🏝️ Island labels status:", {
+                    hoangSaInView: hoangSaInBounds,
+                    truongSaInView: truongSaInBounds,
+                    zoom: mapInstance.getZoom(),
+                    center: mapInstance.getCenter()
+                });
+            }
+        } catch (e) {
+            console.warn("Error ensuring island labels on top:", e);
+        }
+    };
+    
+    // Đảm bảo labels luôn hiển thị khi map thay đổi
+    mapInstance.on('zoomend moveend viewreset load', ensureLabelsOnTop);
+    
+    // Đảm bảo labels hiển thị ngay cả khi zoom quá gần
+    mapInstance.on('zoom', function() {
+        ensureLabelsOnTop();
+    });
+    
+    // Đảm bảo labels hiển thị ngay sau khi map load
+    mapInstance.whenReady(function() {
+        setTimeout(function() {
+            ensureLabelsOnTop();
+            // Kiểm tra lại sau 500ms và 1 giây
+            setTimeout(ensureLabelsOnTop, 500);
+            setTimeout(ensureLabelsOnTop, 1000);
+        }, 200);
+    });
+    
+    // Lưu references để có thể truy cập sau và debug
+    if (!window.__islandLabels) {
+        window.__islandLabels = {};
+    }
+    window.__islandLabels.hoangSa = hoangSaOverlay;
+    window.__islandLabels.truongSa = truongSaOverlay;
+    
+    // Expose function để có thể gọi lại từ console nếu cần
+    window.__ensureIslandLabelsVisible = ensureLabelsOnTop;
 }
 
 // ============ DATE FUNCTIONS ============
@@ -1538,48 +1626,24 @@ function escapeHtml(text) {
 
 // ============ SUBMIT ORDER ============
 async function submitWarehouseOrder() {
-    // Validation - Lấy địa chỉ từ input tìm kiếm hoặc warehouseData
+    // Collect data from form
     const warehouseAreaInput = document.getElementById("warehouseAreaInput");
     const pickupAddressText =
         warehouseAreaInput?.value?.trim() || warehouseData?.address || "";
-
-    if (!pickupAddressText) {
-        alert("⚠️ Vui lòng nhập địa chỉ nhận hàng hoặc chọn vị trí hiện tại!");
-        warehouseAreaInput?.focus();
-        return;
-    }
-
-    // Validation - Kiểm tra có tọa độ không
-    if (!warehouseData || !warehouseData.lat || !warehouseData.lng) {
-        alert(
-            '⚠️ Vui lòng chọn khu vực muốn tìm kho bằng cách nhập địa chỉ hoặc nhấn "Vị trí hiện tại"!'
-        );
-        warehouseAreaInput?.focus();
-        return;
-    }
-
-    if (!selectedWarehouse) {
-        alert("⚠️ Vui lòng chọn kho từ danh sách!");
-        return;
-    }
-
+    
+    const warehouseIdInput = document.getElementById("warehouseIdInput");
+    const warehouseIdValue = warehouseIdInput?.value?.trim();
+    
     const startDate = document.getElementById("storageStartDate").value;
     const endDate = document.getElementById("storageEndDate").value;
+    const customerName = document.getElementById("customerName")?.value?.trim();
+    const customerPhone = document.getElementById("customerPhone")?.value?.trim();
+    const customerEmail = document.getElementById("customerEmail")?.value?.trim();
 
-    if (!startDate || !endDate) {
-        alert("⚠️ Vui lòng chọn ngày nhập và xuất kho!");
-        return;
-    }
-
-    if (new Date(endDate) <= new Date(startDate)) {
-        alert("⚠️ Ngày xuất kho phải sau ngày nhập kho!");
-        return;
-    }
-
-    // Collect items from table rows
+    // Collect items
     const items = [];
     const rows = document.querySelectorAll("#itemsTableBody > tr");
-    rows.forEach((row, idx) => {
+    rows.forEach((row) => {
         // Skip empty row
         if (row.querySelector("td[colspan]")) return;
 
@@ -1595,11 +1659,6 @@ async function submitWarehouseOrder() {
             items.push({ name, category, quantity });
         }
     });
-
-    if (items.length === 0) {
-        alert("⚠️ Vui lòng nhập ít nhất một món đồ!");
-        return;
-    }
 
     // Collect special requirements
     const specialRequirements = [];
@@ -1621,6 +1680,8 @@ async function submitWarehouseOrder() {
     formData.append("PickupAddress.AddressLine", pickupAddressLine);
     formData.append("PickupAddress.Latitude", pickupLat);
     formData.append("PickupAddress.Longitude", pickupLng);
+    formData.append("PickupAddress.RecipientName", customerName || "");
+    formData.append("PickupAddress.RecipientPhone", customerPhone || "");
 
     // WarehouseArea - Địa chỉ kho đã chọn (nơi lưu trữ)
     const warehouseAreaLine =
@@ -1641,16 +1702,23 @@ async function submitWarehouseOrder() {
         selectedWarehouse.Lng;
 
     // Gửi WarehouseId (ưu tiên) để tìm warehouse chính xác
-    const warehouseId = selectedWarehouse.Id ?? selectedWarehouse.id;  // ASP.NET Core mặc định PascalCase
-    if (warehouseId) {
-        formData.append("WarehouseId", warehouseId.toString());
+    const finalWarehouseId = selectedWarehouse?.Id ?? selectedWarehouse?.id ?? warehouseIdValue;  // ASP.NET Core mặc định PascalCase
+    if (finalWarehouseId) {
+        formData.append("WarehouseId", finalWarehouseId.toString());
     }
 
     formData.append("WarehouseArea.AddressLine", warehouseAreaLine);
     formData.append("WarehouseArea.Latitude", warehouseLat);
     formData.append("WarehouseArea.Longitude", warehouseLng);
-    formData.append("StorageStartDate", startDate);
-    formData.append("StorageEndDate", endDate);
+    formData.append("WarehouseArea.RecipientName", customerName || "");
+    formData.append("WarehouseArea.RecipientPhone", customerPhone || "");
+    formData.append("StorageStartDate", startDate || "");
+    formData.append("StorageEndDate", endDate || "");
+    formData.append("CustomerFullName", customerName || "");
+    formData.append("CustomerPhone", customerPhone || "");
+    if (customerEmail) {
+        formData.append("CustomerEmail", customerEmail);
+    }
     formData.append("Note", document.getElementById("orderNote")?.value || "");
 
     items.forEach((item, idx) => {
@@ -1700,7 +1768,7 @@ async function submitWarehouseOrder() {
                 warehouseLat,
                 warehouseLng
             );
-            console.log("WarehouseId:", warehouseId);
+            console.log("WarehouseId:", finalWarehouseId);
             console.log("SelectedWarehouse:", selectedWarehouse);
             console.log("Items:", items);
             console.log("Dates:", startDate, endDate);
@@ -1855,7 +1923,7 @@ async function submitWarehouseOrder() {
                     bookBtn.textContent = originalText;
                     bookBtn.disabled = false;
 
-                    alert(`✅ ${result.message}\n\n📦 Mã đơn hàng: ${result.orderId}`);
+                    showToast(`${result.message}\n\n📦 Mã đơn hàng: ${result.orderId}`, 'success', 6000);
 
                     // Redirect to success page
                     if (result.orderId) {
@@ -1864,7 +1932,7 @@ async function submitWarehouseOrder() {
                     }
                 }
             } else {
-                // Lỗi từ server
+                // Lỗi từ server - có thể là validation errors từ ModelState
                 const errorMessage =
                     result?.message ||
                     result?.detail ||
@@ -1875,9 +1943,41 @@ async function submitWarehouseOrder() {
                     responseText: result,
                 });
 
-                alert(
-                    `❌ ${errorMessage}\n\nVui lòng kiểm tra lại:\n- Địa chỉ nhận hàng đã nhập chưa?\n- Đã chọn kho chưa?\n- Đã nhập ít nhất một món đồ chưa?`
-                );
+                // Xử lý validation errors từ server
+                if (result?.errors && Array.isArray(result.errors)) {
+                    const validationErrors = result.errors.map(e => e.Message || e.message || e).join('\n');
+                    showToast(`Có lỗi validation:\n\n${validationErrors}`, 'error', 8000);
+                    
+                    // Highlight các trường có lỗi
+                    result.errors.forEach(error => {
+                        const fieldName = error.Field || error.field;
+                        if (fieldName) {
+                            // Map field name to input ID
+                            let inputId = '';
+                            if (fieldName.includes('CustomerFullName')) inputId = 'customerName';
+                            else if (fieldName.includes('CustomerPhone')) inputId = 'customerPhone';
+                            else if (fieldName.includes('CustomerEmail')) inputId = 'customerEmail';
+                            else if (fieldName.includes('StorageStartDate')) inputId = 'storageStartDate';
+                            else if (fieldName.includes('StorageEndDate')) inputId = 'storageEndDate';
+                            else if (fieldName.includes('WarehouseId')) inputId = 'warehouseIdInput';
+                            else if (fieldName.includes('PickupAddress')) inputId = 'warehouseAreaInput';
+                            
+                            if (inputId) {
+                                const input = document.getElementById(inputId);
+                                if (input) {
+                                    input.classList.add('error');
+                                    input.focus();
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    showToast(
+                        `${errorMessage}\n\nVui lòng kiểm tra lại:\n- Địa chỉ nhận hàng đã nhập chưa?\n- Đã chọn kho chưa?\n- Đã nhập ít nhất một món đồ chưa?`,
+                        'error',
+                        8000
+                    );
+                }
 
                 bookBtn.textContent = originalText;
                 bookBtn.disabled = false;
@@ -1885,8 +1985,10 @@ async function submitWarehouseOrder() {
         } catch (error) {
             console.error("Error submitting order:", error);
             console.error("Error stack:", error.stack);
-            alert(
-                `❌ Không thể kết nối đến máy chủ!\n\nChi tiết: ${error.message}\n\nVui lòng kiểm tra kết nối và thử lại.`
+            showToast(
+                `Không thể kết nối đến máy chủ!\n\nChi tiết: ${error.message}\n\nVui lòng kiểm tra kết nối và thử lại.`,
+                'error',
+                8000
             );
             bookBtn.textContent = originalText;
             bookBtn.disabled = false;

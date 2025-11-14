@@ -127,10 +127,17 @@
         }
     }
     
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        const loginBtn = document.getElementById('loginBtn');
-        loginBtn.textContent = 'Đang đăng nhập...';
-        loginBtn.disabled = true;
+    // Đảm bảo script chạy sau khi jQuery validation được load
+    $(document).ready(function() {
+        $('#loginForm').on('submit', function(e) {
+            // jQuery validation sẽ tự động kiểm tra và ngăn submit nếu có lỗi
+            // Chỉ disable button nếu form hợp lệ (sẽ được submit)
+            if ($(this).valid && $(this).valid()) {
+                const loginBtn = document.getElementById('loginBtn');
+                loginBtn.textContent = 'Đang đăng nhập...';
+                loginBtn.disabled = true;
+            }
+        });
     });
     
     window.addEventListener('load', function() {

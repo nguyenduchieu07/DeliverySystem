@@ -79,6 +79,34 @@
         border-color: #667eea;
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
+    
+    /* Validation error styles */
+    .form-control.error,
+    .form-control:invalid {
+        border-color: #e74c3c !important;
+        box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+    }
+    
+    .form-control.error:focus {
+        border-color: #e74c3c !important;
+        box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2) !important;
+    }
+    
+    .form-control.valid {
+        border-color: #27ae60;
+    }
+    
+    .form-control.valid:focus {
+        border-color: #27ae60;
+        box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+    }
+
+.validation-error {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: block;
+}
 
 .map-section {
     background: white;

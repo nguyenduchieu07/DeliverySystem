@@ -28,7 +28,11 @@ namespace ServiceLayer.Extensions
             services.AddScoped<IContractService, ContractService>();
             services.AddScoped<IPaymentService,PaymentService>();
             services.AddScoped<IWarehouseService, WarehouseService>();
-            services.AddHttpClient<IGeminiService, GeminiService>();
+            services.AddHttpClient<IGeminiService, GeminiService>((serviceProvider, client) =>
+            {
+                var config = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<DataAccessLayer.Configs.GeminiConfig>>().Value;
+                client.Timeout = TimeSpan.FromSeconds(config.RequestTimeoutSeconds);
+            });
             services.AddHttpContextAccessor();
         }
     }
