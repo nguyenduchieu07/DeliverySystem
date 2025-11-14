@@ -222,6 +222,7 @@ namespace PresentationLayer.Areas.Stores.Controllers
         }
 
         // POST: /Warehouse/Edit
+        // POST: /Warehouse/Edit
         [HttpPost]
         public async Task<IActionResult> Edit(
             Warehouse warehouse,
