@@ -58,8 +58,19 @@ namespace PresentationLayer.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            // Validate số điện thoại phải có đúng 10 số
+            if (!string.IsNullOrWhiteSpace(model.PhoneNumber))
+            {
+                var phoneDigits = model.PhoneNumber.Replace(" ", "").Replace("-", "");
+                if (phoneDigits.Length != 10 || phoneDigits.Any(c => !char.IsDigit(c)))
+                {
+                    ModelState.AddModelError(nameof(model.PhoneNumber), "Số điện thoại phải có đúng 10 số");
+                }
+            }
+            
             if (!ModelState.IsValid)
                 return View(model);
+            
             var fullPhoneNumber = model.PhoneNumber;
             if (!model.PhoneNumber.StartsWith("+") && !model.PhoneNumber.StartsWith("0"))
             {

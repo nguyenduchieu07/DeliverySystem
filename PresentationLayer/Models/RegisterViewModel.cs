@@ -8,7 +8,8 @@ namespace PresentationLayer.Models
         public string CountryCode { get; set; } = "+84";
 
         [Required(ErrorMessage = "Số điện thoại bắt buộc")]
-        [RegularExpression(@"^[0-9]{8,11}$", ErrorMessage = "Số điện thoại không hợp lệ")]
+        [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "Số điện thoại phải có đúng 10 số")]
+        [StringLength(10, MinimumLength = 10, ErrorMessage = "Số điện thoại phải có đúng 10 số")]
         public string PhoneNumber { get; set; }
 
         [Required(ErrorMessage = "Họ và tên bắt buộc")]
