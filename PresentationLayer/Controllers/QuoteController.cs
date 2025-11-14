@@ -112,7 +112,61 @@ namespace PresentationLayer.Controllers
             {
                 var errors = ModelState
                     .Where(x => x.Value?.Errors.Count > 0)
-                    .SelectMany(x => x.Value!.Errors.Select(e => new { Field = x.Key, Message = e.ErrorMessage }))
+                    .SelectMany(x => x.Value!.Errors.Select(e => {
+                        // Chuyển đổi message tiếng Anh sang tiếng Việt
+                        string message = e.ErrorMessage;
+                        if (string.IsNullOrEmpty(message) || message.Contains("field is required"))
+                        {
+                            // Xử lý message mặc định từ ASP.NET Core
+                            if (x.Key.Contains("AddressLine") || message.Contains("AddressLine"))
+                            {
+                                message = "Địa chỉ là bắt buộc";
+                            }
+                            else if (x.Key.Contains("CustomerFullName") || message.Contains("CustomerFullName"))
+                            {
+                                message = "Họ và tên là bắt buộc";
+                            }
+                            else if (x.Key.Contains("CustomerPhone") || message.Contains("CustomerPhone"))
+                            {
+                                message = "Số điện thoại là bắt buộc";
+                            }
+                            else if (x.Key.Contains("CustomerEmail") || message.Contains("CustomerEmail"))
+                            {
+                                message = "Email là bắt buộc";
+                            }
+                            else if (x.Key.Contains("StorageStartDate") || message.Contains("StorageStartDate"))
+                            {
+                                message = "Ngày gửi vào là bắt buộc";
+                            }
+                            else if (x.Key.Contains("StorageEndDate") || message.Contains("StorageEndDate"))
+                            {
+                                message = "Ngày lấy ra là bắt buộc";
+                            }
+                            else if (x.Key.Contains("WarehouseId") || message.Contains("WarehouseId"))
+                            {
+                                message = "Vui lòng chọn kho từ danh sách";
+                            }
+                            else if (message.Contains("field is required"))
+                            {
+                                // Chuyển đổi các message tiếng Anh thường gặp
+                                message = message.Replace("The ", "").Replace(" field is required", " là bắt buộc");
+                                message = message.Replace("The ", "").Replace(" field is required.", " là bắt buộc.");
+                                // Xử lý các field name phổ biến
+                                message = message.Replace("AddressLine", "Địa chỉ");
+                                message = message.Replace("CustomerFullName", "Họ và tên");
+                                message = message.Replace("CustomerPhone", "Số điện thoại");
+                                message = message.Replace("CustomerEmail", "Email");
+                                message = message.Replace("StorageStartDate", "Ngày gửi vào");
+                                message = message.Replace("StorageEndDate", "Ngày lấy ra");
+                                message = message.Replace("WarehouseId", "Kho");
+                            }
+                            else if (string.IsNullOrEmpty(message))
+                            {
+                                message = "Trường này là bắt buộc";
+                            }
+                        }
+                        return new { Field = x.Key, Message = message };
+                    }))
                     .ToList();
                 
                 var errorMessages = errors.Select(e => e.Message).ToList();

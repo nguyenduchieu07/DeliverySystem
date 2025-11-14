@@ -13,14 +13,15 @@ namespace PresentationLayer.Models
         public string PhoneNumber { get; set; }
 
         [Required(ErrorMessage = "Họ và tên bắt buộc")]
-        [StringLength(100, ErrorMessage = "Họ tên tối đa 100 ký tự")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Họ tên phải có từ 2 đến 100 ký tự")]
+        [RegularExpression(@"^[\p{L}\s'-]+$", ErrorMessage = "Họ và tên không được chứa ký tự đặc biệt. Chỉ cho phép chữ cái, khoảng trắng, dấu nháy đơn và dấu gạch ngang")]
         public string FullName { get; set; }
 
         [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string? Email { get; set; }
 
         [Required(ErrorMessage = "Mật khẩu bắt buộc")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu ít nhất 6 ký tự")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
         public string Password { get; set; }
 
         // Sửa: Thêm Required và Compare để kiểm tra xác nhận mật khẩu

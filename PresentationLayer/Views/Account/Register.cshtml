@@ -30,6 +30,16 @@
             </div>
         }
 
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+        {
+            <div class="alert-danger">
+                @foreach (var error in ViewData.ModelState[string.Empty].Errors)
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
         @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { id = "registerForm" }))
         {
             @Html.AntiForgeryToken()
@@ -161,7 +171,9 @@
                     },
                     FullName: {
                         required: true,
-                        minlength: 2
+                        minlength: 2,
+                        maxlength: 100,
+                        pattern: /^[\p{L}\s'-]+$/u
                     },
                     Email: {
                         email: true
@@ -187,7 +199,9 @@
                     },
                     FullName: {
                         required: "Vui lòng nhập họ và tên",
-                        minlength: "Họ và tên phải có ít nhất 2 ký tự"
+                        minlength: "Họ và tên phải có ít nhất 2 ký tự",
+                        maxlength: "Họ và tên không được vượt quá 100 ký tự",
+                        pattern: "Họ và tên không được chứa ký tự đặc biệt. Chỉ cho phép chữ cái, khoảng trắng, dấu nháy đơn và dấu gạch ngang"
                     },
                     Email: {
                         email: "Vui lòng nhập địa chỉ email hợp lệ"
@@ -205,7 +219,30 @@
                     }
                 },
                 errorPlacement: function (error, element) {
-                    error.appendTo(element.closest(".register-form-group").find(".field-validation-error"));
+                    // Xóa các lỗi cũ trước khi thêm lỗi mới để tránh trùng lặp
+                    var errorContainer = element.closest(".register-form-group").find(".field-validation-error");
+                    errorContainer.empty();
+                    error.appendTo(errorContainer);
+                },
+                // Chỉ hiển thị 1 lỗi đầu tiên cho mỗi field
+                showErrors: function(errorMap, errorList) {
+                    // Xóa tất cả lỗi cũ
+                    $(".field-validation-error").empty();
+                    
+                    // Chỉ hiển thị lỗi đầu tiên cho mỗi field
+                    var shownErrors = {};
+                    $.each(errorList, function() {
+                        if (!shownErrors[this.element.name]) {
+                            var errorContainer = $(this.element).closest(".register-form-group").find(".field-validation-error");
+                            errorContainer.html(this.message);
+                            shownErrors[this.element.name] = true;
+                        }
+                    });
+                    
+                    // Cập nhật counter
+                    this.errorList = errorList.filter(function(error) {
+                        return shownErrors[error.element.name];
+                    });
                 }
             });
         });

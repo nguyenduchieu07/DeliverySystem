@@ -1933,10 +1933,16 @@ async function submitWarehouseOrder() {
                 }
             } else {
                 // Lỗi từ server - có thể là validation errors từ ModelState
-                const errorMessage =
-                    result?.message ||
-                    result?.detail ||
-                    `Lỗi ${response.status}: ${response.statusText}`;
+                // Chuyển đổi message tiếng Anh sang tiếng Việt
+                let errorMessage = result?.message || result?.detail || `Lỗi ${response.status}: ${response.statusText}`;
+                
+                // Sửa các message tiếng Anh thường gặp
+                if (errorMessage.includes("The AddressLine field is required") || errorMessage.includes("AddressLine field is required")) {
+                    errorMessage = "Địa chỉ là bắt buộc";
+                } else if (errorMessage.includes("field is required")) {
+                    errorMessage = errorMessage.replace(/The (\w+) field is required/gi, "Trường $1 là bắt buộc");
+                    errorMessage = errorMessage.replace(/(\w+) field is required/gi, "Trường $1 là bắt buộc");
+                }
                 console.error("Order submission failed:", {
                     status: response.status,
                     result: result,
@@ -1945,7 +1951,18 @@ async function submitWarehouseOrder() {
 
                 // Xử lý validation errors từ server
                 if (result?.errors && Array.isArray(result.errors)) {
-                    const validationErrors = result.errors.map(e => e.Message || e.message || e).join('\n');
+                    // Chuyển đổi tất cả message sang tiếng Việt
+                    const validationErrors = result.errors.map(e => {
+                        let msg = e.Message || e.message || e;
+                        // Chuyển các message tiếng Anh thường gặp sang tiếng Việt
+                        if (msg.includes("The AddressLine field is required") || msg.includes("AddressLine field is required")) {
+                            msg = "Địa chỉ là bắt buộc";
+                        } else if (msg.includes("field is required")) {
+                            msg = msg.replace(/The (\w+) field is required/gi, "Trường $1 là bắt buộc");
+                            msg = msg.replace(/(\w+) field is required/gi, "Trường $1 là bắt buộc");
+                        }
+                        return msg;
+                    }).join('\n');
                     showToast(`Có lỗi validation:\n\n${validationErrors}`, 'error', 8000);
                     
                     // Highlight các trường có lỗi

@@ -68,6 +68,17 @@ namespace PresentationLayer.Controllers
                 }
             }
             
+            // Validate họ và tên không được chứa ký tự đặc biệt
+            if (!string.IsNullOrWhiteSpace(model.FullName))
+            {
+                // Chỉ cho phép chữ cái (bao gồm tiếng Việt), khoảng trắng, dấu nháy đơn và dấu gạch ngang
+                var namePattern = new System.Text.RegularExpressions.Regex(@"^[\p{L}\s'-]+$");
+                if (!namePattern.IsMatch(model.FullName))
+                {
+                    ModelState.AddModelError(nameof(model.FullName), "Họ và tên không được chứa ký tự đặc biệt. Chỉ cho phép chữ cái, khoảng trắng, dấu nháy đơn và dấu gạch ngang");
+                }
+            }
+            
             if (!ModelState.IsValid)
                 return View(model);
             
@@ -99,7 +110,22 @@ namespace PresentationLayer.Controllers
                 TempData["SuccessMessage"] = message;
                 return RedirectToAction(nameof(Login));
             }
-            ModelState.AddModelError(string.Empty, message);
+            
+            // Phân tích message để xác định field nào bị lỗi
+            if (message.Contains("Số điện thoại đã được đăng ký") || message.Contains("số điện thoại"))
+            {
+                ModelState.AddModelError(nameof(model.PhoneNumber), message);
+            }
+            else if (message.Contains("Email đã được đăng ký") || message.Contains("email"))
+            {
+                ModelState.AddModelError(nameof(model.Email), message);
+            }
+            else
+            {
+                // Lỗi khác, hiển thị ở trên cùng
+                ModelState.AddModelError(string.Empty, message);
+            }
+            
             return View(model);
         }
         #endregion

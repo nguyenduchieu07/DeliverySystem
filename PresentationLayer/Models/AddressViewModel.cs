@@ -1,4 +1,6 @@
-﻿namespace PresentationLayer.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace PresentationLayer.Models
 {
     public class AddressViewModel
     {
@@ -6,6 +8,8 @@
         public Guid? UserId { get; set; }
         public Guid? StoreId { get; set; }
         public string? Label { get; set; }
+        
+        [Required(ErrorMessage = "Địa chỉ là bắt buộc")]
         public string AddressLine { get; set; } = null!;
         public string? Ward { get; set; }
         public string? District { get; set; }
