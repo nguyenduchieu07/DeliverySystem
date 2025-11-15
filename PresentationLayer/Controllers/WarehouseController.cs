@@ -39,6 +39,9 @@ namespace PresentationLayer.Controllers
                     row = s.Row,
                     col = s.Col,
                     size = s.Size,
+                    widthM = s.WidthM,
+                    lengthM = s.LengthM,
+                    heightM = s.HeightM,
                     volumeM3 = s.VolumeM3,
                     basePricePerHour = s.BasePricePerHour,
                     status = s.IsBlocked ? "blocked"

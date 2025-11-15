@@ -211,6 +211,12 @@ namespace PresentationLayer.Controllers
                         else
                         {
                             Console.WriteLine($"✅ AI đã phân tích {itemsForAI.Count} items và tính được: {volumeResult.RequiredVolumeM3:F2} m³, {volumeResult.RequiredAreaM2:F2} m²");
+                            Console.WriteLine($"📝 AnalysisDetails length: {volumeResult.AnalysisDetails?.Length ?? 0} chars");
+                            Console.WriteLine($"📦 ItemEstimates count: {volumeResult.ItemEstimates?.Count ?? 0}");
+                            if (!string.IsNullOrWhiteSpace(volumeResult.AnalysisDetails))
+                            {
+                                Console.WriteLine($"📝 AnalysisDetails (first 200 chars): {volumeResult.AnalysisDetails.Substring(0, Math.Min(200, volumeResult.AnalysisDetails.Length))}...");
+                            }
                         }
                     }
                     catch (Exception geminiEx)
@@ -240,13 +246,9 @@ namespace PresentationLayer.Controllers
                     {
                         try
                         {
-                            // Upload tất cả ảnh lên Cloudinary
-                            imageUrls = new List<string>();
-                            foreach (var file in filesToProcess)
-                            {
-                                var imageUrl = await _cloudinaryService.UploadImageFileAsync(file);
-                                imageUrls.Add(imageUrl);
-                            }
+                            // Upload tất cả ảnh lên Cloudinary song song để tăng tốc độ
+                            var uploadTasks = filesToProcess.Select(file => _cloudinaryService.UploadImageFileAsync(file));
+                            imageUrls = (await Task.WhenAll(uploadTasks)).ToList();
 
                             // Gọi Gemini để phân tích nhiều ảnh
                             volumeResult = await _geminiService.AnalyzeMultipleImagesAndCalculateVolumeAsync(imageUrls);
@@ -254,10 +256,6 @@ namespace PresentationLayer.Controllers
                             if (volumeResult == null)
                             {
                                 geminiError = "Gemini API trả về null result";
-                            }
-                            else
-                            {
-                                Console.WriteLine($"✅ AI đã phân tích {imageUrls.Count} ảnh và tính được: {volumeResult.RequiredVolumeM3:F2} m³, {volumeResult.RequiredAreaM2:F2} m²");
                             }
                         }
                         catch (Exception geminiEx)

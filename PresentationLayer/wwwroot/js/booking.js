@@ -1226,8 +1226,25 @@ function renderWarehouseGrid(slots) {
                 slotEl.className = `warehouse-slot ${statusClass}`;
                 slotEl.dataset.slotId = slot.id;
                 slotEl.textContent = slot.code || `${r}-${c}`;
-                slotEl.title = `Slot: ${slot.code || "N/A"}\nSize: ${slot.size || "N/A"
-                    }\nPrice: ${slot.basePricePerHour || "N/A"} đ/h`;
+                
+                // Tạo tooltip với thông tin size chi tiết
+                const widthM = slot.widthM || slot.WidthM || 0;
+                const lengthM = slot.lengthM || slot.LengthM || 0;
+                const heightM = slot.heightM || slot.HeightM || 0;
+                const volumeM3 = slot.volumeM3 || slot.VolumeM3 || (widthM * lengthM * heightM);
+                const areaM2 = (widthM * lengthM).toFixed(2);
+                
+                let sizeInfo = "";
+                if (widthM > 0 && lengthM > 0 && heightM > 0) {
+                    sizeInfo = `Kích thước: ${widthM}m × ${lengthM}m × ${heightM}m\nDiện tích: ${areaM2} m²\nThể tích: ${volumeM3.toFixed(2)} m³`;
+                } else if (slot.size) {
+                    sizeInfo = `Size: ${slot.size}`;
+                } else {
+                    sizeInfo = "Size: N/A";
+                }
+                
+                const priceInfo = slot.basePricePerHour ? `${Number(slot.basePricePerHour).toLocaleString('vi-VN')} đ/h` : "N/A";
+                slotEl.title = `Slot: ${slot.code || "N/A"}\n${sizeInfo}\nGiá: ${priceInfo}`;
 
                 // Chỉ cho phép click nếu slot available (không blocked, occupied, hoặc reserved)
                 if (statusClass === "available") {
@@ -1236,8 +1253,13 @@ function renderWarehouseGrid(slots) {
                     });
                 } else if (statusClass === "reserved") {
                     // Slot reserved hiển thị tooltip thông tin
-                    slotEl.title = `Slot: ${slot.code || "N/A"}\nSize: ${slot.size || "N/A"
-                    }\nPrice: ${slot.basePricePerHour || "N/A"} đ/h\n⚠️ Đang được giữ chỗ`;
+                    slotEl.title = `Slot: ${slot.code || "N/A"}\n${sizeInfo}\nGiá: ${priceInfo}\n⚠️ Đang được giữ chỗ`;
+                    slotEl.style.cursor = "not-allowed";
+                } else if (statusClass === "occupied") {
+                    slotEl.title = `Slot: ${slot.code || "N/A"}\n${sizeInfo}\nGiá: ${priceInfo}\n⚠️ Đang sử dụng`;
+                    slotEl.style.cursor = "not-allowed";
+                } else if (statusClass === "blocked") {
+                    slotEl.title = `Slot: ${slot.code || "N/A"}\n${sizeInfo}\nGiá: ${priceInfo}\n🚫 Đã khóa`;
                     slotEl.style.cursor = "not-allowed";
                 }
             } else {
@@ -1455,10 +1477,45 @@ async function previewTotalImage(input) {
     }
 
     if (files && files.length > 0) {
-        console.log(`📷 ${files.length} image(s) selected:`);
+        // Định dạng ảnh được chấp nhận
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
         
-        // Hiển thị preview cho tất cả các ảnh
+        // Kiểm tra từng file
+        const validFiles = [];
+        let hasInvalidFile = false;
+        let invalidFileNames = [];
+        
         Array.from(files).forEach((file, index) => {
+            // Kiểm tra định dạng file
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension);
+            
+            if (!isValidType) {
+                hasInvalidFile = true;
+                invalidFileNames.push(file.name);
+                console.error(`❌ File không hợp lệ: ${file.name} (${file.type || 'unknown type'})`);
+            } else {
+                validFiles.push(file);
+            }
+        });
+        
+        // Nếu có file không hợp lệ, hiển thị toast và clear input
+        if (hasInvalidFile) {
+            const invalidNames = invalidFileNames.join(', ');
+            showToast(`⚠️ Định dạng ảnh không hợp lệ!\n\nFile không hợp lệ: ${invalidNames}\n\nVui lòng chọn file ảnh có định dạng: JPG, JPEG, PNG, WEBP hoặc GIF.`, 'error', 6000);
+            input.value = ''; // Clear input
+            if (previewContainer) {
+                previewContainer.innerHTML = "";
+                previewContainer.style.display = "none";
+            }
+            return;
+        }
+        
+        console.log(`📷 ${validFiles.length} image(s) selected:`);
+        
+        // Hiển thị preview cho tất cả các ảnh hợp lệ
+        validFiles.forEach((file, index) => {
             console.log(`  - Image ${index + 1}:`, file.name, `(${(file.size / 1024).toFixed(2)} KB)`);
             
             if (previewContainer) {
@@ -1481,8 +1538,8 @@ async function previewTotalImage(input) {
             }
         });
 
-        // Gọi AI để phân tích tất cả ảnh và tự động điền vào bảng
-        await analyzeImageAndFillItems(Array.from(files));
+        // Gọi AI để phân tích tất cả ảnh hợp lệ và tự động điền vào bảng
+        await analyzeImageAndFillItems(validFiles);
     } else {
         console.log("📷 No images selected (file input cleared)");
     }
@@ -1683,26 +1740,38 @@ async function submitWarehouseOrder() {
     formData.append("PickupAddress.RecipientName", customerName || "");
     formData.append("PickupAddress.RecipientPhone", customerPhone || "");
 
-    // WarehouseArea - Địa chỉ kho đã chọn (nơi lưu trữ)
-    const warehouseAreaLine =
-        selectedWarehouse.full ||
-        selectedWarehouse.addressLine ||
-        selectedWarehouse.AddressLine ||
-        selectedWarehouse.name ||
-        "Kho đã chọn";
-    const warehouseLat =
-        selectedWarehouse.latitude ||
-        selectedWarehouse.Latitude ||
-        selectedWarehouse.lat ||
-        selectedWarehouse.Lat;
-    const warehouseLng =
-        selectedWarehouse.longitude ||
-        selectedWarehouse.Longitude ||
-        selectedWarehouse.lng ||
-        selectedWarehouse.Lng;
-
     // Gửi WarehouseId (ưu tiên) để tìm warehouse chính xác
     const finalWarehouseId = selectedWarehouse?.Id ?? selectedWarehouse?.id ?? warehouseIdValue;  // ASP.NET Core mặc định PascalCase
+    
+    // Validate: Phải chọn kho trước khi submit
+    if (!finalWarehouseId || !selectedWarehouse) {
+        showToast("⚠️ Vui lòng chọn kho từ danh sách trước khi đặt hàng!", 'error', 5000);
+        const bookBtn = document.getElementById("bookBtn");
+        if (bookBtn) {
+            bookBtn.disabled = false;
+            bookBtn.textContent = "Đặt hàng";
+        }
+        return;
+    }
+
+    // WarehouseArea - Địa chỉ kho đã chọn (nơi lưu trữ)
+    const warehouseAreaLine =
+        selectedWarehouse?.full ||
+        selectedWarehouse?.addressLine ||
+        selectedWarehouse?.AddressLine ||
+        selectedWarehouse?.name ||
+        "Kho đã chọn";
+    const warehouseLat =
+        selectedWarehouse?.latitude ||
+        selectedWarehouse?.Latitude ||
+        selectedWarehouse?.lat ||
+        selectedWarehouse?.Lat;
+    const warehouseLng =
+        selectedWarehouse?.longitude ||
+        selectedWarehouse?.Longitude ||
+        selectedWarehouse?.lng ||
+        selectedWarehouse?.Lng;
+    
     if (finalWarehouseId) {
         formData.append("WarehouseId", finalWarehouseId.toString());
     }
@@ -1739,12 +1808,29 @@ async function submitWarehouseOrder() {
         productImageInput.files &&
         productImageInput.files[0]
     ) {
-        formData.append("productImage", productImageInput.files[0]);
+        // Validate image format trước khi submit
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+        const file = productImageInput.files[0];
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension);
+        
+        if (!isValidType) {
+            showToast(`⚠️ Định dạng ảnh không hợp lệ!\n\nFile: ${file.name}\n\nVui lòng chọn file ảnh có định dạng: JPG, JPEG, PNG, WEBP hoặc GIF.`, 'error', 6000);
+            const bookBtn = document.getElementById("bookBtn");
+            if (bookBtn) {
+                bookBtn.disabled = false;
+                bookBtn.textContent = "Đặt hàng";
+            }
+            return;
+        }
+        
+        formData.append("productImage", file);
         hasImage = true;
         console.log(
             "📷 Product image will be uploaded:",
-            productImageInput.files[0].name,
-            `(${(productImageInput.files[0].size / 1024).toFixed(2)} KB)`
+            file.name,
+            `(${(file.size / 1024).toFixed(2)} KB)`
         );
     } else {
         console.log(
@@ -1939,9 +2025,15 @@ async function submitWarehouseOrder() {
                 // Sửa các message tiếng Anh thường gặp
                 if (errorMessage.includes("The AddressLine field is required") || errorMessage.includes("AddressLine field is required")) {
                     errorMessage = "Địa chỉ là bắt buộc";
+                } else if (errorMessage.includes("WarehouseId") || errorMessage.includes("Vui lòng chọn kho") || errorMessage.includes("chọn kho")) {
+                    errorMessage = "Vui lòng chọn kho từ danh sách";
                 } else if (errorMessage.includes("field is required")) {
                     errorMessage = errorMessage.replace(/The (\w+) field is required/gi, "Trường $1 là bắt buộc");
                     errorMessage = errorMessage.replace(/(\w+) field is required/gi, "Trường $1 là bắt buộc");
+                    // Xử lý WarehouseId riêng
+                    if (errorMessage.includes("WarehouseId") || errorMessage.includes("Kho")) {
+                        errorMessage = "Vui lòng chọn kho từ danh sách";
+                    }
                 }
                 console.error("Order submission failed:", {
                     status: response.status,
@@ -1957,9 +2049,15 @@ async function submitWarehouseOrder() {
                         // Chuyển các message tiếng Anh thường gặp sang tiếng Việt
                         if (msg.includes("The AddressLine field is required") || msg.includes("AddressLine field is required")) {
                             msg = "Địa chỉ là bắt buộc";
+                        } else if (msg.includes("WarehouseId") || msg.includes("Vui lòng chọn kho")) {
+                            msg = "Vui lòng chọn kho từ danh sách";
                         } else if (msg.includes("field is required")) {
                             msg = msg.replace(/The (\w+) field is required/gi, "Trường $1 là bắt buộc");
                             msg = msg.replace(/(\w+) field is required/gi, "Trường $1 là bắt buộc");
+                            // Xử lý WarehouseId riêng
+                            if (msg.includes("WarehouseId") || msg.includes("Kho")) {
+                                msg = "Vui lòng chọn kho từ danh sách";
+                            }
                         }
                         return msg;
                     }).join('\n');
@@ -2015,6 +2113,15 @@ async function submitWarehouseOrder() {
 
 // Hiển thị bảng báo giá chi tiết
 function showQuoteBreakdown(quote, quotationId) {
+    // Debug: Log dữ liệu AI để kiểm tra
+    console.log("🔍 Quote data for breakdown:", {
+        requiredVolumeM3: quote.requiredVolumeM3,
+        requiredAreaM2: quote.requiredAreaM2,
+        analysisDetails: quote.analysisDetails ? quote.analysisDetails.substring(0, 100) + "..." : null,
+        itemEstimates: quote.itemEstimates,
+        geminiAnalysisAvailable: quote.geminiAnalysisAvailable
+    });
+    
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat("vi-VN", {
             style: "currency",
@@ -2066,29 +2173,37 @@ function showQuoteBreakdown(quote, quotationId) {
         )} m²</p>
                     </div>
                     
-                    <!-- Yêu cầu tính toán - chỉ hiển thị khi có kết quả thực từ Gemini (có analysisDetails) -->
-                    ${quote.analysisDetails &&
-            (quote.requiredVolumeM3 > 0 || quote.requiredAreaM2 > 0)
+                    <!-- Yêu cầu tính toán từ AI - hiển thị diện tích, thể tích ước tính và giải thích cách sắp xếp -->
+                    ${(quote.requiredVolumeM3 != null && quote.requiredVolumeM3 > 0) || 
+                       (quote.requiredAreaM2 != null && quote.requiredAreaM2 > 0) || 
+                       (quote.analysisDetails && quote.analysisDetails.trim().length > 0)
             ? `
-                    <div style="margin-bottom: 24px; padding: 16px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-                        <h3 style="margin: 0 0 12px; color: #333; font-size: 18px;">📊 Yêu cầu tính toán (từ phân tích ảnh)</h3>
-                        ${quote.requiredVolumeM3 && quote.requiredVolumeM3 > 0
-                ? `<p style="margin: 4px 0;"><strong>Thể tích cần:</strong> ${formatNumber(
-                    quote.requiredVolumeM3
-                )} m³</p>`
+                    <div style="margin-bottom: 24px; padding: 16px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                        <h3 style="margin: 0 0 12px; color: #333; font-size: 18px;">📊 Ước tính không gian cần thiết (từ AI)</h3>
+                        
+                        ${quote.requiredVolumeM3 != null && quote.requiredVolumeM3 > 0
+                ? `<div style="margin: 8px 0; padding: 10px; background: white; border-radius: 6px;">
+                    <p style="margin: 0; font-size: 16px; font-weight: 600; color: #1976d2;">
+                        <strong>📦 Thể tích ước tính cần thiết:</strong> ${formatNumber(quote.requiredVolumeM3)} m³
+                    </p>
+                </div>`
                 : ""
             }
-                        ${quote.requiredAreaM2 && quote.requiredAreaM2 > 0
-                ? `<p style="margin: 4px 0;"><strong>Diện tích cần:</strong> ${formatNumber(
-                    quote.requiredAreaM2
-                )} m²</p>`
+                        
+                        ${quote.requiredAreaM2 != null && quote.requiredAreaM2 > 0
+                ? `<div style="margin: 8px 0; padding: 10px; background: white; border-radius: 6px;">
+                    <p style="margin: 0; font-size: 16px; font-weight: 600; color: #1976d2;">
+                        <strong>📐 Diện tích ước tính cần thiết:</strong> ${formatNumber(quote.requiredAreaM2)} m²
+                    </p>
+                </div>`
                 : ""
             }
-                        ${quote.analysisDetails
-                ? `<div style="margin-top: 12px; padding: 12px; background: white; border-radius: 6px; font-size: 14px; color: #555;">${quote.analysisDetails.replace(
-                    /\n/g,
-                    "<br>"
-                )}</div>`
+                        
+                        ${quote.analysisDetails && quote.analysisDetails.trim().length > 0
+                ? `<div style="margin-top: 12px; padding: 12px; background: white; border-radius: 6px; font-size: 14px; color: #555; line-height: 1.6;">
+                    <h4 style="margin: 0 0 8px; font-size: 15px; color: #333; font-weight: 600;">💡 Giải thích cách sắp xếp:</h4>
+                    <div style="white-space: pre-wrap;">${quote.analysisDetails.replace(/\n/g, "<br>")}</div>
+                </div>`
                 : ""
             }
                     </div>

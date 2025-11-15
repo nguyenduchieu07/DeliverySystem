@@ -39,32 +39,35 @@ namespace ServiceLayer.Services
 
             var prompt = BuildPromptForMultipleImages(imageUrls.Count);
 
-            // Tải tất cả ảnh và convert sang base64
+            // Tải tất cả ảnh song song và convert sang base64
             var imageParts = new List<object> { new { text = prompt } };
 
-            foreach (var imageUrl in imageUrls)
-            {
-                if (string.IsNullOrEmpty(imageUrl)) continue;
-
-                var imageBytes = await DownloadImageAsync(imageUrl);
-                var base64Image = Convert.ToBase64String(imageBytes);
-
-                // Xác định MIME type dựa trên extension
-                var mimeType = "image/jpeg";
-                if (imageUrl.Contains(".png", StringComparison.OrdinalIgnoreCase))
-                    mimeType = "image/png";
-                else if (imageUrl.Contains(".webp", StringComparison.OrdinalIgnoreCase))
-                    mimeType = "image/webp";
-
-                imageParts.Add(new
+            var downloadTasks = imageUrls
+                .Where(url => !string.IsNullOrEmpty(url))
+                .Select(async url =>
                 {
-                    inline_data = new
+                    var imageBytes = await DownloadImageAsync(url);
+                    var base64Image = Convert.ToBase64String(imageBytes);
+
+                    // Xác định MIME type dựa trên extension
+                    var mimeType = "image/jpeg";
+                    if (url.Contains(".png", StringComparison.OrdinalIgnoreCase))
+                        mimeType = "image/png";
+                    else if (url.Contains(".webp", StringComparison.OrdinalIgnoreCase))
+                        mimeType = "image/webp";
+
+                    return new
                     {
-                        mime_type = mimeType,
-                        data = base64Image
-                    }
+                        inline_data = new
+                        {
+                            mime_type = mimeType,
+                            data = base64Image
+                        }
+                    };
                 });
-            }
+
+            var imageData = await Task.WhenAll(downloadTasks);
+            imageParts.AddRange(imageData);
 
             return await CallGeminiApiAsync(imageParts);
         }
@@ -327,8 +330,11 @@ namespace ServiceLayer.Services
             else if (quantityElement.ValueKind == JsonValueKind.String)
             {
                 var str = quantityElement.GetString();
-                if (int.TryParse(str, out var parsed)) return Math.Max(1, parsed);
-                if (double.TryParse(str, out var parsedDouble)) return Math.Max(1, (int)Math.Round(parsedDouble));
+                if (str != null)
+                {
+                    if (int.TryParse(str, out var parsed)) return Math.Max(1, parsed);
+                    if (double.TryParse(str, out var parsedDouble)) return Math.Max(1, (int)Math.Round(parsedDouble));
+                }
             }
             return 1;
         }
@@ -343,7 +349,7 @@ namespace ServiceLayer.Services
                     temperature = 0.2, // Thấp để nhanh và chính xác
                     topK = 10, // Giảm để nhanh hơn
                     topP = 0.85, // Giảm để nhanh hơn
-                    maxOutputTokens = 3072, // Giảm từ 16384 xuống 3072 để nhanh hơn, vẫn đủ cho JSON
+                    maxOutputTokens = 8192, // Tăng lên 8192 để tránh MAX_TOKENS
                 },
                 safetySettings = new[]
                 {
@@ -383,17 +389,7 @@ namespace ServiceLayer.Services
                 var geminiResponse = DeserializeGeminiResponse(responseContent);
                 var textResponse = ExtractTextFromResponse(geminiResponse);
 
-                try
-                {
-                    return ParseGeminiResponse(textResponse);
-                }
-                catch (Exception parseEx)
-                {
-                    Console.WriteLine($"❌ Failed to parse Gemini response: {parseEx.Message}");
-                    Console.WriteLine($"Full response length: {textResponse.Length} chars");
-                    Console.WriteLine($"Full response: {textResponse}");
-                    throw;
-                }
+                return ParseGeminiResponse(textResponse);
             });
         }
 
@@ -403,7 +399,8 @@ namespace ServiceLayer.Services
             sb.AppendLine($"Phân tích {imageCount} ảnh, tính thể tích & diện tích kho tối ưu.");
             sb.AppendLine("Yêu cầu: Liệt kê đồ vật (tên, số lượng). Ước tính kích thước (DxRxC mét). Tính thể tích tối ưu (xếp chồng/lồng ghép). Diện tích sàn tối thiểu (m²). Thể tích kho (m³, trần 2.5m).");
             sb.AppendLine("Cộng dồn số lượng nếu cùng loại trong nhiều ảnh.");
-            sb.AppendLine(@"Trả về JSON: {""requiredVolumeM3"":N,""requiredAreaM2"":N,""analysisDetails"":""..."",""itemEstimates"":[{""name"":""..."",""quantity"":N,""estimatedVolumeM3"":N,""notes"":""...""}]}");
+            sb.AppendLine(@"Trả về JSON: {""requiredVolumeM3"":N,""requiredAreaM2"":N,""analysisDetails"":""Giải thích ngắn gọn cách sắp xếp (tối đa 200 từ)"",""itemEstimates"":[{""name"":""..."",""quantity"":N,""estimatedVolumeM3"":N,""notes"":""ngắn gọn""}]}");
+            sb.AppendLine("QUAN TRỌNG: analysisDetails phải ngắn gọn, tối đa 200 từ. itemEstimates chỉ cần name, quantity, estimatedVolumeM3, không cần notes dài.");
             return sb.ToString();
         }
 
@@ -416,7 +413,8 @@ namespace ServiceLayer.Services
                 sb.AppendLine($"- {item.Name} x{item.Quantity}" + (!string.IsNullOrWhiteSpace(item.Category) ? $" ({item.Category})" : ""));
             }
             sb.AppendLine("Yêu cầu: Ước tính kích thước (DxRxC mét). Tính thể tích tối ưu (xếp chồng/lồng ghép). Diện tích sàn tối thiểu (m²). Thể tích kho (m³, trần 2.5m).");
-            sb.AppendLine(@"Trả về JSON: {""requiredVolumeM3"":N,""requiredAreaM2"":N,""analysisDetails"":""..."",""itemEstimates"":[{""name"":""..."",""quantity"":N,""estimatedVolumeM3"":N,""notes"":""...""}]}");
+            sb.AppendLine(@"Trả về JSON: {""requiredVolumeM3"":N,""requiredAreaM2"":N,""analysisDetails"":""Giải thích ngắn gọn cách sắp xếp (tối đa 200 từ)"",""itemEstimates"":[{""name"":""..."",""quantity"":N,""estimatedVolumeM3"":N,""notes"":""ngắn gọn""}]}");
+            sb.AppendLine("QUAN TRỌNG: analysisDetails phải ngắn gọn, tối đa 200 từ. itemEstimates chỉ cần name, quantity, estimatedVolumeM3, không cần notes dài.");
             return sb.ToString();
         }
 
@@ -478,10 +476,10 @@ namespace ServiceLayer.Services
                     throw new InvalidOperationException($"Gemini API response was blocked by safety filters: {blockedCategories}. Finish reason: {candidate.FinishReason ?? "unknown"}");
                 }
 
-                // Nếu là MAX_TOKENS và không có Parts, không thể parse được
+                // Nếu là MAX_TOKENS và không có Parts, thử tăng maxOutputTokens và thông báo
                 if (candidate.FinishReason == "MAX_TOKENS")
                 {
-                    throw new InvalidOperationException($"Gemini API response exceeded token limit (MAX_TOKENS) and no content was returned. Consider reducing the number of items or increasing maxOutputTokens.");
+                    throw new InvalidOperationException($"Gemini API response exceeded token limit (MAX_TOKENS) and no content was returned. The response may be too large. Please try with fewer items or contact support.");
                 }
 
                 throw new InvalidOperationException($"Gemini API response does not contain text. Finish reason: {candidate.FinishReason ?? "unknown"}. This might be a temporary API issue or the response exceeded token limits.");
@@ -528,37 +526,100 @@ namespace ServiceLayer.Services
 
             try
             {
-                var result = JsonSerializer.Deserialize<VolumeCalculationResult>(jsonText, _jsonOptions);
-                if (result == null)
-                {
-                    throw new InvalidOperationException("Failed to deserialize Gemini response");
-                }
-
-                if (string.IsNullOrEmpty(result.AnalysisDetails))
-                {
-                    result.AnalysisDetails = textResponse;
-                }
-
-                return result;
+                return ParseVolumeResultFromJson(jsonText);
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
                 // Fallback: Xử lý JSON bị cắt ngang
-                var fixedJson = FixTruncatedJson(jsonText);
-                var result = JsonSerializer.Deserialize<VolumeCalculationResult>(fixedJson, _jsonOptions);
-
-                if (result == null)
+                try
                 {
-                    throw new InvalidOperationException("Failed to deserialize Gemini response after fix");
+                    var fixedJson = FixTruncatedJson(jsonText);
+                    return ParseVolumeResultFromJson(fixedJson);
                 }
-
-                if (string.IsNullOrEmpty(result.AnalysisDetails))
+                catch (Exception fixEx)
                 {
-                    result.AnalysisDetails = textResponse;
+                    Console.WriteLine($"❌ Failed to parse JSON even after fix: {fixEx.Message}");
+                    throw new InvalidOperationException($"Failed to parse Gemini response (possibly truncated by MAX_TOKENS): {ex.Message}", ex);
                 }
-
-                return result;
             }
+        }
+
+        private VolumeCalculationResult ParseVolumeResultFromJson(string jsonText)
+        {
+            using var doc = JsonDocument.Parse(jsonText);
+            var root = doc.RootElement;
+            
+            var result = new VolumeCalculationResult();
+            
+            // Parse requiredVolumeM3 (hỗ trợ cả camelCase và PascalCase)
+            if (TryGetProperty(root, "requiredVolumeM3", "RequiredVolumeM3", out var volElement))
+            {
+                result.RequiredVolumeM3 = ParseDecimal(volElement);
+            }
+            
+            // Parse requiredAreaM2
+            if (TryGetProperty(root, "requiredAreaM2", "RequiredAreaM2", out var areaElement))
+            {
+                result.RequiredAreaM2 = ParseDecimal(areaElement);
+            }
+            
+            // Parse analysisDetails
+            if (TryGetProperty(root, "analysisDetails", "AnalysisDetails", out var detailsElement))
+            {
+                result.AnalysisDetails = detailsElement.GetString();
+            }
+            
+            // Parse itemEstimates
+            if (TryGetProperty(root, "itemEstimates", "ItemEstimates", out var estimatesElement) 
+                && estimatesElement.ValueKind == JsonValueKind.Array)
+            {
+                result.ItemEstimates = new List<ItemEstimate>();
+                foreach (var itemElement in estimatesElement.EnumerateArray())
+                {
+                    var estimate = ParseItemEstimate(itemElement);
+                    if (!string.IsNullOrWhiteSpace(estimate.Name))
+                        result.ItemEstimates.Add(estimate);
+                }
+            }
+
+            return result;
+        }
+
+        private bool TryGetProperty(JsonElement root, string camelCase, string pascalCase, out JsonElement element)
+        {
+            return root.TryGetProperty(camelCase, out element) || root.TryGetProperty(pascalCase, out element);
+        }
+
+        private decimal ParseDecimal(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.Number)
+                return element.GetDecimal();
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                var str = element.GetString();
+                if (str != null && decimal.TryParse(str, out var value))
+                    return value;
+            }
+            return 0;
+        }
+
+        private ItemEstimate ParseItemEstimate(JsonElement itemElement)
+        {
+            var estimate = new ItemEstimate();
+            
+            if (TryGetProperty(itemElement, "name", "Name", out var nameEl))
+                estimate.Name = nameEl.GetString() ?? "";
+            
+            if (TryGetProperty(itemElement, "quantity", "Quantity", out var qtyEl))
+                estimate.Quantity = ParseQuantity(qtyEl);
+            
+            if (TryGetProperty(itemElement, "estimatedVolumeM3", "EstimatedVolumeM3", out var volEstEl))
+                estimate.EstimatedVolumeM3 = ParseDecimal(volEstEl);
+            
+            if (TryGetProperty(itemElement, "notes", "Notes", out var notesEl))
+                estimate.Notes = notesEl.GetString();
+            
+            return estimate;
         }
 
         private string FixTruncatedJson(string jsonText)
