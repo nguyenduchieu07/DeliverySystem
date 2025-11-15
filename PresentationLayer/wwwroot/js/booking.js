@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
     initDateInputs();
     initAddressAutocomplete();
     initEstimationCard();
+    initEmailValidation();
 
     // Đợi map khởi tạo xong rồi mới load warehouses
     // Tự động load kho gần khi trang load
@@ -1696,6 +1697,29 @@ async function submitWarehouseOrder() {
     const customerName = document.getElementById("customerName")?.value?.trim();
     const customerPhone = document.getElementById("customerPhone")?.value?.trim();
     const customerEmail = document.getElementById("customerEmail")?.value?.trim();
+    
+    // Validate email nếu có nhập
+    if (customerEmail && customerEmail.length > 0) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(customerEmail)) {
+            showToast("⚠️ Email không hợp lệ! Vui lòng nhập đúng định dạng email (ví dụ: example@email.com)", 'error', 5000);
+            const emailError = document.getElementById("customerEmailError");
+            if (emailError) {
+                emailError.textContent = "Email không hợp lệ! Vui lòng nhập đúng định dạng email (ví dụ: example@email.com)";
+                emailError.style.display = "block";
+            }
+            const emailInput = document.getElementById("customerEmail");
+            if (emailInput) {
+                emailInput.classList.add("error");
+            }
+            const bookBtn = document.getElementById("bookBtn");
+            if (bookBtn) {
+                bookBtn.disabled = false;
+                bookBtn.textContent = "Đặt hàng";
+            }
+            return;
+        }
+    }
 
     // Collect items
     const items = [];
@@ -2049,6 +2073,10 @@ async function submitWarehouseOrder() {
                         // Chuyển các message tiếng Anh thường gặp sang tiếng Việt
                         if (msg.includes("The AddressLine field is required") || msg.includes("AddressLine field is required")) {
                             msg = "Địa chỉ là bắt buộc";
+                        } else if (msg.includes("Email") && (msg.includes("invalid") || msg.includes("không hợp lệ") || msg.includes("hợp lệ"))) {
+                            msg = "Email không hợp lệ! Vui lòng nhập đúng định dạng email (ví dụ: example@email.com)";
+                        } else if (msg.includes("CustomerEmail") && msg.includes("required")) {
+                            msg = "Email là bắt buộc";
                         } else if (msg.includes("WarehouseId") || msg.includes("Vui lòng chọn kho")) {
                             msg = "Vui lòng chọn kho từ danh sách";
                         } else if (msg.includes("field is required")) {
@@ -2069,11 +2097,27 @@ async function submitWarehouseOrder() {
                         if (fieldName) {
                             // Map field name to input ID
                             let inputId = '';
-                            if (fieldName.includes('CustomerFullName')) inputId = 'customerName';
-                            else if (fieldName.includes('CustomerPhone')) inputId = 'customerPhone';
-                            else if (fieldName.includes('CustomerEmail')) inputId = 'customerEmail';
-                            else if (fieldName.includes('StorageStartDate')) inputId = 'storageStartDate';
-                            else if (fieldName.includes('StorageEndDate')) inputId = 'storageEndDate';
+                            let errorElementId = '';
+                            if (fieldName.includes('CustomerFullName')) {
+                                inputId = 'customerName';
+                                errorElementId = 'customerNameError';
+                            }
+                            else if (fieldName.includes('CustomerPhone')) {
+                                inputId = 'customerPhone';
+                                errorElementId = 'customerPhoneError';
+                            }
+                            else if (fieldName.includes('CustomerEmail')) {
+                                inputId = 'customerEmail';
+                                errorElementId = 'customerEmailError';
+                            }
+                            else if (fieldName.includes('StorageStartDate')) {
+                                inputId = 'storageStartDate';
+                                errorElementId = 'storageStartDateError';
+                            }
+                            else if (fieldName.includes('StorageEndDate')) {
+                                inputId = 'storageEndDate';
+                                errorElementId = 'storageEndDateError';
+                            }
                             else if (fieldName.includes('WarehouseId')) inputId = 'warehouseIdInput';
                             else if (fieldName.includes('PickupAddress')) inputId = 'warehouseAreaInput';
                             
@@ -2082,6 +2126,20 @@ async function submitWarehouseOrder() {
                                 if (input) {
                                     input.classList.add('error');
                                     input.focus();
+                                }
+                            }
+                            
+                            // Hiển thị error message bên dưới input
+                            if (errorElementId) {
+                                const errorElement = document.getElementById(errorElementId);
+                                if (errorElement) {
+                                    let errorMsg = error.Message || error.message || "Lỗi validation";
+                                    // Chuyển message sang tiếng Việt nếu cần
+                                    if (errorMsg.includes("Email") && (errorMsg.includes("invalid") || errorMsg.includes("không hợp lệ") || errorMsg.includes("hợp lệ"))) {
+                                        errorMsg = "Email không hợp lệ! Vui lòng nhập đúng định dạng email (ví dụ: example@email.com)";
+                                    }
+                                    errorElement.textContent = errorMsg;
+                                    errorElement.style.display = "block";
                                 }
                             }
                         }
@@ -2796,6 +2854,48 @@ function updateEstimationCard() {
         totalAddonPrice,
         "VND"
     );
+}
+
+// Initialize email validation
+function initEmailValidation() {
+    const emailInput = document.getElementById("customerEmail");
+    const emailError = document.getElementById("customerEmailError");
+    
+    if (emailInput) {
+        // Clear error khi user nhập lại
+        emailInput.addEventListener('input', function() {
+            if (emailError) {
+                emailError.style.display = 'none';
+            }
+            emailInput.classList.remove('error');
+        });
+        
+        // Validate khi blur (rời khỏi field)
+        emailInput.addEventListener('blur', function() {
+            const email = emailInput.value?.trim();
+            if (email && email.length > 0) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    if (emailError) {
+                        emailError.textContent = "Email không hợp lệ! Vui lòng nhập đúng định dạng email (ví dụ: example@email.com)";
+                        emailError.style.display = "block";
+                    }
+                    emailInput.classList.add('error');
+                } else {
+                    if (emailError) {
+                        emailError.style.display = 'none';
+                    }
+                    emailInput.classList.remove('error');
+                }
+            } else {
+                // Nếu để trống, clear error (vì email là optional)
+                if (emailError) {
+                    emailError.style.display = 'none';
+                }
+                emailInput.classList.remove('error');
+            }
+        });
+    }
 }
 
 // Expose functions globally for debugging (sau khi đã định nghĩa)

@@ -17,8 +17,9 @@ namespace PresentationLayer.Models
         [RegularExpression(@"^[\p{L}\s'-]+$", ErrorMessage = "Họ và tên không được chứa ký tự đặc biệt. Chỉ cho phép chữ cái, khoảng trắng, dấu nháy đơn và dấu gạch ngang")]
         public string FullName { get; set; }
 
-        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
-        public string? Email { get; set; }
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ! Vui lòng nhập đúng định dạng email (ví dụ: example@email.com)")]
+        public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Mật khẩu bắt buộc")]
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]

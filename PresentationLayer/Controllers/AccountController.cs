@@ -87,26 +87,41 @@ namespace PresentationLayer.Controllers
             {
                 fullPhoneNumber = model.CountryCode + model.PhoneNumber;
             }
-            if (string.IsNullOrEmpty(model.Email))
+            
+            // Validate email bắt buộc
+            if (string.IsNullOrWhiteSpace(model.Email))
             {
-                ModelState.AddModelError("Email", "Email là bắt buộc.");
+                ModelState.AddModelError(nameof(model.Email), "Email là bắt buộc");
                 return View(model);
             }
+            
+            var email = model.Email.Trim();
+            
             var (success, message, user) = await _customerService.RegisterCustomerAsync(
                 phoneNumber: fullPhoneNumber,
                 password: model.Password,
                 fullName: model.FullName,
-                email: model.Email
+                email: email
             );
             if (success)
             {
-                var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = emailConfirmationToken }, protocol: Request.Scheme);
-                await _emailSender.SendEmailAsync(
-                    model.Email,
-                    "Xác nhận email",
-                    $"Vui lòng xác nhận email bằng cách <a href='{callbackUrl}'>nhấn vào đây</a>."
-                );
+                // Gửi email confirmation (email là bắt buộc)
+                try
+                {
+                    var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = emailConfirmationToken }, protocol: Request.Scheme);
+                    await _emailSender.SendEmailAsync(
+                        email,
+                        "Xác nhận email",
+                        $"Vui lòng xác nhận email bằng cách <a href='{callbackUrl}'>nhấn vào đây</a>."
+                    );
+                }
+                catch (Exception ex)
+                {
+                    // Log lỗi nhưng không chặn đăng ký
+                    Console.WriteLine($"⚠️ Không thể gửi email confirmation: {ex.Message}");
+                }
+                
                 TempData["SuccessMessage"] = message;
                 return RedirectToAction(nameof(Login));
             }

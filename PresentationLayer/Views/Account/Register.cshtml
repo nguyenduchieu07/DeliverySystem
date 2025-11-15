@@ -74,11 +74,15 @@
             </div>
 
             <div class="register-form-group">
+                <label style="display: block; margin-bottom: 5px; color: #333; font-weight: 500;">
+                    Email <span style="color: #e74c3c;">*</span>
+                </label>
                 @Html.TextBoxFor(m => m.Email, new
                     {
                         @class = "register-input",
-                        @placeholder = "E-mail (không bắt buộc)",
-                        @type = "email"
+                        @placeholder = "Email (ví dụ: example@email.com)",
+                        @type = "email",
+                        @required = "required"
                     })
                 @Html.ValidationMessageFor(m => m.Email, "", new { @class = "field-validation-error" })
             </div>
@@ -176,6 +180,7 @@
                         pattern: /^[\p{L}\s'-]+$/u
                     },
                     Email: {
+                        required: true,
                         email: true
                     },
                     Password: {
@@ -204,7 +209,8 @@
                         pattern: "Họ và tên không được chứa ký tự đặc biệt. Chỉ cho phép chữ cái, khoảng trắng, dấu nháy đơn và dấu gạch ngang"
                     },
                     Email: {
-                        email: "Vui lòng nhập địa chỉ email hợp lệ"
+                        required: "Email là bắt buộc",
+                        email: "Email không hợp lệ! Vui lòng nhập đúng định dạng email (ví dụ: example@email.com)"
                     },
                     Password: {
                         required: "Vui lòng nhập mật khẩu",
@@ -243,6 +249,25 @@
                     this.errorList = errorList.filter(function(error) {
                         return shownErrors[error.element.name];
                     });
+                },
+                submitHandler: function(form) {
+                    // Kiểm tra đồng ý điều khoản
+                    const agreeToTerms = document.getElementById('agreeToTermsInput').value;
+                    if (agreeToTerms !== 'true') {
+                        alert('Vui lòng đồng ý với điều khoản và chính sách');
+                        const registerBtn = document.getElementById('registerBtn');
+                        registerBtn.textContent = 'Đăng ký miễn phí';
+                        registerBtn.disabled = false;
+                        return false;
+                    }
+                    
+                    // Nếu form hợp lệ và đã đồng ý điều khoản, cho phép submit
+                    const registerBtn = document.getElementById('registerBtn');
+                    registerBtn.textContent = 'Đang đăng ký...';
+                    registerBtn.disabled = true;
+                    
+                    // Submit form
+                    form.submit();
                 }
             });
         });
@@ -266,24 +291,6 @@
             checkbox.classList.toggle('checked');
             hiddenField.value = checkbox.classList.contains('checked') ? 'true' : 'false';
         }
-
-        document.getElementById('registerForm').addEventListener('submit', function (e) {
-            const registerBtn = document.getElementById('registerBtn');
-            const agreeToTerms = document.getElementById('agreeToTermsInput').value;
-            if (agreeToTerms !== 'true') {
-                e.preventDefault();
-                alert('Vui lòng đồng ý với điều khoản và chính sách');
-                return false;
-            }
-            if (!$("#registerForm").valid()) {
-                e.preventDefault();
-                registerBtn.textContent = 'Đăng ký miễn phí';
-                registerBtn.disabled = false;
-                return false;
-            }
-            registerBtn.textContent = 'Đang đăng ký...';
-            registerBtn.disabled = true;
-        });
 
         // Phone number validation - only allow numbers
         document.querySelector('input[name="PhoneNumber"]').addEventListener('input', function (e) {
