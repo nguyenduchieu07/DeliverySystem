@@ -70,7 +70,9 @@ namespace ServiceLayer.Services
         {
             try
             {
-                var payment = await _context.Payments.FindAsync(paymentId);
+                var payment = await _context.Payments
+                    .Include(p => p.Order)
+                    .FirstOrDefaultAsync(p => p.Id == paymentId);
                 if (payment == null) return false;
 
                 // Verify với provider tương ứng
@@ -86,6 +88,17 @@ namespace ServiceLayer.Services
                 {
                     payment.Status = StatusValue.Completed;
                     payment.UpdatedAt = DateTime.Now;
+
+                    // Sau khi thanh toán thành công, tự động gán slot và cập nhật trạng thái đơn hàng
+                    if (payment.Order != null)
+                    {
+                        await AssignSlotToOrderAfterPaymentAsync(payment.Order.Id);
+                        
+                        // Cập nhật trạng thái đơn hàng thành Approved (đã duyệt)
+                        payment.Order.Status = StatusValue.Approved;
+                        payment.Order.UpdatedAt = DateTime.Now;
+                    }
+
                     await _context.SaveChangesAsync();
                 }
 
@@ -95,6 +108,126 @@ namespace ServiceLayer.Services
             {
                 _logger.LogError(ex, "Error verifying payment {PaymentId}", paymentId);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Tự động gán slot vào đơn hàng sau khi thanh toán thành công
+        /// </summary>
+        private async Task AssignSlotToOrderAfterPaymentAsync(Guid orderId)
+        {
+            try
+            {
+                _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Starting for order: {OrderId}", orderId);
+
+                // Kiểm tra xem đã có OrderWarehouseSlot chưa
+                var existingAssignment = await _context.OrderWarehouseSlots
+                    .FirstOrDefaultAsync(ows => ows.OrderId == orderId);
+
+                if (existingAssignment != null)
+                {
+                    _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - OrderWarehouseSlot already exists: {SlotId}", existingAssignment.WarehouseSlotId);
+                    
+                    // Đã có assignment rồi, chỉ cập nhật slot status
+                    var slot = await _context.WarehouseSlots
+                        .FirstOrDefaultAsync(s => s.Id == existingAssignment.WarehouseSlotId);
+                    
+                    if (slot != null && slot.Status == StatusValue.Reserved)
+                    {
+                        slot.Status = StatusValue.InUse;
+                        slot.UpdatedAt = DateTime.Now;
+                        _context.WarehouseSlots.Update(slot);
+                        _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Updated slot {SlotId} status from Reserved to InUse", slot.Id);
+                    }
+                    return;
+                }
+
+                // Tìm slot từ SlotReservation hoặc slot.CurrentOrderId
+                var reservation = await _context.SlotReservations
+                    .Include(r => r.WarehouseSlot)
+                    .FirstOrDefaultAsync(r => r.OrderId == orderId && r.Status == StatusValue.Active);
+
+                if (reservation != null && reservation.WarehouseSlot != null)
+                {
+                    var slot = reservation.WarehouseSlot;
+                    _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Found reservation with slot: {SlotId}, Status: {Status}", 
+                        slot.Id, slot.Status);
+
+                    // Tạo OrderWarehouseSlot
+                    var orderWarehouseSlot = new OrderWarehouseSlot
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderId = orderId,
+                        WarehouseSlotId = slot.Id,
+                        AssignedAt = DateTime.Now,
+                        ReleasedAt = null,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    };
+                    _context.OrderWarehouseSlots.Add(orderWarehouseSlot);
+                    _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Created OrderWarehouseSlot: {OrderWarehouseSlotId}", orderWarehouseSlot.Id);
+
+                    // Cập nhật slot status từ Reserved → InUse
+                    if (slot.Status == StatusValue.Reserved)
+                    {
+                        slot.Status = StatusValue.InUse;
+                        slot.UpdatedAt = DateTime.Now;
+                        _context.WarehouseSlots.Update(slot);
+                        _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Updated slot {SlotId} status from Reserved to InUse", slot.Id);
+                    }
+
+                    // Cập nhật reservation status
+                    reservation.Status = StatusValue.InActive;
+                    reservation.UpdatedAt = DateTime.Now;
+                    _context.SlotReservations.Update(reservation);
+                    _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Updated reservation {ReservationId} status to InActive", reservation.Id);
+                }
+                else
+                {
+                    _logger.LogWarning("AssignSlotToOrderAfterPaymentAsync - No active reservation found, trying to find slot by CurrentOrderId");
+                    
+                    // Nếu không có reservation, tìm slot qua CurrentOrderId
+                    var slot = await _context.WarehouseSlots
+                        .FirstOrDefaultAsync(s => s.CurrentOrderId == orderId);
+
+                    if (slot != null)
+                    {
+                        _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Found slot by CurrentOrderId: {SlotId}, Status: {Status}", 
+                            slot.Id, slot.Status);
+                        
+                        // Tạo OrderWarehouseSlot
+                        var orderWarehouseSlot = new OrderWarehouseSlot
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = orderId,
+                            WarehouseSlotId = slot.Id,
+                            AssignedAt = DateTime.Now,
+                            ReleasedAt = null,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now
+                        };
+                        _context.OrderWarehouseSlots.Add(orderWarehouseSlot);
+                        _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Created OrderWarehouseSlot: {OrderWarehouseSlotId}", orderWarehouseSlot.Id);
+
+                        // Cập nhật slot status từ Reserved → InUse
+                        if (slot.Status == StatusValue.Reserved)
+                        {
+                            slot.Status = StatusValue.InUse;
+                            slot.UpdatedAt = DateTime.Now;
+                            _context.WarehouseSlots.Update(slot);
+                            _logger.LogInformation("AssignSlotToOrderAfterPaymentAsync - Updated slot {SlotId} status from Reserved to InUse", slot.Id);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("AssignSlotToOrderAfterPaymentAsync - Cannot find slot for order {OrderId} after payment", orderId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AssignSlotToOrderAfterPaymentAsync - Error assigning slot to order {OrderId} after payment", orderId);
+                // Không throw exception để không làm gián đoạn quá trình verify payment
             }
         }
 
@@ -310,12 +443,24 @@ namespace ServiceLayer.Services
             if (resultCode == "0") // Success
             {
                 var payment = await _context.Payments
+                    .Include(p => p.Order)
                     .FirstOrDefaultAsync(p => p.ProviderTxnId == orderId);
 
                 if (payment != null)
                 {
                     payment.Status = StatusValue.Completed;
                     payment.UpdatedAt = DateTime.Now;
+
+                    // Sau khi thanh toán thành công, tự động gán slot và cập nhật trạng thái đơn hàng
+                    if (payment.Order != null)
+                    {
+                        await AssignSlotToOrderAfterPaymentAsync(payment.Order.Id);
+                        
+                        // Cập nhật trạng thái đơn hàng thành Approved (đã duyệt)
+                        payment.Order.Status = StatusValue.Approved;
+                        payment.Order.UpdatedAt = DateTime.Now;
+                    }
+
                     await _context.SaveChangesAsync();
                 }
 
@@ -342,8 +487,79 @@ namespace ServiceLayer.Services
 
         private async Task<PaymentResultViewModel> HandleVNPayCallback(Dictionary<string, string> parameters)
         {
-            // Tương tự như MoMo
-            return new PaymentResultViewModel { IsSuccess = false, Message = "Not implemented" };
+            // Xử lý callback từ VNPay
+            var responseCode = parameters.GetValueOrDefault("vnp_ResponseCode");
+            var txnRef = parameters.GetValueOrDefault("vnp_TxnRef");
+            var orderId = parameters.GetValueOrDefault("vnp_OrderInfo"); // VNPay có thể gửi orderId trong OrderInfo
+
+            _logger.LogInformation("VNPay callback - responseCode: {ResponseCode}, txnRef: {TxnRef}", responseCode, txnRef);
+
+            if (responseCode == "00") // Success
+            {
+                // Tìm payment bằng txnRef (vnp_TxnRef thường là paymentId)
+                var payment = await _context.Payments
+                    .Include(p => p.Order)
+                    .FirstOrDefaultAsync(p => p.Id.ToString() == txnRef || p.ProviderTxnId == txnRef);
+
+                if (payment != null)
+                {
+                    _logger.LogInformation("VNPay callback - Found payment: {PaymentId}, OrderId: {OrderId}, Current Status: {Status}", 
+                        payment.Id, payment.OrderId, payment.Status);
+
+                    payment.Status = StatusValue.Completed;
+                    payment.UpdatedAt = DateTime.Now;
+
+                    // Sau khi thanh toán thành công, tự động gán slot và cập nhật trạng thái đơn hàng
+                    if (payment.Order != null)
+                    {
+                        _logger.LogInformation("VNPay callback - Assigning slot to order: {OrderId}, Current Order Status: {OrderStatus}", 
+                            payment.Order.Id, payment.Order.Status);
+
+                        await AssignSlotToOrderAfterPaymentAsync(payment.Order.Id);
+                        
+                        // Cập nhật trạng thái đơn hàng thành Approved (đã duyệt)
+                        payment.Order.Status = StatusValue.Approved;
+                        payment.Order.UpdatedAt = DateTime.Now;
+
+                        _logger.LogInformation("VNPay callback - Updated order status to: {OrderStatus}", payment.Order.Status);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("VNPay callback - Payment {PaymentId} has no Order", payment.Id);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("VNPay callback - Successfully saved payment and order updates");
+
+                    return new PaymentResultViewModel
+                    {
+                        IsSuccess = true,
+                        Message = "Thanh toán thành công",
+                        PaymentId = payment.Id
+                    };
+                }
+                else
+                {
+                    _logger.LogWarning("VNPay callback: Payment not found for txnRef: {TxnRef}. Searching all payments...", txnRef);
+                    
+                    // Debug: List all payments để tìm vấn đề
+                    var allPayments = await _context.Payments
+                        .Select(p => new { p.Id, p.ProviderTxnId, p.OrderId })
+                        .Take(10)
+                        .ToListAsync();
+                    _logger.LogInformation("VNPay callback - Recent payments: {@Payments}", allPayments);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("VNPay callback - Payment failed. ResponseCode: {ResponseCode}", responseCode);
+            }
+
+            return new PaymentResultViewModel
+            {
+                IsSuccess = false,
+                Message = "Thanh toán thất bại"
+            };
         }
     }
 }

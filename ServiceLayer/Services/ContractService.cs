@@ -329,6 +329,26 @@ public class ContractService : IContractService
             if (orderSlot == null)
                 throw new InvalidOperationException("Không tìm thấy slot reservation cho đơn hàng.");
 
+            // Kiểm tra xem đã có OrderWarehouseSlot chưa, nếu chưa thì tạo mới
+            var existingOrderWarehouseSlot = await _db.OrderWarehouseSlots
+                .FirstOrDefaultAsync(ows => ows.OrderId == orderId);
+
+            if (existingOrderWarehouseSlot == null && orderSlot.WarehouseSlot != null)
+            {
+                // Tạo OrderWarehouseSlot nếu chưa có
+                var orderWarehouseSlot = new OrderWarehouseSlot
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = orderId,
+                    WarehouseSlotId = orderSlot.WarehouseSlot.Id,
+                    AssignedAt = DateTime.Now,
+                    ReleasedAt = null,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+                _db.OrderWarehouseSlots.Add(orderWarehouseSlot);
+            }
+
             // Đặt reservation sang Inactive (đã sử dụng)
             orderSlot.Status = StatusValue.InActive;
             _db.SlotReservations.Update(orderSlot);

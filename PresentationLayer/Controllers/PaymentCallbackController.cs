@@ -148,19 +148,39 @@ namespace PresentationLayer.Controllers
             {
                 _logger.LogInformation("Received VNPay callback: {@Parameters}", parameters);
 
-                var result = await _paymentService.HandlePaymentCallback("vnpay", parameters);
-
                 var responseCode = parameters.GetValueOrDefault("vnp_ResponseCode");
                 var txnRef = parameters.GetValueOrDefault("vnp_TxnRef");
 
                 if (responseCode == "00") // Success
                 {
-                    var payment = await _db.Payments.Include(e => e.Order)
-                        .FirstOrDefaultAsync(e => e.Id.ToString() == txnRef);
-                    var quotationId = payment!.Order.QuotationId;
-                    await _contractService.GenerateContractsAsync((Guid)quotationId!);
-                    
-                    return Redirect($"/Contract/Index");
+                    // Gọi HandlePaymentCallback để cập nhật payment status và gán slot
+                    var result = await _paymentService.HandlePaymentCallback("vnpay", parameters);
+
+                    if (result.IsSuccess)
+                    {
+                        // Reload payment sau khi đã được cập nhật
+                        var payment = await _db.Payments
+                            .Include(e => e.Order)
+                            .FirstOrDefaultAsync(e => e.Id.ToString() == txnRef || e.ProviderTxnId == txnRef);
+
+                        if (payment != null && payment.Order != null && payment.Order.QuotationId != null)
+                        {
+                            var quotationId = payment.Order.QuotationId;
+                            await _contractService.GenerateContractsAsync((Guid)quotationId);
+                            
+                            return Redirect($"/Contract/Index");
+                        }
+                        else
+                        {
+                            _logger.LogWarning("VNPay callback: Payment or Order not found after processing. txnRef: {TxnRef}", txnRef);
+                            return Redirect($"/Payment/Failed?transactionId={txnRef}");
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("VNPay callback: HandlePaymentCallback failed. Message: {Message}", result.Message);
+                        return Redirect($"/Payment/Failed?transactionId={txnRef}");
+                    }
                 }
                 else
                 {

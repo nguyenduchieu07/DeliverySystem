@@ -387,12 +387,12 @@ namespace PresentationLayer.Controllers
                 // Tính giá cho các dịch vụ đặc biệt
                 var addonPrices = new Dictionary<string, decimal>
                 {
-                    { "🧊 Kho mát", 50000m },
-                    { "💧 Chống ẩm", 30000m },
-                    { "🔒 An ninh cao", 40000m },
-                    { "🛡️ Bảo hiểm hàng hóa", 100000m },
-                    { "🏢 Kho có thang máy", 20000m },
-                    { "📹 Giám sát 24/7", 60000m }
+                    { "🧊 Kho mát", 5000m },
+                    { "💧 Chống ẩm", 3000m },
+                    { "🔒 An ninh cao", 4000m },
+                    { "🛡️ Bảo hiểm hàng hóa", 10000m },
+                    { "🏢 Kho có thang máy", 2000m },
+                    { "📹 Giám sát 24/7", 6000m }
                 };
 
                 var dailyAddons = new HashSet<string> { "🧊 Kho mát", "💧 Chống ẩm", "🔒 An ninh cao", "🏢 Kho có thang máy", "📹 Giám sát 24/7" };
@@ -1076,7 +1076,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> NearbyWarehouses(double lat, double lng, int take = 10)
+        public async Task<IActionResult> NearbyWarehouses(double lat, double lng, int take = 3)
         {
             var warehouses = await _db.Warehouses
                 .Include(w => w.Address)
